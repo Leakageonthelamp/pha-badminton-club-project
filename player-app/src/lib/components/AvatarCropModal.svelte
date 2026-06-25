@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Cropper from 'svelte-easy-crop';
 	import SubmitButton from '$lib/components/SubmitButton.svelte';
+	import { toast } from '$lib/toast/toast.svelte';
 	import {
 		AVATAR_OUTPUT_SIZE,
 		cropAvatarToFile,
@@ -23,14 +24,12 @@
 	let zoom = $state(1);
 	let croppedAreaPixels = $state<CropArea | null>(null);
 	let processing = $state(false);
-	let error = $state<string | null>(null);
 
 	$effect(() => {
 		if (open) {
 			crop = { x: 0, y: 0 };
 			zoom = 1;
 			croppedAreaPixels = null;
-			error = null;
 			processing = false;
 		}
 	});
@@ -43,13 +42,12 @@
 		if (!imageSrc || !croppedAreaPixels || processing) return;
 
 		processing = true;
-		error = null;
 
 		try {
 			const file = await cropAvatarToFile(imageSrc, croppedAreaPixels);
 			onConfirm(file);
 		} catch (err) {
-			error = err instanceof Error ? err.message : 'Could not crop image.';
+			toast.error(err instanceof Error ? err.message : 'Could not crop image.');
 		} finally {
 			processing = false;
 		}
@@ -96,10 +94,6 @@
 						class="mt-2 w-full accent-brand-700"
 					/>
 				</label>
-
-				{#if error}
-					<p class="text-sm text-red-600" role="alert">{error}</p>
-				{/if}
 
 				<div class="flex gap-2">
 					<SubmitButton

@@ -6,6 +6,8 @@
 	import UploadIcon from '$lib/components/icons/UploadIcon.svelte';
 	import SubmitButton from '$lib/components/SubmitButton.svelte';
 	import TagPill from '$lib/components/TagPill.svelte';
+	import FormToast from '$lib/components/FormToast.svelte';
+	import { toast } from '$lib/toast/toast.svelte';
 	import { AVATAR_OUTPUT_SIZE, normalizeImageForCrop } from '$lib/images/cropAvatar';
 	import { validateAvatarFile, validateAvatarInput } from '$lib/validation/avatar';
 	import { tagSuffixFromFull, toFullTag } from '$lib/validation/tag';
@@ -83,6 +85,7 @@
 			const error = validateAvatarFile(avatar);
 			if (error) {
 				avatarError = error;
+				toast.error(error);
 				cancel();
 				return;
 			}
@@ -139,6 +142,7 @@
 		const error = validateAvatarInput(file ?? null);
 		if (error) {
 			avatarError = error;
+			toast.error(error);
 			return;
 		}
 
@@ -154,6 +158,7 @@
 			cropOpen = true;
 		} catch {
 			avatarError = 'Could not open that image. Try another photo.';
+			toast.error(avatarError);
 		} finally {
 			pickLoading = false;
 		}
@@ -163,6 +168,7 @@
 		const error = validateAvatarFile(file);
 		if (error) {
 			avatarError = error;
+			toast.error(error);
 			return;
 		}
 
@@ -193,6 +199,10 @@
 	}
 </script>
 
+<FormToast message={data.loadError} variant="warning" token={data.loadError ?? ''} />
+<FormToast message={form?.success ? 'Profile updated.' : null} variant="success" token={form?.at ?? ''} />
+<FormToast message={form?.error ?? null} variant="error" token={form?.error ?? ''} />
+
 <section class="space-y-6">
 	<div class="flex flex-col items-center text-center">
 		<AppLogo size={56} class="mb-3" />
@@ -200,11 +210,7 @@
 		<p class="mt-2 text-sm text-slate-600">Update your display name, tag, and avatar.</p>
 	</div>
 
-	{#if data.loadError}
-		<div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-			{data.loadError}
-		</div>
-	{:else if data.profile}
+	{#if data.profile}
 		<div class="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4">
 			{#if avatarPreviewUrl}
 				<img src={avatarPreviewUrl} alt="" class="h-16 w-16 rounded-full object-cover" />
@@ -222,18 +228,6 @@
 				<TagPill tag={displayedTag} size="md" class="mt-1" />
 			</div>
 		</div>
-
-		{#if form?.success}
-			<div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-				Profile updated.
-			</div>
-		{/if}
-
-		{#if form?.error || avatarError}
-			<div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-				{avatarError ?? form?.error}
-			</div>
-		{/if}
 
 		<form
 			method="POST"

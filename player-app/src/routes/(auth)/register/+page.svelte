@@ -5,6 +5,7 @@
 	import IdentifierField from '$lib/components/IdentifierField.svelte';
 	import PasswordField from '$lib/components/PasswordField.svelte';
 	import SubmitButton from '$lib/components/SubmitButton.svelte';
+	import FormToast from '$lib/components/FormToast.svelte';
 	import { whileSubmitting } from '$lib/forms/submitting';
 	import { PASSWORD_MIN_LENGTH, validateRegisterPassword } from '$lib/validation/password';
 	import type { ActionData } from './$types';
@@ -15,6 +16,8 @@
 	let registerLoading = $state(false);
 </script>
 
+<FormToast message={form?.message} variant="error" token={form?.message ?? ''} />
+
 <section class="space-y-6">
 	<div class="flex flex-col items-center text-center">
 		<AppLogo size={64} class="mb-4" />
@@ -23,15 +26,6 @@
 			Register with email or phone. You need at least one unique identifier.
 		</p>
 	</div>
-
-	{#if form?.message}
-		<div
-			class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-			role="alert"
-		>
-			{form.message}
-		</div>
-	{/if}
 
 	<form
 		method="POST"

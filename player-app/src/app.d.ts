@@ -1,4 +1,6 @@
-import type { Session, SupabaseClient, User } from '@supabase/supabase-js';
+/// <reference types="@sveltejs/kit" />
+
+import type { App as AppTypes } from '$lib/types/app';
 
 declare global {
 	interface BeforeInstallPromptEvent extends Event {
@@ -12,16 +14,8 @@ declare global {
 	}
 
 	namespace App {
-		interface Error {
-			message: string;
-		}
-
-		interface Locals {
-			supabase: SupabaseClient;
-			safeGetSession: () => Promise<{ session: Session | null; user: User | null }>;
-			session: Session | null;
-			user: User | null;
-		}
+		interface Error extends AppTypes.Error {}
+		interface Locals extends AppTypes.Locals {}
 	}
 }
 

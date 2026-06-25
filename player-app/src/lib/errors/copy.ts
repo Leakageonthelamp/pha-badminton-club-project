@@ -23,6 +23,10 @@ const errorCopyByStatus: Record<number, ErrorCopy> = {
 	500: {
 		title: 'Something went wrong',
 		hint: 'An unexpected error occurred. Please try again in a moment.'
+	},
+	503: {
+		title: 'Temporarily unavailable',
+		hint: 'We are investigating an issue with our backend services. Please come back later.'
 	}
 };
 

@@ -113,6 +113,6 @@ export const actions: Actions = {
 			return fail(400, { error: 'Could not update profile. Please try again.' });
 		}
 
-		return { success: true };
+		return { success: true, at: Date.now() };
 	}
 };

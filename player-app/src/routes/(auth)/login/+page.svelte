@@ -6,6 +6,7 @@
 	import IdentifierField from '$lib/components/IdentifierField.svelte';
 	import PasswordField from '$lib/components/PasswordField.svelte';
 	import SubmitButton from '$lib/components/SubmitButton.svelte';
+	import FormToast from '$lib/components/FormToast.svelte';
 	import { whileSubmitting } from '$lib/forms/submitting';
 	import type { ActionData, PageData } from './$types';
 
@@ -16,21 +17,14 @@
 	let facebookLoading = $state(false);
 </script>
 
+<FormToast message={form?.message ?? data.error} variant="error" token={form?.message ?? data.error ?? ''} />
+
 <section class="space-y-6">
 	<div class="flex flex-col items-center text-center">
 		<AppLogo size={64} class="mb-4" />
 		<h1 class="text-2xl font-semibold text-slate-900">Log in</h1>
 		<p class="mt-2 text-sm text-slate-600">Use email or phone number with your password.</p>
 	</div>
-
-	{#if form?.message || data.error}
-		<div
-			class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-			role="alert"
-		>
-			{form?.message ?? data.error}
-		</div>
-	{/if}
 
 	<form method="POST" action="?/login" class="space-y-4" use:enhance={whileSubmitting((v) => (loginLoading = v))}>
 		<IdentifierField
