@@ -4,6 +4,7 @@ import svelte from 'eslint-plugin-svelte';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 import svelteConfig from './player-app/svelte.config.js';
+import adminSvelteConfig from './admin-app/svelte.config.js';
 
 /** @type {import('eslint').Linter.Config[]} */
 export default tseslint.config(
@@ -17,7 +18,10 @@ export default tseslint.config(
 			'**/.yarn/**',
 			'player-app/static/**',
 			'player-app/svelte.config.js',
-			'player-app/vite.config.ts'
+			'player-app/vite.config.ts',
+			'admin-app/static/**',
+			'admin-app/svelte.config.js',
+			'admin-app/vite.config.ts'
 		]
 	},
 	js.configs.recommended,
@@ -71,6 +75,40 @@ export default tseslint.config(
 			// Dynamic href props (BackLink) and plain internal links
 			'svelte/no-navigation-without-resolve': 'off',
 			// +error.svelte legitimately receives status and error props
+			'svelte/valid-prop-names-in-kit-pages': 'off'
+		}
+	{
+		files: ['admin-app/**/*.{ts,js,mjs,cjs}'],
+		languageOptions: {
+			parserOptions: {
+				projectService: true,
+				tsconfigRootDir: import.meta.dirname
+			}
+		},
+		rules: {
+			'@typescript-eslint/no-unused-vars': [
+				'error',
+				{
+					argsIgnorePattern: '^_',
+					varsIgnorePattern: '^_'
+				}
+			]
+		}
+	},
+	{
+		files: ['admin-app/**/*.svelte'],
+		languageOptions: {
+			parserOptions: {
+				projectService: true,
+				tsconfigRootDir: import.meta.dirname,
+				extraFileExtensions: ['.svelte'],
+				parser: tseslint.parser,
+				svelteConfig: adminSvelteConfig
+			}
+		},
+		rules: {
+			'svelte/prefer-writable-derived': 'off',
+			'svelte/no-navigation-without-resolve': 'off',
 			'svelte/valid-prop-names-in-kit-pages': 'off'
 		}
 	}

@@ -16,10 +16,10 @@ ph-badminton-club-project/
 ```
 
 - **Player app:** `player-app/` — auth, profile, sessions, matches, payments
-- **Admin app:** `admin-app/` — club/session/match management (future phases)
+- **Admin app:** `admin-app/` — super-admin club management (Phase 2a); session/match management (future phases)
 - **Shared backend:** Supabase migrations in `supabase/` (repo root); both apps use the same Supabase project
 
-**Root scripts:** `yarn dev:player`, `yarn dev:admin`, `yarn build:player`, `yarn check:player`, `yarn test:player`
+**Root scripts:** `yarn dev:player`, `yarn dev:admin`, `yarn build:player`, `yarn build:admin`, `yarn check:player`, `yarn check:admin`, `yarn test:player`, `yarn test:admin`
 
 ## Tech stack tree (all free tier)
 
@@ -157,7 +157,7 @@ Player routes under `player-app/src/routes/`; admin routes under `admin-app/src/
 | Phase | Scope                                                                                         | Status      |
 | ----- | --------------------------------------------------------------------------------------------- | ----------- |
 | 1     | Player Auth & Profile (email/phone + password, Google, Facebook, 7-day session, profile edit) | Completed   |
-| 2     | DB schema + RLS + roles + clubs / admin hierarchy                                             | Not started |
+| 2     | DB schema + RLS + roles + clubs / admin hierarchy                                             | In progress (super admin subset done) |
 | 3     | Sessions (CRUD, geo discovery, join/approve)                                                  | Not started |
 | 4     | Matchmaking (manual then auto) + match accept + realtime offers                               | Not started |
 | 5     | Scoring + peer confirmation + dispute/suspend + admin resolve                                 | Not started |
@@ -238,3 +238,67 @@ Auth runs in SvelteKit server form actions using `@supabase/ssr` (sets HttpOnly 
 ### Out of scope (Phase 1)
 
 ELO, sessions, matches, payments, push notifications, self-service email/phone/password change.
+
+---
+
+## Phase 2a - Admin app super admin (detailed spec)
+
+Super-admin bootstrap and club management in `admin-app/`. Club-admin admin-app access is deferred to Phase 2b; assigned club admins exist in DB but cannot sign in to admin-app yet.
+
+### Role capabilities (v1)
+
+| Role | Admin-app access | Capabilities |
+| ---- | ---------------- | ------------ |
+| **Super Admin** | Yes | Create/update/delete clubs, set max active sessions, assign/remove club admins, search all profiles |
+| **Club Admin** | No (Phase 2b) | Row in `club_admins`; `app_role` synced to `club_admin` when assigned |
+| **Player** | No | — |
+
+### Bootstrap first super admin
+
+1. User registers via player-app (normal account).
+2. Set `MASTER_KEY_SHA256` in `admin-app/.env` (SHA-256 hex of a strong raw secret — never store the raw key in env).
+3. One-time POST to the backdoor endpoint:
+
+```bash
+curl -X POST http://localhost:5174/api/internal/promote-superadmin \
+  -H "Content-Type: application/json" \
+  -H "x-master-key: YOUR_RAW_SECRET" \
+  -d '{"userId":"USER_UUID_HERE"}'
+```
+
+4. That user signs in at admin-app (`yarn dev:admin`, port 5174).
+
+Generate hash: `node -e "console.log(require('crypto').createHash('sha256').update('your-secret').digest('hex'))"`
+
+### Phase 2a data model (`supabase/migrations/0003_clubs_admin.sql`)
+
+- `clubs`: `name`, `description`, `max_active_sessions`, `owner_id` (creating super admin)
+- `club_admins`: `club_id`, `user_id`, `assigned_by`
+- `sync_club_admin_role()` trigger: promote `player` → `club_admin` on assign; demote to `player` when removed from last club; never changes `super_admin`
+- RLS: super admin full CRUD on `clubs` / `club_admins`; super admin can select all `profiles` (user pool search)
+
+### Admin-app env (`admin-app/.env.example`)
+
+Same Supabase keys as player-app, plus:
+
+- `PORT=5174`
+- `MASTER_KEY_SHA256` — hex SHA-256 of bootstrap secret (server-only)
+
+### Supabase dashboard (manual)
+
+- Auth > URL configuration: add redirect `http://localhost:5174/auth/callback` (and production admin URL when deployed).
+- Run `yarn db:push` after pulling migration `0003_clubs_admin.sql`.
+
+### Admin routes (`admin-app/src/routes`)
+
+- `(auth)/login/` — email/phone + password + Google/Facebook; no register
+- `auth/callback/+server.ts` — OAuth session exchange
+- `api/internal/promote-superadmin/+server.ts` — master-key backdoor (not linked from UI)
+- `(admin)/` — club list
+- `(admin)/clubs/new/` — create club
+- `(admin)/clubs/[id]/` — edit club, assign/remove admins, delete club
+- `hooks.server.ts` — super-admin-only guard (non-super-admins signed out)
+
+### Out of scope (Phase 2a)
+
+Club-admin admin-app UI, session/match management, demote super admin via UI, rate limiting on backdoor endpoint.

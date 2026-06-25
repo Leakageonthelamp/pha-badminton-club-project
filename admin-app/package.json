@@ -1,11 +1,32 @@
 {
 	"name": "admin-app",
 	"private": true,
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"type": "module",
 	"scripts": {
-		"dev": "echo \"Admin app is not scaffolded yet. See docs/PROJECT_PLAN.md.\" && exit 1",
-		"build": "echo \"Admin app is not scaffolded yet. See docs/PROJECT_PLAN.md.\" && exit 1",
-		"check": "echo \"Admin app is not scaffolded yet.\" && exit 1"
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"prepare": "svelte-kit sync || echo ''",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"test": "vitest run"
+	},
+	"devDependencies": {
+		"@sveltejs/adapter-auto": "^6.0.1",
+		"@sveltejs/kit": "^2.21.1",
+		"@sveltejs/vite-plugin-svelte": "^5.0.3",
+		"@tailwindcss/vite": "^4.1.8",
+		"@types/node": "^22.15.21",
+		"svelte": "^5.33.14",
+		"svelte-check": "^4.2.1",
+		"tailwindcss": "^4.1.8",
+		"typescript": "^5.8.3",
+		"vite": "^6.3.5",
+		"vitest": "^3.1.4"
+	},
+	"dependencies": {
+		"@supabase/ssr": "^0.6.1",
+		"@supabase/supabase-js": "^2.49.8",
+		"zod": "^3.25.28"
 	}
 }

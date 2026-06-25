@@ -1,0 +1,146 @@
+import { createSupabaseServerClient } from '$lib/supabase/server';
+import {
+	isSupabaseUnavailableError,
+	markServiceUnavailable
+} from '$lib/server/supabaseHealth';
+import type { AppRole } from '$lib/types/auth';
+import { PUBLIC_SUPABASE_PUBLISHABLE_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public';
+import { type Handle, redirect, type HandleServerError } from '@sveltejs/kit';
+import { sequence } from '@sveltejs/kit/hooks';
+
+const PUBLIC_PATHS = new Set(['/login', '/auth/callback']);
+const BACKDOOR_PATH = '/api/internal/promote-superadmin';
+
+const isPublicPath = (path: string) =>
+	PUBLIC_PATHS.has(path) || path.startsWith('/auth/callback');
+
+const loadAppRole = async (
+	supabase: App.Locals['supabase'],
+	userId: string
+): Promise<AppRole | null> => {
+	const { data, error } = await supabase
+		.from('profiles')
+		.select('app_role')
+		.eq('id', userId)
+		.single();
+
+	if (error || !data?.app_role) {
+		return null;
+	}
+
+	return data.app_role as AppRole;
+};
+
+const supabaseHandle: Handle = async ({ event, resolve }) => {
+	event.locals.serviceUnavailable = false;
+	event.locals.supabase = createSupabaseServerClient(event.cookies);
+	event.locals.appRole = null;
+
+	event.locals.safeGetSession = async () => {
+		try {
+			const {
+				data: { session },
+				error: sessionError
+			} = await event.locals.supabase.auth.getSession();
+
+			if (sessionError) {
+				if (isSupabaseUnavailableError(sessionError)) {
+					markServiceUnavailable(event.locals);
+				}
+
+				return { session: null, user: null };
+			}
+
+			if (!session) {
+				return { session: null, user: null };
+			}
+
+			const {
+				data: { user },
+				error: userError
+			} = await event.locals.supabase.auth.getUser();
+
+			if (userError) {
+				if (isSupabaseUnavailableError(userError)) {
+					markServiceUnavailable(event.locals);
+				}
+
+				return { session: null, user: null };
+			}
+
+			return { session, user };
+		} catch (error) {
+			if (isSupabaseUnavailableError(error)) {
+				markServiceUnavailable(event.locals);
+			}
+
+			return { session: null, user: null };
+		}
+	};
+
+	return resolve(event, {
+		filterSerializedResponseHeaders: (name) =>
+			name === 'content-range' || name === 'x-supabase-api-version'
+	});
+};
+
+const authGuard: Handle = async ({ event, resolve }) => {
+	const path = event.url.pathname;
+	const isBackdoor = path === BACKDOOR_PATH;
+	const isPublic = isPublicPath(path);
+
+	if (isBackdoor) {
+		return resolve(event);
+	}
+
+	const { session, user } = await event.locals.safeGetSession();
+	event.locals.session = session;
+	event.locals.user = user;
+
+	if (event.locals.serviceUnavailable) {
+		return resolve(event);
+	}
+
+	if (session && user) {
+		event.locals.appRole = await loadAppRole(event.locals.supabase, user.id);
+
+		if (path === '/login') {
+			if (event.locals.appRole === 'super_admin') {
+				redirect(303, '/');
+			}
+
+			await event.locals.supabase.auth.signOut();
+			event.locals.session = null;
+			event.locals.user = null;
+			event.locals.appRole = null;
+		} else if (!isPublic && event.locals.appRole !== 'super_admin') {
+			await event.locals.supabase.auth.signOut();
+			redirect(303, '/login?error=access_denied');
+		}
+	} else if (!isPublic) {
+		redirect(303, '/login');
+	}
+
+	if (!PUBLIC_SUPABASE_URL || !PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
+		console.warn('Supabase env vars are missing. Copy .env.example to .env and fill in your keys.');
+	}
+
+	return resolve(event);
+};
+
+export const handleError: HandleServerError = ({ error, status }) => {
+	if (isSupabaseUnavailableError(error)) {
+		return {
+			message: 'Backend services are temporarily unavailable. Please try again later.',
+			code: 'SERVICE_UNAVAILABLE'
+		};
+	}
+
+	console.error('Unhandled server error', error);
+
+	return {
+		message: status === 404 ? 'Page not found' : 'Something went wrong. Please try again later.'
+	};
+};
+
+export const handle = sequence(supabaseHandle, authGuard);
