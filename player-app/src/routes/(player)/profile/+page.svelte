@@ -1,8 +1,133 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
+	import type { SubmitFunction } from '@sveltejs/kit';
 	import AppLogo from '$lib/components/AppLogo.svelte';
+	import AvatarCropModal from '$lib/components/AvatarCropModal.svelte';
+	import SubmitButton from '$lib/components/SubmitButton.svelte';
+	import { AVATAR_OUTPUT_SIZE, normalizeImageForCrop } from '$lib/images/cropAvatar';
+	import { validateAvatarFile, validateAvatarInput } from '$lib/validation/avatar';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
+
+	let saveLoading = $state(false);
+	let avatarError = $state<string | null>(null);
+	let processedAvatar = $state<File | null>(null);
+	let avatarPreviewUrl = $state<string | null>(null);
+	let cropOpen = $state(false);
+	let cropImageSrc = $state<string | null>(null);
+	let cropSourceSrc = $state<string | null>(null);
+	let pickLoading = $state(false);
+	let fileInput = $state<HTMLInputElement | null>(null);
+
+	const handleSubmit: SubmitFunction = ({ formData, cancel }) => {
+		if (processedAvatar) {
+			formData.set('avatar', processedAvatar);
+		}
+
+		const avatar = formData.get('avatar');
+		if (avatar instanceof File && avatar.size > 0) {
+			const error = validateAvatarFile(avatar);
+			if (error) {
+				avatarError = error;
+				cancel();
+				return;
+			}
+		}
+
+		saveLoading = true;
+		return async ({ update }) => {
+			await update();
+			saveLoading = false;
+		};
+	};
+
+	function revokePreviewUrl() {
+		if (avatarPreviewUrl) {
+			URL.revokeObjectURL(avatarPreviewUrl);
+			avatarPreviewUrl = null;
+		}
+	}
+
+	function revokeCropSrc() {
+		cropImageSrc = null;
+	}
+
+	function setProcessedAvatar(file: File) {
+		revokePreviewUrl();
+		processedAvatar = file;
+		avatarPreviewUrl = URL.createObjectURL(file);
+		avatarError = null;
+	}
+
+	function clearAvatarSelection() {
+		revokePreviewUrl();
+		cropSourceSrc = null;
+		processedAvatar = null;
+		avatarError = null;
+		if (fileInput) fileInput.value = '';
+	}
+
+	function openFilePicker() {
+		fileInput?.click();
+	}
+
+	async function onAvatarPick(event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		const file = input.files?.[0];
+		input.value = '';
+
+		const error = validateAvatarInput(file ?? null);
+		if (error) {
+			avatarError = error;
+			return;
+		}
+
+		if (!file) return;
+
+		pickLoading = true;
+		avatarError = null;
+
+		try {
+			revokeCropSrc();
+			cropSourceSrc = await normalizeImageForCrop(file);
+			cropImageSrc = cropSourceSrc;
+			cropOpen = true;
+		} catch {
+			avatarError = 'Could not open that image. Try another photo.';
+		} finally {
+			pickLoading = false;
+		}
+	}
+
+	function onCropConfirm(file: File) {
+		const error = validateAvatarFile(file);
+		if (error) {
+			avatarError = error;
+			return;
+		}
+
+		setProcessedAvatar(file);
+		cropOpen = false;
+		cropImageSrc = null;
+	}
+
+	function onCropCancel() {
+		cropOpen = false;
+		cropImageSrc = null;
+	}
+
+	function reopenCrop() {
+		if (!cropSourceSrc) return;
+		cropImageSrc = cropSourceSrc;
+		cropOpen = true;
+	}
+
+	$effect(() => {
+		return () => {
+			revokePreviewUrl();
+		};
+	});
 </script>
 
 <section class="space-y-6">
@@ -18,7 +143,9 @@
 		</div>
 	{:else if data.profile}
 		<div class="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4">
-			{#if data.profile.avatar_url}
+			{#if avatarPreviewUrl}
+				<img src={avatarPreviewUrl} alt="" class="h-16 w-16 rounded-full object-cover" />
+			{:else if data.profile.avatar_url}
 				<img src={data.profile.avatar_url} alt="" class="h-16 w-16 rounded-full object-cover" />
 			{:else}
 				<div
@@ -39,13 +166,19 @@
 			</div>
 		{/if}
 
-		{#if form?.error}
+		{#if form?.error || avatarError}
 			<div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-				{form.error}
+				{avatarError ?? form?.error}
 			</div>
 		{/if}
 
-		<form method="POST" action="?/updateProfile" enctype="multipart/form-data" class="space-y-4">
+		<form
+			method="POST"
+			action="?/updateProfile"
+			enctype="multipart/form-data"
+			class="space-y-4"
+			use:enhance={handleSubmit}
+		>
 			<div>
 				<label for="displayName" class="mb-2 block text-sm font-medium text-slate-700">
 					Display name
@@ -61,22 +194,54 @@
 			</div>
 
 			<div>
-				<label for="avatar" class="mb-2 block text-sm font-medium text-slate-700">Avatar</label>
+				<span class="mb-2 block text-sm font-medium text-slate-700">Avatar</span>
 				<input
-					id="avatar"
-					name="avatar"
+					bind:this={fileInput}
 					type="file"
 					accept="image/*"
-					class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-brand-800"
+					class="sr-only"
+					onchange={onAvatarPick}
 				/>
+
+				<div class="flex flex-wrap items-center gap-3">
+					<SubmitButton
+						type="button"
+						variant="secondary"
+						class="w-auto! rounded-xl px-4 py-2.5"
+						loading={pickLoading}
+						loadingLabel="Opening…"
+						onclick={openFilePicker}
+					>
+						{processedAvatar ? 'Choose another photo' : 'Choose photo'}
+					</SubmitButton>
+
+					{#if processedAvatar}
+						<button
+							type="button"
+							class="text-sm font-medium text-brand-700 hover:text-brand-800"
+							onclick={reopenCrop}
+						>
+							Edit crop
+						</button>
+						<button
+							type="button"
+							class="text-sm font-medium text-slate-500 hover:text-slate-700"
+							onclick={clearAvatarSelection}
+						>
+							Remove
+						</button>
+					{/if}
+				</div>
+
+				<p class="mt-2 text-xs text-slate-500">
+					Large phone photos are cropped and resized to {AVATAR_OUTPUT_SIZE}×{AVATAR_OUTPUT_SIZE} px
+					before upload.
+				</p>
 			</div>
 
-			<button
-				type="submit"
-				class="w-full rounded-xl bg-brand-700 px-4 py-3 text-base font-semibold text-white transition hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
-			>
+			<SubmitButton loading={saveLoading} loadingLabel="Saving…" disabled={!!avatarError}>
 				Save changes
-			</button>
+			</SubmitButton>
 		</form>
 
 		<div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
@@ -102,3 +267,10 @@
 		</div>
 	{/if}
 </section>
+
+<AvatarCropModal
+	open={cropOpen}
+	imageSrc={cropImageSrc}
+	onConfirm={onCropConfirm}
+	onCancel={onCropCancel}
+/>

@@ -1,14 +1,18 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import AppLogo from '$lib/components/AppLogo.svelte';
 	import DisplayNameField from '$lib/components/DisplayNameField.svelte';
 	import IdentifierField from '$lib/components/IdentifierField.svelte';
 	import PasswordField from '$lib/components/PasswordField.svelte';
+	import SubmitButton from '$lib/components/SubmitButton.svelte';
+	import { whileSubmitting } from '$lib/forms/submitting';
 	import { PASSWORD_MIN_LENGTH, validateRegisterPassword } from '$lib/validation/password';
 	import type { ActionData } from './$types';
 
 	let { form }: { form: ActionData } = $props();
 
 	let password = $state('');
+	let registerLoading = $state(false);
 </script>
 
 <section class="space-y-6">
@@ -29,7 +33,12 @@
 		</div>
 	{/if}
 
-	<form method="POST" action="?/register" class="space-y-4">
+	<form
+		method="POST"
+		action="?/register"
+		class="space-y-4"
+		use:enhance={whileSubmitting((v) => (registerLoading = v))}
+	>
 		<DisplayNameField
 			value={form?.values?.displayName ?? ''}
 			serverError={form?.error?.displayName?.[0] ?? null}
@@ -57,12 +66,9 @@
 			serverError={form?.error?.confirmPassword?.[0] ?? null}
 		/>
 
-		<button
-			type="submit"
-			class="w-full rounded-xl bg-brand-700 px-4 py-3 text-base font-semibold text-white transition hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
-		>
+		<SubmitButton loading={registerLoading} loadingLabel="Creating account…">
 			Create account
-		</button>
+		</SubmitButton>
 	</form>
 
 	<p class="text-center text-sm text-slate-600">

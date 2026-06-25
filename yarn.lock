@@ -5123,6 +5123,7 @@ __metadata:
     "@vite-pwa/sveltekit": "npm:^1.0.0"
     svelte: "npm:^5.33.14"
     svelte-check: "npm:^4.2.1"
+    svelte-easy-crop: "npm:^5.0.1"
     tailwindcss: "npm:^4.1.8"
     typescript: "npm:^5.8.3"
     vite: "npm:^6.3.5"
@@ -5869,6 +5870,15 @@ __metadata:
   bin:
     svelte-check: bin/svelte-check
   checksum: 10c0/2c836957acf2571c730d0fe484713905db63c3b0c6d8c9c8fb2a4d58dd1b0dee40b4078f2f0ef290a84efcce0cfc03128ba9275c37d6c577b0b630bf8f59361f
+  languageName: node
+  linkType: hard
+
+"svelte-easy-crop@npm:^5.0.1":
+  version: 5.0.1
+  resolution: "svelte-easy-crop@npm:5.0.1"
+  peerDependencies:
+    svelte: ^5.0.0
+  checksum: 10c0/6b342ec31b943ffd42edd7a9cc8a71f342c474f69db94554c9e06d71606902fbfb90a65dbff099cff6e56c4719c0048c6ea537c711b691e0260b1a0be7cb8612
   languageName: node
   linkType: hard
 

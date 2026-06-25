@@ -1,12 +1,19 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import AppLogo from '$lib/components/AppLogo.svelte';
 	import FacebookIcon from '$lib/components/icons/FacebookIcon.svelte';
 	import GoogleIcon from '$lib/components/icons/GoogleIcon.svelte';
 	import IdentifierField from '$lib/components/IdentifierField.svelte';
 	import PasswordField from '$lib/components/PasswordField.svelte';
+	import SubmitButton from '$lib/components/SubmitButton.svelte';
+	import { whileSubmitting } from '$lib/forms/submitting';
 	import type { ActionData, PageData } from './$types';
 
 	let { form, data }: { form: ActionData; data: PageData } = $props();
+
+	let loginLoading = $state(false);
+	let googleLoading = $state(false);
+	let facebookLoading = $state(false);
 </script>
 
 <section class="space-y-6">
@@ -25,7 +32,7 @@
 		</div>
 	{/if}
 
-	<form method="POST" action="?/login" class="space-y-4">
+	<form method="POST" action="?/login" class="space-y-4" use:enhance={whileSubmitting((v) => (loginLoading = v))}>
 		<IdentifierField
 			value={form?.values?.identifier ?? ''}
 			serverError={form?.error?.identifier?.[0] ?? null}
@@ -33,35 +40,37 @@
 
 		<PasswordField serverError={form?.error?.password?.[0] ?? null} />
 
-		<button
-			type="submit"
-			class="w-full rounded-xl bg-brand-700 px-4 py-3 text-base font-semibold text-white transition hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
-		>
-			Log in
-		</button>
+		<SubmitButton loading={loginLoading} loadingLabel="Logging in…">Log in</SubmitButton>
 	</form>
 
 	<div class="space-y-3">
 		<p class="text-center text-sm text-slate-500">Or continue with</p>
-		<form method="POST" action="?/oauth">
+		<form
+			method="POST"
+			action="?/oauth"
+			use:enhance={whileSubmitting((v) => (googleLoading = v))}
+		>
 			<input type="hidden" name="provider" value="google" />
-			<button
-				type="submit"
-				class="mb-3 flex w-full items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+			<SubmitButton
+				variant="secondary"
+				class="mb-3"
+				loading={googleLoading}
+				loadingLabel="Connecting…"
 			>
 				<GoogleIcon />
 				Continue with Google
-			</button>
+			</SubmitButton>
 		</form>
-		<form method="POST" action="?/oauth">
+		<form
+			method="POST"
+			action="?/oauth"
+			use:enhance={whileSubmitting((v) => (facebookLoading = v))}
+		>
 			<input type="hidden" name="provider" value="facebook" />
-			<button
-				type="submit"
-				class="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
-			>
+			<SubmitButton variant="secondary" loading={facebookLoading} loadingLabel="Connecting…">
 				<FacebookIcon />
 				Continue with Facebook
-			</button>
+			</SubmitButton>
 		</form>
 	</div>
 

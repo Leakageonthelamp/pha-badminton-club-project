@@ -1,4 +1,5 @@
 import { displayNameSchema } from '$lib/validation/displayName';
+import { validateAvatarFile } from '$lib/validation/avatar';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { z } from 'zod';
@@ -40,16 +41,12 @@ export const actions: Actions = {
 		};
 
 		if (avatar instanceof File && avatar.size > 0) {
-			if (!avatar.type.startsWith('image/')) {
-				return fail(400, { error: 'Avatar must be an image file.' });
+			const avatarError = validateAvatarFile(avatar);
+			if (avatarError) {
+				return fail(400, { error: avatarError });
 			}
 
-			if (avatar.size > 2 * 1024 * 1024) {
-				return fail(400, { error: 'Avatar must be 2 MB or smaller.' });
-			}
-
-			const extension = avatar.name.split('.').pop()?.toLowerCase() ?? 'jpg';
-			const path = `${user!.id}/avatar.${extension}`;
+			const path = `${user!.id}/avatar.jpg`;
 
 			const { error: uploadError } = await supabase.storage
 				.from('avatars')

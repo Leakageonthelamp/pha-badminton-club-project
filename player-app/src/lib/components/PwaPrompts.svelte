@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import AppLogo from '$lib/components/AppLogo.svelte';
+	import SubmitButton from '$lib/components/SubmitButton.svelte';
 	import { useRegisterSW } from 'virtual:pwa-register/svelte';
 
 	let { appName = 'App' }: { appName?: string } = $props();
@@ -17,6 +18,8 @@
 	let deferredPrompt = $state<BeforeInstallPromptEvent | null>(null);
 	let showInstall = $state(false);
 	let isStandalone = $state(false);
+	let installing = $state(false);
+	let reloading = $state(false);
 
 	onMount(() => {
 		isStandalone =
@@ -45,12 +48,17 @@
 	});
 
 	const installApp = async () => {
-		if (!deferredPrompt) return;
+		if (!deferredPrompt || installing) return;
 
-		await deferredPrompt.prompt();
-		await deferredPrompt.userChoice;
-		deferredPrompt = null;
-		showInstall = false;
+		installing = true;
+		try {
+			await deferredPrompt.prompt();
+			await deferredPrompt.userChoice;
+			deferredPrompt = null;
+			showInstall = false;
+		} finally {
+			installing = false;
+		}
 	};
 
 	const dismissInstall = () => {
@@ -61,8 +69,15 @@
 		$offlineReady = false;
 	};
 
-	const reloadForUpdate = () => {
-		updateServiceWorker(true);
+	const reloadForUpdate = async () => {
+		if (reloading) return;
+
+		reloading = true;
+		try {
+			await updateServiceWorker(true);
+		} finally {
+			reloading = false;
+		}
 	};
 
 	const dismissUpdate = () => {
@@ -97,22 +112,26 @@
 			<AppLogo size={36} />
 			<div>
 				<p class="text-sm font-medium text-brand-900">A new version is available.</p>
-				<div class="mt-3 flex gap-2">
-					<button
-						type="button"
-						class="rounded-lg bg-brand-700 px-3 py-2 text-sm font-medium text-white"
-						onclick={reloadForUpdate}
-					>
-						Reload
-					</button>
-					<button
-						type="button"
-						class="rounded-lg px-3 py-2 text-sm font-medium text-brand-800"
-						onclick={dismissUpdate}
-					>
-						Later
-					</button>
-				</div>
+		<div class="mt-3 flex gap-2">
+			<SubmitButton
+				type="button"
+				variant="primary"
+				class="w-auto! rounded-lg px-3 py-2 text-sm font-medium"
+				loading={reloading}
+				loadingLabel="Reloading…"
+				onclick={reloadForUpdate}
+			>
+				Reload
+			</SubmitButton>
+			<SubmitButton
+				type="button"
+				variant="ghost"
+				class="w-auto! rounded-lg px-3 py-2 text-sm font-medium text-brand-800"
+				onclick={dismissUpdate}
+			>
+				Later
+			</SubmitButton>
+		</div>
 			</div>
 		</div>
 	</div>
@@ -134,20 +153,24 @@
 			</div>
 		</div>
 		<div class="mt-3 flex gap-2">
-			<button
+			<SubmitButton
 				type="button"
-				class="rounded-lg bg-brand-700 px-3 py-2 text-sm font-medium text-white"
+				variant="primary"
+				class="w-auto! rounded-lg px-3 py-2 text-sm font-medium"
+				loading={installing}
+				loadingLabel="Installing…"
 				onclick={installApp}
 			>
 				Install
-			</button>
-			<button
+			</SubmitButton>
+			<SubmitButton
 				type="button"
-				class="rounded-lg px-3 py-2 text-sm font-medium text-slate-600"
+				variant="ghost"
+				class="w-auto! rounded-lg px-3 py-2 text-sm font-medium text-slate-600"
 				onclick={dismissInstall}
 			>
 				Not now
-			</button>
+			</SubmitButton>
 		</div>
 	</div>
 {/if}

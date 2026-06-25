@@ -1,12 +1,15 @@
 <script lang="ts">
 	import '../app.css';
+	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
 	import AppLogo from '$lib/components/AppLogo.svelte';
 	import BackLink from '$lib/components/BackLink.svelte';
+	import SubmitButton from '$lib/components/SubmitButton.svelte';
 	import { appConfig } from '$lib/config/app';
 	import PwaHead from '$lib/components/PwaHead.svelte';
 	import PageTransition from '$lib/components/PageTransition.svelte';
 	import PwaPrompts from '$lib/components/PwaPrompts.svelte';
+	import { whileSubmitting } from '$lib/forms/submitting';
 	import { getBackHref, shouldShowBack } from '$lib/navigation/back';
 	import type { LayoutData } from './$types';
 
@@ -15,6 +18,8 @@
 	const showBack = $derived(shouldShowBack(page.url.pathname));
 	const backHref = $derived(getBackHref(page.url.pathname));
 	const year = new Date().getFullYear();
+
+	let logoutLoading = $state(false);
 </script>
 
 <PwaHead />
@@ -35,13 +40,10 @@
 			</a>
 		{/if}
 		{#if data.session}
-			<form method="POST" action="/logout">
-				<button
-					type="submit"
-					class="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
-				>
+			<form method="POST" action="/logout" use:enhance={whileSubmitting((v) => (logoutLoading = v))}>
+				<SubmitButton variant="ghost" loading={logoutLoading} loadingLabel="Logging out…">
 					Log out
-				</button>
+				</SubmitButton>
 			</form>
 		{/if}
 	</header>
