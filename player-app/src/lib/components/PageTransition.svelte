@@ -20,7 +20,7 @@
 	});
 </script>
 
-<main class="page-shell flex-1 overflow-x-hidden">
+<main class="page-shell">
 	{#key page.url.pathname}
 		<div
 			class="page-panel"

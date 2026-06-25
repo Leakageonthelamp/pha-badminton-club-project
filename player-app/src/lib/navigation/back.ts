@@ -1,8 +1,9 @@
 /** Paths that act as app home — no back arrow shown. */
-export const HOME_PATHS = new Set(['/', '/login', '/profile']);
+export const HOME_PATHS = new Set(['/', '/login']);
 
 const BACK_HREF: Record<string, string> = {
-	'/register': '/login'
+	'/register': '/login',
+	'/profile': '/'
 };
 
 export const shouldShowBack = (pathname: string): boolean => !HOME_PATHS.has(pathname);

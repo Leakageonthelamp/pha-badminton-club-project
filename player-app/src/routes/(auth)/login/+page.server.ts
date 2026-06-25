@@ -47,7 +47,7 @@ export const actions: Actions = {
 			});
 		}
 
-		redirect(303, '/profile');
+		redirect(303, '/');
 	},
 
 	oauth: async ({ request, locals: { supabase }, url }) => {

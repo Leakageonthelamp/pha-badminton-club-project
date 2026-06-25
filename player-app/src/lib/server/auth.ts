@@ -1,5 +1,6 @@
 import { PHONE_EMAIL_DOMAIN } from '$lib/types/auth';
 import { createSupabaseAdminClient } from '$lib/supabase/server';
+import { ensureProfileTag } from '$lib/server/tag';
 import { displayNameSchema } from '$lib/validation/displayName';
 import { isEmail, normalizePhone, validateIdentifier } from '$lib/validation/identifier';
 import { registerPasswordSchema } from '$lib/validation/password';
@@ -151,6 +152,8 @@ export const registerUser = async (input: RegisterInput) => {
 
 		return { ok: false as const, code: 'register_failed' as const };
 	}
+
+	await ensureProfileTag(admin, data.user.id);
 
 	return { ok: true as const, authEmail };
 };

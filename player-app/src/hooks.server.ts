@@ -39,15 +39,15 @@ const authGuard: Handle = async ({ event, resolve }) => {
 	event.locals.user = user;
 
 	const path = event.url.pathname;
-	const isPlayerRoute = path.startsWith('/profile');
+	const isProtectedRoute = path === '/' || path.startsWith('/profile');
 	const isAuthRoute = path === '/login' || path === '/register';
 
-	if (isPlayerRoute && !session) {
+	if (isProtectedRoute && !session) {
 		redirect(303, '/login');
 	}
 
 	if (isAuthRoute && session) {
-		redirect(303, '/profile');
+		redirect(303, '/');
 	}
 
 	if (!PUBLIC_SUPABASE_URL || !PUBLIC_SUPABASE_PUBLISHABLE_KEY) {

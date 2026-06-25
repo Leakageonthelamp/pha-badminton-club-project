@@ -25,12 +25,12 @@
 html {
 	background-color: var(--app-bg);
 	font-family: var(--font-sans);
+	height: 100%;
 }
 
 body {
-	@apply min-h-dvh overflow-x-hidden bg-slate-50 font-sans text-slate-900 antialiased;
-	padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
-		env(safe-area-inset-left);
+	@apply h-dvh overflow-hidden bg-slate-50 font-sans text-slate-900 antialiased;
+	padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
 }
 
 .page-panel--animated {
@@ -85,4 +85,15 @@ body {
 	body {
 		@apply bg-slate-50;
 	}
+}
+
+.app-footer {
+	padding-top: 0.25rem;
+	padding-bottom: max(0.375rem, env(safe-area-inset-bottom));
+}
+
+.app-scroll {
+	-webkit-overflow-scrolling: touch;
+	overscroll-behavior-y: contain;
+	padding-bottom: 1rem;
 }

@@ -3,15 +3,32 @@
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import AppLogo from '$lib/components/AppLogo.svelte';
 	import AvatarCropModal from '$lib/components/AvatarCropModal.svelte';
+	import UploadIcon from '$lib/components/icons/UploadIcon.svelte';
 	import SubmitButton from '$lib/components/SubmitButton.svelte';
+	import TagPill from '$lib/components/TagPill.svelte';
 	import { AVATAR_OUTPUT_SIZE, normalizeImageForCrop } from '$lib/images/cropAvatar';
 	import { validateAvatarFile, validateAvatarInput } from '$lib/validation/avatar';
+	import { tagSuffixFromFull, toFullTag } from '$lib/validation/tag';
+	import { getProfileCredential } from '$lib/types/auth';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
+	const formValues = $derived(
+		form && 'values' in form
+			? (form.values as { displayName?: string; tag?: string } | undefined)
+			: null
+	);
+	const fieldErrors = $derived(
+		form && 'fieldErrors' in form
+			? (form.fieldErrors as { displayName?: string | null; tag?: string | null } | undefined)
+			: null
+	);
+
 	let saveLoading = $state(false);
 	let avatarError = $state<string | null>(null);
+	let displayName = $state('');
+	let tagSuffix = $state('');
 	let processedAvatar = $state<File | null>(null);
 	let avatarPreviewUrl = $state<string | null>(null);
 	let cropOpen = $state(false);
@@ -19,8 +36,44 @@
 	let cropSourceSrc = $state<string | null>(null);
 	let pickLoading = $state(false);
 	let fileInput = $state<HTMLInputElement | null>(null);
+	let lastSyncedAt = $state<string | null>(null);
+
+	const displayedTag = $derived(toFullTag(tagSuffix));
+
+	const credential = $derived(data.profile ? getProfileCredential(data.profile) : null);
+
+	const hasChanges = $derived.by(() => {
+		if (!data.profile) return false;
+		if (processedAvatar) return true;
+		if (displayName.trim() !== data.profile.display_name) return true;
+		return toFullTag(tagSuffix) !== data.profile.tag;
+	});
+
+	$effect(() => {
+		if (!data.profile) return;
+
+		if (formValues) {
+			displayName = formValues.displayName ?? data.profile.display_name;
+			tagSuffix = tagSuffixFromFull(formValues.tag ?? data.profile.tag);
+			return;
+		}
+
+		const token = data.profile.updated_at;
+		if (lastSyncedAt !== token) {
+			displayName = data.profile.display_name;
+			tagSuffix = tagSuffixFromFull(data.profile.tag);
+			lastSyncedAt = token;
+		}
+	});
 
 	const handleSubmit: SubmitFunction = ({ formData, cancel }) => {
+		if (!hasChanges) {
+			cancel();
+			return;
+		}
+
+		formData.set('tag', toFullTag(tagSuffix));
+
 		if (processedAvatar) {
 			formData.set('avatar', processedAvatar);
 		}
@@ -36,9 +89,15 @@
 		}
 
 		saveLoading = true;
-		return async ({ update }) => {
-			await update();
+		return async ({ update, result }) => {
+			await update({ reset: false });
 			saveLoading = false;
+
+			if (result.type === 'success') {
+				processedAvatar = null;
+				cropSourceSrc = null;
+				if (fileInput) fileInput.value = '';
+			}
 		};
 	};
 
@@ -128,13 +187,17 @@
 			revokePreviewUrl();
 		};
 	});
+	function onTagSuffixInput(event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		tagSuffix = input.value.replace(/[^a-zA-Z0-9]/g, '').slice(0, 4);
+	}
 </script>
 
 <section class="space-y-6">
 	<div class="flex flex-col items-center text-center">
 		<AppLogo size={56} class="mb-3" />
 		<h1 class="text-2xl font-semibold text-slate-900">Profile</h1>
-		<p class="mt-2 text-sm text-slate-600">Update your display name and avatar.</p>
+		<p class="mt-2 text-sm text-slate-600">Update your display name, tag, and avatar.</p>
 	</div>
 
 	{#if data.loadError}
@@ -156,7 +219,7 @@
 			{/if}
 			<div>
 				<p class="font-semibold text-slate-900">{data.profile.display_name}</p>
-				<p class="text-sm text-slate-500">Player account</p>
+				<TagPill tag={displayedTag} size="md" class="mt-1" />
 			</div>
 		</div>
 
@@ -188,9 +251,46 @@
 					name="displayName"
 					type="text"
 					required
-					value={data.profile.display_name}
+					bind:value={displayName}
 					class="w-full rounded-xl border border-slate-300 px-4 py-3 text-base focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
 				/>
+				{#if fieldErrors?.displayName}
+					<p class="mt-2 text-sm text-red-600">{fieldErrors.displayName}</p>
+				{/if}
+			</div>
+
+			<div>
+				<label for="tagSuffix" class="mb-2 block text-sm font-medium text-slate-700">Tag</label>
+				<div
+					class="flex overflow-hidden rounded-xl border border-slate-300 focus-within:border-brand-600 focus-within:ring-2 focus-within:ring-brand-600/20"
+				>
+					<span
+						class="flex items-center bg-slate-50 px-4 font-mono text-base font-semibold text-brand-700"
+						aria-hidden="true"
+					>
+						#
+					</span>
+					<input
+						id="tagSuffix"
+						type="text"
+						required
+						maxlength="4"
+						autocapitalize="none"
+						autocomplete="off"
+						spellcheck="false"
+						inputmode="text"
+						placeholder="1234"
+						value={tagSuffix}
+						oninput={onTagSuffixInput}
+						class="min-w-0 flex-1 bg-white py-3 pr-4 font-mono text-base focus:outline-none"
+					/>
+				</div>
+				<p class="mt-2 text-xs text-slate-500">
+					Unique player ID when display names match. Enter 4 letters or numbers.
+				</p>
+				{#if fieldErrors?.tag}
+					<p class="mt-2 text-sm text-red-600">{fieldErrors.tag}</p>
+				{/if}
 			</div>
 
 			<div>
@@ -212,6 +312,7 @@
 						loadingLabel="Opening…"
 						onclick={openFilePicker}
 					>
+						<UploadIcon class="h-5 w-5 shrink-0 text-brand-700" />
 						{processedAvatar ? 'Choose another photo' : 'Choose photo'}
 					</SubmitButton>
 
@@ -239,7 +340,11 @@
 				</p>
 			</div>
 
-			<SubmitButton loading={saveLoading} loadingLabel="Saving…" disabled={!!avatarError}>
+			<SubmitButton
+				loading={saveLoading}
+				loadingLabel="Saving…"
+				disabled={!hasChanges || !!avatarError}
+			>
 				Save changes
 			</SubmitButton>
 		</form>
@@ -247,22 +352,39 @@
 		<div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
 			<h2 class="mb-3 font-medium text-slate-900">Account details</h2>
 			<dl class="space-y-3">
-				<div>
-					<dt class="text-slate-500">Email</dt>
-					<dd class="font-medium text-slate-800">{data.profile.email ?? 'Not set'}</dd>
-				</div>
-				<div>
-					<dt class="text-slate-500">Phone</dt>
-					<dd class="font-medium text-slate-800">{data.profile.phone ?? 'Not set'}</dd>
-				</div>
-				<div>
-					<dt class="text-slate-500">Password</dt>
-					<dd class="font-medium text-slate-800">Hidden</dd>
-				</div>
+				{#if credential}
+					<div>
+						<dt class="text-slate-500">Sign-in method</dt>
+						<dd class="font-medium capitalize text-slate-800">{credential.type}</dd>
+					</div>
+					<div>
+						<dt class="text-slate-500">
+							{credential.type === 'phone' ? 'Phone number' : 'Email address'}
+						</dt>
+						<dd class="font-medium text-slate-800">{credential.value}</dd>
+					</div>
+					<div>
+						<dt class="text-slate-500">Password</dt>
+						<dd class="font-medium text-slate-800">Hidden</dd>
+					</div>
+				{:else}
+					<div>
+						<dt class="text-slate-500">Sign-in</dt>
+						<dd class="font-medium text-slate-800">Not set</dd>
+					</div>
+				{/if}
 			</dl>
 			<p class="mt-4 text-xs text-slate-500">
-				To change email, phone, or password, contact a club admin. Self-service changes are not
-				available in this version.
+				{#if credential?.type === 'phone'}
+					To change your phone number or password, contact a club admin. Self-service changes are
+					not available in this version.
+				{:else if credential?.type === 'email'}
+					To change your email or password, contact a club admin. Self-service changes are not
+					available in this version.
+				{:else}
+					To change your sign-in details, contact a club admin. Self-service changes are not
+					available in this version.
+				{/if}
 			</p>
 		</div>
 	{/if}

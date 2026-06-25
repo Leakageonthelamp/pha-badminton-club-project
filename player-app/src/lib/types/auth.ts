@@ -4,12 +4,35 @@ export const SESSION_MAX_AGE = 60 * 60 * 24 * 7;
 export type Profile = {
 	id: string;
 	display_name: string;
+	tag: string;
 	avatar_url: string | null;
 	email: string | null;
 	phone: string | null;
 	app_role: 'player' | 'club_admin' | 'super_admin';
 	created_at: string;
 	updated_at: string;
+};
+
+export type CredentialType = 'phone' | 'email';
+
+export type ProfileCredential = {
+	type: CredentialType;
+	value: string;
+};
+
+/** Which identifier this account signs in with (phone takes precedence if both exist). */
+export const getProfileCredential = (
+	profile: Pick<Profile, 'email' | 'phone'>
+): ProfileCredential | null => {
+	if (profile.phone) {
+		return { type: 'phone', value: profile.phone };
+	}
+
+	if (profile.email) {
+		return { type: 'email', value: profile.email };
+	}
+
+	return null;
 };
 
 export type AuthErrorCode =

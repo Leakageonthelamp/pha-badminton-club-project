@@ -1,11 +1,14 @@
 import { displayNameSchema } from '$lib/validation/displayName';
+import { tagSchema } from '$lib/validation/tag';
 import { validateAvatarFile } from '$lib/validation/avatar';
+import { createSupabaseAdminClient } from '$lib/supabase/server';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { z } from 'zod';
 
 const profileSchema = z.object({
-	displayName: displayNameSchema
+	displayName: displayNameSchema,
+	tag: tagSchema
 });
 
 export const load: PageServerLoad = async ({ locals: { supabase, user } }) => {
@@ -26,18 +29,51 @@ export const actions: Actions = {
 	updateProfile: async ({ request, locals: { supabase, user } }) => {
 		const formData = await request.formData();
 		const parsed = profileSchema.safeParse({
-			displayName: String(formData.get('displayName') ?? '')
+			displayName: String(formData.get('displayName') ?? ''),
+			tag: String(formData.get('tag') ?? '')
 		});
 
 		if (!parsed.success) {
+			const fieldErrors = parsed.error.flatten().fieldErrors;
 			return fail(400, {
-				error: parsed.error.flatten().fieldErrors.displayName?.[0] ?? 'Invalid display name'
+				error:
+					fieldErrors.displayName?.[0] ??
+					fieldErrors.tag?.[0] ??
+					'Please check your input and try again.',
+				fieldErrors: {
+					displayName: fieldErrors.displayName?.[0] ?? null,
+					tag: fieldErrors.tag?.[0] ?? null
+				},
+				values: {
+					displayName: String(formData.get('displayName') ?? ''),
+					tag: String(formData.get('tag') ?? '')
+				}
+			});
+		}
+
+		const admin = createSupabaseAdminClient();
+		const { data: existingTag } = await admin
+			.from('profiles')
+			.select('id')
+			.eq('tag', parsed.data.tag)
+			.neq('id', user!.id)
+			.maybeSingle();
+
+		if (existingTag) {
+			return fail(400, {
+				error: 'This tag is already taken. Choose another.',
+				fieldErrors: { displayName: null, tag: 'This tag is already taken. Choose another.' },
+				values: {
+					displayName: parsed.data.displayName,
+					tag: parsed.data.tag
+				}
 			});
 		}
 
 		const avatar = formData.get('avatar');
-		const updates: { display_name: string; avatar_url?: string } = {
-			display_name: parsed.data.displayName
+		const updates: { display_name: string; tag: string; avatar_url?: string } = {
+			display_name: parsed.data.displayName,
+			tag: parsed.data.tag
 		};
 
 		if (avatar instanceof File && avatar.size > 0) {
@@ -63,6 +99,17 @@ export const actions: Actions = {
 		const { error } = await supabase.from('profiles').update(updates).eq('id', user!.id);
 
 		if (error) {
+			if (error.code === '23505') {
+				return fail(400, {
+					error: 'This tag is already taken. Choose another.',
+					fieldErrors: { displayName: null, tag: 'This tag is already taken. Choose another.' },
+					values: {
+						displayName: parsed.data.displayName,
+						tag: parsed.data.tag
+					}
+				});
+			}
+
 			return fail(400, { error: 'Could not update profile. Please try again.' });
 		}
 

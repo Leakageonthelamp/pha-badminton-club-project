@@ -5,7 +5,10 @@ describe('back navigation', () => {
 	it('hides back on home routes', () => {
 		expect(shouldShowBack('/')).toBe(false);
 		expect(shouldShowBack('/login')).toBe(false);
-		expect(shouldShowBack('/profile')).toBe(false);
+	});
+
+	it('shows back on profile', () => {
+		expect(shouldShowBack('/profile')).toBe(true);
 	});
 
 	it('shows back on secondary routes', () => {
@@ -16,8 +19,8 @@ describe('back navigation', () => {
 		expect(getBackHref('/register')).toBe('/login');
 	});
 
-	it('falls back to parent path for nested routes', () => {
-		expect(getBackHref('/profile/settings')).toBe('/profile');
+	it('resolves profile back to home', () => {
+		expect(getBackHref('/profile')).toBe('/');
 	});
 
 	it('detects forward and back transition direction', () => {
