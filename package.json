@@ -1,0 +1,18 @@
+{
+	"name": "ph-badminton-club-project",
+	"private": true,
+	"workspaces": [
+		"player-app",
+		"admin-app"
+	],
+	"scripts": {
+		"dev:player": "yarn workspace player-app dev",
+		"dev:admin": "yarn workspace admin-app dev",
+		"build:player": "yarn workspace player-app build",
+		"build:admin": "yarn workspace admin-app build",
+		"check:player": "yarn workspace player-app check",
+		"test:player": "yarn workspace player-app test",
+		"icons:player": "yarn workspace player-app icons"
+	},
+	"packageManager": "yarn@4.17.0"
+}

@@ -1,0 +1,31 @@
+.DS_Store
+node_modules
+**/node_modules
+**/build
+**/.svelte-kit
+**/package
+.env
+.env.*
+!.env.example
+!**/.env.example
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+**/dev-dist
+player-app/dev-dist
+
+# npm (use yarn)
+package-lock.json
+**/package-lock.json
+npm-debug.log*
+
+# yarn
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
+
+# cursor
+.cursor/

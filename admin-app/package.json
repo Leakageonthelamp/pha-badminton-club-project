@@ -1,0 +1,11 @@
+{
+	"name": "admin-app",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "echo \"Admin app is not scaffolded yet. See docs/PROJECT_PLAN.md.\" && exit 1",
+		"build": "echo \"Admin app is not scaffolded yet. See docs/PROJECT_PLAN.md.\" && exit 1",
+		"check": "echo \"Admin app is not scaffolded yet.\" && exit 1"
+	}
+}
