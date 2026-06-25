@@ -2,7 +2,8 @@
 export const HOME_PATHS = new Set(['/', '/login']);
 
 const BACK_HREF: Record<string, string> = {
-	'/clubs/new': '/'
+	'/clubs/new': '/',
+	'/profile': '/'
 };
 
 export const shouldShowBack = (pathname: string): boolean => !HOME_PATHS.has(pathname);

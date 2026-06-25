@@ -5,12 +5,14 @@
 	import SubmitButton from '$lib/components/SubmitButton.svelte';
 	import TagPill from '$lib/components/TagPill.svelte';
 	import { whileSubmitting } from '$lib/forms/submitting';
-	import type { Profile } from '$lib/types/auth';
+	import { appRoleLabel, type AppRole, type Profile } from '$lib/types/auth';
 
 	let {
 		profile
 	}: {
-		profile: Pick<Profile, 'display_name' | 'avatar_url'> & { tag: string | null } | null;
+		profile:
+			| (Pick<Profile, 'display_name' | 'avatar_url' | 'app_role'> & { tag: string | null })
+			| null;
 	} = $props();
 
 	let open = $state(false);
@@ -20,6 +22,7 @@
 	let menuRight = $state(0);
 
 	const initial = $derived(profile?.display_name.slice(0, 1).toUpperCase() ?? '?');
+	const roleLabel = $derived(profile ? appRoleLabel(profile.app_role as AppRole) : '');
 
 	function updateMenuPosition() {
 		if (!triggerEl) return;
@@ -115,6 +118,7 @@
 							{#if profile.tag}
 								<TagPill tag={profile.tag} class="mt-1 bg-white/90 ring-brand-200" />
 							{/if}
+							<p class="mt-1 text-xs font-medium text-brand-800">{roleLabel}</p>
 						</div>
 					</div>
 				</div>

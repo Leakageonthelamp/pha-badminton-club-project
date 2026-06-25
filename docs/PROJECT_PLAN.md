@@ -283,10 +283,12 @@ Same Supabase keys as player-app, plus:
 
 - `PORT=5174`
 - `MASTER_KEY_SHA256` — hex SHA-256 of bootstrap secret (server-only)
+- Auth cookie `maxAge` = 30 days (`SESSION_MAX_AGE` in `admin-app/src/lib/types/auth.ts`)
 
 ### Supabase dashboard (manual)
 
 - Auth > URL configuration: add redirect `http://localhost:5174/auth/callback` (and production admin URL when deployed).
+- Auth > Sessions: set time-box to **720 hours (30 days)** so admin refresh tokens outlive the player-app 7-day default if both apps share one project (use the longer value project-wide).
 - Run `yarn db:push` after pulling migration `0003_clubs_admin.sql`.
 
 ### Admin routes (`admin-app/src/routes`)

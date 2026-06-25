@@ -16,6 +16,7 @@
 		"test:player": "yarn workspace player-app test",
 		"test:admin": "yarn workspace admin-app test",
 		"icons:player": "yarn workspace player-app icons",
+		"icons:admin": "yarn workspace admin-app icons",
 		"lint": "eslint player-app admin-app",
 		"lint:fix": "eslint player-app admin-app --fix",
 		"format": "prettier --write .",

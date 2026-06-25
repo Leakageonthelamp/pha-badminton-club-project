@@ -1,7 +1,16 @@
 export const PHONE_EMAIL_DOMAIN = 'phone.ph-badminton.local';
-export const SESSION_MAX_AGE = 60 * 60 * 24 * 7;
+/** Auth cookie maxAge — 30 days for admin-app (player-app stays 7 days). */
+export const SESSION_MAX_AGE = 60 * 60 * 24 * 30;
 
 export type AppRole = 'player' | 'club_admin' | 'super_admin';
+
+const APP_ROLE_LABELS: Record<AppRole, string> = {
+	player: 'Player',
+	club_admin: 'Club admin',
+	super_admin: 'Super admin'
+};
+
+export const appRoleLabel = (role: AppRole): string => APP_ROLE_LABELS[role] ?? role;
 
 export type Profile = {
 	id: string;

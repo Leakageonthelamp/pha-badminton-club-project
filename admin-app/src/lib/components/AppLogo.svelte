@@ -1,7 +1,9 @@
 <script lang="ts">
+	import { appConfig } from '$lib/config/app';
+
 	let {
 		size = 40,
-		title = 'PH Badminton Club',
+		title = appConfig.shortName,
 		class: className = ''
 	}: {
 		size?: number;
@@ -11,10 +13,14 @@
 </script>
 
 <svg width={size} height={size} viewBox="0 0 48 48" class={className} role="img" aria-label={title}>
-	<circle cx="24" cy="24" r="24" fill="var(--app-accent, #964ac0)" />
-	<circle cx="24" cy="14.5" r="3.2" fill="#ffffff" />
+	<rect x="2" y="2" width="44" height="44" rx="12" fill="#7d3ca3" />
 	<path
-		d="M24 17.8C18.8 19.2 15.8 22.4 15.2 26L24 37.2L32.8 26C32.2 22.4 29.2 19.2 24 17.8Z"
+		d="M24 10.5L33.5 14.2V23.2C33.5 28.4 24 37.5 24 37.5C24 37.5 14.5 28.4 14.5 23.2V14.2L24 10.5Z"
 		fill="#ffffff"
+	/>
+	<circle cx="24" cy="17.2" r="2.4" fill="#7d3ca3" />
+	<path
+		d="M24 19.4C21.2 20.2 19.6 22 19.2 24.1L24 30.8L28.8 24.1C28.4 22 26.8 20.2 24 19.4Z"
+		fill="#7d3ca3"
 	/>
 </svg>
