@@ -6,16 +6,16 @@ A mobile-first monorepo for organizing 2v2 badminton club sessions: player auth 
 
 ## Current status
 
-| Phase | Scope | Status |
-| --- | --- | --- |
-| 1 | Player auth & profile | **Completed** |
-| 2 | DB schema, RLS, clubs & admin hierarchy | Not started |
-| 3 | Sessions (geo discovery, join/approve) | Not started |
-| 4 | Matchmaking + realtime offers | Not started |
-| 5 | Scoring, disputes, admin resolve | Not started |
-| 6 | ELO engine + leaderboard | Not started |
-| 7 | Payment summary + PromptPay QR | Not started |
-| 8 | Push notifications + offline polish | Not started |
+| Phase | Scope                                   | Status        |
+| ----- | --------------------------------------- | ------------- |
+| 1     | Player auth & profile                   | **Completed** |
+| 2     | DB schema, RLS, clubs & admin hierarchy | Not started   |
+| 3     | Sessions (geo discovery, join/approve)  | Not started   |
+| 4     | Matchmaking + realtime offers           | Not started   |
+| 5     | Scoring, disputes, admin resolve        | Not started   |
+| 6     | ELO engine + leaderboard                | Not started   |
+| 7     | Payment summary + PromptPay QR          | Not started   |
+| 8     | Push notifications + offline polish     | Not started   |
 
 **Shipped today (Phase 1 — `player-app`):**
 
@@ -43,13 +43,13 @@ Supabase migrations currently live in `player-app/supabase/`. Both apps will sha
 
 ## Tech stack
 
-| Layer | Choices |
-| --- | --- |
-| Frontend | SvelteKit 5, Svelte runes, Tailwind CSS 4, `@vite-pwa/sveltekit` |
-| Backend | Supabase (Postgres, Auth, Storage, Realtime, Edge Functions — later phases) |
-| Validation | Zod |
-| Tests | Vitest |
-| Package manager | Yarn 4 (Berry) |
+| Layer           | Choices                                                                     |
+| --------------- | --------------------------------------------------------------------------- |
+| Frontend        | SvelteKit 5, Svelte runes, Tailwind CSS 4, `@vite-pwa/sveltekit`            |
+| Backend         | Supabase (Postgres, Auth, Storage, Realtime, Edge Functions — later phases) |
+| Validation      | Zod                                                                         |
+| Tests           | Vitest                                                                      |
+| Package manager | Yarn 4 (Berry)                                                              |
 
 **Planned (later phases):** PostGIS, Web Push, PromptPay QR (`promptpay-qr`), Edge Functions for matchmaking / ELO / payments.
 
@@ -78,14 +78,14 @@ Copy the example env file and fill in your Supabase keys:
 cp player-app/.env.example player-app/.env
 ```
 
-| Variable | Description |
-| --- | --- |
-| `PUBLIC_APP_NAME` | Full app name (PWA manifest, header) |
-| `PUBLIC_APP_SHORT_NAME` | Short name (home screen) |
-| `PUBLIC_APP_VERSION` | Display / cache version |
-| `PORT` | Dev server port (default `5173`) |
-| `PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
+| Variable                    | Description                                                |
+| --------------------------- | ---------------------------------------------------------- |
+| `PUBLIC_APP_NAME`           | Full app name (PWA manifest, header)                       |
+| `PUBLIC_APP_SHORT_NAME`     | Short name (home screen)                                   |
+| `PUBLIC_APP_VERSION`        | Display / cache version                                    |
+| `PORT`                      | Dev server port (default `5173`)                           |
+| `PUBLIC_SUPABASE_URL`       | Supabase project URL                                       |
+| `PUBLIC_SUPABASE_ANON_KEY`  | Supabase anon key                                          |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role key (**server only**, never expose to client) |
 
 ### 3. Supabase setup
@@ -116,14 +116,18 @@ Open `http://localhost:5173` (or your `PORT`). Unauthenticated users are redirec
 
 Run from the **repo root**:
 
-| Command | Description |
-| --- | --- |
-| `yarn dev:player` | Start player PWA dev server |
-| `yarn build:player` | Production build (player) |
+| Command             | Description                       |
+| ------------------- | --------------------------------- |
+| `yarn dev:player`   | Start player PWA dev server       |
+| `yarn build:player` | Production build (player)         |
 | `yarn check:player` | Typecheck / svelte-check (player) |
-| `yarn test:player` | Run Vitest (player) |
-| `yarn icons:player` | Regenerate PWA icon PNGs |
-| `yarn dev:admin` | Admin app (not scaffolded yet) |
+| `yarn test:player`  | Run Vitest (player)               |
+| `yarn lint`         | ESLint (player-app)               |
+| `yarn lint:fix`     | ESLint with auto-fix              |
+| `yarn format`       | Prettier format (whole repo)      |
+| `yarn format:check` | Prettier check (CI)               |
+| `yarn icons:player` | Regenerate PWA icon PNGs          |
+| `yarn dev:admin`    | Admin app (not scaffolded yet)    |
 
 Player-only commands from `player-app/`:
 
@@ -134,13 +138,13 @@ yarn workspace player-app test
 
 ## Player app routes (Phase 1)
 
-| Route | Purpose |
-| --- | --- |
-| `/login` | Email/phone + password; OAuth |
-| `/register` | Create account (display name, identifier, password) |
-| `/profile` | Edit display name & avatar (protected) |
-| `/auth/callback` | OAuth session exchange |
-| `/logout` | Sign out |
+| Route            | Purpose                                             |
+| ---------------- | --------------------------------------------------- |
+| `/login`         | Email/phone + password; OAuth                       |
+| `/register`      | Create account (display name, identifier, password) |
+| `/profile`       | Edit display name & avatar (protected)              |
+| `/auth/callback` | OAuth session exchange                              |
+| `/logout`        | Sign out                                            |
 
 ## Architecture (Phase 1)
 

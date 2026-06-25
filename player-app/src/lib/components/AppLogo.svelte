@@ -10,14 +10,7 @@
 	} = $props();
 </script>
 
-<svg
-	width={size}
-	height={size}
-	viewBox="0 0 48 48"
-	class={className}
-	role="img"
-	aria-label={title}
->
+<svg width={size} height={size} viewBox="0 0 48 48" class={className} role="img" aria-label={title}>
 	<circle cx="24" cy="24" r="24" fill="var(--app-accent, #964ac0)" />
 	<circle cx="24" cy="14.5" r="3.2" fill="#ffffff" />
 	<path

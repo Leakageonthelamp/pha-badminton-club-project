@@ -29,10 +29,7 @@ html {
 
 body {
 	@apply min-h-dvh overflow-x-hidden bg-slate-50 font-sans text-slate-900 antialiased;
-	padding:
-		env(safe-area-inset-top)
-		env(safe-area-inset-right)
-		env(safe-area-inset-bottom)
+	padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
 		env(safe-area-inset-left);
 }
 

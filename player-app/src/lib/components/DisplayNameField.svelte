@@ -1,8 +1,5 @@
 <script lang="ts">
-	import {
-		DISPLAY_NAME_MAX,
-		validateDisplayName
-	} from '$lib/validation/displayName';
+	import { DISPLAY_NAME_MAX, validateDisplayName } from '$lib/validation/displayName';
 
 	let {
 		id = 'displayName',

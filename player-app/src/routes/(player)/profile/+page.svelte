@@ -19,11 +19,7 @@
 	{:else if data.profile}
 		<div class="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4">
 			{#if data.profile.avatar_url}
-				<img
-					src={data.profile.avatar_url}
-					alt=""
-					class="h-16 w-16 rounded-full object-cover"
-				/>
+				<img src={data.profile.avatar_url} alt="" class="h-16 w-16 rounded-full object-cover" />
 			{:else}
 				<div
 					class="flex h-16 w-16 items-center justify-center rounded-full bg-brand-100 text-lg font-semibold text-brand-800"

@@ -16,10 +16,7 @@
 		animate = true;
 		const from = navigation.from.url.pathname;
 		const to = navigation.to?.url.pathname ?? '';
-		direction =
-			navigation.type === 'popstate'
-				? 'back'
-				: getTransitionDirection(from, to);
+		direction = navigation.type === 'popstate' ? 'back' : getTransitionDirection(from, to);
 	});
 </script>
 

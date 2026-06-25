@@ -49,9 +49,7 @@ describe('validateIdentifier', () => {
 
 	it('validates phone format when input looks like phone', () => {
 		expect(validateIdentifier('0812345678')).toBeNull();
-		expect(validateIdentifier('08123')).toBe(
-			'Enter a valid Thai phone number (e.g. 0812345678)'
-		);
+		expect(validateIdentifier('08123')).toBe('Enter a valid Thai phone number (e.g. 0812345678)');
 	});
 
 	it('detects identifier kind from input', () => {

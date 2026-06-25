@@ -1,0 +1,77 @@
+import js from '@eslint/js';
+import eslintConfigPrettier from 'eslint-config-prettier';
+import svelte from 'eslint-plugin-svelte';
+import globals from 'globals';
+import tseslint from 'typescript-eslint';
+import svelteConfig from './player-app/svelte.config.js';
+
+/** @type {import('eslint').Linter.Config[]} */
+export default tseslint.config(
+	{
+		ignores: [
+			'**/node_modules/**',
+			'**/.svelte-kit/**',
+			'**/build/**',
+			'**/dist/**',
+			'**/dev-dist/**',
+			'**/.yarn/**',
+			'player-app/static/**',
+			'player-app/svelte.config.js',
+			'player-app/vite.config.ts'
+		]
+	},
+	js.configs.recommended,
+	...tseslint.configs.recommended,
+	...svelte.configs.recommended,
+	eslintConfigPrettier,
+	{
+		languageOptions: {
+			globals: {
+				...globals.browser,
+				...globals.node,
+				App: 'readonly',
+				BeforeInstallPromptEvent: 'readonly'
+			}
+		}
+	},
+	{
+		files: ['player-app/**/*.{ts,js,mjs,cjs}'],
+		languageOptions: {
+			parserOptions: {
+				projectService: true,
+				tsconfigRootDir: import.meta.dirname
+			}
+		},
+		rules: {
+			'@typescript-eslint/no-unused-vars': [
+				'error',
+				{
+					argsIgnorePattern: '^_',
+					varsIgnorePattern: '^_'
+				}
+			]
+		}
+	},
+	{
+		files: ['player-app/**/*.svelte'],
+		languageOptions: {
+			parserOptions: {
+				projectService: true,
+				tsconfigRootDir: import.meta.dirname,
+				extraFileExtensions: ['.svelte'],
+				parser: tseslint.parser,
+				svelteConfig
+			}
+		},
+		rules: {
+			// ponytail: PwaHead only injects vite-pwa manifest linkTag
+			'svelte/no-at-html-tags': 'off',
+			// Form fields sync props via $state + $effect (controlled inputs)
+			'svelte/prefer-writable-derived': 'off',
+			// Dynamic href props (BackLink) and plain internal links
+			'svelte/no-navigation-without-resolve': 'off',
+			// +error.svelte legitimately receives status and error props
+			'svelte/valid-prop-names-in-kit-pages': 'off'
+		}
+	}
+);

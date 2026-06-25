@@ -1,8 +1,5 @@
 import { authErrorMessage } from '$lib/types/auth';
-import {
-	parseLoginInput,
-	resolveLoginEmail
-} from '$lib/server/auth';
+import { parseLoginInput, resolveLoginEmail } from '$lib/server/auth';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import type { Provider } from '@supabase/supabase-js';

@@ -1,8 +1,4 @@
-import {
-	PUBLIC_APP_NAME,
-	PUBLIC_APP_SHORT_NAME,
-	PUBLIC_APP_VERSION
-} from '$env/static/public';
+import { PUBLIC_APP_NAME, PUBLIC_APP_SHORT_NAME, PUBLIC_APP_VERSION } from '$env/static/public';
 
 export const appConfig = {
 	name: PUBLIC_APP_NAME,

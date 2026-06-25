@@ -21,7 +21,8 @@
 	onMount(() => {
 		isStandalone =
 			window.matchMedia('(display-mode: standalone)').matches ||
-			('standalone' in navigator && (navigator as Navigator & { standalone?: boolean }).standalone === true);
+			('standalone' in navigator &&
+				(navigator as Navigator & { standalone?: boolean }).standalone === true);
 
 		const onBeforeInstallPrompt = (event: Event) => {
 			event.preventDefault();

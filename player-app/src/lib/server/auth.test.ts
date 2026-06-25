@@ -17,7 +17,9 @@ describe('parseRegisterInput', () => {
 
 		expect(result.success).toBe(false);
 		if (!result.success) {
-			expect(result.error.flatten().fieldErrors.confirmPassword).toEqual(['Passwords do not match']);
+			expect(result.error.flatten().fieldErrors.confirmPassword).toEqual([
+				'Passwords do not match'
+			]);
 		}
 	});
 

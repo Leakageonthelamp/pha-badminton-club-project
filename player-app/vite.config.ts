@@ -67,9 +67,9 @@ export default defineConfig(({ mode }) => {
 						'client/**/*.{js,css,ico,png,svg,webp,webmanifest}',
 						'client/*.webmanifest'
 					],
-				globIgnores: ['server/**']
-			}
-		})
+					globIgnores: ['server/**']
+				}
+			})
 		],
 		test: {
 			include: ['src/**/*.{test,spec}.{js,ts}']

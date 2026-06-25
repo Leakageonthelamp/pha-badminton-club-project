@@ -56,7 +56,7 @@
 			{autocomplete}
 			required
 			{minlength}
-			value={value}
+			{value}
 			oninput={onInput}
 			onblur={onBlur}
 			aria-invalid={errorMessage ? 'true' : undefined}

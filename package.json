@@ -1,6 +1,7 @@
 {
 	"name": "ph-badminton-club-project",
 	"private": true,
+	"type": "module",
 	"workspaces": [
 		"player-app",
 		"admin-app"
@@ -12,7 +13,23 @@
 		"build:admin": "yarn workspace admin-app build",
 		"check:player": "yarn workspace player-app check",
 		"test:player": "yarn workspace player-app test",
-		"icons:player": "yarn workspace player-app icons"
+		"icons:player": "yarn workspace player-app icons",
+		"lint": "eslint player-app",
+		"lint:fix": "eslint player-app --fix",
+		"format": "prettier --write .",
+		"format:check": "prettier --check ."
 	},
-	"packageManager": "yarn@4.17.0"
+	"packageManager": "yarn@4.17.0",
+	"devDependencies": {
+		"@eslint/js": "^10.0.1",
+		"eslint": "^10.5.0",
+		"eslint-config-prettier": "^10.1.8",
+		"eslint-plugin-svelte": "^3.19.0",
+		"globals": "^17.7.0",
+		"prettier": "^3.8.4",
+		"prettier-plugin-svelte": "^4.1.1",
+		"svelte": "^5.56.4",
+		"typescript": "^5.8.3",
+		"typescript-eslint": "^8.62.0"
+	}
 }

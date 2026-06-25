@@ -1,0 +1,9 @@
+node_modules
+.svelte-kit
+build
+dist
+dev-dist
+.yarn
+coverage
+package-lock.json
+player-app/static

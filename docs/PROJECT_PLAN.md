@@ -126,7 +126,7 @@ flowchart TD
 
 - Team rating = average of the two players' ELO.
 - Expected_A = 1 / (1 + 10^((R_B - R_A)/400)); winner score 1, loser 0.
-- delta = K * (actual - expected), K ~ 32 (configurable, lower at high games_played).
+- delta = K \* (actual - expected), K ~ 32 (configurable, lower at high games_played).
 - Apply same delta to both players on a team; write `elo_history` + update `player_ratings`. Recompute rank ordering for the club leaderboard.
 
 ### 5. Payment on leave (free PromptPay)
@@ -134,7 +134,7 @@ flowchart TD
 On leave/close, an Edge Function sums the player's games and shuttle usage:
 
 - court_share = court_fee_per_hour prorated across the games the player joined
-- shuttle_share = sum over player's matches of (shuttle_price * shuttle_count / 4)
+- shuttle_share = sum over player's matches of (shuttle_price \* shuttle_count / 4)
 - total -> generate PromptPay payload (`promptpay-qr` from admin's phone/id + amount) -> render QR -> player pays in banking app -> player marks submitted -> admin confirms -> status approved -> player may leave.
 
 ## Module mapping (scaffold -> build)
@@ -153,16 +153,16 @@ Player routes under `player-app/src/routes/`; admin routes under `admin-app/src/
 
 ## Phased roadmap & status
 
-| Phase | Scope | Status |
-| --- | --- | --- |
-| 1 | Player Auth & Profile (email/phone + password, Google, Facebook, 7-day session, profile edit) | Completed |
-| 2 | DB schema + RLS + roles + clubs / admin hierarchy | Not started |
-| 3 | Sessions (CRUD, geo discovery, join/approve) | Not started |
-| 4 | Matchmaking (manual then auto) + match accept + realtime offers | Not started |
-| 5 | Scoring + peer confirmation + dispute/suspend + admin resolve | Not started |
-| 6 | ELO engine + history + leaderboard | Not started |
-| 7 | Payment summary + PromptPay QR + admin confirm | Not started |
-| 8 | Push notifications + offline polish + final QA | Not started |
+| Phase | Scope                                                                                         | Status      |
+| ----- | --------------------------------------------------------------------------------------------- | ----------- |
+| 1     | Player Auth & Profile (email/phone + password, Google, Facebook, 7-day session, profile edit) | Completed   |
+| 2     | DB schema + RLS + roles + clubs / admin hierarchy                                             | Not started |
+| 3     | Sessions (CRUD, geo discovery, join/approve)                                                  | Not started |
+| 4     | Matchmaking (manual then auto) + match accept + realtime offers                               | Not started |
+| 5     | Scoring + peer confirmation + dispute/suspend + admin resolve                                 | Not started |
+| 6     | ELO engine + history + leaderboard                                                            | Not started |
+| 7     | Payment summary + PromptPay QR + admin confirm                                                | Not started |
+| 8     | Push notifications + offline polish + final QA                                                | Not started |
 
 ---
 

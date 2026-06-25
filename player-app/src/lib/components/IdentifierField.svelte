@@ -1,8 +1,5 @@
 <script lang="ts">
-	import {
-		getIdentifierKind,
-		validateIdentifier
-	} from '$lib/validation/identifier';
+	import { getIdentifierKind, validateIdentifier } from '$lib/validation/identifier';
 
 	let {
 		id = 'identifier',

@@ -3,10 +3,7 @@
 	import DisplayNameField from '$lib/components/DisplayNameField.svelte';
 	import IdentifierField from '$lib/components/IdentifierField.svelte';
 	import PasswordField from '$lib/components/PasswordField.svelte';
-	import {
-		PASSWORD_MIN_LENGTH,
-		validateRegisterPassword
-	} from '$lib/validation/password';
+	import { PASSWORD_MIN_LENGTH, validateRegisterPassword } from '$lib/validation/password';
 	import type { ActionData } from './$types';
 
 	let { form }: { form: ActionData } = $props();
@@ -24,7 +21,10 @@
 	</div>
 
 	{#if form?.message}
-		<div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+		<div
+			class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+			role="alert"
+		>
 			{form.message}
 		</div>
 	{/if}
