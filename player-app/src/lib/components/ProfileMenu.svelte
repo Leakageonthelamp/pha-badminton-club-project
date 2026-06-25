@@ -19,7 +19,7 @@
 	let menuTop = $state(0);
 	let menuRight = $state(0);
 
-	const initial = $derived(profile?.display_name.slice(0, 1).toUpperCase() ?? '?');
+	const initial = $derived(profile?.display_name?.slice(0, 1).toUpperCase() ?? '?');
 
 	function updateMenuPosition() {
 		if (!triggerEl) return;

@@ -21,7 +21,7 @@
 	let menuTop = $state(0);
 	let menuRight = $state(0);
 
-	const initial = $derived(profile?.display_name.slice(0, 1).toUpperCase() ?? '?');
+	const initial = $derived(profile?.display_name?.slice(0, 1).toUpperCase() ?? '?');
 	const roleLabel = $derived(profile ? appRoleLabel(profile.app_role as AppRole) : '');
 
 	function updateMenuPosition() {
