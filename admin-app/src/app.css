@@ -70,12 +70,12 @@ body {
 
 @keyframes toast-enter {
 	from {
-		transform: translateY(-0.75rem);
+		transform: translateX(0.5rem) translateY(-0.25rem);
 		opacity: 0;
 	}
 
 	to {
-		transform: translateY(0);
+		transform: translateX(0) translateY(0);
 		opacity: 1;
 	}
 }

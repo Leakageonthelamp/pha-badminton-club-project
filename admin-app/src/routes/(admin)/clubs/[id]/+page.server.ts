@@ -1,3 +1,9 @@
+import {
+	CLUB_MAX_ACTIVE_SESSIONS_LIMIT,
+	CLUB_MAX_ADMINS_LIMIT
+} from '$lib/server/clubLimits';
+import { buildProfileSearchOrFilter } from '$lib/server/profileSearch';
+import { CLUB_DELETE_CONFIRM_PHRASE } from '$lib/config/club';
 import { clubInputSchema } from '$lib/validation/club';
 import type { Club } from '$lib/types/club';
 import type { Profile } from '$lib/types/auth';
@@ -5,19 +11,21 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { z } from 'zod';
 
-type AdminProfile = Pick<Profile, 'display_name' | 'tag' | 'email' | 'app_role'>;
+type AdminProfile = Pick<Profile, 'display_name' | 'tag' | 'email' | 'phone' | 'app_role'>;
 
-type AdminRow = {
+export type ClubAdminWithProfile = {
 	user_id: string;
 	created_at: string;
-	profiles: AdminProfile | AdminProfile[] | null;
+	profile: AdminProfile | null;
+	otherClubCount: number;
 };
 
-const normalizeAdminRow = (row: AdminRow) => ({
-	user_id: row.user_id,
-	created_at: row.created_at,
-	profiles: Array.isArray(row.profiles) ? (row.profiles[0] ?? null) : row.profiles
-});
+export type ProfileSearchResult = Pick<
+	Profile,
+	'id' | 'display_name' | 'tag' | 'email' | 'phone' | 'app_role'
+> & {
+	otherClubCount: number;
+};
 
 const assignSchema = z.object({
 	userId: z.string().uuid()
@@ -26,6 +34,75 @@ const assignSchema = z.object({
 const removeSchema = z.object({
 	userId: z.string().uuid()
 });
+
+const loadOtherClubAdminCounts = async (
+	supabase: App.Locals['supabase'],
+	userIds: string[],
+	excludeClubId: string
+): Promise<Map<string, number>> => {
+	if (!userIds.length) {
+		return new Map();
+	}
+
+	const { data, error } = await supabase
+		.from('club_admins')
+		.select('user_id, club_id')
+		.in('user_id', userIds);
+
+	if (error) {
+		console.error('Failed to load club admin memberships', error);
+		return new Map();
+	}
+
+	const counts = new Map<string, number>();
+	for (const row of data ?? []) {
+		if (row.club_id === excludeClubId) {
+			continue;
+		}
+		counts.set(row.user_id, (counts.get(row.user_id) ?? 0) + 1);
+	}
+
+	return counts;
+};
+
+const loadClubAdmins = async (
+	supabase: App.Locals['supabase'],
+	clubId: string
+): Promise<ClubAdminWithProfile[]> => {
+	const { data: adminRows, error: adminsError } = await supabase
+		.from('club_admins')
+		.select('user_id, created_at')
+		.eq('club_id', clubId)
+		.order('created_at', { ascending: true });
+
+	if (adminsError) {
+		console.error('Failed to load club admins', adminsError);
+		return [];
+	}
+
+	if (!adminRows?.length) {
+		return [];
+	}
+
+	const userIds = adminRows.map((row) => row.user_id);
+	const { data: profiles, error: profilesError } = await supabase
+		.from('profiles')
+		.select('id, display_name, tag, email, phone, app_role')
+		.in('id', userIds);
+
+	if (profilesError) {
+		console.error('Failed to load club admin profiles', profilesError);
+	}
+
+	const profileById = new Map((profiles ?? []).map((profile) => [profile.id, profile]));
+
+	return adminRows.map((row) => ({
+		user_id: row.user_id,
+		created_at: row.created_at,
+		profile: profileById.get(row.user_id) ?? null,
+		otherClubCount: 0
+	}));
+};
 
 export const load: PageServerLoad = async ({ params, url, locals: { supabase } }) => {
 	const { data: club, error: clubError } = await supabase
@@ -38,45 +115,52 @@ export const load: PageServerLoad = async ({ params, url, locals: { supabase } }
 		error(404, 'Club not found');
 	}
 
-	const { data: adminRows, error: adminsError } = await supabase
-		.from('club_admins')
-		.select('user_id, created_at, profiles(display_name, tag, email, app_role)')
-		.eq('club_id', params.id);
-
-	if (adminsError) {
-		console.error('Failed to load club admins', adminsError);
-	}
-
-	const admins = (adminRows ?? []).map((row) => normalizeAdminRow(row as AdminRow));
+	const admins = await loadClubAdmins(supabase, params.id);
 	const assignedIds = new Set(admins.map((row) => row.user_id));
 
 	const searchQuery = url.searchParams.get('q')?.trim() ?? '';
-	let searchResults: Pick<Profile, 'id' | 'display_name' | 'tag' | 'email' | 'app_role'>[] = [];
+	let searchResults: ProfileSearchResult[] = [];
 
 	if (searchQuery.length >= 2) {
-		const escaped = searchQuery.replace(/[%_,]/g, '');
-		const pattern = `%${escaped}%`;
-
 		const { data: matches, error: searchError } = await supabase
 			.from('profiles')
-			.select('id, display_name, tag, email, app_role')
-			.or(`display_name.ilike.${pattern},tag.ilike.${pattern},email.ilike.${pattern}`)
+			.select('id, display_name, tag, email, phone, app_role')
 			.neq('app_role', 'super_admin')
+			.or(buildProfileSearchOrFilter(searchQuery))
 			.limit(20);
 
 		if (searchError) {
 			console.error('User search failed', searchError);
 		} else {
-			searchResults = (matches ?? []).filter((profile) => !assignedIds.has(profile.id));
+			searchResults = (matches ?? [])
+				.filter((profile) => !assignedIds.has(profile.id))
+				.map((profile) => ({ ...profile, otherClubCount: 0 }));
 		}
 	}
 
+	const membershipUserIds = [
+		...new Set([...searchResults.map((profile) => profile.id), ...admins.map((admin) => admin.user_id)])
+	];
+	const otherClubCounts = await loadOtherClubAdminCounts(supabase, membershipUserIds, params.id);
+
+	searchResults = searchResults.map((profile) => ({
+		...profile,
+		otherClubCount: otherClubCounts.get(profile.id) ?? 0
+	}));
+	const adminsWithCounts = admins.map((admin) => ({
+		...admin,
+		otherClubCount: otherClubCounts.get(admin.user_id) ?? 0
+	}));
+
 	return {
 		club: club as Club,
-		admins,
+		admins: adminsWithCounts,
 		searchResults,
 		searchQuery,
-		created: url.searchParams.get('created') === '1'
+		created: url.searchParams.get('created') === '1',
+		maxActiveSessionsLimit: CLUB_MAX_ACTIVE_SESSIONS_LIMIT,
+		maxAdminsLimit: CLUB_MAX_ADMINS_LIMIT,
+		atAdminCapacity: adminsWithCounts.length >= club.max_admins
 	};
 };
 
@@ -86,7 +170,9 @@ export const actions: Actions = {
 		const parsed = clubInputSchema.safeParse({
 			name: formData.get('name'),
 			description: formData.get('description') ?? '',
-			max_active_sessions: formData.get('max_active_sessions')
+			max_active_sessions: formData.get('max_active_sessions'),
+			max_admins: formData.get('max_admins'),
+			is_active: formData.get('is_active')
 		});
 
 		if (!parsed.success) {
@@ -97,12 +183,30 @@ export const actions: Actions = {
 			});
 		}
 
+		const { count: assignedCount, error: countError } = await supabase
+			.from('club_admins')
+			.select('*', { count: 'exact', head: true })
+			.eq('club_id', params.id);
+
+		if (countError) {
+			console.error('Failed to count club admins', countError);
+			return fail(500, { message: 'Could not update club. Please try again.' });
+		}
+
+		if ((assignedCount ?? 0) > parsed.data.max_admins) {
+			return fail(400, {
+				message: `Max admins cannot be below current assignments (${assignedCount}). Remove admins first.`
+			});
+		}
+
 		const { error: updateError } = await supabase
 			.from('clubs')
 			.update({
 				name: parsed.data.name,
 				description: parsed.data.description,
-				max_active_sessions: parsed.data.max_active_sessions
+				max_active_sessions: parsed.data.max_active_sessions,
+				max_admins: parsed.data.max_admins,
+				is_active: parsed.data.is_active
 			})
 			.eq('id', params.id);
 
@@ -118,7 +222,14 @@ export const actions: Actions = {
 		return { success: true, message: 'Club updated.' };
 	},
 
-	delete: async ({ params, locals: { supabase } }) => {
+	delete: async ({ request, params, locals: { supabase } }) => {
+		const formData = await request.formData();
+		const confirmText = String(formData.get('confirmText') ?? '').trim();
+
+		if (confirmText !== CLUB_DELETE_CONFIRM_PHRASE) {
+			return fail(400, { message: `Type "${CLUB_DELETE_CONFIRM_PHRASE}" to confirm deletion.` });
+		}
+
 		const { error: deleteError } = await supabase.from('clubs').delete().eq('id', params.id);
 
 		if (deleteError) {
@@ -143,6 +254,32 @@ export const actions: Actions = {
 			return fail(400, { message: 'Invalid user selected' });
 		}
 
+		const { data: club, error: clubError } = await supabase
+			.from('clubs')
+			.select('max_admins')
+			.eq('id', params.id)
+			.single();
+
+		if (clubError || !club) {
+			return fail(404, { message: 'Club not found' });
+		}
+
+		const { count: assignedCount, error: countError } = await supabase
+			.from('club_admins')
+			.select('*', { count: 'exact', head: true })
+			.eq('club_id', params.id);
+
+		if (countError) {
+			console.error('Failed to count club admins', countError);
+			return fail(500, { message: 'Could not assign club admin. Please try again.' });
+		}
+
+		if ((assignedCount ?? 0) >= club.max_admins) {
+			return fail(400, {
+				message: `This club already has the maximum of ${club.max_admins} admins`
+			});
+		}
+
 		const { data: target, error: targetError } = await supabase
 			.from('profiles')
 			.select('id, app_role')
@@ -155,6 +292,21 @@ export const actions: Actions = {
 
 		if (target.app_role === 'super_admin') {
 			return fail(400, { message: 'Super admins cannot be assigned as club admins' });
+		}
+
+		const { count: existingMembershipCount, error: membershipError } = await supabase
+			.from('club_admins')
+			.select('*', { count: 'exact', head: true })
+			.eq('club_id', params.id)
+			.eq('user_id', parsed.data.userId);
+
+		if (membershipError) {
+			console.error('Failed to check existing club admin membership', membershipError);
+			return fail(500, { message: 'Could not assign club admin. Please try again.' });
+		}
+
+		if ((existingMembershipCount ?? 0) > 0) {
+			return fail(400, { message: 'User is already a club admin for this club' });
 		}
 
 		const { error: insertError } = await supabase.from('club_admins').insert({

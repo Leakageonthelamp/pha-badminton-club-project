@@ -43,9 +43,18 @@
 									<p class="mt-1 line-clamp-2 text-sm text-slate-600">{club.description}</p>
 								{/if}
 							</div>
-							<span class="shrink-0 rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-800">
-								Max {club.max_active_sessions} sessions
-							</span>
+							<div class="flex shrink-0 flex-wrap gap-2">
+								<span
+									class="rounded-full px-3 py-1 text-xs font-medium {club.is_active
+										? 'bg-emerald-50 text-emerald-800'
+										: 'bg-slate-100 text-slate-600'}"
+								>
+									{club.is_active ? 'Active' : 'Inactive'}
+								</span>
+								<span class="rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-800">
+									Max {club.max_active_sessions} sessions
+								</span>
+							</div>
 						</div>
 					</a>
 				</li>

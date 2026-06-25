@@ -3,6 +3,8 @@ export type Club = {
 	name: string;
 	description: string;
 	max_active_sessions: number;
+	max_admins: number;
+	is_active: boolean;
 	owner_id: string;
 	created_at: string;
 	updated_at: string;

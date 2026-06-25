@@ -4,7 +4,7 @@ export function whileSubmitting(setLoading: (loading: boolean) => void): SubmitF
 	return () => {
 		setLoading(true);
 		return async ({ update }) => {
-			await update();
+			await update({ reset: false });
 			setLoading(false);
 		};
 	};
