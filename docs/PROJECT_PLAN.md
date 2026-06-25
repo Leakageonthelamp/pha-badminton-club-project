@@ -9,6 +9,7 @@ A mobile-first PWA for organizing 2v2 badminton club sessions: player auth/profi
 ```
 ph-badminton-club-project/
 ├── docs/PROJECT_PLAN.md      # this file
+├── supabase/                 # Shared DB schema & migrations
 ├── player-app/               # Player PWA (SvelteKit) — Phase 1 done
 ├── admin-app/                # Admin PWA (SvelteKit) — not scaffolded yet
 └── package.json              # Yarn workspaces root
@@ -16,7 +17,7 @@ ph-badminton-club-project/
 
 - **Player app:** `player-app/` — auth, profile, sessions, matches, payments
 - **Admin app:** `admin-app/` — club/session/match management (future phases)
-- **Shared backend:** Supabase migrations live in `player-app/supabase/` for now (move to repo root later if both apps share one DB project)
+- **Shared backend:** Supabase migrations in `supabase/` (repo root); both apps use the same Supabase project
 
 **Root scripts:** `yarn dev:player`, `yarn dev:admin`, `yarn build:player`, `yarn check:player`, `yarn test:player`
 
@@ -192,7 +193,7 @@ flowchart TD
 
 Auth runs in SvelteKit server form actions using `@supabase/ssr` (sets HttpOnly cookies). The service-role key stays server-only (`$env/static/private`) and is used for: uniqueness pre-checks, `admin.createUser`, and resolving phone -> account email before sign-in.
 
-### Phase 1 data model (`player-app/supabase/migrations/0001_init.sql`)
+### Phase 1 data model (`supabase/migrations/0001_init.sql`)
 
 - `profiles`: `id uuid PK references auth.users on delete cascade`, `display_name text not null`, `avatar_url text`, `email text`, `phone text unique`, `app_role text default 'player'`, `created_at`, `updated_at`
 - `handle_new_user()` trigger on `auth.users` insert -> inserts profile from `raw_user_meta_data` (covers password AND OAuth signups uniformly): display_name from `display_name`/`full_name`/`name`, avatar from `avatar_url`/`picture`, phone from metadata, email left null when the auth email is the synthesized `@phone.ph-badminton.local` domain.
@@ -220,7 +221,7 @@ Auth runs in SvelteKit server form actions using `@supabase/ssr` (sets HttpOnly 
 
 - Init SvelteKit (TS) + Tailwind + `@vite-pwa/sveltekit` (minimal manifest/service worker; full offline polish in Phase 8).
 - Deps: `@supabase/supabase-js`, `@supabase/ssr`, `zod`; dev: `vitest`.
-- Env: `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (server-only).
+- Env: `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_PUBLISHABLE_KEY` (`sb_publishable_...`), `SUPABASE_SECRET_KEY` (`sb_secret_...`, server-only).
 - Auth cookie `maxAge = 60*60*24*7`.
 
 ### Check (one runnable test)

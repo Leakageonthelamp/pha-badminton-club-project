@@ -33,13 +33,14 @@ A mobile-first monorepo for organizing 2v2 badminton club sessions: player auth 
 ```
 ph-badminton-club-project/
 ├── docs/PROJECT_PLAN.md    # Big-picture plan & phase specs
+├── supabase/                 # Shared DB schema & migrations (both apps)
 ├── player-app/               # Player PWA (SvelteKit) — active
 ├── admin-app/                # Admin PWA — placeholder
 ├── package.json              # Yarn workspaces root
 └── README.md
 ```
 
-Supabase migrations currently live in `player-app/supabase/`. Both apps will share one Supabase project as phases progress.
+Supabase migrations live in `supabase/` at the repo root. Both `player-app` and `admin-app` connect to the same Supabase project via their own `.env` files (same URL and keys).
 
 ## Tech stack
 
@@ -84,17 +85,25 @@ cp player-app/.env.example player-app/.env
 | `PUBLIC_APP_SHORT_NAME`     | Short name (home screen)                                   |
 | `PUBLIC_APP_VERSION`        | Display / cache version                                    |
 | `PORT`                      | Dev server port (default `5173`)                           |
-| `PUBLIC_SUPABASE_URL`       | Supabase project URL                                       |
-| `PUBLIC_SUPABASE_ANON_KEY`  | Supabase anon key                                          |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key (**server only**, never expose to client) |
+| `PUBLIC_SUPABASE_URL`              | Supabase project URL                                          |
+| `PUBLIC_SUPABASE_PUBLISHABLE_KEY`  | Supabase publishable key (`sb_publishable_...`)              |
+| `SUPABASE_SECRET_KEY`              | Secret key `sb_secret_...` (**server only**, never expose)   |
 
 ### 3. Supabase setup
 
+The Supabase CLI is a root dev dependency — use `yarn db:*` / `yarn supabase:*` from the repo root (no global install needed).
+
 1. Create a project at [supabase.com](https://supabase.com).
-2. Run the initial migration: `player-app/supabase/migrations/0001_init.sql` (SQL editor or Supabase CLI).
+2. Apply migrations (pick one):
+   - **CLI:** link once, then push:
+     ```bash
+     yarn supabase link --project-ref <your-project-ref>
+     yarn db:push
+     ```
+   - **Dashboard:** paste `supabase/migrations/0001_init.sql` into the SQL editor.
 3. **Auth → Providers:** enable Google and Facebook; set redirect URL to `http://localhost:{PORT}/auth/callback` (and your production URL later).
 4. **Auth → Sessions:** set time-box to **168 hours** (7 days) to match app cookies.
-5. Paste URL, anon key, and service role key into `player-app/.env`.
+5. Paste URL, publishable key, and secret key into `player-app/.env` (and `admin-app/.env` when that app is scaffolded).
 
 ### 4. Generate PWA icons (optional)
 
@@ -128,6 +137,10 @@ Run from the **repo root**:
 | `yarn format:check` | Prettier check (CI)               |
 | `yarn icons:player` | Regenerate PWA icon PNGs          |
 | `yarn dev:admin`    | Admin app (not scaffolded yet)    |
+| `yarn db:push`      | Push migrations to linked Supabase project |
+| `yarn db:migration:new <name>` | Create a new migration file |
+| `yarn supabase:start` | Start local Supabase stack        |
+| `yarn supabase:stop`  | Stop local Supabase stack         |
 
 Player-only commands from `player-app/`:
 

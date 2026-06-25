@@ -1,5 +1,5 @@
 import { createSupabaseServerClient } from '$lib/supabase/server';
-import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public';
+import { PUBLIC_SUPABASE_PUBLISHABLE_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public';
 import { type Handle, redirect } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 
@@ -50,7 +50,7 @@ const authGuard: Handle = async ({ event, resolve }) => {
 		redirect(303, '/profile');
 	}
 
-	if (!PUBLIC_SUPABASE_URL || !PUBLIC_SUPABASE_ANON_KEY) {
+	if (!PUBLIC_SUPABASE_URL || !PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
 		console.warn('Supabase env vars are missing. Copy .env.example to .env and fill in your keys.');
 	}
 
