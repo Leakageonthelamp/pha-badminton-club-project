@@ -2,6 +2,7 @@
 	import '../app.css';
 	import { appConfig } from '$lib/config/app';
 	import ServiceUnavailable from '$lib/components/ServiceUnavailable.svelte';
+	import LocationPermissionPrompt from '@repo/ui/components/LocationPermissionPrompt.svelte';
 	import ToastContainer from '@repo/ui/components/ToastContainer.svelte';
 	import type { LayoutData } from './$types';
 
@@ -20,6 +21,9 @@
 		{#if data.serviceUnavailable}
 			<ServiceUnavailable />
 		{:else}
+			<LocationPermissionPrompt
+				description="Allow location access so you can set club venues on the map and manage nearby clubs."
+			/>
 			{@render children()}
 		{/if}
 	</div>

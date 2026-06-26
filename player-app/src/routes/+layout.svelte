@@ -4,6 +4,7 @@
 	import PwaHead from '$lib/components/PwaHead.svelte';
 	import PwaPrompts from '$lib/components/PwaPrompts.svelte';
 	import ServiceUnavailable from '$lib/components/ServiceUnavailable.svelte';
+	import LocationPermissionPrompt from '@repo/ui/components/LocationPermissionPrompt.svelte';
 	import ToastContainer from '@repo/ui/components/ToastContainer.svelte';
 	import type { LayoutData } from './$types';
 
@@ -24,6 +25,9 @@
 		{#if data.serviceUnavailable}
 			<ServiceUnavailable />
 		{:else}
+			<LocationPermissionPrompt
+				description="Allow location access so we can show nearby clubs and improve your experience."
+			/>
 			{@render children()}
 		{/if}
 	</div>

@@ -23,7 +23,6 @@
 	let updateLoading = $state(false);
 	let promptPayLoading = $state(false);
 	let locationLoading = $state(false);
-	let locationClearLoading = $state(false);
 	let shuttleCreateLoading = $state(false);
 	let shuttleUpdateLoadingId = $state<string | null>(null);
 	let shuttleDeleteLoadingId = $state<string | null>(null);
@@ -33,19 +32,20 @@
 	let searchInput = $state('');
 	let searchLoading = $state(false);
 	let initializedSearch = $state(false);
-	let name = $state(data.club.name);
-	let description = $state(data.club.description);
-	let maxActiveSessions = $state(String(data.club.max_active_sessions));
-	let maxAdmins = $state(String(data.club.max_admins));
-	let isActive = $state(data.club.is_active);
-	let promptPayType = $state<PromptPayType | ''>(data.club.promptpay_type ?? '');
-	let promptPayTarget = $state(data.club.promptpay_target ?? '');
-	let latitude = $state<number | null>(data.club.latitude);
-	let longitude = $state<number | null>(data.club.longitude);
-	let lastSyncedAt = $state(data.club.updated_at);
+	let name = $state('');
+	let description = $state('');
+	let maxActiveSessions = $state('');
+	let maxAdmins = $state('');
+	let isActive = $state(true);
+	let promptPayType = $state<PromptPayType | ''>('');
+	let promptPayTarget = $state('');
+	let latitude = $state<number | null>(null);
+	let longitude = $state<number | null>(null);
+	let lastSyncedAt = $state<string | null>(null);
 	let deleteModalOpen = $state(false);
 	let deleteConfirmText = $state('');
 	let editingShuttleId = $state<string | null>(null);
+	let locationEditing = $state(false);
 
 	let newShuttleName = $state('');
 	let newShuttleSpeed = $state('75');
@@ -85,8 +85,15 @@
 		isActive = club.is_active ?? true;
 		promptPayType = club.promptpay_type ?? '';
 		promptPayTarget = club.promptpay_target ?? '';
-		latitude = club.latitude;
-		longitude = club.longitude;
+		if (!locationEditing) {
+			latitude = club.latitude;
+			longitude = club.longitude;
+		}
+		if (club.latitude === null || club.longitude === null) {
+			locationEditing = true;
+		} else if (!locationEditing) {
+			locationEditing = false;
+		}
 		lastSyncedAt = club.updated_at;
 	};
 
@@ -131,6 +138,44 @@
 	const hasLocationChanges = $derived.by(() => {
 		return latitude !== data.club.latitude || longitude !== data.club.longitude;
 	});
+
+	const hasSavedLocation = $derived(
+		data.club.latitude !== null && data.club.longitude !== null
+	);
+	const locationLocked = $derived(hasSavedLocation && !locationEditing);
+
+	const handleLocationUpdate: SubmitFunction = ({ formData, cancel }) => {
+		const isClear = formData.get('clear') === 'true';
+
+		if (!isClear && (!hasLocationChanges || latitude === null || longitude === null)) {
+			cancel();
+			return;
+		}
+
+		locationLoading = true;
+		return async ({ result, update }) => {
+			await update({ reset: false });
+			locationLoading = false;
+
+			if (result.type === 'success') {
+				if (isClear) {
+					locationEditing = true;
+				} else {
+					locationEditing = false;
+				}
+			}
+		};
+	};
+
+	function startLocationEdit() {
+		locationEditing = true;
+	}
+
+	function cancelLocationEdit() {
+		latitude = data.club.latitude;
+		longitude = data.club.longitude;
+		locationEditing = false;
+	}
 
 	const handleUpdate: SubmitFunction = ({ cancel }) => {
 		if (!hasChanges) {
@@ -660,24 +705,27 @@
 			>
 				Save PromptPay
 			</SubmitButton>
+			{#if data.club.promptpay_type || data.club.promptpay_target}
+				<SubmitButton
+					type="submit"
+					name="clear"
+					value="true"
+					variant="ghost"
+					loading={promptPayLoading}
+					loadingLabel="Clearing…"
+					class="!w-auto !text-sm"
+				>
+					Clear PromptPay
+				</SubmitButton>
+			{/if}
 		</div>
 	</form>
-
-	{#if data.club.promptpay_type || data.club.promptpay_target}
-		<form method="POST" action="?/updatePromptPay" use:enhance={whileSubmitting((v) => (promptPayLoading = v))}>
-			<input type="hidden" name="clear" value="true" />
-			<input type="hidden" name="promptpay_target" value="" />
-			<SubmitButton variant="ghost" loading={promptPayLoading} loadingLabel="Clearing…" class="!w-auto !text-sm">
-				Clear PromptPay
-			</SubmitButton>
-		</form>
-	{/if}
 
 	<form
 		method="POST"
 		action="?/updateLocation"
 		class="{cardClass} space-y-4"
-		use:enhance={whileSubmitting((v) => (locationLoading = v))}
+		use:enhance={handleLocationUpdate}
 	>
 		<div>
 			<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -686,47 +734,69 @@
 					<NotSetBadge />
 				{/if}
 			</div>
-			<p class="mt-2 text-sm text-slate-600">Drop a pin where your club usually plays.</p>
+			<p class="mt-2 text-sm text-slate-600">
+				{#if locationLocked}
+					Your club venue is saved. Change location only when you need to move the pin.
+				{:else}
+					Drag the map so the pin sits on your club venue. Location is required for players to find you.
+				{/if}
+			</p>
 		</div>
 
-		<MapPinPicker bind:latitude bind:longitude disabled={locationLoading} />
+		<MapPinPicker bind:latitude bind:longitude locked={locationLocked} disabled={locationLoading} />
 
 		<input type="hidden" name="latitude" value={latitude ?? ''} />
 		<input type="hidden" name="longitude" value={longitude ?? ''} />
 
 		<div class="flex flex-wrap gap-2">
-			<SubmitButton
-				loading={locationLoading}
-				loadingLabel="Saving…"
-				disabled={!hasLocationChanges || latitude === null || longitude === null}
-				class="!w-auto"
-			>
-				Save location
-			</SubmitButton>
+			{#if locationLocked}
+				<SubmitButton
+					type="button"
+					variant="secondary"
+					class="!w-auto"
+					disabled={locationLoading}
+					onclick={startLocationEdit}
+				>
+					Change location
+				</SubmitButton>
+				<SubmitButton
+					type="submit"
+					name="clear"
+					value="true"
+					variant="ghost"
+					loading={locationLoading}
+					loadingLabel="Clearing…"
+					class="!w-auto !text-sm"
+					onclick={() => {
+						latitude = null;
+						longitude = null;
+					}}
+				>
+					Clear location
+				</SubmitButton>
+			{:else}
+				<SubmitButton
+					loading={locationLoading}
+					loadingLabel="Saving…"
+					disabled={!hasLocationChanges || latitude === null || longitude === null}
+					class="!w-auto"
+				>
+					Save location
+				</SubmitButton>
+				{#if hasSavedLocation}
+					<SubmitButton
+						type="button"
+						variant="ghost"
+						class="!w-auto !text-sm"
+						disabled={locationLoading}
+						onclick={cancelLocationEdit}
+					>
+						Cancel
+					</SubmitButton>
+				{/if}
+			{/if}
 		</div>
 	</form>
-
-	{#if data.club.latitude !== null && data.club.longitude !== null}
-		<form
-			method="POST"
-			action="?/updateLocation"
-			use:enhance={whileSubmitting((v) => (locationClearLoading = v))}
-		>
-			<input type="hidden" name="clear" value="true" />
-			<SubmitButton
-				variant="ghost"
-				loading={locationClearLoading}
-				loadingLabel="Clearing…"
-				class="!w-auto !text-sm"
-				onclick={() => {
-					latitude = null;
-					longitude = null;
-				}}
-			>
-				Clear location
-			</SubmitButton>
-		</form>
-	{/if}
 
 	{#if isSuperAdmin}
 	<section class="{cardClass} space-y-4">
