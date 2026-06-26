@@ -1,9 +1,12 @@
 import { isSupabaseUnavailableError } from '$lib/server/supabaseHealth';
+import { authLoadDepends } from '$lib/navigation/authCache';
 import { redirect, error as kitError } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async ({ locals }) => {
+export const load: LayoutServerLoad = async ({ locals, depends, setHeaders }) => {
 	const { supabase, session, user, serviceUnavailable } = locals;
+
+	setHeaders({ 'cache-control': 'private, no-store' });
 
 	if (serviceUnavailable) {
 		return { profile: null };
@@ -13,10 +16,12 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		redirect(303, '/login');
 	}
 
+	authLoadDepends(user.id, depends);
+
 	try {
 		const { data: profile, error: profileError } = await supabase
 			.from('profiles')
-			.select('display_name, avatar_url, tag')
+			.select('id, display_name, avatar_url, tag')
 			.eq('id', user.id)
 			.single();
 
@@ -29,6 +34,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 
 		return {
 			profile: profile ?? {
+				id: user.id,
 				display_name: user.email?.split('@')[0] ?? 'Player',
 				avatar_url: null,
 				tag: null

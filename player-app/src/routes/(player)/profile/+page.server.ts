@@ -1,7 +1,12 @@
 import { displayNameSchema } from '$lib/validation/displayName';
 import { tagSchema } from '$lib/validation/tag';
 import { validateAvatarFile } from '$lib/validation/avatar';
-import { updateProfileCredentials, type CredentialsInput } from '$lib/server/profileCredentials';
+import {
+	ensureOAuthSignInMethod,
+	updateProfileCredentials,
+	type CredentialsInput
+} from '$lib/server/profileCredentials';
+import { authLoadDepends } from '$lib/navigation/authCache';
 import { createSupabaseAdminClient } from '$lib/supabase/server';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
@@ -13,7 +18,12 @@ const profileSchema = z.object({
 	tag: tagSchema
 });
 
-export const load: PageServerLoad = async ({ locals: { supabase, user } }) => {
+export const load: PageServerLoad = async ({ locals: { supabase, user }, depends }) => {
+	authLoadDepends(user!.id, depends);
+
+	const admin = createSupabaseAdminClient();
+	await ensureOAuthSignInMethod(admin, user!);
+
 	const { data: profile, error } = await supabase
 		.from('profiles')
 		.select('*')

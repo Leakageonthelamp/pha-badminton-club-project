@@ -48,11 +48,7 @@
 
 		<div class="space-y-3 border-t border-slate-100 pt-4">
 			<p class="text-center text-sm text-slate-500">Or continue with</p>
-			<form
-				method="POST"
-				action="?/oauth"
-				use:enhance={whileSubmitting((v) => (googleLoading = v))}
-			>
+			<form method="POST" action="?/oauth" onsubmit={() => (googleLoading = true)}>
 				<input type="hidden" name="provider" value="google" />
 				<SubmitButton
 					variant="secondary"
@@ -64,11 +60,7 @@
 					Continue with Google
 				</SubmitButton>
 			</form>
-			<form
-				method="POST"
-				action="?/oauth"
-				use:enhance={whileSubmitting((v) => (facebookLoading = v))}
-			>
+			<form method="POST" action="?/oauth" onsubmit={() => (facebookLoading = true)}>
 				<input type="hidden" name="provider" value="facebook" />
 				<SubmitButton variant="secondary" loading={facebookLoading} loadingLabel="Connecting…">
 					<FacebookIcon />

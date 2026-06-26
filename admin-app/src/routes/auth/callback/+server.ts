@@ -5,7 +5,7 @@ import { ensureProfileTag } from '$lib/server/tag';
 import { redirect } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async ({ url, locals: { supabase } }) => {
+export const GET: RequestHandler = async ({ url, locals: { supabase }, cookies }) => {
 	const code = url.searchParams.get('code');
 
 	if (code) {
@@ -21,6 +21,13 @@ export const GET: RequestHandler = async ({ url, locals: { supabase } }) => {
 				await ensureOAuthProfileAvatar(admin, user);
 				await ensureOAuthSignInMethod(admin, user);
 			}
+
+			cookies.set('oauth_refresh', '1', {
+				path: '/',
+				maxAge: 10,
+				httpOnly: false,
+				sameSite: 'lax'
+			});
 
 			redirect(303, '/');
 		}

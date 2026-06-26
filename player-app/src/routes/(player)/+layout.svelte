@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { page } from '$app/state';
 	import { invalidateAll } from '$app/navigation';
 	import AppLogo from '$lib/components/AppLogo.svelte';
@@ -7,12 +8,26 @@
 	import PageTransition from '$lib/components/PageTransition.svelte';
 	import { appConfig } from '$lib/config/app';
 	import { getBackHref, shouldShowBack } from '$lib/navigation/back';
+	import { refreshAuthCacheIfNeeded } from '$lib/navigation/authCache';
 	import type { LayoutData } from './$types';
 
 	let { data, children }: { data: LayoutData; children: import('svelte').Snippet } = $props();
 
 	const showBack = $derived(shouldShowBack(page.url.pathname));
 	const backHref = $derived(getBackHref(page.url.pathname));
+
+	$effect(() => {
+		if (!browser) return;
+		refreshAuthCacheIfNeeded();
+	});
+
+	$effect(() => {
+		const userId = page.data.user?.id;
+		const profileId = data.profile?.id;
+		if (userId && profileId && userId !== profileId) {
+			void invalidateAll();
+		}
+	});
 
 	// Refetch profile/clubs when returning to the app so changes made elsewhere
 	// (e.g. display name updated in admin-app) show without a manual reload.

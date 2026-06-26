@@ -58,6 +58,8 @@ export const actions: Actions = {
 			return fail(400, { message: authErrorMessage('oauth_failed') });
 		}
 
+		await supabase.auth.signOut();
+
 		const { data, error } = await supabase.auth.signInWithOAuth({
 			provider,
 			options: {

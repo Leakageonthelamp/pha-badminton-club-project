@@ -1,11 +1,9 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import LogOutIcon from '@repo/ui/icons/LogOutIcon.svelte';
 	import UserIcon from '@repo/ui/icons/UserIcon.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
-	import { whileSubmitting } from '$lib/forms/submitting';
 	import type { Profile } from '$lib/types/auth';
 
 	let {
@@ -15,7 +13,6 @@
 	} = $props();
 
 	let open = $state(false);
-	let logoutLoading = $state(false);
 	let triggerEl = $state<HTMLButtonElement | null>(null);
 	let menuTop = $state(0);
 	let menuRight = $state(0);
@@ -117,18 +114,11 @@
 						Profile
 					</a>
 
-					<form
-						method="POST"
-						action="/logout"
-						role="none"
-						use:enhance={whileSubmitting((v) => (logoutLoading = v))}
-					>
+					<form method="POST" action="/logout" role="none">
 						<SubmitButton
 							type="submit"
 							variant="ghost"
 							class="flex w-full items-center justify-start gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-100"
-							loading={logoutLoading}
-							loadingLabel="Logging out…"
 						>
 							<LogOutIcon class="h-5 w-5 shrink-0 text-slate-500" />
 							Log out

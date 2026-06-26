@@ -71,7 +71,15 @@ export const ensureOAuthSignInMethod = async (
 	const method = oauthSignInMethodFromUser(user);
 	if (!method) return;
 
-	await admin.from('profiles').update({ sign_in_method: method }).eq('id', user.id);
+	const { error } = await admin
+		.from('profiles')
+		.update({ sign_in_method: method })
+		.eq('id', user.id)
+		.neq('sign_in_method', method);
+
+	if (error) {
+		console.error('Failed to set OAuth sign_in_method', { userId: user.id, method, error });
+	}
 };
 
 const resolveAuthEmailForUser = async (
