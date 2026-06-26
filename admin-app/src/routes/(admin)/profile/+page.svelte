@@ -5,6 +5,7 @@
 	import UploadIcon from '@repo/ui/icons/UploadIcon.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
+	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
 	import FormToast from '@repo/ui/components/FormToast.svelte';
 	import AppCard from '@repo/ui/components/AppCard.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
@@ -215,15 +216,18 @@
 	{#if data.profile}
 		<AppCard class="flex items-center gap-4">
 			{#if avatarPreviewUrl}
-				<img src={avatarPreviewUrl} alt="" class="h-16 w-16 rounded-full object-cover" />
-			{:else if data.profile.avatar_url}
-				<img src={data.profile.avatar_url} alt="" class="h-16 w-16 rounded-full object-cover" />
+				<img
+					src={avatarPreviewUrl}
+					alt=""
+					class="h-16 w-16 rounded-full object-cover"
+					referrerpolicy="no-referrer"
+				/>
 			{:else}
-				<div
-					class="flex h-16 w-16 items-center justify-center rounded-full bg-brand-100 text-lg font-semibold text-brand-800"
-				>
-					{data.profile.display_name.slice(0, 1).toUpperCase()}
-				</div>
+				<UserAvatar
+					displayName={data.profile.display_name}
+					avatarUrl={data.profile.avatar_url}
+					size="xl"
+				/>
 			{/if}
 			<div>
 				<p class="font-semibold text-slate-900">{data.profile.display_name}</p>

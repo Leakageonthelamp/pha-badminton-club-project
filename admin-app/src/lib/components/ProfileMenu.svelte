@@ -4,6 +4,7 @@
 	import UserIcon from '@repo/ui/icons/UserIcon.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
+	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
 	import { whileSubmitting } from '$lib/forms/submitting';
 	import { appRoleLabel, type AppRole, type Profile } from '$lib/types/auth';
 
@@ -21,7 +22,6 @@
 	let menuTop = $state(0);
 	let menuRight = $state(0);
 
-	const initial = $derived(profile?.display_name?.slice(0, 1).toUpperCase() ?? '?');
 	const roleLabel = $derived(profile ? appRoleLabel(profile.app_role as AppRole) : '');
 
 	function updateMenuPosition() {
@@ -67,15 +67,11 @@
 			aria-label="Account menu"
 			onclick={toggleMenu}
 		>
-			{#if profile.avatar_url}
-				<img src={profile.avatar_url} alt="" class="h-9 w-9 rounded-full object-cover" />
-			{:else}
-				<div
-					class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-800"
-				>
-					{initial}
-				</div>
-			{/if}
+			<UserAvatar
+				displayName={profile.display_name}
+				avatarUrl={profile.avatar_url}
+				size="sm"
+			/>
 		</button>
 
 		{#if open}
@@ -94,19 +90,11 @@
 			>
 				<div class="bg-linear-to-br from-brand-50 to-brand-100/80 px-3 py-3">
 					<div class="flex items-center gap-3">
-						{#if profile.avatar_url}
-							<img
-								src={profile.avatar_url}
-								alt=""
-								class="h-11 w-11 shrink-0 rounded-full border-2 border-white object-cover shadow-sm"
-							/>
-						{:else}
-							<div
-								class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-white bg-brand-200 text-base font-semibold text-brand-900 shadow-sm"
-							>
-								{initial}
-							</div>
-						{/if}
+						<UserAvatar
+							displayName={profile.display_name}
+							avatarUrl={profile.avatar_url}
+							size="lg"
+						/>
 
 						<div class="min-w-0">
 							<p
