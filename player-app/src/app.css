@@ -1,9 +1,13 @@
 @import 'tailwindcss';
+@source '../../shared/ui/**/*.{html,js,svelte,ts}';
 
 @theme {
 	--color-brand-50: #f7f0fc;
 	--color-brand-100: #efdcf8;
 	--color-brand-200: #dfc0f0;
+	--color-brand-300: #c893e0;
+	--color-brand-400: #b06ed4;
+	--color-brand-500: #964ac0;
 	--color-brand-600: #964ac0;
 	--color-brand-700: #964ac0;
 	--color-brand-800: #7d3ca3;
@@ -172,3 +176,5 @@ body {
 	overscroll-behavior-y: contain;
 	padding-bottom: 1rem;
 }
+
+@import '../../shared/ui/styles/design-system.css';

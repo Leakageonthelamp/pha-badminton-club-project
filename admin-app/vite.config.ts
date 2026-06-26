@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
 	return {
 		server: {
 			port,
-			strictPort: false
+			strictPort: true
 		},
 		plugins: [tailwindcss(), sveltekit()],
 		test: {

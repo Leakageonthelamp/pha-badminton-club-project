@@ -7,6 +7,8 @@
 	import PasswordField from '$lib/components/PasswordField.svelte';
 	import SubmitButton from '$lib/components/SubmitButton.svelte';
 	import FormToast from '$lib/components/FormToast.svelte';
+	import AppCard from '@repo/ui/components/AppCard.svelte';
+	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import { whileSubmitting } from '$lib/forms/submitting';
 	import type { ActionData, PageData } from './$types';
 
@@ -20,53 +22,53 @@
 <FormToast message={form?.message ?? data.error} variant="error" token={form?.message ?? data.error ?? ''} />
 
 <section class="space-y-6">
-	<div class="flex flex-col items-center text-center">
-		<AppLogo size={64} class="mb-4" />
-		<h1 class="text-2xl font-semibold text-slate-900">Log in</h1>
-		<p class="mt-2 text-sm text-slate-600">Use email or phone number with your password.</p>
-	</div>
+	<DashboardHero title="Log in" subtitle="Use email or phone number with your password.">
+		<AppLogo size={48} class="mx-auto opacity-95" />
+	</DashboardHero>
 
-	<form method="POST" action="?/login" class="space-y-4" use:enhance={whileSubmitting((v) => (loginLoading = v))}>
-		<IdentifierField
-			value={form?.values?.identifier ?? ''}
-			serverError={form?.error?.identifier?.[0] ?? null}
-		/>
+	<AppCard class="space-y-4">
+		<form method="POST" action="?/login" class="space-y-4" use:enhance={whileSubmitting((v) => (loginLoading = v))}>
+			<IdentifierField
+				value={form?.values?.identifier ?? ''}
+				serverError={form?.error?.identifier?.[0] ?? null}
+			/>
 
-		<PasswordField serverError={form?.error?.password?.[0] ?? null} />
+			<PasswordField serverError={form?.error?.password?.[0] ?? null} />
 
-		<SubmitButton loading={loginLoading} loadingLabel="Logging in…">Log in</SubmitButton>
-	</form>
+			<SubmitButton loading={loginLoading} loadingLabel="Logging in…">Log in</SubmitButton>
+		</form>
 
-	<div class="space-y-3">
-		<p class="text-center text-sm text-slate-500">Or continue with</p>
-		<form
-			method="POST"
-			action="?/oauth"
-			use:enhance={whileSubmitting((v) => (googleLoading = v))}
-		>
-			<input type="hidden" name="provider" value="google" />
-			<SubmitButton
-				variant="secondary"
-				class="mb-3"
-				loading={googleLoading}
-				loadingLabel="Connecting…"
+		<div class="space-y-3 border-t border-slate-100 pt-4">
+			<p class="text-center text-sm text-slate-500">Or continue with</p>
+			<form
+				method="POST"
+				action="?/oauth"
+				use:enhance={whileSubmitting((v) => (googleLoading = v))}
 			>
-				<GoogleIcon />
-				Continue with Google
-			</SubmitButton>
-		</form>
-		<form
-			method="POST"
-			action="?/oauth"
-			use:enhance={whileSubmitting((v) => (facebookLoading = v))}
-		>
-			<input type="hidden" name="provider" value="facebook" />
-			<SubmitButton variant="secondary" loading={facebookLoading} loadingLabel="Connecting…">
-				<FacebookIcon />
-				Continue with Facebook
-			</SubmitButton>
-		</form>
-	</div>
+				<input type="hidden" name="provider" value="google" />
+				<SubmitButton
+					variant="secondary"
+					class="mb-3"
+					loading={googleLoading}
+					loadingLabel="Connecting…"
+				>
+					<GoogleIcon />
+					Continue with Google
+				</SubmitButton>
+			</form>
+			<form
+				method="POST"
+				action="?/oauth"
+				use:enhance={whileSubmitting((v) => (facebookLoading = v))}
+			>
+				<input type="hidden" name="provider" value="facebook" />
+				<SubmitButton variant="secondary" loading={facebookLoading} loadingLabel="Connecting…">
+					<FacebookIcon />
+					Continue with Facebook
+				</SubmitButton>
+			</form>
+		</div>
+	</AppCard>
 
 	<p class="text-center text-sm text-slate-600">
 		No account?

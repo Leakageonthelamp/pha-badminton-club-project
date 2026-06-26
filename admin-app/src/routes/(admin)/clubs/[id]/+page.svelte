@@ -166,7 +166,7 @@
 	const toastVariant = $derived(form?.success || data.created ? 'success' : 'error');
 
 	const labelClass = 'mb-2 block text-sm font-medium text-slate-700';
-	const cardClass = 'rounded-2xl border border-slate-200 bg-white p-4';
+	const cardClass = 'app-card-padded space-y-4';
 	const skeletonClass = 'animate-pulse rounded-xl bg-slate-200';
 
 	async function submitSearch(event: SubmitEvent) {

@@ -1,6 +1,9 @@
 <script lang="ts">
-	import DashboardTile from '$lib/components/DashboardTile.svelte';
-	import SettingsIcon from '$lib/components/icons/SettingsIcon.svelte';
+	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
+	import DashboardTile from '@repo/ui/components/DashboardTile.svelte';
+	import EmptyState from '@repo/ui/components/EmptyState.svelte';
+	import SectionHeading from '@repo/ui/components/SectionHeading.svelte';
+	import SettingsIcon from '@repo/ui/icons/SettingsIcon.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -9,30 +12,24 @@
 </script>
 
 <section class="space-y-6">
-	<div
-		class="overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900 p-5 text-white shadow-lg shadow-brand-300/30"
-	>
-		<p class="text-sm font-medium text-brand-100">Welcome back</p>
-		<h1 class="mt-1 text-2xl font-semibold tracking-tight">{data.profileName}</h1>
+	<DashboardHero eyebrow="Welcome back" title={data.profileName}>
 		{#if singleClub}
-			<p class="mt-3 inline-flex max-w-full items-center rounded-full bg-white/15 px-3 py-1 text-sm font-medium text-white backdrop-blur-sm">
+			<p class="app-hero-badge">
 				<span class="truncate">{singleClub.name}</span>
 				{#if !singleClub.is_active}
 					<span class="ml-2 shrink-0 text-xs text-amber-200">Inactive</span>
 				{/if}
 			</p>
 		{:else if data.clubs.length > 1}
-			<p class="mt-2 text-sm text-brand-100">{data.clubs.length} clubs assigned</p>
+			<p class="app-hero-subtitle">{data.clubs.length} clubs assigned</p>
 		{/if}
-	</div>
+	</DashboardHero>
 
 	{#if data.clubs.length === 0}
-		<div class="rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-			<p class="text-slate-600">No clubs assigned to you yet.</p>
-		</div>
+		<EmptyState message="No clubs assigned to you yet." />
 	{:else}
 		<div class="space-y-4">
-			<h2 class="px-1 text-sm font-semibold uppercase tracking-wide text-slate-500">Quick actions</h2>
+			<SectionHeading title="Quick actions" />
 			<div class="grid gap-4 {singleClub ? 'grid-cols-1' : 'grid-cols-2'}">
 				{#each data.clubs as club (club.id)}
 					<DashboardTile

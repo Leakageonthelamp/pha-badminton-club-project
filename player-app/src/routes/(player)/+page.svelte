@@ -1,15 +1,22 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
 	import ClubDetailSheet from '$lib/components/ClubDetailSheet.svelte';
-	import RefreshIcon from '$lib/components/icons/RefreshIcon.svelte';
+	import RefreshIcon from '@repo/ui/icons/RefreshIcon.svelte';
+	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
+	import DashboardTile from '@repo/ui/components/DashboardTile.svelte';
+	import EmptyState from '@repo/ui/components/EmptyState.svelte';
+	import SectionHeading from '@repo/ui/components/SectionHeading.svelte';
+	import BuildingIcon from '@repo/ui/icons/BuildingIcon.svelte';
 	import type { ClubPublic } from '$lib/types/club';
+	import type { LayoutData } from '../$types';
 	import type { PageData } from './$types';
 
-	let { data }: { data: PageData } = $props();
+	let { data }: { data: PageData & LayoutData } = $props();
 
 	const clubs = $derived(data.clubs ?? []);
 	const page = $derived(data.page ?? 1);
 	const totalPages = $derived(data.totalPages ?? 1);
+	const profileName = $derived(data.profile?.display_name ?? 'Player');
 
 	let sheetOpen = $state(false);
 	let selectedClub = $state<ClubPublic | null>(null);
@@ -37,58 +44,48 @@
 	};
 </script>
 
-<section class="space-y-8 py-4">
-	<div class="text-center">
-		<h1 class="text-2xl font-semibold text-slate-900">Home</h1>
-		<p class="mt-2 text-sm text-slate-500">Find clubs and join sessions near you.</p>
-	</div>
+<section class="space-y-6">
+	<DashboardHero
+		eyebrow="Welcome back"
+		title={profileName}
+		subtitle="Find clubs and join sessions near you."
+	/>
 
 	<div class="space-y-4">
-		<div>
-			<div class="flex items-center justify-between gap-3">
-				<h2 class="text-lg font-semibold text-slate-900">Clubs</h2>
-				<button
-					type="button"
-					class="inline-flex shrink-0 items-center justify-center rounded-xl bg-brand-700 p-2.5 text-white transition hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 disabled:opacity-70"
-					disabled={refreshing}
-					aria-label="Refresh clubs"
-					aria-busy={refreshing}
-					onclick={refreshClubs}
-				>
-					{#if refreshing}
-						<span
-							class="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"
-							aria-hidden="true"
-						></span>
-					{:else}
-						<RefreshIcon class="h-5 w-5" />
-					{/if}
-				</button>
-			</div>
-			<p class="text-sm text-slate-600">Browse active clubs in the system.</p>
+		<div class="flex items-center justify-between gap-3 px-1">
+			<SectionHeading title="Clubs" class="!px-0" />
+			<button
+				type="button"
+				class="inline-flex shrink-0 items-center justify-center rounded-xl bg-brand-700 p-2.5 text-white transition hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 disabled:opacity-70"
+				disabled={refreshing}
+				aria-label="Refresh clubs"
+				aria-busy={refreshing}
+				onclick={refreshClubs}
+			>
+				{#if refreshing}
+					<span
+						class="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"
+						aria-hidden="true"
+					></span>
+				{:else}
+					<RefreshIcon class="h-5 w-5" />
+				{/if}
+			</button>
 		</div>
 
 		{#if clubs.length === 0}
-			<div class="rounded-2xl border border-slate-200 bg-white p-4 text-center">
-				<p class="text-sm text-slate-600">No active clubs yet. Check back later.</p>
-			</div>
+			<EmptyState message="No active clubs yet. Check back later." />
 		{:else}
-			<ul class="grid grid-cols-2 gap-3">
+			<div class="grid grid-cols-2 gap-4">
 				{#each clubs as club (club.id)}
-					<li class="min-w-0">
-						<button
-							type="button"
-							class="flex h-full w-full flex-col rounded-2xl border border-slate-200 bg-white p-4 text-left transition hover:border-brand-200 hover:shadow-sm"
-							onclick={() => openClub(club)}
-						>
-							<h3 class="line-clamp-2 text-sm font-semibold text-slate-900">{club.name}</h3>
-							{#if club.description}
-								<p class="mt-1 line-clamp-2 text-xs text-slate-600">{club.description}</p>
-							{/if}
-						</button>
-					</li>
+					<DashboardTile
+						title={club.name}
+						description={club.description || 'Tap to view details'}
+						icon={BuildingIcon}
+						onclick={() => openClub(club)}
+					/>
 				{/each}
-			</ul>
+			</div>
 
 			{#if totalPages > 1}
 				<nav class="flex items-center justify-between gap-3 pt-1" aria-label="Clubs pagination">

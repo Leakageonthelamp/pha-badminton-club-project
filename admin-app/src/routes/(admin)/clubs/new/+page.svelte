@@ -2,6 +2,8 @@
 	import { enhance } from '$app/forms';
 	import FormToast from '$lib/components/FormToast.svelte';
 	import SubmitButton from '$lib/components/SubmitButton.svelte';
+	import AppCard from '@repo/ui/components/AppCard.svelte';
+	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import { CLUB_DESCRIPTION_MAX_LENGTH, CLUB_NAME_MAX_LENGTH } from '$lib/config/club';
 	import { whileSubmitting } from '$lib/forms/submitting';
 	import type { ActionData, PageData } from './$types';
@@ -40,14 +42,12 @@
 <FormToast message={form?.message} variant="error" token={form?.message ?? ''} />
 
 <section class="space-y-6">
-	<div>
-		<h1 class="text-2xl font-semibold text-slate-900">Create club</h1>
-		<p class="mt-2 text-sm text-slate-600">Set the club name, description, and session limit.</p>
-	</div>
+	<DashboardHero title="Create club" subtitle="Set the club name, description, and session limit." />
 
+	<AppCard class="space-y-4">
 	<form
 		method="POST"
-		class="space-y-4 rounded-2xl border border-slate-200 bg-white p-4"
+		class="space-y-4"
 		use:enhance={whileSubmitting((v) => (loading = v))}
 	>
 		<div>
@@ -164,4 +164,5 @@
 
 		<SubmitButton loading={loading} loadingLabel="Creating…">Create club</SubmitButton>
 	</form>
+	</AppCard>
 </section>

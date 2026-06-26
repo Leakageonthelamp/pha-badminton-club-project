@@ -9,9 +9,10 @@ A mobile-first PWA for organizing 2v2 badminton club sessions: player auth/profi
 ```
 ph-badminton-club-project/
 ├── docs/PROJECT_PLAN.md      # this file
+├── shared/ui/                # Shared dashboard UI (both apps import via @repo/ui)
 ├── supabase/                 # Shared DB schema & migrations
 ├── player-app/               # Player PWA (SvelteKit) — Phase 1 done
-├── admin-app/                # Admin PWA (SvelteKit) — not scaffolded yet
+├── admin-app/                # Admin PWA (SvelteKit) — Phase 2a/2b
 └── package.json              # Yarn workspaces root
 ```
 
@@ -26,7 +27,7 @@ ph-badminton-club-project/
 - **Frontend / PWA**
   - SvelteKit (Svelte 5 runes) + Vite
   - `@vite-pwa/sveltekit` - service worker, manifest, installable, offline shell
-  - TailwindCSS + a light component layer (skeleton / shadcn-svelte) for fast mobile UI
+  - TailwindCSS v4 + shared dashboard UI in `shared/ui/` (hero banners, launcher tiles, cards)
   - Web Push API for match/score notifications (graceful fallback to in-app realtime)
 - **Backend / data (Supabase free tier)**
   - Postgres + **PostGIS** (session location + nearby queries)
@@ -40,6 +41,45 @@ ph-badminton-club-project/
   - Vercel or Cloudflare Pages for the SvelteKit app; Supabase hosts DB/auth/functions
 - **Tooling**
   - TypeScript, Zod (validation at trust boundaries), Vitest (logic tests), Playwright (optional e2e later)
+
+## UI design system (shared — both apps)
+
+Both `player-app` and `admin-app` import shared UI from `shared/ui/` via the `@repo/ui` alias (configured in each app's `svelte.config.js`). Styles live in `shared/ui/styles/design-system.css`, imported from each app's `app.css`. Tailwind scans `shared/ui/**` via `@source`.
+
+### Visual language
+
+- **Mobile-first** shell: `max-w-lg`, light slate background, purple brand (`#964ac0`)
+- **Rounded surfaces**: prefer `rounded-3xl` for hero/cards/tiles (softer than old `rounded-2xl` lists)
+- **Motion**: tile hover lift (`-translate-y-0.5`), icon scale on hover; respect `prefers-reduced-motion`
+
+### Core patterns
+
+| Pattern | Component / class | Use for |
+| ------- | ----------------- | ------- |
+| **Dashboard hero** | `DashboardHero` / `.app-hero` | Page welcome banner — gradient purple, white text, eyebrow + title + subtitle |
+| **Launcher tile** | `DashboardTile` / `.app-tile` | Big icon + label grid actions (club settings, browse clubs, create club) |
+| **Section label** | `SectionHeading` / `.app-section-heading` | Uppercase “Quick actions”, “All clubs”, etc. |
+| **Content card** | `AppCard` / `.app-card-padded` | Forms, settings sections, login boxes |
+| **Empty state** | `EmptyState` / `.app-empty` | No data placeholders |
+| **Muted panel** | `.app-muted-panel` | Secondary info (account details on profile) |
+
+### DashboardTile spec
+
+- Gradient icon box: `from-brand-500 to-brand-700`, 64×64 default / 80×80 `large`
+- Supports `href` (link) or `onclick` (button) — e.g. player club browse opens bottom sheet
+- Optional `badge` (e.g. “Inactive”), `description` subtitle
+- Grid: `grid-cols-2 gap-4`; single primary action may use `grid-cols-1` + `large`
+
+### Brand tokens (`@theme` in each app `app.css`)
+
+`brand-50` … `brand-900` including `brand-300`, `brand-400`, `brand-500` for gradients and shadows.
+
+### When adding new screens
+
+1. Start with `DashboardHero` (or compact heading for dense forms)
+2. Primary actions → `DashboardTile` grid under `SectionHeading`
+3. Forms / detail blocks → `AppCard`
+4. Reuse icons from `shared/ui/icons/` before adding app-local duplicates
 
 ## Role hierarchy
 
@@ -304,3 +344,33 @@ Same Supabase keys as player-app, plus:
 ### Out of scope (Phase 2a)
 
 Club-admin admin-app UI, session/match management, demote super admin via UI, rate limiting on backdoor endpoint.
+
+---
+
+## Phase 2b - Club admin dashboard and settings (detailed spec)
+
+Club admins can sign in to `admin-app`, land on `/dashboard`, and open club settings from launcher tiles.
+
+### Role capabilities (updated)
+
+| Role | Admin-app access | Capabilities |
+| ---- | ---------------- | ------------ |
+| **Super Admin** | Yes (`/`) | All clubs, create/delete, assign admins, full club settings |
+| **Club Admin** | Yes (`/dashboard`) | Assigned clubs only; name/description + shuttles, PromptPay, location |
+| **Player** | No | — |
+
+### Admin routes (Phase 2b additions)
+
+- `(admin)/dashboard/` — club admin home (hero + launcher tiles)
+- `(admin)/clubs/[id]/` — club settings (role-gated sections)
+- `hooks.server.ts` — allows `club_admin`; login → `/dashboard` for club admin, `/` for super admin
+
+### Data (`0008_club_settings.sql`)
+
+- `clubs`: `promptpay_type`, `promptpay_target`, `latitude`, `longitude`
+- `club_shuttles`: inventory CRUD (speed 75/76, pricing; per-each computed in UI)
+- RLS: `is_club_admin_of()` for club admin read/update; trigger guards restricted columns
+
+### UI
+
+Uses shared dashboard design system (see **UI design system** above): `DashboardHero`, `DashboardTile`, `AppCard` on dashboard, settings, login, and profile screens.

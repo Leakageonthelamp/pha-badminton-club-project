@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { SubmitFunction } from '@sveltejs/kit';
-	import AppLogo from '$lib/components/AppLogo.svelte';
 	import AvatarCropModal from '$lib/components/AvatarCropModal.svelte';
 	import UploadIcon from '$lib/components/icons/UploadIcon.svelte';
 	import SubmitButton from '$lib/components/SubmitButton.svelte';
 	import TagPill from '$lib/components/TagPill.svelte';
 	import FormToast from '$lib/components/FormToast.svelte';
+	import AppCard from '@repo/ui/components/AppCard.svelte';
+	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import { toast } from '$lib/toast/toast.svelte';
 	import { AVATAR_OUTPUT_SIZE, normalizeImageForCrop } from '$lib/images/cropAvatar';
 	import { validateAvatarFile, validateAvatarInput } from '$lib/validation/avatar';
@@ -204,14 +205,10 @@
 <FormToast message={form?.error ?? null} variant="error" token={form?.error ?? ''} />
 
 <section class="space-y-6">
-	<div class="flex flex-col items-center text-center">
-		<AppLogo size={56} class="mb-3" />
-		<h1 class="text-2xl font-semibold text-slate-900">Profile</h1>
-		<p class="mt-2 text-sm text-slate-600">Update your display name, tag, and avatar.</p>
-	</div>
+	<DashboardHero title="Profile" subtitle="Update your display name, tag, and avatar." />
 
 	{#if data.profile}
-		<div class="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4">
+		<AppCard class="flex items-center gap-4">
 			{#if avatarPreviewUrl}
 				<img src={avatarPreviewUrl} alt="" class="h-16 w-16 rounded-full object-cover" />
 			{:else if data.profile.avatar_url}
@@ -227,8 +224,9 @@
 				<p class="font-semibold text-slate-900">{data.profile.display_name}</p>
 				<TagPill tag={displayedTag} size="md" class="mt-1" />
 			</div>
-		</div>
+		</AppCard>
 
+		<AppCard class="space-y-4">
 		<form
 			method="POST"
 			action="?/updateProfile"
@@ -342,8 +340,9 @@
 				Save changes
 			</SubmitButton>
 		</form>
+		</AppCard>
 
-		<div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+		<div class="app-muted-panel">
 			<h2 class="mb-3 font-medium text-slate-900">Account details</h2>
 			<dl class="space-y-3">
 				{#if credential}
