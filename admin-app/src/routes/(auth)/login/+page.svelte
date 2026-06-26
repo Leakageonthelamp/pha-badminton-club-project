@@ -23,7 +23,7 @@
 	<div class="flex flex-col items-center text-center">
 		<AppLogo size={64} class="mb-4" />
 		<h1 class="text-2xl font-semibold text-slate-900">Admin sign in</h1>
-		<p class="mt-2 text-sm text-slate-600">Super admin access only. Use your player account credentials.</p>
+		<p class="mt-2 text-sm text-slate-600">Super admin and club admin sign in. Use your player account credentials.</p>
 	</div>
 
 	<form method="POST" action="?/login" class="space-y-4" use:enhance={whileSubmitting((v) => (loginLoading = v))}>

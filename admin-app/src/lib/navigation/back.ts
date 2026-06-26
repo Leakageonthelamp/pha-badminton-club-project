@@ -1,20 +1,28 @@
-/** Paths that act as app home — no back arrow shown. */
-export const HOME_PATHS = new Set(['/', '/login']);
+import type { AppRole } from '$lib/types/auth';
 
-const BACK_HREF: Record<string, string> = {
-	'/clubs/new': '/',
-	'/profile': '/'
+/** Paths that never show a back arrow. */
+const AUTH_PATHS = new Set(['/login']);
+
+export const getHomePath = (appRole?: AppRole | null): string =>
+	appRole === 'club_admin' ? '/dashboard' : '/';
+
+export const shouldShowBack = (pathname: string, appRole?: AppRole | null): boolean => {
+	if (AUTH_PATHS.has(pathname) || pathname.startsWith('/auth/callback')) {
+		return false;
+	}
+
+	return pathname !== getHomePath(appRole);
 };
 
-export const shouldShowBack = (pathname: string): boolean => !HOME_PATHS.has(pathname);
+export const getBackHref = (pathname: string, appRole?: AppRole | null): string => {
+	const home = getHomePath(appRole);
 
-export const getBackHref = (pathname: string): string => {
-	if (BACK_HREF[pathname]) {
-		return BACK_HREF[pathname];
+	if (pathname === '/clubs/new' || pathname === '/profile') {
+		return home;
 	}
 
 	if (pathname.startsWith('/clubs/') && pathname !== '/clubs/new') {
-		return '/';
+		return home;
 	}
 
 	const segments = pathname.split('/').filter(Boolean);
@@ -22,18 +30,19 @@ export const getBackHref = (pathname: string): string => {
 		return `/${segments.slice(0, -1).join('/')}`;
 	}
 
-	return '/';
+	return home;
 };
 
 export const getTransitionDirection = (
 	fromPath: string | undefined,
-	toPath: string
+	toPath: string,
+	appRole?: AppRole | null
 ): 'forward' | 'back' => {
 	if (!fromPath) {
 		return 'forward';
 	}
 
-	if (getBackHref(fromPath) === toPath) {
+	if (getBackHref(fromPath, appRole) === toPath) {
 		return 'back';
 	}
 

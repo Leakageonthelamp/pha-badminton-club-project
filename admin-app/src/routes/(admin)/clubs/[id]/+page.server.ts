@@ -1,11 +1,23 @@
 import {
+	assertCanManageClub,
+	assertSuperAdmin
+} from '$lib/server/clubAccess';
+import {
 	CLUB_MAX_ACTIVE_SESSIONS_LIMIT,
 	CLUB_MAX_ADMINS_LIMIT
 } from '$lib/server/clubLimits';
 import { buildProfileSearchOrFilter } from '$lib/server/profileSearch';
 import { CLUB_DELETE_CONFIRM_PHRASE } from '$lib/config/club';
+import type { ClubShuttle } from '$lib/types/club';
 import { clubInputSchema } from '$lib/validation/club';
-import type { Club } from '$lib/types/club';
+import {
+	clubAdminClubInputSchema,
+	locationInputSchema,
+	promptPayInputSchema,
+	shuttleDeleteSchema,
+	shuttleInputSchema,
+	shuttleUpdateSchema
+} from '$lib/validation/clubSettings';
 import type { Profile } from '$lib/types/auth';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
@@ -44,13 +56,13 @@ const loadOtherClubAdminCounts = async (
 		return new Map();
 	}
 
-	const { data, error } = await supabase
+	const { data, error: loadError } = await supabase
 		.from('club_admins')
 		.select('user_id, club_id')
 		.in('user_id', userIds);
 
-	if (error) {
-		console.error('Failed to load club admin memberships', error);
+	if (loadError) {
+		console.error('Failed to load club admin memberships', loadError);
 		return new Map();
 	}
 
@@ -104,69 +116,139 @@ const loadClubAdmins = async (
 	}));
 };
 
-export const load: PageServerLoad = async ({ params, url, locals: { supabase } }) => {
-	const { data: club, error: clubError } = await supabase
-		.from('clubs')
+const loadClubShuttles = async (
+	supabase: App.Locals['supabase'],
+	clubId: string
+): Promise<ClubShuttle[]> => {
+	const { data, error: loadError } = await supabase
+		.from('club_shuttles')
 		.select('*')
-		.eq('id', params.id)
-		.single();
+		.eq('club_id', clubId)
+		.order('name', { ascending: true });
 
-	if (clubError || !club) {
-		error(404, 'Club not found');
+	if (loadError) {
+		console.error('Failed to load club shuttles', loadError);
+		return [];
 	}
 
-	const admins = await loadClubAdmins(supabase, params.id);
-	const assignedIds = new Set(admins.map((row) => row.user_id));
+	return (data ?? []) as ClubShuttle[];
+};
 
-	const searchQuery = url.searchParams.get('q')?.trim() ?? '';
+export const load: PageServerLoad = async ({
+	params,
+	url,
+	locals: { supabase, user, appRole }
+}) => {
+	if (!user || !appRole) {
+		error(401, 'Sign in required');
+	}
+
+	const club = await assertCanManageClub(supabase, user.id, params.id, appRole);
+	const isSuperAdmin = appRole === 'super_admin';
+	const shuttles = await loadClubShuttles(supabase, params.id);
+
+	let admins: ClubAdminWithProfile[] = [];
 	let searchResults: ProfileSearchResult[] = [];
+	const searchQuery = url.searchParams.get('q')?.trim() ?? '';
 
-	if (searchQuery.length >= 2) {
-		const { data: matches, error: searchError } = await supabase
-			.from('profiles')
-			.select('id, display_name, tag, email, phone, app_role')
-			.neq('app_role', 'super_admin')
-			.or(buildProfileSearchOrFilter(searchQuery))
-			.limit(20);
+	if (isSuperAdmin) {
+		admins = await loadClubAdmins(supabase, params.id);
+		const assignedIds = new Set(admins.map((row) => row.user_id));
 
-		if (searchError) {
-			console.error('User search failed', searchError);
-		} else {
-			searchResults = (matches ?? [])
-				.filter((profile) => !assignedIds.has(profile.id))
-				.map((profile) => ({ ...profile, otherClubCount: 0 }));
+		if (searchQuery.length >= 2) {
+			const { data: matches, error: searchError } = await supabase
+				.from('profiles')
+				.select('id, display_name, tag, email, phone, app_role')
+				.neq('app_role', 'super_admin')
+				.or(buildProfileSearchOrFilter(searchQuery))
+				.limit(20);
+
+			if (searchError) {
+				console.error('User search failed', searchError);
+			} else {
+				searchResults = (matches ?? [])
+					.filter((profile) => !assignedIds.has(profile.id))
+					.map((profile) => ({ ...profile, otherClubCount: 0 }));
+			}
 		}
+
+		const membershipUserIds = [
+			...new Set([
+				...searchResults.map((profile) => profile.id),
+				...admins.map((admin) => admin.user_id)
+			])
+		];
+		const otherClubCounts = await loadOtherClubAdminCounts(
+			supabase,
+			membershipUserIds,
+			params.id
+		);
+
+		searchResults = searchResults.map((profile) => ({
+			...profile,
+			otherClubCount: otherClubCounts.get(profile.id) ?? 0
+		}));
+		admins = admins.map((admin) => ({
+			...admin,
+			otherClubCount: otherClubCounts.get(admin.user_id) ?? 0
+		}));
 	}
-
-	const membershipUserIds = [
-		...new Set([...searchResults.map((profile) => profile.id), ...admins.map((admin) => admin.user_id)])
-	];
-	const otherClubCounts = await loadOtherClubAdminCounts(supabase, membershipUserIds, params.id);
-
-	searchResults = searchResults.map((profile) => ({
-		...profile,
-		otherClubCount: otherClubCounts.get(profile.id) ?? 0
-	}));
-	const adminsWithCounts = admins.map((admin) => ({
-		...admin,
-		otherClubCount: otherClubCounts.get(admin.user_id) ?? 0
-	}));
 
 	return {
-		club: club as Club,
-		admins: adminsWithCounts,
+		club,
+		shuttles,
+		admins,
 		searchResults,
 		searchQuery,
+		appRole,
+		isSuperAdmin,
 		created: url.searchParams.get('created') === '1',
 		maxActiveSessionsLimit: CLUB_MAX_ACTIVE_SESSIONS_LIMIT,
 		maxAdminsLimit: CLUB_MAX_ADMINS_LIMIT,
-		atAdminCapacity: adminsWithCounts.length >= club.max_admins
+		atAdminCapacity: admins.length >= club.max_admins
 	};
 };
 
 export const actions: Actions = {
-	update: async ({ request, params, locals: { supabase } }) => {
+	update: async ({ request, params, locals: { supabase, user, appRole } }) => {
+		if (!user || !appRole) {
+			return fail(401, { message: 'Sign in required' });
+		}
+
+		await assertCanManageClub(supabase, user.id, params.id, appRole);
+
 		const formData = await request.formData();
+
+		if (appRole === 'club_admin') {
+			const parsed = clubAdminClubInputSchema.safeParse({
+				name: formData.get('name'),
+				description: formData.get('description') ?? ''
+			});
+
+			if (!parsed.success) {
+				const fieldErrors = parsed.error.flatten().fieldErrors;
+				return fail(400, {
+					message: Object.values(fieldErrors).flat()[0] ?? 'Invalid input',
+					error: fieldErrors
+				});
+			}
+
+			const { error: updateError } = await supabase
+				.from('clubs')
+				.update({
+					name: parsed.data.name,
+					description: parsed.data.description
+				})
+				.eq('id', params.id);
+
+			if (updateError) {
+				console.error('Failed to update club', updateError);
+				return fail(500, { message: 'Could not update club. Please try again.' });
+			}
+
+			return { success: true, message: 'Club updated.' };
+		}
+
 		const parsed = clubInputSchema.safeParse({
 			name: formData.get('name'),
 			description: formData.get('description') ?? '',
@@ -222,7 +304,199 @@ export const actions: Actions = {
 		return { success: true, message: 'Club updated.' };
 	},
 
-	delete: async ({ request, params, locals: { supabase } }) => {
+	updatePromptPay: async ({ request, params, locals: { supabase, user, appRole } }) => {
+		if (!user || !appRole) {
+			return fail(401, { message: 'Sign in required' });
+		}
+
+		await assertCanManageClub(supabase, user.id, params.id, appRole);
+
+		const formData = await request.formData();
+		const parsed = promptPayInputSchema.safeParse({
+			clear: formData.get('clear'),
+			promptpay_type: formData.get('promptpay_type') || undefined,
+			promptpay_target: String(formData.get('promptpay_target') ?? '')
+		});
+
+		if (!parsed.success) {
+			const fieldErrors = parsed.error.flatten().fieldErrors;
+			return fail(400, {
+				message: Object.values(fieldErrors).flat()[0] ?? 'Invalid PromptPay info',
+				error: fieldErrors
+			});
+		}
+
+		const payload = parsed.data.clear
+			? { promptpay_type: null, promptpay_target: null }
+			: {
+					promptpay_type: parsed.data.promptpay_type ?? null,
+					promptpay_target: parsed.data.promptpay_target
+				};
+
+		const { error: updateError } = await supabase.from('clubs').update(payload).eq('id', params.id);
+
+		if (updateError) {
+			console.error('Failed to update PromptPay', updateError);
+			return fail(500, { message: 'Could not save PromptPay info. Please try again.' });
+		}
+
+		return { success: true, message: 'PromptPay info saved.' };
+	},
+
+	updateLocation: async ({ request, params, locals: { supabase, user, appRole } }) => {
+		if (!user || !appRole) {
+			return fail(401, { message: 'Sign in required' });
+		}
+
+		await assertCanManageClub(supabase, user.id, params.id, appRole);
+
+		const formData = await request.formData();
+		const parsed = locationInputSchema.safeParse({
+			clear: formData.get('clear'),
+			latitude: formData.get('latitude'),
+			longitude: formData.get('longitude')
+		});
+
+		if (!parsed.success) {
+			const fieldErrors = parsed.error.flatten().fieldErrors;
+			return fail(400, {
+				message: Object.values(fieldErrors).flat()[0] ?? 'Invalid location',
+				error: fieldErrors
+			});
+		}
+
+		const payload = parsed.data.clear
+			? { latitude: null, longitude: null }
+			: { latitude: parsed.data.latitude, longitude: parsed.data.longitude };
+
+		const { error: updateError } = await supabase.from('clubs').update(payload).eq('id', params.id);
+
+		if (updateError) {
+			console.error('Failed to update location', updateError);
+			return fail(500, { message: 'Could not save location. Please try again.' });
+		}
+
+		return { success: true, message: 'Location saved.' };
+	},
+
+	createShuttle: async ({ request, params, locals: { supabase, user, appRole } }) => {
+		if (!user || !appRole) {
+			return fail(401, { message: 'Sign in required' });
+		}
+
+		await assertCanManageClub(supabase, user.id, params.id, appRole);
+
+		const formData = await request.formData();
+		const parsed = shuttleInputSchema.safeParse({
+			name: formData.get('name'),
+			speed: formData.get('speed'),
+			original_price: formData.get('original_price'),
+			price: formData.get('price'),
+			number_per_box: formData.get('number_per_box')
+		});
+
+		if (!parsed.success) {
+			const fieldErrors = parsed.error.flatten().fieldErrors;
+			return fail(400, {
+				message: Object.values(fieldErrors).flat()[0] ?? 'Invalid shuttle input',
+				error: fieldErrors
+			});
+		}
+
+		const { error: insertError } = await supabase.from('club_shuttles').insert({
+			club_id: params.id,
+			...parsed.data
+		});
+
+		if (insertError) {
+			if (insertError.code === '23505') {
+				return fail(400, { message: 'A shuttle with this name and speed already exists.' });
+			}
+
+			console.error('Failed to create shuttle', insertError);
+			return fail(500, { message: 'Could not add shuttle. Please try again.' });
+		}
+
+		return { success: true, message: 'Shuttle added.' };
+	},
+
+	updateShuttle: async ({ request, params, locals: { supabase, user, appRole } }) => {
+		if (!user || !appRole) {
+			return fail(401, { message: 'Sign in required' });
+		}
+
+		await assertCanManageClub(supabase, user.id, params.id, appRole);
+
+		const formData = await request.formData();
+		const parsed = shuttleUpdateSchema.safeParse({
+			shuttleId: formData.get('shuttleId'),
+			name: formData.get('name'),
+			speed: formData.get('speed'),
+			original_price: formData.get('original_price'),
+			price: formData.get('price'),
+			number_per_box: formData.get('number_per_box')
+		});
+
+		if (!parsed.success) {
+			const fieldErrors = parsed.error.flatten().fieldErrors;
+			return fail(400, {
+				message: Object.values(fieldErrors).flat()[0] ?? 'Invalid shuttle input',
+				error: fieldErrors
+			});
+		}
+
+		const { shuttleId, ...values } = parsed.data;
+		const { error: updateError } = await supabase
+			.from('club_shuttles')
+			.update(values)
+			.eq('id', shuttleId)
+			.eq('club_id', params.id);
+
+		if (updateError) {
+			if (updateError.code === '23505') {
+				return fail(400, { message: 'A shuttle with this name and speed already exists.' });
+			}
+
+			console.error('Failed to update shuttle', updateError);
+			return fail(500, { message: 'Could not update shuttle. Please try again.' });
+		}
+
+		return { success: true, message: 'Shuttle updated.' };
+	},
+
+	deleteShuttle: async ({ request, params, locals: { supabase, user, appRole } }) => {
+		if (!user || !appRole) {
+			return fail(401, { message: 'Sign in required' });
+		}
+
+		await assertCanManageClub(supabase, user.id, params.id, appRole);
+
+		const formData = await request.formData();
+		const parsed = shuttleDeleteSchema.safeParse({
+			shuttleId: formData.get('shuttleId')
+		});
+
+		if (!parsed.success) {
+			return fail(400, { message: 'Invalid shuttle selected' });
+		}
+
+		const { error: deleteError } = await supabase
+			.from('club_shuttles')
+			.delete()
+			.eq('id', parsed.data.shuttleId)
+			.eq('club_id', params.id);
+
+		if (deleteError) {
+			console.error('Failed to delete shuttle', deleteError);
+			return fail(500, { message: 'Could not delete shuttle. Please try again.' });
+		}
+
+		return { success: true, message: 'Shuttle removed.' };
+	},
+
+	delete: async ({ request, params, locals: { supabase, appRole } }) => {
+		assertSuperAdmin(appRole);
+
 		const formData = await request.formData();
 		const confirmText = String(formData.get('confirmText') ?? '').trim();
 
@@ -240,7 +514,9 @@ export const actions: Actions = {
 		redirect(303, '/?deleted=1');
 	},
 
-	assign: async ({ request, params, locals: { supabase, user } }) => {
+	assign: async ({ request, params, locals: { supabase, user, appRole } }) => {
+		assertSuperAdmin(appRole);
+
 		if (!user) {
 			return fail(401, { message: 'Sign in required' });
 		}
@@ -327,7 +603,9 @@ export const actions: Actions = {
 		return { success: true, message: 'Club admin assigned.' };
 	},
 
-	remove: async ({ request, params, locals: { supabase } }) => {
+	remove: async ({ request, params, locals: { supabase, appRole } }) => {
+		assertSuperAdmin(appRole);
+
 		const formData = await request.formData();
 		const parsed = removeSchema.safeParse({
 			userId: formData.get('userId')

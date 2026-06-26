@@ -1,15 +1,22 @@
+import { assertSuperAdmin } from '$lib/server/clubAccess';
 import { CLUB_MAX_ACTIVE_SESSIONS_LIMIT, CLUB_MAX_ADMINS_LIMIT } from '$lib/server/clubLimits';
 import { clubInputSchema } from '$lib/validation/club';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = () => ({
-	maxActiveSessionsLimit: CLUB_MAX_ACTIVE_SESSIONS_LIMIT,
-	maxAdminsLimit: CLUB_MAX_ADMINS_LIMIT
-});
+export const load: PageServerLoad = ({ locals: { appRole } }) => {
+	assertSuperAdmin(appRole);
+
+	return {
+		maxActiveSessionsLimit: CLUB_MAX_ACTIVE_SESSIONS_LIMIT,
+		maxAdminsLimit: CLUB_MAX_ADMINS_LIMIT
+	};
+};
 
 export const actions: Actions = {
-	default: async ({ request, locals: { supabase, user } }) => {
+	default: async ({ request, locals: { supabase, user, appRole } }) => {
+		assertSuperAdmin(appRole);
+
 		if (!user) {
 			return fail(401, { message: 'Sign in required' });
 		}

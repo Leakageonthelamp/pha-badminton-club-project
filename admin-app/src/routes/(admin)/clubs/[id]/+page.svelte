@@ -4,6 +4,7 @@
 	import { page } from '$app/state';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import FormToast from '$lib/components/FormToast.svelte';
+	import MapPinPicker from '$lib/components/MapPinPicker.svelte';
 	import SubmitButton from '$lib/components/SubmitButton.svelte';
 	import {
 		CLUB_DELETE_CONFIRM_PHRASE,
@@ -11,11 +12,19 @@
 		CLUB_NAME_MAX_LENGTH
 	} from '$lib/config/club';
 	import { whileSubmitting } from '$lib/forms/submitting';
+	import { formatThb, shuttlePricePerEach, type ClubShuttle, type PromptPayType } from '$lib/types/club';
+	import { SHUTTLE_NAME_MAX_LENGTH } from '$lib/validation/clubSettings';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	let updateLoading = $state(false);
+	let promptPayLoading = $state(false);
+	let locationLoading = $state(false);
+	let locationClearLoading = $state(false);
+	let shuttleCreateLoading = $state(false);
+	let shuttleUpdateLoadingId = $state<string | null>(null);
+	let shuttleDeleteLoadingId = $state<string | null>(null);
 	let deleteLoading = $state(false);
 	let assignLoadingUserId = $state<string | null>(null);
 	let removeLoadingUserId = $state<string | null>(null);
@@ -27,9 +36,28 @@
 	let maxActiveSessions = $state(String(data.club.max_active_sessions));
 	let maxAdmins = $state(String(data.club.max_admins));
 	let isActive = $state(data.club.is_active);
+	let promptPayType = $state<PromptPayType | ''>(data.club.promptpay_type ?? '');
+	let promptPayTarget = $state(data.club.promptpay_target ?? '');
+	let latitude = $state<number | null>(data.club.latitude);
+	let longitude = $state<number | null>(data.club.longitude);
 	let lastSyncedAt = $state(data.club.updated_at);
 	let deleteModalOpen = $state(false);
 	let deleteConfirmText = $state('');
+	let editingShuttleId = $state<string | null>(null);
+
+	let newShuttleName = $state('');
+	let newShuttleSpeed = $state('75');
+	let newShuttleOriginalPrice = $state('');
+	let newShuttlePrice = $state('');
+	let newShuttlePerBox = $state('12');
+
+	let editShuttleName = $state('');
+	let editShuttleSpeed = $state('75');
+	let editShuttleOriginalPrice = $state('');
+	let editShuttlePrice = $state('');
+	let editShuttlePerBox = $state('12');
+
+	const isSuperAdmin = $derived(data.isSuperAdmin);
 
 	const deleteConfirmed = $derived(deleteConfirmText === CLUB_DELETE_CONFIRM_PHRASE);
 
@@ -43,7 +71,24 @@
 		maxActiveSessions = String(club.max_active_sessions);
 		maxAdmins = String(club.max_admins);
 		isActive = club.is_active ?? true;
+		promptPayType = club.promptpay_type ?? '';
+		promptPayTarget = club.promptpay_target ?? '';
+		latitude = club.latitude;
+		longitude = club.longitude;
 		lastSyncedAt = club.updated_at;
+	};
+
+	const startEditShuttle = (shuttle: ClubShuttle) => {
+		editingShuttleId = shuttle.id;
+		editShuttleName = shuttle.name;
+		editShuttleSpeed = String(shuttle.speed);
+		editShuttleOriginalPrice = String(shuttle.original_price);
+		editShuttlePrice = String(shuttle.price);
+		editShuttlePerBox = String(shuttle.number_per_box);
+	};
+
+	const cancelEditShuttle = () => {
+		editingShuttleId = null;
 	};
 
 	$effect.pre(() => {
@@ -58,10 +103,21 @@
 	const hasChanges = $derived.by(() => {
 		if (name.trim() !== data.club.name) return true;
 		if (description.trim() !== data.club.description) return true;
+		if (!isSuperAdmin) return false;
 		if (Number(maxActiveSessions) !== data.club.max_active_sessions) return true;
 		if (Number(maxAdmins) !== data.club.max_admins) return true;
 		if (isActive !== (data.club.is_active ?? true)) return true;
 		return false;
+	});
+
+	const hasPromptPayChanges = $derived.by(() => {
+		const savedType = data.club.promptpay_type ?? '';
+		const savedTarget = data.club.promptpay_target ?? '';
+		return promptPayType !== savedType || promptPayTarget.trim() !== savedTarget;
+	});
+
+	const hasLocationChanges = $derived.by(() => {
+		return latitude !== data.club.latitude || longitude !== data.club.longitude;
 	});
 
 	const handleUpdate: SubmitFunction = ({ cancel }) => {
@@ -143,9 +199,15 @@
 
 <section class="space-y-6">
 	<div>
-		<h1 class="text-2xl font-semibold text-slate-900">{data.club.name}</h1>
+		<h1 class="text-2xl font-semibold text-slate-900">
+			{isSuperAdmin ? data.club.name : 'Club settings'}
+		</h1>
 		<p class="mt-2 text-sm text-slate-600">
-			Manage club settings and admins.
+			{#if isSuperAdmin}
+				Manage club settings and admins.
+			{:else}
+				{data.club.name} — configure shuttles, PromptPay, and location.
+			{/if}
 			{#if !data.club.is_active}
 				<span class="font-medium text-amber-700">This club is inactive.</span>
 			{/if}
@@ -197,6 +259,7 @@
 			</div>
 		</div>
 
+		{#if isSuperAdmin}
 		<div>
 			<label for="max_active_sessions" class={labelClass}>Max active sessions</label>
 			<div class="relative">
@@ -279,12 +342,359 @@
 			</button>
 			<input type="hidden" name="is_active" value={isActive ? 'true' : 'false'} />
 		</div>
+		{/if}
 
 		<SubmitButton loading={updateLoading} loadingLabel="Saving…" disabled={!hasChanges || updateLoading}>
 			Save changes
 		</SubmitButton>
 	</form>
 
+	<section class="{cardClass} space-y-4">
+		<div>
+			<h2 class="text-lg font-semibold text-slate-900">Shuttlecocks</h2>
+			<p class="mt-2 text-sm text-slate-600">Brands and pricing your club uses.</p>
+		</div>
+
+		{#if data.shuttles.length === 0}
+			<p class="text-sm text-slate-500">No shuttlecocks yet — add the brands your club uses.</p>
+		{:else}
+			<ul class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
+				{#each data.shuttles as shuttle (shuttle.id)}
+					<li class="bg-white px-4 py-3">
+						{#if editingShuttleId === shuttle.id}
+							<form
+								method="POST"
+								action="?/updateShuttle"
+								class="space-y-3"
+								use:enhance={whileSubmitting((v) => {
+									shuttleUpdateLoadingId = v ? shuttle.id : null;
+								})}
+							>
+								<input type="hidden" name="shuttleId" value={shuttle.id} />
+								<div class="grid gap-3 sm:grid-cols-2">
+									<div class="sm:col-span-2">
+										<label class={labelClass} for="edit-name-{shuttle.id}">Name</label>
+										<input
+											id="edit-name-{shuttle.id}"
+											name="name"
+											type="text"
+											required
+											maxlength={SHUTTLE_NAME_MAX_LENGTH}
+											bind:value={editShuttleName}
+											class={inputClass}
+										/>
+									</div>
+									<div>
+										<label class={labelClass} for="edit-speed-{shuttle.id}">Speed</label>
+										<select
+											id="edit-speed-{shuttle.id}"
+											name="speed"
+											bind:value={editShuttleSpeed}
+											class={inputClass}
+										>
+											<option value="75">75</option>
+											<option value="76">76</option>
+										</select>
+									</div>
+									<div>
+										<label class={labelClass} for="edit-per-box-{shuttle.id}">Per box</label>
+										<input
+											id="edit-per-box-{shuttle.id}"
+											name="number_per_box"
+											type="number"
+											min="1"
+											required
+											bind:value={editShuttlePerBox}
+											class={inputClass}
+										/>
+									</div>
+									<div>
+										<label class={labelClass} for="edit-original-{shuttle.id}">Original price</label>
+										<input
+											id="edit-original-{shuttle.id}"
+											name="original_price"
+											type="number"
+											min="0"
+											step="0.01"
+											required
+											bind:value={editShuttleOriginalPrice}
+											class={inputClass}
+										/>
+									</div>
+									<div>
+										<label class={labelClass} for="edit-price-{shuttle.id}">Price (per box)</label>
+										<input
+											id="edit-price-{shuttle.id}"
+											name="price"
+											type="number"
+											min="0"
+											step="0.01"
+											required
+											bind:value={editShuttlePrice}
+											class={inputClass}
+										/>
+									</div>
+								</div>
+								<div class="flex flex-wrap gap-2">
+									<SubmitButton
+										loading={shuttleUpdateLoadingId === shuttle.id}
+										loadingLabel="Saving…"
+										class="!w-auto"
+									>
+										Save
+									</SubmitButton>
+									<SubmitButton type="button" variant="secondary" class="!w-auto" onclick={cancelEditShuttle}>
+										Cancel
+									</SubmitButton>
+								</div>
+							</form>
+						{:else}
+							<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+								<div>
+									<p class="font-medium text-slate-900">
+										{shuttle.name}
+										<span class="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+											{shuttle.speed}
+										</span>
+									</p>
+									<p class="mt-1 text-sm text-slate-600">
+										{formatThb(shuttle.original_price)} original · {formatThb(shuttle.price)} per box ·
+										{shuttle.number_per_box} per box ·
+										{formatThb(shuttlePricePerEach(shuttle))} each
+									</p>
+								</div>
+								<div class="flex gap-2">
+									<SubmitButton
+										type="button"
+										variant="secondary"
+										class="!w-auto !py-2 !text-sm"
+										onclick={() => startEditShuttle(shuttle)}
+									>
+										Edit
+									</SubmitButton>
+									<form
+										method="POST"
+										action="?/deleteShuttle"
+										use:enhance={whileSubmitting((v) => {
+											shuttleDeleteLoadingId = v ? shuttle.id : null;
+										})}
+									>
+										<input type="hidden" name="shuttleId" value={shuttle.id} />
+										<SubmitButton
+											variant="ghost"
+											loading={shuttleDeleteLoadingId === shuttle.id}
+											loadingLabel="Removing…"
+											class="!w-auto !py-2 !text-sm text-red-600 hover:!bg-red-50"
+										>
+											Delete
+										</SubmitButton>
+									</form>
+								</div>
+							</div>
+						{/if}
+					</li>
+				{/each}
+			</ul>
+		{/if}
+
+		<form
+			method="POST"
+			action="?/createShuttle"
+			class="space-y-3 border-t border-slate-100 pt-4"
+			use:enhance={whileSubmitting((v) => (shuttleCreateLoading = v))}
+		>
+			<h3 class="text-sm font-medium text-slate-700">Add shuttlecock</h3>
+			<div class="grid gap-3 sm:grid-cols-2">
+				<div class="sm:col-span-2">
+					<label class={labelClass} for="new-shuttle-name">Name</label>
+					<input
+						id="new-shuttle-name"
+						name="name"
+						type="text"
+						required
+						maxlength={SHUTTLE_NAME_MAX_LENGTH}
+						bind:value={newShuttleName}
+						class={inputClass}
+						placeholder="Yonex AS-30"
+					/>
+				</div>
+				<div>
+					<label class={labelClass} for="new-shuttle-speed">Speed</label>
+					<select id="new-shuttle-speed" name="speed" bind:value={newShuttleSpeed} class={inputClass}>
+						<option value="75">75</option>
+						<option value="76">76</option>
+					</select>
+				</div>
+				<div>
+					<label class={labelClass} for="new-shuttle-per-box">Number per box</label>
+					<input
+						id="new-shuttle-per-box"
+						name="number_per_box"
+						type="number"
+						min="1"
+						required
+						bind:value={newShuttlePerBox}
+						class={inputClass}
+					/>
+				</div>
+				<div>
+					<label class={labelClass} for="new-shuttle-original">Original price</label>
+					<input
+						id="new-shuttle-original"
+						name="original_price"
+						type="number"
+						min="0"
+						step="0.01"
+						required
+						bind:value={newShuttleOriginalPrice}
+						class={inputClass}
+					/>
+				</div>
+				<div>
+					<label class={labelClass} for="new-shuttle-price">Price (per box)</label>
+					<input
+						id="new-shuttle-price"
+						name="price"
+						type="number"
+						min="0"
+						step="0.01"
+						required
+						bind:value={newShuttlePrice}
+						class={inputClass}
+					/>
+				</div>
+			</div>
+			<SubmitButton loading={shuttleCreateLoading} loadingLabel="Adding…" class="!w-auto">
+				Add shuttlecock
+			</SubmitButton>
+		</form>
+	</section>
+
+	<form
+		method="POST"
+		action="?/updatePromptPay"
+		class="{cardClass} space-y-4"
+		use:enhance={whileSubmitting((v) => (promptPayLoading = v))}
+	>
+		<div>
+			<h2 class="text-lg font-semibold text-slate-900">PromptPay</h2>
+			<p class="mt-2 text-sm text-slate-600">
+				Phone number or national ID for payment QR codes (coming soon).
+			</p>
+		</div>
+
+		<fieldset class="space-y-3">
+			<legend class="sr-only">PromptPay type</legend>
+			<label class="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3">
+				<input
+					type="radio"
+					name="promptpay_type"
+					value="phone"
+					bind:group={promptPayType}
+					class="h-4 w-4 border-slate-300 text-brand-600 focus:ring-brand-600"
+				/>
+				<span class="text-sm font-medium text-slate-900">Mobile phone</span>
+			</label>
+			<label class="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3">
+				<input
+					type="radio"
+					name="promptpay_type"
+					value="national_id"
+					bind:group={promptPayType}
+					class="h-4 w-4 border-slate-300 text-brand-600 focus:ring-brand-600"
+				/>
+				<span class="text-sm font-medium text-slate-900">National ID card</span>
+			</label>
+		</fieldset>
+
+		<div>
+			<label for="promptpay_target" class={labelClass}>
+				{promptPayType === 'national_id' ? 'National ID' : 'Phone number'}
+			</label>
+			<input
+				id="promptpay_target"
+				name="promptpay_target"
+				type="text"
+				inputmode={promptPayType === 'national_id' ? 'numeric' : 'tel'}
+				bind:value={promptPayTarget}
+				placeholder={promptPayType === 'national_id' ? '1234567890123' : '0812345678'}
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-wrap gap-2">
+			<SubmitButton
+				loading={promptPayLoading}
+				loadingLabel="Saving…"
+				disabled={!hasPromptPayChanges || !promptPayType}
+				class="!w-auto"
+			>
+				Save PromptPay
+			</SubmitButton>
+		</div>
+	</form>
+
+	{#if data.club.promptpay_type || data.club.promptpay_target}
+		<form method="POST" action="?/updatePromptPay" use:enhance={whileSubmitting((v) => (promptPayLoading = v))}>
+			<input type="hidden" name="clear" value="true" />
+			<input type="hidden" name="promptpay_target" value="" />
+			<SubmitButton variant="ghost" loading={promptPayLoading} loadingLabel="Clearing…" class="!w-auto !text-sm">
+				Clear PromptPay
+			</SubmitButton>
+		</form>
+	{/if}
+
+	<form
+		method="POST"
+		action="?/updateLocation"
+		class="{cardClass} space-y-4"
+		use:enhance={whileSubmitting((v) => (locationLoading = v))}
+	>
+		<div>
+			<h2 class="text-lg font-semibold text-slate-900">Location</h2>
+			<p class="mt-2 text-sm text-slate-600">Drop a pin where your club usually plays.</p>
+		</div>
+
+		<MapPinPicker bind:latitude bind:longitude disabled={locationLoading} />
+
+		<input type="hidden" name="latitude" value={latitude ?? ''} />
+		<input type="hidden" name="longitude" value={longitude ?? ''} />
+
+		<div class="flex flex-wrap gap-2">
+			<SubmitButton
+				loading={locationLoading}
+				loadingLabel="Saving…"
+				disabled={!hasLocationChanges || latitude === null || longitude === null}
+				class="!w-auto"
+			>
+				Save location
+			</SubmitButton>
+		</div>
+	</form>
+
+	{#if data.club.latitude !== null && data.club.longitude !== null}
+		<form
+			method="POST"
+			action="?/updateLocation"
+			use:enhance={whileSubmitting((v) => (locationClearLoading = v))}
+		>
+			<input type="hidden" name="clear" value="true" />
+			<SubmitButton
+				variant="ghost"
+				loading={locationClearLoading}
+				loadingLabel="Clearing…"
+				class="!w-auto !text-sm"
+				onclick={() => {
+					latitude = null;
+					longitude = null;
+				}}
+			>
+				Clear location
+			</SubmitButton>
+		</form>
+	{/if}
+
+	{#if isSuperAdmin}
 	<section class="{cardClass} space-y-4">
 		<div>
 			<h2 class="text-lg font-semibold text-slate-900">Club admins</h2>
@@ -442,9 +852,10 @@
 			Delete club
 		</button>
 	</section>
+	{/if}
 </section>
 
-{#if deleteModalOpen}
+{#if isSuperAdmin && deleteModalOpen}
 	<div
 		class="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 sm:items-center"
 		role="dialog"

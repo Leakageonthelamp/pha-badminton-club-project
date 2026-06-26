@@ -1,3 +1,4 @@
+import { isAdminAppRole } from '$lib/server/clubAccess';
 import { createSupabaseServerClient } from '$lib/supabase/server';
 import {
 	isSupabaseUnavailableError,
@@ -10,6 +11,7 @@ import { sequence } from '@sveltejs/kit/hooks';
 
 const PUBLIC_PATHS = new Set(['/login', '/auth/callback']);
 const BACKDOOR_PATH = '/api/internal/promote-superadmin';
+const SUPER_ADMIN_ONLY_PREFIXES = ['/clubs/new'];
 
 const isPublicPath = (path: string) =>
 	PUBLIC_PATHS.has(path) || path.startsWith('/auth/callback');
@@ -105,17 +107,27 @@ const authGuard: Handle = async ({ event, resolve }) => {
 		event.locals.appRole = await loadAppRole(event.locals.supabase, user.id);
 
 		if (path === '/login') {
-			if (event.locals.appRole === 'super_admin') {
-				redirect(303, '/');
+			if (isAdminAppRole(event.locals.appRole)) {
+				redirect(303, event.locals.appRole === 'club_admin' ? '/dashboard' : '/');
 			}
 
 			await event.locals.supabase.auth.signOut();
 			event.locals.session = null;
 			event.locals.user = null;
 			event.locals.appRole = null;
-		} else if (!isPublic && event.locals.appRole !== 'super_admin') {
+		} else if (!isPublic && !isAdminAppRole(event.locals.appRole)) {
 			await event.locals.supabase.auth.signOut();
 			redirect(303, '/login?error=access_denied');
+		} else if (!isPublic && event.locals.appRole === 'club_admin' && path === '/') {
+			redirect(303, '/dashboard');
+		} else if (!isPublic && event.locals.appRole === 'super_admin' && path === '/dashboard') {
+			redirect(303, '/');
+		} else if (
+			!isPublic &&
+			event.locals.appRole === 'club_admin' &&
+			SUPER_ADMIN_ONLY_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))
+		) {
+			redirect(303, '/dashboard');
 		}
 	} else if (!isPublic) {
 		redirect(303, '/login');

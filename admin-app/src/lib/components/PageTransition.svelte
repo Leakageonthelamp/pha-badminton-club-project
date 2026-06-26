@@ -2,8 +2,12 @@
 	import { onNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import { getTransitionDirection } from '$lib/navigation/back';
+	import type { AppRole } from '$lib/types/auth';
 
-	let { children }: { children: import('svelte').Snippet } = $props();
+	let {
+		appRole = null,
+		children
+	}: { appRole?: AppRole | null; children: import('svelte').Snippet } = $props();
 
 	let direction = $state<'forward' | 'back'>('forward');
 	let animate = $state(false);
@@ -16,7 +20,10 @@
 		animate = true;
 		const from = navigation.from.url.pathname;
 		const to = navigation.to?.url.pathname ?? '';
-		direction = navigation.type === 'popstate' ? 'back' : getTransitionDirection(from, to);
+		direction =
+			navigation.type === 'popstate'
+				? 'back'
+				: getTransitionDirection(from, to, appRole);
 	});
 </script>
 
