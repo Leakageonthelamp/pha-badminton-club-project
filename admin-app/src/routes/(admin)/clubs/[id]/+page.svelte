@@ -8,6 +8,8 @@
 	import SelectMenu from '@repo/ui/components/SelectMenu.svelte';
 	import MapPinPicker from '$lib/components/MapPinPicker.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
+	import TagPill from '@repo/ui/components/TagPill.svelte';
+	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
 	import {
 		CLUB_DELETE_CONFIRM_PHRASE,
 		CLUB_DESCRIPTION_MAX_LENGTH,
@@ -413,6 +415,44 @@
 			Save changes
 		</SubmitButton>
 	</form>
+
+	{#if !isSuperAdmin}
+		<section class="{cardClass} space-y-4">
+			<div>
+				<h2 class="text-lg font-semibold text-slate-900">Club admins</h2>
+				<p class="mt-2 text-sm text-slate-600">People who manage this club.</p>
+			</div>
+
+			{#if data.admins.length === 0}
+				<p class="text-sm text-slate-500">No club admins assigned yet.</p>
+			{:else}
+				<ul class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
+					{#each data.admins as admin (admin.user_id)}
+						<li class="flex items-center gap-3 bg-white px-4 py-3">
+							<UserAvatar
+								displayName={admin.profile?.display_name ?? 'Unknown'}
+								avatarUrl={admin.profile?.avatar_url}
+								size="sm"
+							/>
+							<div class="min-w-0 flex-1">
+								<p class="truncate font-medium text-slate-900">
+									{admin.profile?.display_name ?? 'Unknown'}
+								</p>
+								{#if admin.profile?.email}
+									<p class="truncate text-sm text-slate-500">{admin.profile.email}</p>
+								{:else if admin.profile?.phone}
+									<p class="truncate text-sm text-slate-500">{admin.profile.phone}</p>
+								{/if}
+							</div>
+							{#if admin.profile?.tag}
+								<TagPill tag={admin.profile.tag} />
+							{/if}
+						</li>
+					{/each}
+				</ul>
+			{/if}
+		</section>
+	{/if}
 
 	<section class="{cardClass} space-y-4">
 		<div>

@@ -56,6 +56,8 @@ export const loadStoredUserLocation = (): StoredUserLocation | null => {
 	}
 };
 
+export const USER_LOCATION_STORED_EVENT = 'ph:userLocationStored';
+
 export const storeUserLocation = (
 	latitude: number,
 	longitude: number,
@@ -71,7 +73,47 @@ export const storeUserLocation = (
 	if (typeof sessionStorage !== 'undefined') {
 		sessionStorage.removeItem(LOCATION_DENIED_KEY);
 	}
+
+	if (typeof window !== 'undefined') {
+		window.dispatchEvent(new CustomEvent(USER_LOCATION_STORED_EVENT));
+	}
 };
+
+const EARTH_RADIUS_KM = 6371;
+
+export const haversineDistanceKm = (
+	lat1: number,
+	lng1: number,
+	lat2: number,
+	lng2: number
+): number => {
+	const toRad = (deg: number) => (deg * Math.PI) / 180;
+	const dLat = toRad(lat2 - lat1);
+	const dLng = toRad(lng2 - lng1);
+	const a =
+		Math.sin(dLat / 2) ** 2 +
+		Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+
+	return EARTH_RADIUS_KM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
+export const formatDistanceKm = (distanceKm: number): string => {
+	if (distanceKm < 1) {
+		return `${Math.round(distanceKm * 1000)} m`;
+	}
+
+	if (distanceKm < 10) {
+		return `${distanceKm.toFixed(1)} km`;
+	}
+
+	return `${Math.round(distanceKm)} km`;
+};
+
+export const mapsSearchUrl = (latitude: number, longitude: number): string =>
+	`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+
+export const appleMapsSearchUrl = (latitude: number, longitude: number): string =>
+	`https://maps.apple.com/?ll=${latitude},${longitude}`;
 
 export const markLocationDenied = (): void => {
 	if (typeof sessionStorage !== 'undefined') {

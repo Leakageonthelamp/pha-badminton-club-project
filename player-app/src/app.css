@@ -34,6 +34,14 @@
 	transform: translateY(0);
 }
 
+.bottom-sheet-panel--dragging {
+	transition: none;
+}
+
+.bottom-sheet-drag-handle {
+	@apply min-h-8 shrink-0 cursor-grab touch-none select-none active:cursor-grabbing;
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.bottom-sheet-backdrop,
 	.bottom-sheet-panel {

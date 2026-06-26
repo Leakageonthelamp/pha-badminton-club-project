@@ -1,22 +1,39 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { invalidate } from '$app/navigation';
 	import ClubDetailSheet from '$lib/components/ClubDetailSheet.svelte';
+	import { clubsWithDistance } from '$lib/clubs/nearby';
 	import RefreshIcon from '@repo/ui/icons/RefreshIcon.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import DashboardTile from '@repo/ui/components/DashboardTile.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
-	import SectionHeading from '@repo/ui/components/SectionHeading.svelte';
 	import BuildingIcon from '@repo/ui/icons/BuildingIcon.svelte';
+	import {
+		formatDistanceKm,
+		loadStoredUserLocation,
+		USER_LOCATION_STORED_EVENT
+	} from '@repo/ui/geolocation';
 	import type { ClubPublic } from '$lib/types/club';
 	import type { LayoutData } from '../$types';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData & LayoutData } = $props();
 
-	const clubs = $derived(data.clubs ?? []);
-	const page = $derived(data.page ?? 1);
-	const totalPages = $derived(data.totalPages ?? 1);
+	let userLocation = $state(loadStoredUserLocation());
+	const clubs = $derived(clubsWithDistance(data.clubs ?? [], userLocation));
+	const sortedByDistance = $derived(userLocation !== null);
 	const profileName = $derived(data.profile?.display_name ?? 'Player');
+	const clubCountLabel = $derived(`${clubs.length} club${clubs.length === 1 ? '' : 's'}`);
+	const sectionTitle = $derived(sortedByDistance ? 'Nearby clubs' : 'Clubs');
+	const sectionMeta = $derived(
+		clubs.length === 0
+			? sortedByDistance
+				? 'Nearest clubs appear here once available'
+				: 'Active clubs appear here once available'
+			: sortedByDistance
+				? `${clubCountLabel} · nearest first`
+				: `${clubCountLabel} · A–Z`
+	);
 
 	let sheetOpen = $state(false);
 	let selectedClub = $state<ClubPublic | null>(null);
@@ -42,6 +59,22 @@
 			refreshing = false;
 		}
 	};
+
+	$effect(() => {
+		if (!browser) return;
+
+		const syncLocation = () => {
+			userLocation = loadStoredUserLocation();
+		};
+
+		window.addEventListener(USER_LOCATION_STORED_EVENT, syncLocation);
+		window.addEventListener('storage', syncLocation);
+
+		return () => {
+			window.removeEventListener(USER_LOCATION_STORED_EVENT, syncLocation);
+			window.removeEventListener('storage', syncLocation);
+		};
+	});
 </script>
 
 <section class="space-y-6">
@@ -53,11 +86,14 @@
 	/>
 
 	<div class="space-y-4">
-		<div class="flex items-center justify-between gap-3 px-1">
-			<SectionHeading title="Clubs" class="!px-0" />
+		<header class="app-section-header">
+			<div class="min-w-0">
+				<h2 class="app-section-title">{sectionTitle}</h2>
+				<p class="app-section-meta">{sectionMeta}</p>
+			</div>
 			<button
 				type="button"
-				class="inline-flex shrink-0 items-center justify-center rounded-xl bg-brand-700 p-2.5 text-white transition hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 disabled:opacity-70"
+				class="app-section-action"
 				disabled={refreshing}
 				aria-label="Refresh clubs"
 				aria-busy={refreshing}
@@ -65,14 +101,15 @@
 			>
 				{#if refreshing}
 					<span
-						class="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"
+						class="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-brand-600"
 						aria-hidden="true"
 					></span>
 				{:else}
-					<RefreshIcon class="h-5 w-5" />
+					<RefreshIcon class="h-4 w-4 text-brand-700" />
 				{/if}
+				Refresh
 			</button>
-		</div>
+		</header>
 
 		{#if clubs.length === 0}
 			<EmptyState message="No active clubs yet. Check back later." />
@@ -83,40 +120,11 @@
 						title={club.name}
 						description={club.description || 'Tap to view details'}
 						icon={BuildingIcon}
+						badge={club.distanceKm !== null ? formatDistanceKm(club.distanceKm) : undefined}
 						onclick={() => openClub(club)}
 					/>
 				{/each}
 			</div>
-
-			{#if totalPages > 1}
-				<nav class="flex items-center justify-between gap-3 pt-1" aria-label="Clubs pagination">
-					{#if page > 1}
-						<a
-							href="/?page={page - 1}"
-							class="text-sm font-medium text-brand-700 hover:text-brand-800"
-						>
-							Previous
-						</a>
-					{:else}
-						<span class="text-sm text-slate-300">Previous</span>
-					{/if}
-
-					<p class="text-sm text-slate-500">
-						Page {page} of {totalPages}
-					</p>
-
-					{#if page < totalPages}
-						<a
-							href="/?page={page + 1}"
-							class="text-sm font-medium text-brand-700 hover:text-brand-800"
-						>
-							Next
-						</a>
-					{:else}
-						<span class="text-sm text-slate-300">Next</span>
-					{/if}
-				</nav>
-			{/if}
 		{/if}
 	</div>
 </section>

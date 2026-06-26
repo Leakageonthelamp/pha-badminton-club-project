@@ -23,7 +23,7 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { z } from 'zod';
 
-type AdminProfile = Pick<Profile, 'display_name' | 'tag' | 'email' | 'phone' | 'app_role'>;
+type AdminProfile = Pick<Profile, 'display_name' | 'tag' | 'email' | 'phone' | 'app_role' | 'avatar_url'>;
 
 export type ClubAdminWithProfile = {
 	user_id: string;
@@ -99,7 +99,7 @@ const loadClubAdmins = async (
 	const userIds = adminRows.map((row) => row.user_id);
 	const { data: profiles, error: profilesError } = await supabase
 		.from('profiles')
-		.select('id, display_name, tag, email, phone, app_role')
+		.select('id, display_name, tag, email, phone, app_role, avatar_url')
 		.in('id', userIds);
 
 	if (profilesError) {
@@ -146,13 +146,11 @@ export const load: PageServerLoad = async ({
 	const club = await assertCanManageClub(supabase, user.id, params.id, appRole);
 	const isSuperAdmin = appRole === 'super_admin';
 	const shuttles = await loadClubShuttles(supabase, params.id);
-
-	let admins: ClubAdminWithProfile[] = [];
+	let admins = await loadClubAdmins(supabase, params.id);
 	let searchResults: ProfileSearchResult[] = [];
 	const searchQuery = url.searchParams.get('q')?.trim() ?? '';
 
 	if (isSuperAdmin) {
-		admins = await loadClubAdmins(supabase, params.id);
 		const assignedIds = new Set(admins.map((row) => row.user_id));
 
 		if (searchQuery.length >= 2) {

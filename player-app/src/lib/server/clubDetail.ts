@@ -1,4 +1,4 @@
-import type { ClubAdminPublic, ClubPublic } from '$lib/types/club';
+import type { ClubAdminPublic, ClubDetail, ClubShuttlePublic } from '$lib/types/club';
 
 const loadClubAdmins = async (
 	supabase: App.Locals['supabase'],
@@ -22,7 +22,7 @@ const loadClubAdmins = async (
 	const userIds = adminRows.map((row) => row.user_id);
 	const { data: profiles, error: profilesError } = await supabase
 		.from('profiles')
-		.select('id, display_name, tag')
+		.select('id, display_name, tag, avatar_url')
 		.in('id', userIds);
 
 	if (profilesError) {
@@ -37,18 +37,37 @@ const loadClubAdmins = async (
 		return {
 			user_id: row.user_id,
 			display_name: profile?.display_name ?? 'Unknown',
-			tag: profile?.tag ?? ''
+			tag: profile?.tag ?? '',
+			avatar_url: profile?.avatar_url ?? null
 		};
 	});
+};
+
+const loadClubShuttles = async (
+	supabase: App.Locals['supabase'],
+	clubId: string
+): Promise<ClubShuttlePublic[]> => {
+	const { data, error } = await supabase
+		.from('club_shuttles')
+		.select('id, name, speed, original_price, price, number_per_box')
+		.eq('club_id', clubId)
+		.order('name', { ascending: true });
+
+	if (error) {
+		console.error('Failed to load club shuttles', error);
+		return [];
+	}
+
+	return (data ?? []) as ClubShuttlePublic[];
 };
 
 export const loadClubDetail = async (
 	supabase: App.Locals['supabase'],
 	clubId: string
-): Promise<{ club: ClubPublic; admins: ClubAdminPublic[] } | null> => {
+): Promise<ClubDetail | null> => {
 	const { data: club, error: clubError } = await supabase
 		.from('clubs')
-		.select('id, name, description')
+		.select('id, name, description, latitude, longitude')
 		.eq('id', clubId)
 		.eq('is_active', true)
 		.single();
@@ -57,10 +76,14 @@ export const loadClubDetail = async (
 		return null;
 	}
 
-	const admins = await loadClubAdmins(supabase, clubId);
+	const [admins, shuttles] = await Promise.all([
+		loadClubAdmins(supabase, clubId),
+		loadClubShuttles(supabase, clubId)
+	]);
 
 	return {
-		club: club as ClubPublic,
-		admins
+		club,
+		admins,
+		shuttles
 	};
 };
