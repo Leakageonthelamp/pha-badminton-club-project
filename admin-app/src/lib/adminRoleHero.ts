@@ -2,11 +2,11 @@ import type { AppRole } from '$lib/types/auth';
 
 export const adminRoleHeroBadgeClass = (role: AppRole | null | undefined): string => {
 	if (role === 'super_admin') {
-		return 'bg-violet-400/25 text-violet-50';
+		return 'app-hero-badge--role-super';
 	}
 
 	if (role === 'club_admin') {
-		return 'bg-sky-400/25 text-sky-50';
+		return 'app-hero-badge--role-club';
 	}
 
 	return '';

@@ -105,7 +105,7 @@
 		roleBadgeClass={roleHeroBadgeClass}
 	>
 		{#if isBanned}
-			<p class="app-hero-badge bg-red-500/90">Banned</p>
+			<span class="app-hero-badge app-hero-badge--danger">Banned</span>
 		{/if}
 	</DashboardHero>
 

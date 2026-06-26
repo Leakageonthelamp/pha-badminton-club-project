@@ -29,7 +29,7 @@
 <FormToast message={form?.message ?? data.error} variant="error" token={form?.message ?? data.error ?? ''} />
 
 <section class="space-y-6">
-	<DashboardHero title="Log in" subtitle="Use email or phone number with your password.">
+	<DashboardHero title="Log in" subtitle="Use email or phone number with your password." footerCenter>
 		<AppLogo size={48} class="mx-auto opacity-95" />
 	</DashboardHero>
 

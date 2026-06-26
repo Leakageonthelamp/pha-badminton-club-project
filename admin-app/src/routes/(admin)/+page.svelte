@@ -35,21 +35,19 @@
 		subtitle="Create and manage clubs and their admins."
 	>
 		{#if clubCount > 0}
-			<div class="flex flex-wrap gap-2">
-				<span class="app-hero-badge">
-					{clubCount} club{clubCount === 1 ? '' : 's'}
+			<span class="app-hero-stat">
+				{clubCount} club{clubCount === 1 ? '' : 's'}
+			</span>
+			{#if activeClubCount > 0}
+				<span class="app-hero-stat app-hero-stat--success">
+					{activeClubCount} active
 				</span>
-				{#if activeClubCount > 0}
-					<span class="app-hero-badge bg-emerald-400/20 text-emerald-50">
-						{activeClubCount} active
-					</span>
-				{/if}
-				{#if inactiveClubCount > 0}
-					<span class="app-hero-badge bg-amber-400/20 text-amber-50">
-						{inactiveClubCount} inactive
-					</span>
-				{/if}
-			</div>
+			{/if}
+			{#if inactiveClubCount > 0}
+				<span class="app-hero-stat app-hero-stat--warn">
+					{inactiveClubCount} inactive
+				</span>
+			{/if}
 		{/if}
 	</DashboardHero>
 

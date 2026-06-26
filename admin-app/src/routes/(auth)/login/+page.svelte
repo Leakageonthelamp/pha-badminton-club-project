@@ -29,7 +29,7 @@
 <FormToast message={form?.message ?? data.error} variant="error" token={form?.message ?? data.error ?? ''} />
 
 <section class="space-y-6">
-	<DashboardHero title="Admin sign in" subtitle="Super admin and club admin. Use your player account credentials.">
+	<DashboardHero title="Admin sign in" subtitle="Super admin and club admin. Use your player account credentials." footerCenter>
 		<AppLogo size={48} class="mx-auto opacity-95" />
 	</DashboardHero>
 

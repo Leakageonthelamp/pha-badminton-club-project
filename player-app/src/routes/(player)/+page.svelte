@@ -83,7 +83,14 @@
 		title={profileName}
 		tag={data.profile?.tag}
 		subtitle="Find clubs and join sessions near you."
-	/>
+	>
+		{#if clubs.length > 0}
+			<span class="app-hero-stat">{clubCountLabel}</span>
+			{#if sortedByDistance}
+				<span class="app-hero-stat app-hero-stat--success">Sorted by distance</span>
+			{/if}
+		{/if}
+	</DashboardHero>
 
 	<div class="space-y-4">
 		<header class="app-section-header">

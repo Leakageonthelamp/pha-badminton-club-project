@@ -5,6 +5,7 @@
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import FormToast from '@repo/ui/components/FormToast.svelte';
 	import AppModal from '@repo/ui/components/AppModal.svelte';
+	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import NotSetBadge from '@repo/ui/components/NotSetBadge.svelte';
 	import SelectMenu from '@repo/ui/components/SelectMenu.svelte';
 	import MapPinPicker from '$lib/components/MapPinPicker.svelte';
@@ -63,6 +64,12 @@
 	let editShuttlePerBox = $state('12');
 
 	const isSuperAdmin = $derived(data.isSuperAdmin);
+	const clubHeroEyebrow = $derived(isSuperAdmin ? 'Club management' : 'Club settings');
+	const clubHeroSubtitle = $derived(
+		isSuperAdmin
+			? 'Manage club settings and admins.'
+			: 'Configure shuttles, PromptPay, and location.'
+	);
 
 	const clubDescriptionNotSet = $derived(!data.club.description.trim());
 	const shuttlesNotSet = $derived(data.shuttles.length === 0);
@@ -261,21 +268,18 @@
 <FormToast message={toastMessage} variant={toastVariant} token={toastMessage ?? ''} />
 
 <section class="space-y-6">
-	<div>
-		<h1 class="text-2xl font-semibold text-slate-900">
-			{isSuperAdmin ? data.club.name : 'Club settings'}
-		</h1>
-		<p class="mt-2 text-sm text-slate-600">
-			{#if isSuperAdmin}
-				Manage club settings and admins.
-			{:else}
-				{data.club.name} — configure shuttles, PromptPay, and location.
-			{/if}
-			{#if !data.club.is_active}
-				<span class="font-medium text-amber-700">This club is inactive.</span>
-			{/if}
-		</p>
-	</div>
+	<DashboardHero eyebrow={clubHeroEyebrow} title={data.club.name} subtitle={clubHeroSubtitle}>
+		{#if data.club.is_active}
+			<span class="app-hero-stat app-hero-stat--success">Active</span>
+		{:else}
+			<span class="app-hero-stat app-hero-stat--warn">Inactive</span>
+		{/if}
+		{#if isSuperAdmin}
+			<span class="app-hero-stat">
+				{data.admins.length} admin{data.admins.length === 1 ? '' : 's'}
+			</span>
+		{/if}
+	</DashboardHero>
 
 	<form
 		method="POST"
