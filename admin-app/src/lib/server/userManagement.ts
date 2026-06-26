@@ -20,7 +20,7 @@ export const USER_MANAGEMENT_ERRORS: Record<UserManagementErrorCode, string> = {
 	not_super_admin: 'Super admin access required.',
 	self_action: 'You cannot perform this action on your own account.',
 	user_not_found: 'User not found.',
-	oauth_only: 'Password reset is only available for email or phone sign-in accounts.',
+	oauth_only: 'Setting a password is only available for email or phone sign-in accounts.',
 	invalid_password: 'Password does not meet requirements.',
 	cannot_delete_super_admin: 'Super admin accounts cannot be deleted.',
 	owns_clubs: 'Reassign club ownership before deleting this user.',
@@ -205,6 +205,35 @@ export type AuthUserSummary = {
 	providers: string[];
 };
 
+export const isAuthUserBanned = (bannedUntil: string | null | undefined): boolean =>
+	bannedUntil ? new Date(bannedUntil) > new Date() : false;
+
+export const loadUsersBannedStatus = async (userIds: string[]): Promise<Map<string, boolean>> => {
+	const result = new Map<string, boolean>();
+
+	if (!userIds.length) {
+		return result;
+	}
+
+	const admin = createSupabaseAdminClient();
+
+	await Promise.all(
+		userIds.map(async (userId) => {
+			const { data, error } = await admin.auth.admin.getUserById(userId);
+
+			if (error || !data.user) {
+				console.error('Failed to load auth user ban status', userId, error);
+				result.set(userId, false);
+				return;
+			}
+
+			result.set(userId, isAuthUserBanned(data.user.banned_until));
+		})
+	);
+
+	return result;
+};
+
 export const loadAuthUserSummary = async (userId: string): Promise<AuthUserSummary | null> => {
 	const admin = createSupabaseAdminClient();
 	const { data, error } = await admin.auth.admin.getUserById(userId);
@@ -216,14 +245,13 @@ export const loadAuthUserSummary = async (userId: string): Promise<AuthUserSumma
 
 	const user = data.user;
 	const bannedUntil = user.banned_until ?? null;
-	const isBanned = bannedUntil ? new Date(bannedUntil) > new Date() : false;
 	const providers = (user.identities ?? []).map((identity) => identity.provider);
 
 	return {
 		lastSignInAt: user.last_sign_in_at ?? null,
 		emailConfirmedAt: user.email_confirmed_at ?? null,
 		bannedUntil,
-		isBanned,
+		isBanned: isAuthUserBanned(bannedUntil),
 		providers
 	};
 };

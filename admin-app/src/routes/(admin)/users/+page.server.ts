@@ -1,5 +1,6 @@
 import { assertSuperAdmin } from '$lib/server/clubAccess';
 import { buildProfileSearchOrFilter } from '$lib/server/profileSearch';
+import { loadUsersBannedStatus } from '$lib/server/userManagement';
 import type { AppRole, Profile } from '$lib/types/auth';
 import { appRoleLabel } from '$lib/types/auth';
 import type { PageServerLoad } from './$types';
@@ -14,6 +15,7 @@ export type UserListItem = Pick<
 > & {
 	managedClubCount: number;
 	managedClubNames: string[];
+	isBanned: boolean;
 };
 
 export const load: PageServerLoad = async ({ url, locals: { supabase, appRole } }) => {
@@ -60,13 +62,15 @@ export const load: PageServerLoad = async ({ url, locals: { supabase, appRole } 
 	const profileRows = profiles ?? [];
 	const userIds = profileRows.map((profile) => profile.id);
 	const clubContext = await loadManagedClubContext(supabase, userIds);
+	const bannedStatus = await loadUsersBannedStatus(userIds);
 
 	const users: UserListItem[] = profileRows.map((profile) => {
 		const context = clubContext.get(profile.id) ?? { count: 0, names: [] };
 		return {
 			...profile,
 			managedClubCount: context.count,
-			managedClubNames: context.names
+			managedClubNames: context.names,
+			isBanned: bannedStatus.get(profile.id) ?? false
 		};
 	});
 

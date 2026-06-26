@@ -7,6 +7,8 @@
 	import BuildingIcon from '@repo/ui/icons/BuildingIcon.svelte';
 	import PlusIcon from '@repo/ui/icons/PlusIcon.svelte';
 	import UserIcon from '@repo/ui/icons/UserIcon.svelte';
+	import { adminRoleHeroBadgeClass } from '$lib/adminRoleHero';
+	import { appRoleLabel, type AppRole } from '$lib/types/auth';
 	import type { LayoutData } from '../$types';
 	import type { PageData } from './$types';
 
@@ -16,6 +18,11 @@
 	const clubCount = $derived(data.clubs.length);
 	const activeClubCount = $derived(data.clubs.filter((club) => club.is_active).length);
 	const inactiveClubCount = $derived(clubCount - activeClubCount);
+	const effectiveAppRole = $derived(data.effectiveAppRole ?? null);
+	const roleLabel = $derived(
+		effectiveAppRole ? appRoleLabel(effectiveAppRole as AppRole) : ''
+	);
+	const roleBadgeClass = $derived(adminRoleHeroBadgeClass(effectiveAppRole));
 </script>
 
 <section class="space-y-8">
@@ -23,6 +30,8 @@
 		eyebrow="Admin dashboard"
 		title={profileName}
 		tag={data.profile?.tag}
+		roleLabel={roleLabel}
+		roleBadgeClass={roleBadgeClass}
 		subtitle="Create and manage clubs and their admins."
 	>
 		{#if clubCount > 0}

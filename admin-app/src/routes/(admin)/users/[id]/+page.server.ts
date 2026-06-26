@@ -125,7 +125,7 @@ export const actions: Actions = {
 			return fail(400, { message: result.message });
 		}
 
-		return { success: true, message: 'Temporary password set.' };
+		return { success: true, message: 'Password set.' };
 	},
 
 	ban: async ({ params, locals: { user, appRole } }) => {

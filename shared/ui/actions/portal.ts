@@ -1,10 +1,17 @@
-/** ponytail: append to body so `fixed` is viewport-relative, not trapped in `.app-scroll` */
-export const portal = (node: HTMLElement, target: ParentNode = document.body) => {
-	target.appendChild(node);
+export function portal(node: HTMLElement, target: string | HTMLElement = document.body) {
+	const targetEl =
+		typeof target === 'string' ? document.querySelector<HTMLElement>(target) : target;
+
+	if (!targetEl) {
+		console.warn('portal: target not found');
+		return;
+	}
+
+	targetEl.appendChild(node);
 
 	return {
 		destroy() {
 			node.remove();
 		}
 	};
-};
+}

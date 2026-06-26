@@ -3,10 +3,12 @@
 	import { page } from '$app/state';
 	import { invalidateAll } from '$app/navigation';
 	import AdminWorkspaceSwitch from '$lib/components/AdminWorkspaceSwitch.svelte';
+	import ClubWorkspaceSwitch from '$lib/components/ClubWorkspaceSwitch.svelte';
 	import AppLogo from '$lib/components/AppLogo.svelte';
 	import ProfileMenu from '$lib/components/ProfileMenu.svelte';
 	import BackLink from '@repo/ui/components/BackLink.svelte';
 	import PageTransition from '$lib/components/PageTransition.svelte';
+	import { syncSelectedClub, selectClub } from '$lib/clubWorkspace.svelte';
 	import { appConfig } from '$lib/config/app';
 	import { getBackHref, getHomePath, shouldShowBack } from '$lib/navigation/back';
 	import { refreshAuthCacheIfNeeded } from '$lib/navigation/authCache';
@@ -24,6 +26,26 @@
 		getBackHref(page.url.pathname, appRole, dashboardMode, hasClubMembership)
 	);
 	const homeHref = $derived(getHomePath(appRole, dashboardMode, hasClubMembership));
+	const clubWorkspaceOptions = $derived(
+		(data.managedClubs ?? []).map((club) => ({
+			id: club.id,
+			name: club.name,
+			is_active: club.is_active
+		}))
+	);
+
+	$effect(() => {
+		const clubs = clubWorkspaceOptions;
+		const match = page.url.pathname.match(/^\/clubs\/([^/]+)/);
+		const pathClubId = match?.[1];
+
+		if (pathClubId && clubs.some((club) => club.id === pathClubId)) {
+			selectClub(pathClubId);
+			return;
+		}
+
+		syncSelectedClub(clubs);
+	});
 
 	$effect(() => {
 		if (!browser) return;
@@ -65,6 +87,9 @@
 	{/if}
 
 	<div class="flex shrink-0 items-center gap-2">
+		{#if clubWorkspaceOptions.length > 0}
+			<ClubWorkspaceSwitch clubs={clubWorkspaceOptions} />
+		{/if}
 		<AdminWorkspaceSwitch
 			options={data.workspaceOptions ?? []}
 			currentWorkspace={data.dashboardMode ?? 'super'}

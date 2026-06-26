@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { SubmitFunction } from '@sveltejs/kit';
+	import ActionRowLink from '@repo/ui/components/ActionRowLink.svelte';
 	import AppModal from '@repo/ui/components/AppModal.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import FormToast from '@repo/ui/components/FormToast.svelte';
@@ -9,6 +10,13 @@
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
+	import BuildingIcon from '@repo/ui/icons/BuildingIcon.svelte';
+	import FacebookIcon from '@repo/ui/icons/FacebookIcon.svelte';
+	import GoogleIcon from '@repo/ui/icons/GoogleIcon.svelte';
+	import RefreshIcon from '@repo/ui/icons/RefreshIcon.svelte';
+	import SettingsIcon from '@repo/ui/icons/SettingsIcon.svelte';
+	import UserIcon from '@repo/ui/icons/UserIcon.svelte';
+	import { adminRoleBadgeClass, adminRoleHeroBadgeClass } from '$lib/adminRoleHero';
 	import { USER_DELETE_CONFIRM_PHRASE } from '$lib/config/user';
 	import { PASSWORD_MIN_LENGTH } from '$lib/validation/password';
 	import {
@@ -19,7 +27,6 @@
 	import { toast } from '@repo/ui/toast/toast.svelte';
 	import type { ActionData, PageData } from './$types';
 
-	const cardClass = 'app-card-padded space-y-4';
 	const inputClass =
 		'w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base text-slate-900 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20';
 
@@ -40,10 +47,18 @@
 	const canDelete = $derived(
 		data.profile.app_role !== 'super_admin' && data.ownedClubCount === 0
 	);
+	const roleLabel = $derived(appRoleLabel(data.profile.app_role));
+	const roleBadgeClass = $derived(adminRoleBadgeClass(data.profile.app_role));
+	const roleHeroBadgeClass = $derived(adminRoleHeroBadgeClass(data.profile.app_role));
+	const toastMessage = $derived(form?.message ?? null);
+	const toastVariant = $derived(form?.success ? 'success' : 'error');
 
 	function formatDate(value: string | null | undefined): string {
 		if (!value) return '—';
-		return new Date(value).toLocaleString();
+		return new Date(value).toLocaleString(undefined, {
+			dateStyle: 'medium',
+			timeStyle: 'short'
+		});
 	}
 
 	const handleResetPassword: SubmitFunction = () => {
@@ -53,7 +68,6 @@
 			if (result.type === 'success') {
 				passwordModalOpen = false;
 				resetPassword = '';
-				toast.success('Temporary password set.');
 			}
 			await update();
 		};
@@ -65,7 +79,6 @@
 			banLoading = false;
 			if (result.type === 'success') {
 				banModalOpen = false;
-				toast.success(isBanned ? 'User unbanned.' : 'User banned.');
 			}
 			await update();
 		};
@@ -88,125 +101,211 @@
 		eyebrow="User detail"
 		title={data.profile.display_name}
 		tag={data.profile.tag}
-		subtitle={appRoleLabel(data.profile.app_role)}
+		roleLabel={roleLabel}
+		roleBadgeClass={roleHeroBadgeClass}
 	>
 		{#if isBanned}
 			<p class="app-hero-badge bg-red-500/90">Banned</p>
 		{/if}
 	</DashboardHero>
 
-	<FormToast message={form?.message} />
+	<FormToast message={toastMessage} variant={toastVariant} token={toastMessage ?? ''} />
 
-	<section class={cardClass}>
-		<h2 class="text-lg font-semibold text-slate-900">Identity</h2>
-		<div class="flex items-center gap-4">
-			<UserAvatar
-				displayName={data.profile.display_name}
-				avatarUrl={data.profile.avatar_url}
-				size="lg"
-			/>
-			<div class="space-y-1 text-sm text-slate-600">
-				<p>
-					<span class="font-medium text-slate-700">Email:</span>
-					{#if data.profile.email}
-						{data.profile.email}
-					{:else}
-						<NotSetBadge />
-					{/if}
-				</p>
-				<p>
-					<span class="font-medium text-slate-700">Phone:</span>
-					{#if data.profile.phone}
-						{data.profile.phone}
-					{:else}
-						<NotSetBadge />
-					{/if}
-				</p>
-				<p>
-					<span class="font-medium text-slate-700">Sign-in:</span>
-					{formatSignInMethodLabel(data.profile.sign_in_method)}
-				</p>
+	<section class="app-detail-section">
+		<div class="app-detail-profile-band">
+			<div class="flex items-center gap-4">
+				<UserAvatar
+					displayName={data.profile.display_name}
+					avatarUrl={data.profile.avatar_url}
+					size="lg"
+				/>
+				<div class="min-w-0">
+					<p class="truncate text-lg font-semibold text-slate-900">{data.profile.display_name}</p>
+					<div class="mt-1 flex flex-wrap items-center gap-2">
+						{#if data.profile.tag}
+							<TagPill tag={data.profile.tag} />
+						{/if}
+						<span class="app-role-badge {roleBadgeClass}">{roleLabel}</span>
+						{#if isBanned}
+							<span class="app-role-badge bg-red-50 text-red-800 ring-1 ring-red-200/80">Banned</span>
+						{/if}
+					</div>
+					<p class="mt-1 text-sm text-slate-600">
+						{formatSignInMethodLabel(data.profile.sign_in_method)} sign-in
+					</p>
+				</div>
+			</div>
+		</div>
+		<div class="app-detail-section-body">
+			<div class="app-detail-section-header">
+				<span class="app-detail-section-icon" aria-hidden="true">
+					<UserIcon class="h-5 w-5" />
+				</span>
+				<div>
+					<h2 class="text-lg font-semibold text-slate-900">Contact</h2>
+					<p class="text-sm text-slate-500">How this user signs in and can be reached</p>
+				</div>
+			</div>
+			<div class="app-detail-contact-grid">
+				<div class="app-detail-contact-item app-detail-contact-item--wide">
+					<p class="app-detail-contact-label">Email</p>
+					<p class="app-detail-contact-value">
+						{#if data.profile.email}
+							<span class="break-all">{data.profile.email}</span>
+						{:else}
+							<NotSetBadge />
+						{/if}
+					</p>
+				</div>
+				<div class="app-detail-contact-item">
+					<p class="app-detail-contact-label">Phone</p>
+					<p class="app-detail-contact-value">
+						{#if data.profile.phone}
+							<span class="truncate">{data.profile.phone}</span>
+						{:else}
+							<NotSetBadge />
+						{/if}
+					</p>
+				</div>
+				<div class="app-detail-contact-item">
+					<p class="app-detail-contact-label">Sign-in method</p>
+					<p class="app-detail-contact-value">
+						{#if data.profile.sign_in_method === 'google'}
+							<GoogleIcon class="h-5 w-5 shrink-0" />
+						{:else if data.profile.sign_in_method === 'facebook'}
+							<FacebookIcon class="h-5 w-5 shrink-0" />
+						{:else}
+							<UserIcon class="h-5 w-5 shrink-0 text-brand-700" />
+						{/if}
+						<span>{formatSignInMethodLabel(data.profile.sign_in_method)}</span>
+					</p>
+				</div>
 			</div>
 		</div>
 	</section>
 
-	<section class={cardClass}>
-		<h2 class="text-lg font-semibold text-slate-900">Role & clubs</h2>
-		<p class="text-sm text-slate-600">
-			<span class="font-medium text-slate-700">App role:</span>
-			{appRoleLabel(data.profile.app_role)}
-		</p>
-		{#if data.managedClubs.length}
-			<ul class="divide-y divide-slate-200 rounded-xl border border-slate-200">
-				{#each data.managedClubs as club (club.id)}
-					<li class="px-3 py-2 text-sm">
-						<a href="/clubs/{club.id}" class="font-medium text-brand-700 hover:text-brand-800">
-							{club.name}
-						</a>
-						<span class="text-slate-500"> · club admin</span>
-					</li>
-				{/each}
-			</ul>
-		{:else}
-			<p class="text-sm text-slate-500">Not assigned as club admin for any club.</p>
-		{/if}
-		{#if data.ownedClubs.length}
-			<div class="space-y-2">
-				<p class="text-sm font-medium text-slate-700">Owns clubs</p>
-				<ul class="divide-y divide-slate-200 rounded-xl border border-amber-200 bg-amber-50">
-					{#each data.ownedClubs as club (club.id)}
-						<li class="px-3 py-2 text-sm text-amber-900">{club.name}</li>
-					{/each}
-				</ul>
+	<section class="app-detail-section">
+		<div class="app-detail-section-body">
+			<div class="app-detail-section-header">
+				<span class="app-detail-section-icon" aria-hidden="true">
+					<BuildingIcon class="h-5 w-5" />
+				</span>
+				<div>
+					<h2 class="text-lg font-semibold text-slate-900">Role & clubs</h2>
+					<p class="text-sm text-slate-500">Platform role and club assignments</p>
+				</div>
 			</div>
-		{/if}
+			<div class="flex flex-wrap items-center gap-2">
+				<span class="text-sm text-slate-600">App role</span>
+				<span class="app-role-badge {roleBadgeClass}">{roleLabel}</span>
+			</div>
+			{#if data.managedClubs.length}
+				<div class="space-y-2">
+					<p class="text-sm font-medium text-slate-700">
+						Club admin for {data.managedClubs.length} club{data.managedClubs.length === 1 ? '' : 's'}
+					</p>
+					<div class="space-y-2">
+						{#each data.managedClubs as club (club.id)}
+							<ActionRowLink
+								href="/clubs/{club.id}"
+								title={club.name}
+								description="Club admin access"
+								icon={BuildingIcon}
+								accent="indigo"
+							/>
+						{/each}
+					</div>
+				</div>
+			{:else}
+				<p class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+					Not assigned as club admin for any club.
+				</p>
+			{/if}
+			{#if data.ownedClubs.length}
+				<div class="space-y-2">
+					<p class="text-sm font-medium text-amber-900">Owns {data.ownedClubs.length} club{data.ownedClubs.length === 1 ? '' : 's'}</p>
+					<ul class="divide-y divide-amber-200/80 rounded-xl border border-amber-200 bg-amber-50">
+						{#each data.ownedClubs as club (club.id)}
+							<li class="px-3 py-2.5 text-sm font-medium text-amber-900">{club.name}</li>
+						{/each}
+					</ul>
+				</div>
+			{/if}
+		</div>
 	</section>
 
-	<section class={cardClass}>
-		<h2 class="text-lg font-semibold text-slate-900">Account</h2>
-		<dl class="grid gap-2 text-sm text-slate-600">
-			<div>
-				<dt class="font-medium text-slate-700">Created</dt>
-				<dd>{formatDate(data.profile.created_at)}</dd>
+	<section class="app-detail-section">
+		<div class="app-detail-section-body">
+			<div class="app-detail-section-header">
+				<span class="app-detail-section-icon" aria-hidden="true">
+					<RefreshIcon class="h-5 w-5" />
+				</span>
+				<div>
+					<h2 class="text-lg font-semibold text-slate-900">Account activity</h2>
+					<p class="text-sm text-slate-500">Timestamps and auth providers</p>
+				</div>
 			</div>
-			<div>
-				<dt class="font-medium text-slate-700">Updated</dt>
-				<dd>{formatDate(data.profile.updated_at)}</dd>
-			</div>
-			<div>
-				<dt class="font-medium text-slate-700">Last sign-in</dt>
-				<dd>{formatDate(data.authSummary?.lastSignInAt)}</dd>
-			</div>
-			<div>
-				<dt class="font-medium text-slate-700">Email confirmed</dt>
-				<dd>{formatDate(data.authSummary?.emailConfirmedAt)}</dd>
-			</div>
-			<div>
-				<dt class="font-medium text-slate-700">Providers</dt>
-				<dd>
-					{#if data.authSummary?.providers.length}
-						{data.authSummary.providers.join(', ')}
-					{:else}
-						<NotSetBadge />
-					{/if}
-				</dd>
-			</div>
-		</dl>
+			<dl class="app-detail-meta-grid">
+				<div class="app-detail-meta-item">
+					<dt class="app-detail-meta-label">Created</dt>
+					<dd class="app-detail-meta-value">{formatDate(data.profile.created_at)}</dd>
+				</div>
+				<div class="app-detail-meta-item">
+					<dt class="app-detail-meta-label">Updated</dt>
+					<dd class="app-detail-meta-value">{formatDate(data.profile.updated_at)}</dd>
+				</div>
+				<div class="app-detail-meta-item">
+					<dt class="app-detail-meta-label">Last sign-in</dt>
+					<dd class="app-detail-meta-value">{formatDate(data.authSummary?.lastSignInAt)}</dd>
+				</div>
+				<div class="app-detail-meta-item">
+					<dt class="app-detail-meta-label">Email confirmed</dt>
+					<dd class="app-detail-meta-value">{formatDate(data.authSummary?.emailConfirmedAt)}</dd>
+				</div>
+				<div class="app-detail-meta-item sm:col-span-2">
+					<dt class="app-detail-meta-label">Auth providers</dt>
+					<dd class="app-detail-meta-value">
+						{#if data.authSummary?.providers.length}
+							<span class="flex flex-wrap gap-2">
+								{#each data.authSummary.providers as provider (provider)}
+									<span class="app-role-badge bg-slate-100 text-slate-700 ring-1 ring-slate-200/80">
+										{provider}
+									</span>
+								{/each}
+							</span>
+						{:else}
+							<NotSetBadge />
+						{/if}
+					</dd>
+				</div>
+			</dl>
+		</div>
 	</section>
 
-	<section class={cardClass}>
-		<h2 class="text-lg font-semibold text-slate-900">Actions</h2>
-		<div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+	<section class="app-detail-section">
+		<div class="app-detail-section-body">
+			<div class="app-detail-section-header">
+				<span class="app-detail-section-icon" aria-hidden="true">
+					<SettingsIcon class="h-5 w-5" />
+				</span>
+				<div>
+					<h2 class="text-lg font-semibold text-slate-900">Actions</h2>
+					<p class="text-sm text-slate-500">Set password, ban, and access controls</p>
+				</div>
+			</div>
+			<div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
 			{#if canResetPassword}
 				<button
 					type="button"
 					class="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
 					onclick={() => (passwordModalOpen = true)}
 				>
-					Set temporary password
+					Set password
 				</button>
 			{:else}
-				<p class="text-sm text-slate-500">Password reset is not available for OAuth-only accounts.</p>
+				<p class="text-sm text-slate-500">
+					Setting a password is not available for OAuth-only accounts.
+				</p>
 			{/if}
 
 			{#if isBanned}
@@ -224,6 +323,7 @@
 					Ban user
 				</button>
 			{/if}
+			</div>
 		</div>
 	</section>
 
@@ -256,10 +356,11 @@
 		<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
 			<div class="border-b border-slate-100 px-4 py-4">
 				<h2 id="reset-password-title" class="text-lg font-semibold text-slate-900">
-					Set temporary password
+					Set password
 				</h2>
 				<p class="mt-2 text-sm text-slate-600">
-					Share the new password with the user through a secure channel.
+					Users cannot change their password on their own. Set a new password here and share it
+					with them through a secure channel.
 				</p>
 			</div>
 			<form

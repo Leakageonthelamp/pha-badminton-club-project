@@ -7,6 +7,7 @@
 	} from '$lib/adminWorkspace';
 	import BuildingIcon from '@repo/ui/icons/BuildingIcon.svelte';
 	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
+	import MenuSelectedMark from '@repo/ui/components/MenuSelectedMark.svelte';
 	import SettingsIcon from '@repo/ui/icons/SettingsIcon.svelte';
 	import type { Component } from 'svelte';
 
@@ -33,9 +34,6 @@
 
 	const currentOption = $derived(
 		options.find((option) => option.id === currentWorkspace) ?? options[0] ?? null
-	);
-	const CurrentIcon = $derived(
-		currentOption ? WORKSPACE_ICONS[currentOption.id] : LayersIcon
 	);
 
 	function updateMenuPosition() {
@@ -101,11 +99,12 @@
 		<button
 			bind:this={triggerEl}
 			type="button"
-			class="app-nav-icon-btn"
+			class="app-nav-icon-btn app-nav-icon-btn--admin-ws"
 			aria-expanded={open}
 			aria-busy={switching}
 			aria-haspopup="menu"
 			aria-label="Switch admin workspace ({currentOption?.label ?? 'Admin'})"
+			title="Admin workspace"
 			disabled={switching}
 			onclick={toggleMenu}
 		>
@@ -115,7 +114,7 @@
 					aria-hidden="true"
 				></span>
 			{:else}
-				<CurrentIcon class="h-5 w-5 text-brand-700" />
+				<LayersIcon class="h-5 w-5 text-brand-700" />
 			{/if}
 		</button>
 
@@ -145,6 +144,7 @@
 						<button
 							type="button"
 							role="menuitem"
+							aria-current={option.id === currentWorkspace ? 'true' : undefined}
 							disabled={switching || option.id === currentWorkspace}
 							class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition {option.id ===
 							currentWorkspace
@@ -162,7 +162,7 @@
 								<span class="block text-xs text-slate-500">{option.shortLabel} dashboard</span>
 							</span>
 							{#if option.id === currentWorkspace}
-								<span class="ml-auto text-xs font-semibold text-brand-700">Active</span>
+								<MenuSelectedMark />
 							{/if}
 						</button>
 					{/each}

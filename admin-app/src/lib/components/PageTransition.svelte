@@ -26,7 +26,6 @@
 			return;
 		}
 
-		animate = true;
 		const from = navigation.from.url.pathname;
 		const to = navigation.to?.url.pathname ?? '';
 		workspaceSwitch = isWorkspaceHomeSwitch(from, to);
@@ -34,6 +33,14 @@
 			navigation.type === 'popstate'
 				? 'back'
 				: getTransitionDirection(from, to, appRole, dashboardMode, hasClubMembership);
+
+		// Same path (e.g. /users search) — skip slide transform so fixed menus stay viewport-relative.
+		if (from === to) {
+			animate = false;
+			return;
+		}
+
+		animate = true;
 	});
 </script>
 

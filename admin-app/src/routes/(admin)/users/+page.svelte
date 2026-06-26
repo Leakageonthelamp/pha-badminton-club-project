@@ -1,25 +1,36 @@
 <script lang="ts">
+	import { navigating } from '$app/state';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
+	import EmptyState from '@repo/ui/components/EmptyState.svelte';
 	import SectionHeading from '@repo/ui/components/SectionHeading.svelte';
+	import SelectMenu from '@repo/ui/components/SelectMenu.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
-	import EmptyState from '@repo/ui/components/EmptyState.svelte';
-	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
+	import SearchIcon from '@repo/ui/icons/SearchIcon.svelte';
 	import { appRoleLabel } from '$lib/types/auth';
 	import type { AppRole } from '$lib/types/auth';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
-	const inputClass =
-		'w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base text-slate-900 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20';
+	let searchQuery = $state('');
+	let roleFilter = $state('');
 
-	const roleFilters: { value: string; label: string }[] = [
+	const roleFilterOptions = [
 		{ value: '', label: 'All roles' },
 		{ value: 'player', label: appRoleLabel('player') },
 		{ value: 'club_admin', label: appRoleLabel('club_admin') },
 		{ value: 'super_admin', label: appRoleLabel('super_admin') }
 	];
+
+	const isFetchingUsers = $derived(
+		navigating.to !== null && navigating.to.url.pathname === '/users'
+	);
+
+	$effect(() => {
+		searchQuery = data.searchQuery;
+		roleFilter = data.roleFilter;
+	});
 
 	function buildPageUrl(page: number): string {
 		const params = new URLSearchParams();
@@ -46,25 +57,67 @@
 	/>
 
 	<form method="GET" action="/users" class="space-y-3">
-		<div class="flex flex-col gap-3 sm:flex-row">
-			<input
-				type="search"
-				name="q"
-				value={data.searchQuery}
-				placeholder="Search name, tag, email, or phone"
-				minlength="2"
-				class="{inputClass} flex-1"
-			/>
-			<select name="role" class="{inputClass} sm:w-40" value={data.roleFilter}>
-				{#each roleFilters as filter (filter.value)}
-					<option value={filter.value}>{filter.label}</option>
-				{/each}
-			</select>
-			<SubmitButton type="submit" variant="secondary" class="!w-full sm:!w-auto">Search</SubmitButton>
+		<div class="app-filter-row">
+			<div class="min-w-0">
+				<label for="user-search" class="app-filter-label">Search</label>
+				<input
+					id="user-search"
+					type="search"
+					name="q"
+					bind:value={searchQuery}
+					placeholder="Search name, tag, email, or phone"
+					minlength="2"
+					class="app-filter-input"
+				/>
+			</div>
+			<div class="min-w-0">
+				<SelectMenu
+					id="user-role-filter"
+					label="Role"
+					options={roleFilterOptions}
+					bind:value={roleFilter}
+				/>
+				<input type="hidden" name="role" value={roleFilter} />
+			</div>
+			<div class="app-filter-submit-wrap">
+				<span class="app-filter-label invisible" aria-hidden="true">Search</span>
+				<button
+					type="submit"
+					class="app-filter-submit"
+					aria-label="Search users"
+					title="Search"
+					disabled={isFetchingUsers}
+					aria-busy={isFetchingUsers}
+				>
+					{#if isFetchingUsers}
+						<span
+							class="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-brand-700"
+							aria-hidden="true"
+						></span>
+					{:else}
+						<SearchIcon class="h-5 w-5 text-brand-700" />
+					{/if}
+				</button>
+			</div>
 		</div>
 	</form>
 
-	{#if data.users.length === 0}
+	{#if isFetchingUsers}
+		<div class="space-y-4" aria-busy="true" aria-label="Loading users">
+			<div class="app-skeleton h-5 w-24 rounded-md"></div>
+			<ul class="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
+				{#each Array(6) as _, index (index)}
+					<li class="flex items-center gap-3 px-4 py-3">
+						<div class="app-skeleton h-10 w-10 shrink-0 rounded-full"></div>
+						<div class="min-w-0 flex-1 space-y-2">
+							<div class="app-skeleton h-4 w-48 max-w-full rounded-md"></div>
+							<div class="app-skeleton h-3 w-32 max-w-full rounded-md"></div>
+						</div>
+					</li>
+				{/each}
+			</ul>
+		</div>
+	{:else if data.users.length === 0}
 		<EmptyState message="No users found." />
 	{:else}
 		<div class="space-y-4">
@@ -94,6 +147,11 @@
 									<span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
 										{appRoleLabel(user.app_role as AppRole)}
 									</span>
+									{#if user.isBanned}
+										<span class="app-role-badge bg-red-50 text-red-800 ring-1 ring-red-200/80">
+											Banned
+										</span>
+									{/if}
 									{#if user.managedClubCount > 0}
 										<span
 											class="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-800"
@@ -116,7 +174,10 @@
 			{#if data.hasPrevPage || data.hasNextPage}
 				<div class="flex justify-between gap-3">
 					{#if data.hasPrevPage}
-						<a href={buildPageUrl(data.page - 1)} class="text-sm font-medium text-brand-700 hover:text-brand-800">
+						<a
+							href={buildPageUrl(data.page - 1)}
+							class="text-sm font-medium text-brand-700 hover:text-brand-800"
+						>
 							Previous
 						</a>
 					{:else}
@@ -124,7 +185,10 @@
 					{/if}
 					<span class="text-sm text-slate-500">Page {data.page}</span>
 					{#if data.hasNextPage}
-						<a href={buildPageUrl(data.page + 1)} class="text-sm font-medium text-brand-700 hover:text-brand-800">
+						<a
+							href={buildPageUrl(data.page + 1)}
+							class="text-sm font-medium text-brand-700 hover:text-brand-800"
+						>
 							Next
 						</a>
 					{:else}

@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
 	assertCallerCanManageUser,
 	assertCanDeleteUser,
-	assertCanResetPassword
+	assertCanResetPassword,
+	isAuthUserBanned
 } from './userManagement';
 
 describe('userManagement guards', () => {
@@ -23,5 +24,14 @@ describe('userManagement guards', () => {
 		expect(assertCanResetPassword('phone').ok).toBe(true);
 		expect(assertCanResetPassword('google').ok).toBe(false);
 		expect(assertCanResetPassword('facebook').ok).toBe(false);
+	});
+
+	it('isAuthUserBanned treats future banned_until as banned', () => {
+		const future = new Date(Date.now() + 60_000).toISOString();
+		const past = new Date(Date.now() - 60_000).toISOString();
+
+		expect(isAuthUserBanned(future)).toBe(true);
+		expect(isAuthUserBanned(past)).toBe(false);
+		expect(isAuthUserBanned(null)).toBe(false);
 	});
 });

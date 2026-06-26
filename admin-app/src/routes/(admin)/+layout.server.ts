@@ -7,8 +7,10 @@ import {
 	getDashboardModeFromCookies,
 	getEffectiveAppRole,
 	hasClubAdminMembership,
-	sanitizeDashboardMode
+	sanitizeDashboardMode,
+	shouldUseClubDashboard
 } from '$lib/server/adminDashboardMode';
+import { loadManagedClubs } from '$lib/server/clubAccess';
 import { authLoadDepends } from '$lib/navigation/authCache';
 import { error } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
@@ -28,7 +30,8 @@ export const load: LayoutServerLoad = async ({
 			hasClubMembership: false,
 			workspaceOptions: [],
 			canSwitchWorkspace: false,
-			effectiveAppRole: null
+			effectiveAppRole: null,
+			managedClubs: []
 		};
 	}
 
@@ -54,6 +57,10 @@ export const load: LayoutServerLoad = async ({
 
 	const workspaceOptions = getWorkspaceOptions(appRole, hasClubMembership);
 	const effectiveAppRole = getEffectiveAppRole(appRole, dashboardMode, hasClubMembership);
+	const inClubWorkspace = shouldUseClubDashboard(appRole, dashboardMode, hasClubMembership);
+	const managedClubs = inClubWorkspace
+		? await loadManagedClubs(supabase, user.id, effectiveAppRole)
+		: [];
 
 	return {
 		profile,
@@ -61,6 +68,7 @@ export const load: LayoutServerLoad = async ({
 		hasClubMembership,
 		workspaceOptions,
 		canSwitchWorkspace: canSwitchDashboardMode(appRole, hasClubMembership),
-		effectiveAppRole
+		effectiveAppRole,
+		managedClubs
 	};
 };

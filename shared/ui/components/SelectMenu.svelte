@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { portal } from '../actions/portal';
 	import ChevronDownIcon from '../icons/ChevronDownIcon.svelte';
 
 	export type SelectOption = {
@@ -137,42 +138,44 @@
 	</button>
 
 	{#if open}
-		<button
-			type="button"
-			class="fixed inset-0 z-40 cursor-default"
-			aria-label="Close menu"
-			onclick={closeMenu}
-		></button>
+		<div use:portal>
+			<button
+				type="button"
+				class="fixed inset-0 z-[100] cursor-default"
+				aria-label="Close menu"
+				onclick={closeMenu}
+			></button>
 
-		<ul
-			id={listboxId}
-			role="listbox"
-			aria-labelledby={id}
-			tabindex="-1"
-			class="app-select-menu"
-			style:top="{menuTop}px"
-			style:left="{menuLeft}px"
-			style:width="{menuWidth}px"
-			onkeydown={onListboxKeydown}
-		>
-			{#each options as option (option.value)}
-				<li role="presentation">
-					<button
-						type="button"
-						role="option"
-						aria-selected={value === option.value}
-						disabled={option.disabled}
-						class="app-select-option"
-						class:app-select-option--selected={value === option.value}
-						onclick={() => selectOption(option)}
-					>
-						<span class="min-w-0 truncate">{option.label}</span>
-						{#if option.hint}
-							<span class="shrink-0 text-xs font-medium text-slate-400">{option.hint}</span>
-						{/if}
-					</button>
-				</li>
-			{/each}
-		</ul>
+			<ul
+				id={listboxId}
+				role="listbox"
+				aria-labelledby={id}
+				tabindex="-1"
+				class="app-select-menu z-[110]"
+				style:top="{menuTop}px"
+				style:left="{menuLeft}px"
+				style:width="{menuWidth}px"
+				onkeydown={onListboxKeydown}
+			>
+				{#each options as option (option.value)}
+					<li role="presentation">
+						<button
+							type="button"
+							role="option"
+							aria-selected={value === option.value}
+							disabled={option.disabled}
+							class="app-select-option"
+							class:app-select-option--selected={value === option.value}
+							onclick={() => selectOption(option)}
+						>
+							<span class="min-w-0 truncate">{option.label}</span>
+							{#if option.hint}
+								<span class="shrink-0 text-xs font-medium text-slate-400">{option.hint}</span>
+							{/if}
+						</button>
+					</li>
+				{/each}
+			</ul>
+		</div>
 	{/if}
 </div>
