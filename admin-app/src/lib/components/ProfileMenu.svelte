@@ -115,10 +115,16 @@
 							>
 								{profile.display_name}
 							</p>
-							{#if profile.tag}
-								<TagPill tag={profile.tag} class="mt-1 bg-white/90 ring-brand-200" />
-							{/if}
-							<p class="mt-1 text-xs font-medium text-brand-800">{roleLabel}</p>
+							<div class="mt-1 flex flex-col items-start gap-1">
+								{#if profile.tag}
+									<TagPill tag={profile.tag} class="bg-white/90 ring-brand-200" />
+								{/if}
+								<span
+									class="inline-flex items-center rounded-full bg-brand-800 px-2 py-0.5 text-xs font-semibold text-white shadow-sm"
+								>
+									{roleLabel}
+								</span>
+							</div>
 						</div>
 					</div>
 				</div>

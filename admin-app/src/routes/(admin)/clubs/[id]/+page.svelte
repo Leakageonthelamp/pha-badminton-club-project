@@ -4,6 +4,8 @@
 	import { page } from '$app/state';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import FormToast from '@repo/ui/components/FormToast.svelte';
+	import NotSetBadge from '@repo/ui/components/NotSetBadge.svelte';
+	import SelectMenu from '@repo/ui/components/SelectMenu.svelte';
 	import MapPinPicker from '$lib/components/MapPinPicker.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import {
@@ -58,6 +60,16 @@
 	let editShuttlePerBox = $state('12');
 
 	const isSuperAdmin = $derived(data.isSuperAdmin);
+
+	const clubDescriptionNotSet = $derived(!data.club.description.trim());
+	const shuttlesNotSet = $derived(data.shuttles.length === 0);
+	const promptPayNotSet = $derived(
+		!data.club.promptpay_type || !data.club.promptpay_target?.trim()
+	);
+	const locationNotSet = $derived(
+		data.club.latitude === null || data.club.longitude === null
+	);
+	const clubAdminsNotSet = $derived(isSuperAdmin && data.admins.length === 0);
 
 	const deleteConfirmed = $derived(deleteConfirmText === CLUB_DELETE_CONFIRM_PHRASE);
 
@@ -167,6 +179,10 @@
 
 	const labelClass = 'mb-2 block text-sm font-medium text-slate-700';
 	const cardClass = 'app-card-padded space-y-4';
+	const shuttleSpeedOptions = [
+		{ value: '75', label: '75' },
+		{ value: '76', label: '76' }
+	];
 
 	async function submitSearch(event: SubmitEvent) {
 		event.preventDefault();
@@ -220,7 +236,12 @@
 		use:enhance={handleUpdate}
 		aria-busy={updateLoading}
 	>
-		<h2 class="text-lg font-semibold text-slate-900">Club settings</h2>
+		<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+			<h2 class="text-lg font-semibold text-slate-900">Club settings</h2>
+			{#if clubDescriptionNotSet}
+				<NotSetBadge />
+			{/if}
+		</div>
 
 		<div>
 			<label for="name" class={labelClass}>Club name</label>
@@ -350,7 +371,12 @@
 
 	<section class="{cardClass} space-y-4">
 		<div>
-			<h2 class="text-lg font-semibold text-slate-900">Shuttlecocks</h2>
+			<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+				<h2 class="text-lg font-semibold text-slate-900">Shuttlecocks</h2>
+				{#if shuttlesNotSet}
+					<NotSetBadge />
+				{/if}
+			</div>
 			<p class="mt-2 text-sm text-slate-600">Brands and pricing your club uses.</p>
 		</div>
 
@@ -384,16 +410,13 @@
 										/>
 									</div>
 									<div>
-										<label class={labelClass} for="edit-speed-{shuttle.id}">Speed</label>
-										<select
+										<SelectMenu
 											id="edit-speed-{shuttle.id}"
-											name="speed"
+											label="Speed"
+											options={shuttleSpeedOptions}
 											bind:value={editShuttleSpeed}
-											class={inputClass}
-										>
-											<option value="75">75</option>
-											<option value="76">76</option>
-										</select>
+										/>
+										<input type="hidden" name="speed" value={editShuttleSpeed} />
 									</div>
 									<div>
 										<label class={labelClass} for="edit-per-box-{shuttle.id}">Per box</label>
@@ -518,11 +541,13 @@
 					/>
 				</div>
 				<div>
-					<label class={labelClass} for="new-shuttle-speed">Speed</label>
-					<select id="new-shuttle-speed" name="speed" bind:value={newShuttleSpeed} class={inputClass}>
-						<option value="75">75</option>
-						<option value="76">76</option>
-					</select>
+					<SelectMenu
+						id="new-shuttle-speed"
+						label="Speed"
+						options={shuttleSpeedOptions}
+						bind:value={newShuttleSpeed}
+					/>
+					<input type="hidden" name="speed" value={newShuttleSpeed} />
 				</div>
 				<div>
 					<label class={labelClass} for="new-shuttle-per-box">Number per box</label>
@@ -576,7 +601,12 @@
 		use:enhance={whileSubmitting((v) => (promptPayLoading = v))}
 	>
 		<div>
-			<h2 class="text-lg font-semibold text-slate-900">PromptPay</h2>
+			<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+				<h2 class="text-lg font-semibold text-slate-900">PromptPay</h2>
+				{#if promptPayNotSet}
+					<NotSetBadge />
+				{/if}
+			</div>
 			<p class="mt-2 text-sm text-slate-600">
 				Phone number or national ID for payment QR codes (coming soon).
 			</p>
@@ -650,7 +680,12 @@
 		use:enhance={whileSubmitting((v) => (locationLoading = v))}
 	>
 		<div>
-			<h2 class="text-lg font-semibold text-slate-900">Location</h2>
+			<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+				<h2 class="text-lg font-semibold text-slate-900">Location</h2>
+				{#if locationNotSet}
+					<NotSetBadge />
+				{/if}
+			</div>
 			<p class="mt-2 text-sm text-slate-600">Drop a pin where your club usually plays.</p>
 		</div>
 
@@ -696,7 +731,12 @@
 	{#if isSuperAdmin}
 	<section class="{cardClass} space-y-4">
 		<div>
-			<h2 class="text-lg font-semibold text-slate-900">Club admins</h2>
+			<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+				<h2 class="text-lg font-semibold text-slate-900">Club admins</h2>
+				{#if clubAdminsNotSet}
+					<NotSetBadge />
+				{/if}
+			</div>
 			<p class="mt-2 text-sm text-slate-600">
 				Assign players as admins for this club. The same person can admin multiple clubs.
 				<span class="font-medium text-slate-700">

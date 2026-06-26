@@ -1,6 +1,7 @@
 import { displayNameSchema } from '$lib/validation/displayName';
 import { tagSchema } from '$lib/validation/tag';
 import { validateAvatarFile } from '$lib/validation/avatar';
+import { loadManagedClubs } from '$lib/server/clubAccess';
 import { createSupabaseAdminClient } from '$lib/supabase/server';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
@@ -11,7 +12,7 @@ const profileSchema = z.object({
 	tag: tagSchema
 });
 
-export const load: PageServerLoad = async ({ locals: { supabase, user } }) => {
+export const load: PageServerLoad = async ({ locals: { supabase, user, appRole } }) => {
 	const { data: profile, error } = await supabase
 		.from('profiles')
 		.select('*')
@@ -19,10 +20,19 @@ export const load: PageServerLoad = async ({ locals: { supabase, user } }) => {
 		.single();
 
 	if (error) {
-		return { profile: null, loadError: 'Could not load your profile.' };
+		return { profile: null, loadError: 'Could not load your profile.', managedClubs: [] };
 	}
 
-	return { profile, loadError: null };
+	const managedClubs =
+		appRole === 'club_admin' && user
+			? (await loadManagedClubs(supabase, user.id, appRole)).map((club) => ({
+					id: club.id,
+					name: club.name,
+					is_active: club.is_active
+				}))
+			: [];
+
+	return { profile, loadError: null, managedClubs };
 };
 
 export const actions: Actions = {

@@ -43,7 +43,7 @@
 	{:else}
 		<div class="space-y-4">
 			<SectionHeading title="All clubs" />
-			<div class="grid grid-cols-2 gap-4">
+			<div class="grid grid-cols-2 gap-3">
 				{#each data.clubs as club (club.id)}
 					<DashboardTile
 						href="/clubs/{club.id}"

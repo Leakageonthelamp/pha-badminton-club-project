@@ -77,7 +77,7 @@
 		{#if clubs.length === 0}
 			<EmptyState message="No active clubs yet. Check back later." />
 		{:else}
-			<div class="grid grid-cols-2 gap-4">
+			<div class="grid grid-cols-2 gap-3">
 				{#each clubs as club (club.id)}
 					<DashboardTile
 						title={club.name}

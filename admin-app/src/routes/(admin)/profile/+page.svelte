@@ -376,6 +376,32 @@
 					<dt class="text-slate-500">Role</dt>
 					<dd class="font-medium text-slate-800">{appRoleLabel(data.profile.app_role)}</dd>
 				</div>
+				{#if data.profile.app_role === 'club_admin'}
+					<div>
+						<dt class="text-slate-500">Clubs you admin</dt>
+						<dd class="font-medium text-slate-800">
+							{#if data.managedClubs.length === 0}
+								<span class="text-slate-500">None assigned</span>
+							{:else}
+								<ul class="mt-1 space-y-1.5">
+									{#each data.managedClubs as club (club.id)}
+										<li class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+											<a
+												href="/clubs/{club.id}"
+												class="text-brand-700 hover:text-brand-800"
+											>
+												{club.name}
+											</a>
+											{#if !club.is_active}
+												<span class="text-xs font-medium text-amber-700">Inactive</span>
+											{/if}
+										</li>
+									{/each}
+								</ul>
+							{/if}
+						</dd>
+					</div>
+				{/if}
 				{#if credential}
 					<div>
 						<dt class="text-slate-500">Sign-in method</dt>
