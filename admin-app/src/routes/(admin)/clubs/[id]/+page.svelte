@@ -3,7 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import type { SubmitFunction } from '@sveltejs/kit';
-	import FormToast from '$lib/components/FormToast.svelte';
+	import FormToast from '@repo/ui/components/FormToast.svelte';
 	import MapPinPicker from '$lib/components/MapPinPicker.svelte';
 	import SubmitButton from '$lib/components/SubmitButton.svelte';
 	import {
@@ -167,7 +167,6 @@
 
 	const labelClass = 'mb-2 block text-sm font-medium text-slate-700';
 	const cardClass = 'app-card-padded space-y-4';
-	const skeletonClass = 'animate-pulse rounded-xl bg-slate-200';
 
 	async function submitSearch(event: SubmitEvent) {
 		event.preventDefault();
@@ -227,7 +226,7 @@
 			<label for="name" class={labelClass}>Club name</label>
 			<div class="relative">
 				{#if updateLoading}
-					<div class="{skeletonClass} absolute inset-0 z-10 h-[50px]" aria-hidden="true"></div>
+					<div class="app-skeleton absolute inset-0 z-10 h-[50px]" aria-hidden="true"></div>
 				{/if}
 				<input
 					id="name"
@@ -246,7 +245,7 @@
 			<label for="description" class={labelClass}>Description</label>
 			<div class="relative">
 				{#if updateLoading}
-					<div class="{skeletonClass} absolute inset-0 z-10 min-h-[122px]" aria-hidden="true"></div>
+					<div class="app-skeleton absolute inset-0 z-10 min-h-[122px]" aria-hidden="true"></div>
 				{/if}
 				<textarea
 					id="description"
@@ -264,7 +263,7 @@
 			<label for="max_active_sessions" class={labelClass}>Max active sessions</label>
 			<div class="relative">
 				{#if updateLoading}
-					<div class="{skeletonClass} absolute inset-0 z-10 h-[50px]" aria-hidden="true"></div>
+					<div class="app-skeleton absolute inset-0 z-10 h-[50px]" aria-hidden="true"></div>
 				{/if}
 				<input
 					id="max_active_sessions"
@@ -288,7 +287,7 @@
 			<label for="max_admins" class={labelClass}>Max club admins</label>
 			<div class="relative">
 				{#if updateLoading}
-					<div class="{skeletonClass} absolute inset-0 z-10 h-[50px]" aria-hidden="true"></div>
+					<div class="app-skeleton absolute inset-0 z-10 h-[50px]" aria-hidden="true"></div>
 				{/if}
 				<input
 					id="max_admins"
@@ -312,7 +311,7 @@
 			class="relative flex items-center justify-between gap-4 rounded-xl border border-slate-200 px-4 py-3"
 		>
 			{#if updateLoading}
-				<div class="{skeletonClass} absolute inset-0 z-10" aria-hidden="true"></div>
+				<div class="app-skeleton absolute inset-0 z-10" aria-hidden="true"></div>
 			{/if}
 			<div class={updateLoading ? 'opacity-0' : ''}>
 				<p class="text-sm font-medium text-slate-900">Club status</p>

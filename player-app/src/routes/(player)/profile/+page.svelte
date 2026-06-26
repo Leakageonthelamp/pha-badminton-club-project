@@ -5,10 +5,10 @@
 	import UploadIcon from '$lib/components/icons/UploadIcon.svelte';
 	import SubmitButton from '$lib/components/SubmitButton.svelte';
 	import TagPill from '$lib/components/TagPill.svelte';
-	import FormToast from '$lib/components/FormToast.svelte';
+	import FormToast from '@repo/ui/components/FormToast.svelte';
 	import AppCard from '@repo/ui/components/AppCard.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
-	import { toast } from '$lib/toast/toast.svelte';
+	import { toast } from '@repo/ui/toast/toast.svelte';
 	import { AVATAR_OUTPUT_SIZE, normalizeImageForCrop } from '$lib/images/cropAvatar';
 	import { validateAvatarFile, validateAvatarInput } from '$lib/validation/avatar';
 	import { tagSuffixFromFull, toFullTag } from '$lib/validation/tag';
@@ -198,6 +198,11 @@
 		const input = event.currentTarget as HTMLInputElement;
 		tagSuffix = input.value.replace(/[^a-zA-Z0-9]/g, '').slice(0, 4);
 	}
+
+	const inputClass =
+		'w-full rounded-xl border border-slate-300 px-4 py-3 text-base focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20';
+	const profileFieldClass = $derived(`${inputClass}${saveLoading ? ' opacity-0' : ''}`);
+	const labelClass = 'mb-2 block text-sm font-medium text-slate-700';
 </script>
 
 <FormToast message={data.loadError} variant="warning" token={data.loadError ?? ''} />
@@ -233,49 +238,64 @@
 			enctype="multipart/form-data"
 			class="space-y-4"
 			use:enhance={handleSubmit}
+			aria-busy={saveLoading}
 		>
 			<div>
-				<label for="displayName" class="mb-2 block text-sm font-medium text-slate-700">
+				<label for="displayName" class={labelClass}>
 					Display name
 				</label>
-				<input
-					id="displayName"
-					name="displayName"
-					type="text"
-					required
-					bind:value={displayName}
-					class="w-full rounded-xl border border-slate-300 px-4 py-3 text-base focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
-				/>
+				<div class="relative">
+					{#if saveLoading}
+						<div class="app-skeleton absolute inset-0 z-10 h-[50px]" aria-hidden="true"></div>
+					{/if}
+					<input
+						id="displayName"
+						name="displayName"
+						type="text"
+						required
+						bind:value={displayName}
+						disabled={saveLoading}
+						class={profileFieldClass}
+					/>
+				</div>
 				{#if fieldErrors?.displayName}
 					<p class="mt-2 text-sm text-red-600">{fieldErrors.displayName}</p>
 				{/if}
 			</div>
 
 			<div>
-				<label for="tagSuffix" class="mb-2 block text-sm font-medium text-slate-700">Tag</label>
-				<div
-					class="flex overflow-hidden rounded-xl border border-slate-300 focus-within:border-brand-600 focus-within:ring-2 focus-within:ring-brand-600/20"
-				>
-					<span
-						class="flex items-center bg-slate-50 px-4 font-mono text-base font-semibold text-brand-700"
-						aria-hidden="true"
+				<label for="tagSuffix" class={labelClass}>Tag</label>
+				<div class="relative">
+					{#if saveLoading}
+						<div class="app-skeleton absolute inset-0 z-10 h-[50px]" aria-hidden="true"></div>
+					{/if}
+					<div
+						class="flex overflow-hidden rounded-xl border border-slate-300 focus-within:border-brand-600 focus-within:ring-2 focus-within:ring-brand-600/20{saveLoading
+							? ' opacity-0'
+							: ''}"
 					>
-						#
-					</span>
-					<input
-						id="tagSuffix"
-						type="text"
-						required
-						maxlength="4"
-						autocapitalize="none"
-						autocomplete="off"
-						spellcheck="false"
-						inputmode="text"
-						placeholder="1234"
-						value={tagSuffix}
-						oninput={onTagSuffixInput}
-						class="min-w-0 flex-1 bg-white py-3 pr-4 font-mono text-base focus:outline-none"
-					/>
+						<span
+							class="flex items-center bg-slate-50 px-4 font-mono text-base font-semibold text-brand-700"
+							aria-hidden="true"
+						>
+							#
+						</span>
+						<input
+							id="tagSuffix"
+							type="text"
+							required
+							maxlength="4"
+							autocapitalize="none"
+							autocomplete="off"
+							spellcheck="false"
+							inputmode="text"
+							placeholder="1234"
+							value={tagSuffix}
+							disabled={saveLoading}
+							oninput={onTagSuffixInput}
+							class="min-w-0 flex-1 bg-white py-3 pr-4 font-mono text-base focus:outline-none"
+						/>
+					</div>
 				</div>
 				<p class="mt-2 text-xs text-slate-500">
 					Unique player ID when display names match. Enter 4 letters or numbers.
@@ -286,24 +306,30 @@
 			</div>
 
 			<div>
-				<span class="mb-2 block text-sm font-medium text-slate-700">Avatar</span>
+				<span class={labelClass}>Avatar</span>
 				<input
 					bind:this={fileInput}
 					type="file"
 					accept="image/*"
 					class="sr-only"
+					disabled={saveLoading}
 					onchange={onAvatarPick}
 				/>
 
-				<div class="flex flex-wrap items-center gap-3">
-					<SubmitButton
-						type="button"
-						variant="secondary"
-						class="w-auto! rounded-xl px-4 py-2.5"
-						loading={pickLoading}
-						loadingLabel="Opening…"
-						onclick={openFilePicker}
-					>
+				<div class="relative">
+					{#if saveLoading}
+						<div class="app-skeleton absolute inset-0 z-10 h-[42px]" aria-hidden="true"></div>
+					{/if}
+					<div class="flex flex-wrap items-center gap-3{saveLoading ? ' opacity-0' : ''}">
+						<SubmitButton
+							type="button"
+							variant="secondary"
+							class="w-auto! rounded-xl px-4 py-2.5"
+							loading={pickLoading}
+							loadingLabel="Opening…"
+							disabled={saveLoading}
+							onclick={openFilePicker}
+						>
 						<UploadIcon class="h-5 w-5 shrink-0 text-brand-700" />
 						{processedAvatar ? 'Choose another photo' : 'Choose photo'}
 					</SubmitButton>
@@ -324,6 +350,7 @@
 							Remove
 						</button>
 					{/if}
+					</div>
 				</div>
 
 				<p class="mt-2 text-xs text-slate-500">

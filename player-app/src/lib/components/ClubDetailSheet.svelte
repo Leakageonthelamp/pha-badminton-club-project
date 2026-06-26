@@ -25,8 +25,6 @@
 	const title = $derived(club?.name ?? preview?.name ?? 'Club');
 	const description = $derived(club?.description ?? preview?.description ?? '');
 
-	const skeletonClass = 'animate-pulse rounded-lg bg-slate-200';
-
 	const close = () => {
 		visible = false;
 		window.setTimeout(onClose, 220);
@@ -150,8 +148,8 @@
 						>
 							{#each [0, 1, 2] as row (row)}
 								<li class="flex items-center justify-between gap-3 bg-white px-4 py-3">
-									<div class="{skeletonClass} h-4 w-32 max-w-[60%]"></div>
-									<div class="{skeletonClass} h-6 w-16 rounded-full"></div>
+									<div class="app-skeleton h-4 w-32 max-w-[60%]"></div>
+									<div class="app-skeleton h-6 w-16 rounded-full"></div>
 								</li>
 							{/each}
 						</ul>

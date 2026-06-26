@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ToastItem } from '$lib/toast/toast.svelte';
+	import type { ToastItem } from '../toast/toast.svelte';
 
 	let { item, onDismiss }: { item: ToastItem; onDismiss: () => void } = $props();
 
@@ -28,10 +28,10 @@
 </script>
 
 <div
-	class="toast-item overflow-hidden rounded-xl border shadow-lg {variantClass}"
+	class="toast-item w-full overflow-hidden rounded-xl border shadow-lg {variantClass}"
 	role="alert"
 >
-	<div class="flex items-start gap-2 px-4 py-3">
+	<div class="flex items-start gap-2 px-3 py-2.5">
 		<p class="min-w-0 flex-1 text-sm leading-snug font-medium">{item.message}</p>
 		<button
 			type="button"

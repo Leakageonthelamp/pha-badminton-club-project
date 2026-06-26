@@ -5,7 +5,7 @@
 	import IdentifierField from '$lib/components/IdentifierField.svelte';
 	import PasswordField from '$lib/components/PasswordField.svelte';
 	import SubmitButton from '$lib/components/SubmitButton.svelte';
-	import FormToast from '$lib/components/FormToast.svelte';
+	import FormToast from '@repo/ui/components/FormToast.svelte';
 	import AppCard from '@repo/ui/components/AppCard.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import { whileSubmitting } from '$lib/forms/submitting';

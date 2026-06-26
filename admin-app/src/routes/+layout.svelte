@@ -2,7 +2,7 @@
 	import '../app.css';
 	import { appConfig } from '$lib/config/app';
 	import ServiceUnavailable from '$lib/components/ServiceUnavailable.svelte';
-	import ToastContainer from '$lib/components/ToastContainer.svelte';
+	import ToastContainer from '@repo/ui/components/ToastContainer.svelte';
 	import type { LayoutData } from './$types';
 
 	let { data, children }: { data: LayoutData; children: import('svelte').Snippet } = $props();
@@ -27,6 +27,6 @@
 	<footer class="app-footer shrink-0 px-4 text-center text-[10px] leading-tight text-slate-400">
 		<p>© {year} {appConfig.name}</p>
 	</footer>
-
-	<ToastContainer />
 </div>
+
+<ToastContainer />

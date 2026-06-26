@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import FormToast from '$lib/components/FormToast.svelte';
+	import FormToast from '@repo/ui/components/FormToast.svelte';
 	import SubmitButton from '$lib/components/SubmitButton.svelte';
 	import AppCard from '@repo/ui/components/AppCard.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';

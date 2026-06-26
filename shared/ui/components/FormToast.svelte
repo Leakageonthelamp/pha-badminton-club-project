@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { toast, type ToastVariant } from '$lib/toast/toast.svelte';
+	import { toast, type ToastVariant } from '../toast/toast.svelte';
 
 	let {
 		message,

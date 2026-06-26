@@ -57,45 +57,6 @@ body {
 	.page-panel--animated {
 		animation: none;
 	}
-
-	.toast-item {
-		animation: none;
-	}
-
-	.toast-ttl-bar {
-		animation: none;
-		transform: scaleX(0);
-	}
-}
-
-.toast-item {
-	animation: toast-enter 280ms cubic-bezier(0.25, 0.8, 0.25, 1) both;
-}
-
-@keyframes toast-enter {
-	from {
-		transform: translateX(0.5rem) translateY(-0.25rem);
-		opacity: 0;
-	}
-
-	to {
-		transform: translateX(0) translateY(0);
-		opacity: 1;
-	}
-}
-
-.toast-ttl-bar {
-	animation: toast-ttl linear forwards;
-}
-
-@keyframes toast-ttl {
-	from {
-		transform: scaleX(1);
-	}
-
-	to {
-		transform: scaleX(0);
-	}
 }
 
 @layer base {
