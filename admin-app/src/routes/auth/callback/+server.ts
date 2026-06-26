@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from '$lib/supabase/server';
+import { ensureOAuthSignInMethod } from '$lib/server/profileCredentials';
 import { ensureOAuthProfileAvatar } from '$lib/server/oauthProfile';
 import { ensureProfileTag } from '$lib/server/tag';
 import { redirect } from '@sveltejs/kit';
@@ -18,6 +19,7 @@ export const GET: RequestHandler = async ({ url, locals: { supabase } }) => {
 				const admin = createSupabaseAdminClient();
 				await ensureProfileTag(admin, user.id);
 				await ensureOAuthProfileAvatar(admin, user);
+				await ensureOAuthSignInMethod(admin, user);
 			}
 
 			redirect(303, '/');

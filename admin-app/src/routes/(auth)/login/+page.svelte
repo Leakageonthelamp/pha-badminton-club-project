@@ -9,7 +9,9 @@
 	import FormToast from '@repo/ui/components/FormToast.svelte';
 	import AppCard from '@repo/ui/components/AppCard.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
+	import { loadSignInPreference } from '@repo/ui/signInPreference';
 	import { whileSubmitting } from '$lib/forms/submitting';
+	import { onMount } from 'svelte';
 	import type { ActionData, PageData } from './$types';
 
 	let { form, data }: { form: ActionData; data: PageData } = $props();
@@ -17,6 +19,11 @@
 	let loginLoading = $state(false);
 	let googleLoading = $state(false);
 	let facebookLoading = $state(false);
+	let signInPreference = $state<ReturnType<typeof loadSignInPreference>>(null);
+
+	onMount(() => {
+		signInPreference = loadSignInPreference();
+	});
 </script>
 
 <FormToast message={form?.message ?? data.error} variant="error" token={form?.message ?? data.error ?? ''} />
@@ -31,6 +38,7 @@
 			<IdentifierField
 				value={form?.values?.identifier ?? ''}
 				serverError={form?.error?.identifier?.[0] ?? null}
+				preference={signInPreference}
 			/>
 
 			<PasswordField serverError={form?.error?.password?.[0] ?? null} />

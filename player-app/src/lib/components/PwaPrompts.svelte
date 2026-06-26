@@ -1,10 +1,21 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { fly } from 'svelte/transition';
 	import AppLogo from '$lib/components/AppLogo.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
+	import {
+		bottomBannerTransition,
+		bottomBannerTransitionReduced,
+		prefersReducedMotion
+	} from '@repo/ui/transitions/modal';
 	import { useRegisterSW } from 'virtual:pwa-register/svelte';
 
 	let { appName = 'App' }: { appName?: string } = $props();
+
+	let reduceMotion = $state(false);
+	const bannerTransition = $derived(
+		reduceMotion ? bottomBannerTransitionReduced : bottomBannerTransition
+	);
 
 	const { needRefresh, offlineReady, updateServiceWorker } = useRegisterSW({
 		onRegistered: () => {
@@ -22,6 +33,8 @@
 	let reloading = $state(false);
 
 	onMount(() => {
+		reduceMotion = prefersReducedMotion();
+
 		isStandalone =
 			window.matchMedia('(display-mode: standalone)').matches ||
 			('standalone' in navigator &&
@@ -89,6 +102,8 @@
 	<div
 		class="fixed inset-x-4 bottom-4 z-50 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg"
 		role="status"
+		in:fly={bannerTransition}
+		out:fly={bannerTransition}
 	>
 		<p class="text-sm font-medium text-slate-900">App ready to work offline.</p>
 		<div class="mt-3 flex gap-2">
@@ -107,6 +122,8 @@
 	<div
 		class="fixed inset-x-4 bottom-4 z-50 rounded-2xl border border-brand-200 bg-brand-50 p-4 shadow-lg"
 		role="alert"
+		in:fly={bannerTransition}
+		out:fly={bannerTransition}
 	>
 		<div class="flex items-start gap-3">
 			<AppLogo size={36} />
@@ -142,6 +159,8 @@
 		class="fixed inset-x-4 bottom-4 z-50 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg"
 		role="dialog"
 		aria-label="Install app"
+		in:fly={bannerTransition}
+		out:fly={bannerTransition}
 	>
 		<div class="flex items-start gap-3">
 			<AppLogo size={40} />

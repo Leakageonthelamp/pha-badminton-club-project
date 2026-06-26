@@ -71,7 +71,24 @@ export const resolveLoginEmail = async (identifier: string): Promise<string | nu
 	const trimmed = identifier.trim();
 
 	if (isEmail(trimmed)) {
-		return trimmed.toLowerCase();
+		const email = trimmed.toLowerCase();
+		const admin = createSupabaseAdminClient();
+		const { data: profile } = await admin
+			.from('profiles')
+			.select('id')
+			.eq('email', email)
+			.maybeSingle();
+
+		if (profile) {
+			const { data, error } = await admin.auth.admin.getUserById(profile.id);
+			if (error || !data.user?.email) {
+				return null;
+			}
+
+			return data.user.email;
+		}
+
+		return email;
 	}
 
 	const phone = normalizePhone(trimmed);
@@ -154,6 +171,15 @@ export const registerUser = async (input: RegisterInput) => {
 	}
 
 	await ensureProfileTag(admin, data.user.id);
+
+	await admin
+		.from('profiles')
+		.update({
+			sign_in_method: email ? 'email' : 'phone',
+			...(email ? { email } : {}),
+			...(phone ? { phone } : {})
+		})
+		.eq('id', data.user.id);
 
 	return { ok: true as const, authEmail };
 };

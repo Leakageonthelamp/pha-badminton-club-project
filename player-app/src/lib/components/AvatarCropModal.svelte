@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Cropper from 'svelte-easy-crop';
+	import AppModal from '@repo/ui/components/AppModal.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import { toast } from '@repo/ui/toast/toast.svelte';
 	import {
@@ -25,8 +26,10 @@
 	let croppedAreaPixels = $state<CropArea | null>(null);
 	let processing = $state(false);
 
+	const modalOpen = $derived(open && !!imageSrc);
+
 	$effect(() => {
-		if (open) {
+		if (modalOpen) {
 			crop = { x: 0, y: 0 };
 			zoom = 1;
 			croppedAreaPixels = null;
@@ -54,14 +57,14 @@
 	}
 </script>
 
-{#if open && imageSrc}
-	<div
-		class="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 sm:items-center"
-		role="dialog"
-		aria-modal="true"
-		aria-labelledby="avatar-crop-title"
+{#if imageSrc}
+	<AppModal
+		open={modalOpen}
+		labelledBy="avatar-crop-title"
+		closeLabel="Close crop dialog"
+		onClose={onCancel}
 	>
-		<div class="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-xl">
+		<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
 			<div class="border-b border-slate-200 px-4 py-3">
 				<h2 id="avatar-crop-title" class="text-base font-semibold text-slate-900">Crop avatar</h2>
 				<p class="mt-1 text-sm text-slate-500">
@@ -118,5 +121,5 @@
 				</div>
 			</div>
 		</div>
-	</div>
+	</AppModal>
 {/if}

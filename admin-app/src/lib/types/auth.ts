@@ -12,6 +12,9 @@ const APP_ROLE_LABELS: Record<AppRole, string> = {
 
 export const appRoleLabel = (role: AppRole): string => APP_ROLE_LABELS[role] ?? role;
 
+export type SignInMethod = 'email' | 'phone' | 'google' | 'facebook';
+export type PasswordSignInPreference = 'email' | 'phone';
+
 export type Profile = {
 	id: string;
 	display_name: string;
@@ -19,6 +22,7 @@ export type Profile = {
 	avatar_url: string | null;
 	email: string | null;
 	phone: string | null;
+	sign_in_method: SignInMethod;
 	app_role: AppRole;
 	created_at: string;
 	updated_at: string;
@@ -31,10 +35,33 @@ export type ProfileCredential = {
 	value: string;
 };
 
-/** Which identifier this account signs in with (phone takes precedence if both exist). */
+export const isOAuthSignInMethod = (
+	method: SignInMethod
+): method is 'google' | 'facebook' => method === 'google' || method === 'facebook';
+
+export const isPasswordSignInMethod = (
+	method: SignInMethod
+): method is PasswordSignInPreference => method === 'email' || method === 'phone';
+
+export const isSyntheticAuthEmail = (email: string | null | undefined): boolean =>
+	!!email && email.endsWith(`@${PHONE_EMAIL_DOMAIN}`);
+
+/** Preferred password sign-in identifier for display. */
 export const getProfileCredential = (
-	profile: Pick<Profile, 'email' | 'phone'>
+	profile: Pick<Profile, 'email' | 'phone' | 'sign_in_method'>
 ): ProfileCredential | null => {
+	if (isOAuthSignInMethod(profile.sign_in_method)) {
+		return null;
+	}
+
+	if (profile.sign_in_method === 'phone' && profile.phone) {
+		return { type: 'phone', value: profile.phone };
+	}
+
+	if (profile.sign_in_method === 'email' && profile.email) {
+		return { type: 'email', value: profile.email };
+	}
+
 	if (profile.phone) {
 		return { type: 'phone', value: profile.phone };
 	}
@@ -44,6 +71,19 @@ export const getProfileCredential = (
 	}
 
 	return null;
+};
+
+export const formatSignInMethodLabel = (method: SignInMethod): string => {
+	switch (method) {
+		case 'google':
+			return 'Google';
+		case 'facebook':
+			return 'Facebook';
+		case 'phone':
+			return 'Phone';
+		default:
+			return 'Email';
+	}
 };
 
 export type AuthErrorCode =

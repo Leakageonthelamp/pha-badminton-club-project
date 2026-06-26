@@ -1,16 +1,19 @@
 <script lang="ts">
 	import { getIdentifierKind, validateIdentifier } from '$lib/validation/identifier';
+	import type { SignInPreference } from '@repo/ui/signInPreference';
 
 	let {
 		id = 'identifier',
 		name = 'identifier',
 		value = '',
-		serverError = null
+		serverError = null,
+		preference = null
 	}: {
 		id?: string;
 		name?: string;
 		value?: string;
 		serverError?: string | null;
+		preference?: SignInPreference | null;
 	} = $props();
 
 	let input = $state('');
@@ -25,6 +28,20 @@
 	const errorMessage = $derived(serverError ?? clientError);
 	const inputType = $derived(kind === 'email' ? 'email' : kind === 'phone' ? 'tel' : 'text');
 	const inputMode = $derived(kind === 'phone' ? 'tel' : kind === 'email' ? 'email' : 'text');
+	const label = $derived(
+		preference === 'email'
+			? 'Email address'
+			: preference === 'phone'
+				? 'Phone number'
+				: 'Email or phone'
+	);
+	const placeholder = $derived(
+		preference === 'email'
+			? 'you@example.com'
+			: preference === 'phone'
+				? '0812345678'
+				: 'you@example.com or 0812345678'
+	);
 
 	const onBlur = () => {
 		touched = true;
@@ -37,7 +54,7 @@
 </script>
 
 <div>
-	<label for={id} class="mb-2 block text-sm font-medium text-slate-700"> Email or phone </label>
+	<label for={id} class="mb-2 block text-sm font-medium text-slate-700">{label}</label>
 	<input
 		{id}
 		{name}
@@ -52,7 +69,7 @@
 		class="w-full rounded-xl border px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-600/20 {errorMessage
 			? 'border-red-400 focus:border-red-500'
 			: 'border-slate-300 focus:border-brand-600'}"
-		placeholder="you@example.com or 0812345678"
+		{placeholder}
 	/>
 	{#if errorMessage}
 		<p class="mt-1 text-sm text-red-600">{errorMessage}</p>

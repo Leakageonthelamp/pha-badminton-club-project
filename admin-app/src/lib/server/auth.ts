@@ -1,8 +1,18 @@
+import { PHONE_EMAIL_DOMAIN } from '$lib/types/auth';
 import { createSupabaseAdminClient } from '$lib/supabase/server';
 import { isEmail, normalizePhone, validateIdentifier } from '$lib/validation/identifier';
 import { z } from 'zod';
 
 export { isEmail, normalizePhone } from '$lib/validation/identifier';
+
+export const phoneToAuthEmail = (phone: string): string => {
+	const normalized = normalizePhone(phone);
+	if (!normalized) {
+		throw new Error('invalid phone');
+	}
+
+	return `${normalized.replace('+', '')}@${PHONE_EMAIL_DOMAIN}`;
+};
 
 const identifierRefine = (value: string, ctx: z.RefinementCtx) => {
 	const message = validateIdentifier(value);
@@ -31,7 +41,24 @@ export const resolveLoginEmail = async (identifier: string): Promise<string | nu
 	const trimmed = identifier.trim();
 
 	if (isEmail(trimmed)) {
-		return trimmed.toLowerCase();
+		const email = trimmed.toLowerCase();
+		const admin = createSupabaseAdminClient();
+		const { data: profile } = await admin
+			.from('profiles')
+			.select('id')
+			.eq('email', email)
+			.maybeSingle();
+
+		if (profile) {
+			const { data, error } = await admin.auth.admin.getUserById(profile.id);
+			if (error || !data.user?.email) {
+				return null;
+			}
+
+			return data.user.email;
+		}
+
+		return email;
 	}
 
 	const phone = normalizePhone(trimmed);

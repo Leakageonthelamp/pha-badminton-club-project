@@ -4,6 +4,7 @@
 	import { page } from '$app/state';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import FormToast from '@repo/ui/components/FormToast.svelte';
+	import AppModal from '@repo/ui/components/AppModal.svelte';
 	import NotSetBadge from '@repo/ui/components/NotSetBadge.svelte';
 	import SelectMenu from '@repo/ui/components/SelectMenu.svelte';
 	import MapPinPicker from '$lib/components/MapPinPicker.svelte';
@@ -1005,20 +1006,8 @@
 </section>
 
 {#if isSuperAdmin && deleteModalOpen}
-	<div
-		class="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 sm:items-center"
-		role="dialog"
-		aria-modal="true"
-		aria-labelledby="delete-club-title"
-	>
-		<button
-			type="button"
-			class="absolute inset-0 cursor-default"
-			aria-label="Close delete confirmation"
-			onclick={closeDeleteModal}
-		></button>
-
-		<div class="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-xl">
+	<AppModal open={deleteModalOpen} labelledBy="delete-club-title" onClose={closeDeleteModal}>
+		<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
 			<div class="border-b border-red-100 bg-red-50 px-4 py-4">
 				<h2 id="delete-club-title" class="text-lg font-semibold text-red-900">Delete this club?</h2>
 				<p class="mt-2 text-sm text-red-800">
@@ -1064,5 +1053,5 @@
 				</div>
 			</form>
 		</div>
-	</div>
+	</AppModal>
 {/if}

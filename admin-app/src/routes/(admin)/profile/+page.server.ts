@@ -2,9 +2,11 @@ import { displayNameSchema } from '$lib/validation/displayName';
 import { tagSchema } from '$lib/validation/tag';
 import { validateAvatarFile } from '$lib/validation/avatar';
 import { loadManagedClubs } from '$lib/server/clubAccess';
+import { updateProfileCredentials, type CredentialsInput } from '$lib/server/profileCredentials';
 import { createSupabaseAdminClient } from '$lib/supabase/server';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
+import type { PasswordSignInPreference } from '$lib/types/auth';
 import { z } from 'zod';
 
 const profileSchema = z.object({
@@ -124,5 +126,53 @@ export const actions: Actions = {
 		}
 
 		return { success: true, at: Date.now() };
+	},
+
+	updateCredentials: async ({ request, locals: { supabase, user } }) => {
+		const formData = await request.formData();
+		const input: CredentialsInput = {
+			email: String(formData.get('email') ?? ''),
+			phone: String(formData.get('phone') ?? ''),
+			signInPreference: String(formData.get('signInPreference') ?? 'email') as PasswordSignInPreference,
+			currentPassword: String(formData.get('currentPassword') ?? '')
+		};
+
+		const { data: profile, error: loadError } = await supabase
+			.from('profiles')
+			.select('email, phone, sign_in_method')
+			.eq('id', user!.id)
+			.single();
+
+		if (loadError || !profile) {
+			return fail(400, {
+				credentialsAction: true,
+				error: 'Could not load your profile.'
+			});
+		}
+
+		const admin = createSupabaseAdminClient();
+		const result = await updateProfileCredentials({
+			admin,
+			supabase,
+			userId: user!.id,
+			profile,
+			input
+		});
+
+		if (!result.ok) {
+			return fail(400, {
+				credentialsAction: true,
+				error: result.error,
+				fieldErrors: result.fieldErrors,
+				values: result.values
+			});
+		}
+
+		return {
+			credentialsAction: true,
+			credentialsSuccess: true,
+			credentialsAt: Date.now(),
+			signInPreference: result.signInPreference
+		};
 	}
 };
