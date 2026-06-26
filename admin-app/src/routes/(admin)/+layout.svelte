@@ -2,6 +2,7 @@
 	import { browser } from '$app/environment';
 	import { page } from '$app/state';
 	import { invalidateAll } from '$app/navigation';
+	import AdminWorkspaceSwitch from '$lib/components/AdminWorkspaceSwitch.svelte';
 	import AppLogo from '$lib/components/AppLogo.svelte';
 	import ProfileMenu from '$lib/components/ProfileMenu.svelte';
 	import BackLink from '@repo/ui/components/BackLink.svelte';
@@ -14,9 +15,15 @@
 	let { data, children }: { data: LayoutData; children: import('svelte').Snippet } = $props();
 
 	const appRole = $derived(data.profile?.app_role ?? null);
-	const showBack = $derived(shouldShowBack(page.url.pathname, appRole));
-	const backHref = $derived(getBackHref(page.url.pathname, appRole));
-	const homeHref = $derived(getHomePath(appRole));
+	const dashboardMode = $derived(data.dashboardMode ?? 'super');
+	const hasClubMembership = $derived(data.hasClubMembership ?? false);
+	const showBack = $derived(
+		shouldShowBack(page.url.pathname, appRole, dashboardMode, hasClubMembership)
+	);
+	const backHref = $derived(
+		getBackHref(page.url.pathname, appRole, dashboardMode, hasClubMembership)
+	);
+	const homeHref = $derived(getHomePath(appRole, dashboardMode, hasClubMembership));
 
 	$effect(() => {
 		if (!browser) return;
@@ -57,7 +64,20 @@
 		</a>
 	{/if}
 
-	<ProfileMenu profile={data.profile} />
+	<div class="flex shrink-0 items-center gap-2">
+		<AdminWorkspaceSwitch
+			options={data.workspaceOptions ?? []}
+			currentWorkspace={data.dashboardMode ?? 'super'}
+			canSwitch={data.canSwitchWorkspace ?? false}
+		/>
+		<ProfileMenu profile={data.profile} />
+	</div>
 </header>
 
-<PageTransition appRole={appRole}>{@render children()}</PageTransition>
+<PageTransition
+	appRole={data.effectiveAppRole ?? appRole}
+	dashboardMode={dashboardMode}
+	hasClubMembership={hasClubMembership}
+>
+	{@render children()}
+</PageTransition>

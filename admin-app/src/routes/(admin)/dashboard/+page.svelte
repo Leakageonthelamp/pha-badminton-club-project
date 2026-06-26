@@ -1,7 +1,7 @@
 <script lang="ts">
 	import AppCard from '@repo/ui/components/AppCard.svelte';
+	import ActionRowLink from '@repo/ui/components/ActionRowLink.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
-	import DashboardTile from '@repo/ui/components/DashboardTile.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
 	import SectionHeading from '@repo/ui/components/SectionHeading.svelte';
 	import SelectMenu from '@repo/ui/components/SelectMenu.svelte';
@@ -112,30 +112,24 @@
 
 		<div class="space-y-4">
 			<SectionHeading title="Quick actions" />
-			<div class="grid grid-cols-1 gap-4 sm:max-w-xs">
-				{#if activeClub}
-					<DashboardTile
-						href="/clubs/{activeClub.id}"
-						title="Club settings"
-						description="Shuttles, PromptPay & location"
-						icon={SettingsIcon}
-						large
-					/>
-				{/if}
-			</div>
-		</div>
-	{:else if activeClub}
-		<div class="space-y-4">
-			<SectionHeading title="Quick actions" />
-			<div class="grid grid-cols-1 gap-4 sm:max-w-xs">
-				<DashboardTile
+			{#if activeClub}
+				<ActionRowLink
 					href="/clubs/{activeClub.id}"
 					title="Club settings"
 					description="Shuttles, PromptPay & location"
 					icon={SettingsIcon}
-					large
 				/>
-			</div>
+			{/if}
+		</div>
+	{:else if activeClub}
+		<div class="space-y-4">
+			<SectionHeading title="Quick actions" />
+			<ActionRowLink
+				href="/clubs/{activeClub.id}"
+				title="Club settings"
+				description="Shuttles, PromptPay & location"
+				icon={SettingsIcon}
+			/>
 		</div>
 	{/if}
 </section>

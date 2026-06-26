@@ -2,6 +2,7 @@ import {
 	assertCanManageClub,
 	assertSuperAdmin
 } from '$lib/server/clubAccess';
+import { resolveEffectiveAppRole } from '$lib/server/adminDashboardMode';
 import {
 	CLUB_MAX_ACTIVE_SESSIONS_LIMIT,
 	CLUB_MAX_ADMINS_LIMIT
@@ -137,14 +138,16 @@ const loadClubShuttles = async (
 export const load: PageServerLoad = async ({
 	params,
 	url,
+	cookies,
 	locals: { supabase, user, appRole }
 }) => {
 	if (!user || !appRole) {
 		error(401, 'Sign in required');
 	}
 
-	const club = await assertCanManageClub(supabase, user.id, params.id, appRole);
-	const isSuperAdmin = appRole === 'super_admin';
+	const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
+	const club = await assertCanManageClub(supabase, user.id, params.id, effectiveAppRole);
+	const isSuperAdmin = effectiveAppRole === 'super_admin';
 	const shuttles = await loadClubShuttles(supabase, params.id);
 	let admins = await loadClubAdmins(supabase, params.id);
 	let searchResults: ProfileSearchResult[] = [];
@@ -157,7 +160,6 @@ export const load: PageServerLoad = async ({
 			const { data: matches, error: searchError } = await supabase
 				.from('profiles')
 				.select('id, display_name, tag, email, phone, app_role')
-				.neq('app_role', 'super_admin')
 				.or(buildProfileSearchOrFilter(searchQuery))
 				.limit(20);
 
@@ -198,7 +200,7 @@ export const load: PageServerLoad = async ({
 		admins,
 		searchResults,
 		searchQuery,
-		appRole,
+		appRole: effectiveAppRole,
 		isSuperAdmin,
 		created: url.searchParams.get('created') === '1',
 		maxActiveSessionsLimit: CLUB_MAX_ACTIVE_SESSIONS_LIMIT,
@@ -208,16 +210,17 @@ export const load: PageServerLoad = async ({
 };
 
 export const actions: Actions = {
-	update: async ({ request, params, locals: { supabase, user, appRole } }) => {
+	update: async ({ request, params, cookies, locals: { supabase, user, appRole } }) => {
 		if (!user || !appRole) {
 			return fail(401, { message: 'Sign in required' });
 		}
 
-		await assertCanManageClub(supabase, user.id, params.id, appRole);
+		const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
+		await assertCanManageClub(supabase, user.id, params.id, effectiveAppRole);
 
 		const formData = await request.formData();
 
-		if (appRole === 'club_admin') {
+		if (effectiveAppRole === 'club_admin') {
 			const parsed = clubAdminClubInputSchema.safeParse({
 				name: formData.get('name'),
 				description: formData.get('description') ?? ''
@@ -302,12 +305,13 @@ export const actions: Actions = {
 		return { success: true, message: 'Club updated.' };
 	},
 
-	updatePromptPay: async ({ request, params, locals: { supabase, user, appRole } }) => {
+	updatePromptPay: async ({ request, params, cookies, locals: { supabase, user, appRole } }) => {
 		if (!user || !appRole) {
 			return fail(401, { message: 'Sign in required' });
 		}
 
-		await assertCanManageClub(supabase, user.id, params.id, appRole);
+		const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
+		await assertCanManageClub(supabase, user.id, params.id, effectiveAppRole);
 
 		const formData = await request.formData();
 		const parsed = promptPayInputSchema.safeParse({
@@ -341,12 +345,13 @@ export const actions: Actions = {
 		return { success: true, message: 'PromptPay info saved.' };
 	},
 
-	updateLocation: async ({ request, params, locals: { supabase, user, appRole } }) => {
+	updateLocation: async ({ request, params, cookies, locals: { supabase, user, appRole } }) => {
 		if (!user || !appRole) {
 			return fail(401, { message: 'Sign in required' });
 		}
 
-		await assertCanManageClub(supabase, user.id, params.id, appRole);
+		const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
+		await assertCanManageClub(supabase, user.id, params.id, effectiveAppRole);
 
 		const formData = await request.formData();
 		const parsed = locationInputSchema.safeParse({
@@ -377,12 +382,13 @@ export const actions: Actions = {
 		return { success: true, message: 'Location saved.' };
 	},
 
-	createShuttle: async ({ request, params, locals: { supabase, user, appRole } }) => {
+	createShuttle: async ({ request, params, cookies, locals: { supabase, user, appRole } }) => {
 		if (!user || !appRole) {
 			return fail(401, { message: 'Sign in required' });
 		}
 
-		await assertCanManageClub(supabase, user.id, params.id, appRole);
+		const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
+		await assertCanManageClub(supabase, user.id, params.id, effectiveAppRole);
 
 		const formData = await request.formData();
 		const parsed = shuttleInputSchema.safeParse({
@@ -418,12 +424,13 @@ export const actions: Actions = {
 		return { success: true, message: 'Shuttle added.' };
 	},
 
-	updateShuttle: async ({ request, params, locals: { supabase, user, appRole } }) => {
+	updateShuttle: async ({ request, params, cookies, locals: { supabase, user, appRole } }) => {
 		if (!user || !appRole) {
 			return fail(401, { message: 'Sign in required' });
 		}
 
-		await assertCanManageClub(supabase, user.id, params.id, appRole);
+		const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
+		await assertCanManageClub(supabase, user.id, params.id, effectiveAppRole);
 
 		const formData = await request.formData();
 		const parsed = shuttleUpdateSchema.safeParse({
@@ -462,12 +469,13 @@ export const actions: Actions = {
 		return { success: true, message: 'Shuttle updated.' };
 	},
 
-	deleteShuttle: async ({ request, params, locals: { supabase, user, appRole } }) => {
+	deleteShuttle: async ({ request, params, cookies, locals: { supabase, user, appRole } }) => {
 		if (!user || !appRole) {
 			return fail(401, { message: 'Sign in required' });
 		}
 
-		await assertCanManageClub(supabase, user.id, params.id, appRole);
+		const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
+		await assertCanManageClub(supabase, user.id, params.id, effectiveAppRole);
 
 		const formData = await request.formData();
 		const parsed = shuttleDeleteSchema.safeParse({
@@ -562,10 +570,6 @@ export const actions: Actions = {
 
 		if (targetError || !target) {
 			return fail(404, { message: 'User not found' });
-		}
-
-		if (target.app_role === 'super_admin') {
-			return fail(400, { message: 'Super admins cannot be assigned as club admins' });
 		}
 
 		const { count: existingMembershipCount, error: membershipError } = await supabase

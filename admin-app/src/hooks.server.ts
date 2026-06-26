@@ -1,3 +1,10 @@
+import {
+	getDashboardModeFromCookies,
+	getLoginHomePath,
+	hasClubAdminMembership,
+	sanitizeDashboardMode,
+	shouldUseClubDashboard
+} from '$lib/server/adminDashboardMode';
 import { isAdminAppRole } from '$lib/server/clubAccess';
 import { createSupabaseServerClient } from '$lib/supabase/server';
 import {
@@ -11,7 +18,7 @@ import { sequence } from '@sveltejs/kit/hooks';
 
 const PUBLIC_PATHS = new Set(['/login', '/auth/callback']);
 const BACKDOOR_PATH = '/api/internal/promote-superadmin';
-const SUPER_ADMIN_ONLY_PREFIXES = ['/clubs/new'];
+const SUPER_ADMIN_ONLY_PREFIXES = ['/clubs/new', '/users'];
 
 const isPublicPath = (path: string) =>
 	PUBLIC_PATHS.has(path) || path.startsWith('/auth/callback');
@@ -105,10 +112,27 @@ const authGuard: Handle = async ({ event, resolve }) => {
 
 	if (session && user) {
 		event.locals.appRole = await loadAppRole(event.locals.supabase, user.id);
+		let dashboardMode = getDashboardModeFromCookies(event.cookies);
+		const hasClubMembership =
+			event.locals.appRole === 'super_admin'
+				? await hasClubAdminMembership(event.locals.supabase, user.id)
+				: false;
+
+		if (event.locals.appRole === 'super_admin') {
+			dashboardMode = sanitizeDashboardMode(
+				event.locals.appRole,
+				dashboardMode,
+				hasClubMembership,
+				event.cookies
+			);
+		}
 
 		if (path === '/login') {
 			if (isAdminAppRole(event.locals.appRole)) {
-				redirect(303, event.locals.appRole === 'club_admin' ? '/dashboard' : '/');
+				redirect(
+					303,
+					getLoginHomePath(event.locals.appRole!, dashboardMode, hasClubMembership)
+				);
 			}
 
 			await event.locals.supabase.auth.signOut();
@@ -120,11 +144,32 @@ const authGuard: Handle = async ({ event, resolve }) => {
 			redirect(303, '/login?error=access_denied');
 		} else if (!isPublic && event.locals.appRole === 'club_admin' && path === '/') {
 			redirect(303, '/dashboard');
-		} else if (!isPublic && event.locals.appRole === 'super_admin' && path === '/dashboard') {
+		} else if (
+			!isPublic &&
+			event.locals.appRole === 'super_admin' &&
+			dashboardMode === 'club' &&
+			hasClubMembership &&
+			path === '/'
+		) {
+			redirect(303, '/dashboard');
+		} else if (
+			!isPublic &&
+			event.locals.appRole === 'super_admin' &&
+			path === '/dashboard' &&
+			!shouldUseClubDashboard(event.locals.appRole, dashboardMode, hasClubMembership)
+		) {
 			redirect(303, '/');
 		} else if (
 			!isPublic &&
 			event.locals.appRole === 'club_admin' &&
+			SUPER_ADMIN_ONLY_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))
+		) {
+			redirect(303, '/dashboard');
+		} else if (
+			!isPublic &&
+			event.locals.appRole === 'super_admin' &&
+			dashboardMode === 'club' &&
+			hasClubMembership &&
 			SUPER_ADMIN_ONLY_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))
 		) {
 			redirect(303, '/dashboard');

@@ -1,0 +1,1 @@
+export const USER_DELETE_CONFIRM_PHRASE = 'DELETE';

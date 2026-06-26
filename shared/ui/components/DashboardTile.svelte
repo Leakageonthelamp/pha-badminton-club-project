@@ -1,4 +1,5 @@
 <script lang="ts">
+	import DashboardIcon from './DashboardIcon.svelte';
 	import type { Component } from 'svelte';
 
 	let {
@@ -22,21 +23,18 @@
 	const tileClass = $derived(
 		`app-tile h-full ${large ? 'min-h-36 justify-center py-5' : 'justify-start'} ${!href && !onclick ? 'pointer-events-none opacity-60' : ''}`
 	);
-	const iconWrapClass = $derived(`app-tile-icon ${large ? 'h-16 w-16' : 'h-12 w-12'}`);
-	const iconClass = $derived(large ? 'h-8 w-8' : 'h-6 w-6');
 	const titleClass = $derived(
 		`line-clamp-2 w-full font-semibold leading-snug text-slate-900 ${large ? 'text-lg' : 'min-h-[2.25rem] text-sm'}`
 	);
 	const descriptionClass = $derived(
 		`mt-0.5 line-clamp-2 w-full text-xs leading-snug text-slate-500 ${large ? '' : 'min-h-8'}`
 	);
+	const iconSize = $derived(large ? 'lg' : 'md');
 </script>
 
 {#if href}
 	<a {href} class={tileClass}>
-		<div class={iconWrapClass}>
-			<Icon class={iconClass} />
-		</div>
+		<DashboardIcon icon={Icon} size={iconSize} class="mb-2.5" />
 		<p class={titleClass}>{title}</p>
 		{#if description}
 			<p class={descriptionClass}>{description}</p>
@@ -49,9 +47,7 @@
 	</a>
 {:else}
 	<button type="button" class={tileClass} {onclick}>
-		<div class={iconWrapClass}>
-			<Icon class={iconClass} />
-		</div>
+		<DashboardIcon icon={Icon} size={iconSize} class="mb-2.5" />
 		<p class={titleClass}>{title}</p>
 		{#if description}
 			<p class={descriptionClass}>{description}</p>
