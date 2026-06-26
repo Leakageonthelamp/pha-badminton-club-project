@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { invalidateAll } from '$app/navigation';
 	import AppLogo from '$lib/components/AppLogo.svelte';
 	import ProfileMenu from '$lib/components/ProfileMenu.svelte';
-	import BackLink from '$lib/components/BackLink.svelte';
+	import BackLink from '@repo/ui/components/BackLink.svelte';
 	import PageTransition from '$lib/components/PageTransition.svelte';
 	import { appConfig } from '$lib/config/app';
 	import { getBackHref, shouldShowBack } from '$lib/navigation/back';
@@ -12,6 +13,21 @@
 
 	const showBack = $derived(shouldShowBack(page.url.pathname));
 	const backHref = $derived(getBackHref(page.url.pathname));
+
+	// Refetch profile/clubs when returning to the app so changes made elsewhere
+	// (e.g. display name updated in admin-app) show without a manual reload.
+	// ponytail: invalidateAll re-runs every load on focus; fine at this scale.
+	$effect(() => {
+		const revalidate = () => {
+			if (document.visibilityState === 'visible') invalidateAll();
+		};
+		document.addEventListener('visibilitychange', revalidate);
+		window.addEventListener('focus', revalidate);
+		return () => {
+			document.removeEventListener('visibilitychange', revalidate);
+			window.removeEventListener('focus', revalidate);
+		};
+	});
 </script>
 
 <header class="relative z-30 mb-8 flex items-center justify-between gap-3 overflow-visible">

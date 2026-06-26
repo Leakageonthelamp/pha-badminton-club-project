@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import FormToast from '@repo/ui/components/FormToast.svelte';
-	import SubmitButton from '$lib/components/SubmitButton.svelte';
+	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import AppCard from '@repo/ui/components/AppCard.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import { CLUB_DESCRIPTION_MAX_LENGTH, CLUB_NAME_MAX_LENGTH } from '$lib/config/club';

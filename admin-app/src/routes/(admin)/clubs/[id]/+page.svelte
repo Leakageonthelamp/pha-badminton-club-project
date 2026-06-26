@@ -5,7 +5,7 @@
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import FormToast from '@repo/ui/components/FormToast.svelte';
 	import MapPinPicker from '$lib/components/MapPinPicker.svelte';
-	import SubmitButton from '$lib/components/SubmitButton.svelte';
+	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import {
 		CLUB_DELETE_CONFIRM_PHRASE,
 		CLUB_DESCRIPTION_MAX_LENGTH,

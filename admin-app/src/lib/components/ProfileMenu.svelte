@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import LogOutIcon from '$lib/components/icons/LogOutIcon.svelte';
-	import UserIcon from '$lib/components/icons/UserIcon.svelte';
-	import SubmitButton from '$lib/components/SubmitButton.svelte';
-	import TagPill from '$lib/components/TagPill.svelte';
+	import LogOutIcon from '@repo/ui/icons/LogOutIcon.svelte';
+	import UserIcon from '@repo/ui/icons/UserIcon.svelte';
+	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
+	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import { whileSubmitting } from '$lib/forms/submitting';
 	import { appRoleLabel, type AppRole, type Profile } from '$lib/types/auth';
 

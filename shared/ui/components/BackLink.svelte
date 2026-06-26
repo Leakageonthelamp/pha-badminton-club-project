@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ArrowLeftIcon from '$lib/components/icons/ArrowLeftIcon.svelte';
+	import ArrowLeftIcon from '../icons/ArrowLeftIcon.svelte';
 
 	let {
 		href,

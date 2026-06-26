@@ -4,11 +4,13 @@
 	let {
 		eyebrow,
 		title,
+		tag,
 		subtitle,
 		children
 	}: {
 		eyebrow?: string;
 		title: string;
+		tag?: string | null;
 		subtitle?: string;
 		children?: Snippet;
 	} = $props();
@@ -19,6 +21,9 @@
 		<p class="app-hero-eyebrow">{eyebrow}</p>
 	{/if}
 	<h1 class="app-hero-title">{title}</h1>
+	{#if tag}
+		<span class="app-hero-badge font-mono font-semibold">{tag}</span>
+	{/if}
 	{#if subtitle}
 		<p class="app-hero-subtitle">{subtitle}</p>
 	{/if}

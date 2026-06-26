@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import AppLogo from '$lib/components/AppLogo.svelte';
-	import BackLink from '$lib/components/BackLink.svelte';
+	import BackLink from '@repo/ui/components/BackLink.svelte';
 	import PageTransition from '$lib/components/PageTransition.svelte';
 	import { appConfig } from '$lib/config/app';
 	import { getBackHref, shouldShowBack } from '$lib/navigation/back';

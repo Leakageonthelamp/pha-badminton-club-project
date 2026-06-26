@@ -48,6 +48,7 @@
 	<DashboardHero
 		eyebrow="Welcome back"
 		title={profileName}
+		tag={data.profile?.tag}
 		subtitle="Find clubs and join sessions near you."
 	/>
 

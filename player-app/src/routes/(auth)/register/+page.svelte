@@ -3,8 +3,8 @@
 	import AppLogo from '$lib/components/AppLogo.svelte';
 	import DisplayNameField from '$lib/components/DisplayNameField.svelte';
 	import IdentifierField from '$lib/components/IdentifierField.svelte';
-	import PasswordField from '$lib/components/PasswordField.svelte';
-	import SubmitButton from '$lib/components/SubmitButton.svelte';
+	import PasswordField from '@repo/ui/components/PasswordField.svelte';
+	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import FormToast from '@repo/ui/components/FormToast.svelte';
 	import AppCard from '@repo/ui/components/AppCard.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';

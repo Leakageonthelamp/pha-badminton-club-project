@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import TagPill from '$lib/components/TagPill.svelte';
+	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import type { ClubAdminPublic, ClubPublic } from '$lib/types/club';
 
 	let {

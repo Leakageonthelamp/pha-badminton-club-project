@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import AppLogo from '$lib/components/AppLogo.svelte';
-	import FacebookIcon from '$lib/components/icons/FacebookIcon.svelte';
-	import GoogleIcon from '$lib/components/icons/GoogleIcon.svelte';
+	import FacebookIcon from '@repo/ui/icons/FacebookIcon.svelte';
+	import GoogleIcon from '@repo/ui/icons/GoogleIcon.svelte';
 	import IdentifierField from '$lib/components/IdentifierField.svelte';
-	import PasswordField from '$lib/components/PasswordField.svelte';
-	import SubmitButton from '$lib/components/SubmitButton.svelte';
+	import PasswordField from '@repo/ui/components/PasswordField.svelte';
+	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import FormToast from '@repo/ui/components/FormToast.svelte';
 	import AppCard from '@repo/ui/components/AppCard.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';

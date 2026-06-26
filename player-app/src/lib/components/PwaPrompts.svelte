@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import AppLogo from '$lib/components/AppLogo.svelte';
-	import SubmitButton from '$lib/components/SubmitButton.svelte';
+	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import { useRegisterSW } from 'virtual:pwa-register/svelte';
 
 	let { appName = 'App' }: { appName?: string } = $props();

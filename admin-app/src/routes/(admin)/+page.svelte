@@ -17,6 +17,7 @@
 	<DashboardHero
 		eyebrow="Admin dashboard"
 		title={profileName}
+		tag={data.profile?.tag}
 		subtitle="Create and manage clubs and their admins."
 	/>
 

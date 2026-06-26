@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Cropper from 'svelte-easy-crop';
-	import SubmitButton from '$lib/components/SubmitButton.svelte';
+	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import { toast } from '@repo/ui/toast/toast.svelte';
 	import {
 		AVATAR_OUTPUT_SIZE,

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import EyeIcon from '$lib/components/icons/EyeIcon.svelte';
-	import EyeOffIcon from '$lib/components/icons/EyeOffIcon.svelte';
+	import EyeIcon from '../icons/EyeIcon.svelte';
+	import EyeOffIcon from '../icons/EyeOffIcon.svelte';
 
 	let {
 		id = 'password',

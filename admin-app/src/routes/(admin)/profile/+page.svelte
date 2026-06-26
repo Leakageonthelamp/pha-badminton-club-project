@@ -2,9 +2,9 @@
 	import { enhance } from '$app/forms';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import AvatarCropModal from '$lib/components/AvatarCropModal.svelte';
-	import UploadIcon from '$lib/components/icons/UploadIcon.svelte';
-	import SubmitButton from '$lib/components/SubmitButton.svelte';
-	import TagPill from '$lib/components/TagPill.svelte';
+	import UploadIcon from '@repo/ui/icons/UploadIcon.svelte';
+	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
+	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import FormToast from '@repo/ui/components/FormToast.svelte';
 	import AppCard from '@repo/ui/components/AppCard.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';

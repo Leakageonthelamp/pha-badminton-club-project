@@ -4,15 +4,16 @@
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
 	import SectionHeading from '@repo/ui/components/SectionHeading.svelte';
 	import SettingsIcon from '@repo/ui/icons/SettingsIcon.svelte';
+	import type { LayoutData } from '../$types';
 	import type { PageData } from './$types';
 
-	let { data }: { data: PageData } = $props();
+	let { data }: { data: PageData & LayoutData } = $props();
 
 	const singleClub = $derived(data.clubs.length === 1 ? data.clubs[0] : null);
 </script>
 
 <section class="space-y-6">
-	<DashboardHero eyebrow="Welcome back" title={data.profileName}>
+	<DashboardHero eyebrow="Welcome back" title={data.profileName} tag={data.profile?.tag}>
 		{#if singleClub}
 			<p class="app-hero-badge">
 				<span class="truncate">{singleClub.name}</span>
