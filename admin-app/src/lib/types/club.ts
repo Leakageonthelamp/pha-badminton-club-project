@@ -10,6 +10,7 @@ export type Club = {
 	owner_id: string;
 	promptpay_type: PromptPayType | null;
 	promptpay_target: string | null;
+	venue_name: string | null;
 	latitude: number | null;
 	longitude: number | null;
 	created_at: string;
@@ -23,7 +24,6 @@ export type ClubShuttle = {
 	club_id: string;
 	name: string;
 	speed: ShuttleSpeed;
-	original_price: number;
 	price: number;
 	number_per_box: number;
 	created_at: string;

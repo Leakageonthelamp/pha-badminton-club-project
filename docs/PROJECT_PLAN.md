@@ -198,7 +198,7 @@ Player routes under `player-app/src/routes/`; admin routes under `admin-app/src/
 | ----- | --------------------------------------------------------------------------------------------- | ----------- |
 | 1     | Player Auth & Profile (email/phone + password, Google, Facebook, 7-day session, profile edit) | Completed   |
 | 2     | DB schema + RLS + roles + clubs / admin hierarchy                                             | In progress (super admin subset done) |
-| 3     | Sessions (CRUD, geo discovery, join/approve)                                                  | Not started |
+| 3     | Sessions (CRUD, geo discovery, join/approve)                                                  | In progress (admin create v1 done) |
 | 4     | Matchmaking (manual then auto) + match accept + realtime offers                               | Not started |
 | 5     | Scoring + peer confirmation + dispute/suspend + admin resolve                                 | Not started |
 | 6     | ELO engine + history + leaderboard                                                            | Not started |
@@ -374,3 +374,60 @@ Club admins can sign in to `admin-app`, land on `/dashboard`, and open club sett
 ### UI
 
 Uses shared dashboard design system (see **UI design system** above): `DashboardHero`, `DashboardTile`, `AppCard` on dashboard, settings, login, and profile screens.
+
+---
+
+## Phase 3 — Sessions (admin create v1)
+
+Admin-app session module: **create + list + detail (observe) + super-admin force-end**. Player join, geo discovery, matchmaking, and payment execution are later phases.
+
+### Role capabilities (sessions v1)
+
+| Role | Sessions access | Capabilities |
+| ---- | --------------- | ------------ |
+| **Super Admin** | `/sessions`, `/sessions/[id]` | View all sessions; **force end** only (danger zone) |
+| **Club Admin** | `/sessions`, `/sessions/new`, `/sessions/[id]` | Create sessions for assigned clubs; list own club sessions; observe others' sessions (read-only detail) |
+| **Player** | — (later phase) | — |
+
+### Admin routes (Phase 3 v1)
+
+- `(admin)/sessions/` — upcoming + past session lists
+- `(admin)/sessions/new/` — create form (club admin / super-admin in club workspace only)
+- `(admin)/sessions/[id]/` — session detail (observe); super-admin force-end action
+
+### Data (`0012`–`0014` migrations)
+
+- `clubs.venue_name` — default venue label prefilled on session create
+- `club_shuttles` — dropped `speed`; unique `(club_id, name)`; fields: brand (`name`), `original_price`, tube price (`price`), amount per tube (`number_per_box`); per-each computed in UI
+- `sessions`: `club_id`, `host_id`, `name`, `description` (sanitized HTML), `status` (`open` \| `in_progress` \| `closed` \| `cancelled`), `start_at`, `end_at`, `venue_name`, `latitude`, `longitude`, `max_players`, `min_players`, `court_count`, `court_fee_per_hour`, `shuttle_id`, `shuttle_price_per_each`, `match_score_type` (15 \| 21), `match_type` (`one_round` \| `two_round`)
+
+All session datetimes stored as `timestamptz`; UI inputs/display use **Asia/Bangkok**.
+
+Create enforces club `max_active_sessions` (counts sessions with status `open` or `in_progress`).
+
+### Payment formulas (locked — used in Phase 7)
+
+When a player leaves or a session ends, per-player charges:
+
+- **Court share** = `court_fee_per_hour × duration_hours × court_count ÷ active_players`
+  - Example: 200 THB/hr × 4 hrs × 4 courts ÷ 10 players = **320 THB**
+- **Shuttle share** = `(shuttle_price_per_each ÷ 4) × games_played_by_player`
+  - Example: (80 ÷ 4) × 5 games = **100 THB**
+- **Session total** = court_share + shuttle_share (example → **420 THB**)
+
+`shuttle_price_per_each` is set per session (may differ from club default for markup).
+
+### Deferred (not v1)
+
+- Session edit/cancel by host
+- Min-players auto-cancel 15 min before start
+- Player join window (30 min before end)
+- Court assignment infographic / match flow
+- Actual payment QR generation and collection
+
+### UI notes
+
+- Description: TipTap rich text (admin) → sanitized HTML stored → `RichTextDisplay` (shared) on detail
+- Venue: prefilled from club `venue_name` + lat/lng; editable per session via `MapPinPicker`
+- Datetime helpers: `admin-app/src/lib/datetime/bangkok.ts`
+

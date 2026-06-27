@@ -356,6 +356,7 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		const parsed = locationInputSchema.safeParse({
 			clear: formData.get('clear'),
+			venue_name: formData.get('venue_name'),
 			latitude: formData.get('latitude'),
 			longitude: formData.get('longitude')
 		});
@@ -369,8 +370,12 @@ export const actions: Actions = {
 		}
 
 		const payload = parsed.data.clear
-			? { latitude: null, longitude: null }
-			: { latitude: parsed.data.latitude, longitude: parsed.data.longitude };
+			? { venue_name: null, latitude: null, longitude: null }
+			: {
+					venue_name: parsed.data.venue_name,
+					latitude: parsed.data.latitude,
+					longitude: parsed.data.longitude
+				};
 
 		const { error: updateError } = await supabase.from('clubs').update(payload).eq('id', params.id);
 
@@ -394,7 +399,6 @@ export const actions: Actions = {
 		const parsed = shuttleInputSchema.safeParse({
 			name: formData.get('name'),
 			speed: formData.get('speed'),
-			original_price: formData.get('original_price'),
 			price: formData.get('price'),
 			number_per_box: formData.get('number_per_box')
 		});
@@ -437,7 +441,6 @@ export const actions: Actions = {
 			shuttleId: formData.get('shuttleId'),
 			name: formData.get('name'),
 			speed: formData.get('speed'),
-			original_price: formData.get('original_price'),
 			price: formData.get('price'),
 			number_per_box: formData.get('number_per_box')
 		});

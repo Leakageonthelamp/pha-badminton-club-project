@@ -49,7 +49,7 @@ const loadClubShuttles = async (
 ): Promise<ClubShuttlePublic[]> => {
 	const { data, error } = await supabase
 		.from('club_shuttles')
-		.select('id, name, speed, original_price, price, number_per_box')
+		.select('id, name, speed, price, number_per_box')
 		.eq('club_id', clubId)
 		.order('name', { ascending: true });
 

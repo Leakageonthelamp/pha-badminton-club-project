@@ -7,8 +7,8 @@
 	import AppModal from '@repo/ui/components/AppModal.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import NotSetBadge from '@repo/ui/components/NotSetBadge.svelte';
-	import SelectMenu from '@repo/ui/components/SelectMenu.svelte';
 	import MapPinPicker from '$lib/components/MapPinPicker.svelte';
+	import SelectMenu from '@repo/ui/components/SelectMenu.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
@@ -19,7 +19,11 @@
 	} from '$lib/config/club';
 	import { whileSubmitting } from '$lib/forms/submitting';
 	import { formatThb, shuttlePricePerEach, type ClubShuttle, type PromptPayType } from '$lib/types/club';
-	import { SHUTTLE_NAME_MAX_LENGTH } from '$lib/validation/clubSettings';
+	import {
+		SHUTTLE_NAME_MAX_LENGTH,
+		SHUTTLE_SPEEDS,
+		VENUE_NAME_MAX_LENGTH
+	} from '$lib/validation/clubSettings';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -45,6 +49,7 @@
 	let promptPayTarget = $state('');
 	let latitude = $state<number | null>(null);
 	let longitude = $state<number | null>(null);
+	let venueName = $state('');
 	let lastSyncedAt = $state<string | null>(null);
 	let deleteModalOpen = $state(false);
 	let deleteConfirmText = $state('');
@@ -53,13 +58,11 @@
 
 	let newShuttleName = $state('');
 	let newShuttleSpeed = $state('75');
-	let newShuttleOriginalPrice = $state('');
 	let newShuttlePrice = $state('');
 	let newShuttlePerBox = $state('12');
 
 	let editShuttleName = $state('');
 	let editShuttleSpeed = $state('75');
-	let editShuttleOriginalPrice = $state('');
 	let editShuttlePrice = $state('');
 	let editShuttlePerBox = $state('12');
 
@@ -68,7 +71,7 @@
 	const clubHeroSubtitle = $derived(
 		isSuperAdmin
 			? 'Manage club settings and admins.'
-			: 'Configure shuttles, PromptPay, and location.'
+			: 'Configure shuttles, PromptPay, venue, and location.'
 	);
 
 	const clubDescriptionNotSet = $derived(!data.club.description.trim());
@@ -77,11 +80,18 @@
 		!data.club.promptpay_type || !data.club.promptpay_target?.trim()
 	);
 	const locationNotSet = $derived(
-		data.club.latitude === null || data.club.longitude === null
+		!data.club.venue_name?.trim() ||
+			data.club.latitude === null ||
+			data.club.longitude === null
 	);
 	const clubAdminsNotSet = $derived(isSuperAdmin && data.admins.length === 0);
 
 	const deleteConfirmed = $derived(deleteConfirmText === CLUB_DELETE_CONFIRM_PHRASE);
+
+	const shuttleSpeedOptions = SHUTTLE_SPEEDS.map((speed) => ({
+		value: String(speed),
+		label: String(speed)
+	}));
 
 	const inputClass =
 		'w-full rounded-xl border border-slate-300 px-4 py-3 text-base focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20';
@@ -98,6 +108,7 @@
 		if (!locationEditing) {
 			latitude = club.latitude;
 			longitude = club.longitude;
+			venueName = club.venue_name ?? '';
 		}
 		if (club.latitude === null || club.longitude === null) {
 			locationEditing = true;
@@ -111,7 +122,6 @@
 		editingShuttleId = shuttle.id;
 		editShuttleName = shuttle.name;
 		editShuttleSpeed = String(shuttle.speed);
-		editShuttleOriginalPrice = String(shuttle.original_price);
 		editShuttlePrice = String(shuttle.price);
 		editShuttlePerBox = String(shuttle.number_per_box);
 	};
@@ -146,7 +156,11 @@
 	});
 
 	const hasLocationChanges = $derived.by(() => {
-		return latitude !== data.club.latitude || longitude !== data.club.longitude;
+		return (
+			latitude !== data.club.latitude ||
+			longitude !== data.club.longitude ||
+			venueName.trim() !== (data.club.venue_name ?? '')
+		);
 	});
 
 	const hasSavedLocation = $derived(
@@ -157,7 +171,7 @@
 	const handleLocationUpdate: SubmitFunction = ({ formData, cancel }) => {
 		const isClear = formData.get('clear') === 'true';
 
-		if (!isClear && (!hasLocationChanges || latitude === null || longitude === null)) {
+		if (!isClear && (!hasLocationChanges || latitude === null || longitude === null || !venueName.trim())) {
 			cancel();
 			return;
 		}
@@ -184,6 +198,7 @@
 	function cancelLocationEdit() {
 		latitude = data.club.latitude;
 		longitude = data.club.longitude;
+		venueName = data.club.venue_name ?? '';
 		locationEditing = false;
 	}
 
@@ -234,10 +249,6 @@
 
 	const labelClass = 'mb-2 block text-sm font-medium text-slate-700';
 	const cardClass = 'app-card-padded space-y-4';
-	const shuttleSpeedOptions = [
-		{ value: '75', label: '75' },
-		{ value: '76', label: '76' }
-	];
 
 	async function submitSearch(event: SubmitEvent) {
 		event.preventDefault();
@@ -473,14 +484,14 @@
 		{#if data.shuttles.length === 0}
 			<p class="text-sm text-slate-500">No shuttlecocks yet — add the brands your club uses.</p>
 		{:else}
-			<ul class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
+			<ul class="space-y-3">
 				{#each data.shuttles as shuttle (shuttle.id)}
-					<li class="bg-white px-4 py-3">
+					<li class="overflow-hidden rounded-xl border border-slate-200 bg-white">
 						{#if editingShuttleId === shuttle.id}
 							<form
 								method="POST"
 								action="?/updateShuttle"
-								class="space-y-3"
+								class="space-y-3 p-4"
 								use:enhance={whileSubmitting((v) => {
 									shuttleUpdateLoadingId = v ? shuttle.id : null;
 								})}
@@ -509,7 +520,7 @@
 										<input type="hidden" name="speed" value={editShuttleSpeed} />
 									</div>
 									<div>
-										<label class={labelClass} for="edit-per-box-{shuttle.id}">Per box</label>
+										<label class={labelClass} for="edit-per-box-{shuttle.id}">Amount per tube</label>
 										<input
 											id="edit-per-box-{shuttle.id}"
 											name="number_per_box"
@@ -521,20 +532,7 @@
 										/>
 									</div>
 									<div>
-										<label class={labelClass} for="edit-original-{shuttle.id}">Original price</label>
-										<input
-											id="edit-original-{shuttle.id}"
-											name="original_price"
-											type="number"
-											min="0"
-											step="0.01"
-											required
-											bind:value={editShuttleOriginalPrice}
-											class={inputClass}
-										/>
-									</div>
-									<div>
-										<label class={labelClass} for="edit-price-{shuttle.id}">Price (per box)</label>
+										<label class={labelClass} for="edit-price-{shuttle.id}">Tube price</label>
 										<input
 											id="edit-price-{shuttle.id}"
 											name="price"
@@ -561,21 +559,42 @@
 								</div>
 							</form>
 						{:else}
-							<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-								<div>
-									<p class="font-medium text-slate-900">
-										{shuttle.name}
-										<span class="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
-											{shuttle.speed}
-										</span>
-									</p>
-									<p class="mt-1 text-sm text-slate-600">
-										{formatThb(shuttle.original_price)} original · {formatThb(shuttle.price)} per box ·
-										{shuttle.number_per_box} per box ·
-										{formatThb(shuttlePricePerEach(shuttle))} each
-									</p>
+							<div class="p-4">
+								<div class="flex items-start justify-between gap-4">
+									<div class="min-w-0 flex-1">
+										<div class="flex flex-wrap items-center gap-2">
+											<p class="font-semibold text-slate-900">{shuttle.name}</p>
+											<span
+												class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium tabular-nums text-slate-700"
+											>
+												Speed {shuttle.speed}
+											</span>
+										</div>
+									</div>
+									<div class="shrink-0 text-right">
+										<p class="text-xs font-medium text-slate-500">Per each</p>
+										<p class="text-lg font-semibold tabular-nums text-brand-700">
+											{formatThb(shuttlePricePerEach(shuttle))}
+										</p>
+									</div>
 								</div>
-								<div class="flex gap-2">
+
+								<dl class="mt-3 grid grid-cols-2 gap-2">
+									<div class="rounded-lg bg-slate-50 px-3 py-2">
+										<dt class="text-xs text-slate-500">Tube price</dt>
+										<dd class="mt-0.5 text-sm font-medium tabular-nums text-slate-900">
+											{formatThb(shuttle.price)}
+										</dd>
+									</div>
+									<div class="rounded-lg bg-slate-50 px-3 py-2">
+										<dt class="text-xs text-slate-500">In tube</dt>
+										<dd class="mt-0.5 text-sm font-medium tabular-nums text-slate-900">
+											{shuttle.number_per_box}
+										</dd>
+									</div>
+								</dl>
+
+								<div class="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
 									<SubmitButton
 										type="button"
 										variant="secondary"
@@ -640,7 +659,7 @@
 					<input type="hidden" name="speed" value={newShuttleSpeed} />
 				</div>
 				<div>
-					<label class={labelClass} for="new-shuttle-per-box">Number per box</label>
+					<label class={labelClass} for="new-shuttle-per-box">Amount per tube</label>
 					<input
 						id="new-shuttle-per-box"
 						name="number_per_box"
@@ -652,20 +671,7 @@
 					/>
 				</div>
 				<div>
-					<label class={labelClass} for="new-shuttle-original">Original price</label>
-					<input
-						id="new-shuttle-original"
-						name="original_price"
-						type="number"
-						min="0"
-						step="0.01"
-						required
-						bind:value={newShuttleOriginalPrice}
-						class={inputClass}
-					/>
-				</div>
-				<div>
-					<label class={labelClass} for="new-shuttle-price">Price (per box)</label>
+					<label class={labelClass} for="new-shuttle-price">Tube price</label>
 					<input
 						id="new-shuttle-price"
 						name="price"
@@ -774,7 +780,7 @@
 	>
 		<div>
 			<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-				<h2 class="text-lg font-semibold text-slate-900">Location</h2>
+				<h2 class="text-lg font-semibold text-slate-900">Venue & location</h2>
 				{#if locationNotSet}
 					<NotSetBadge />
 				{/if}
@@ -785,6 +791,23 @@
 				{:else}
 					Drag the map so the pin sits on your club venue. Location is required for players to find you.
 				{/if}
+			</p>
+		</div>
+
+		<div>
+			<label for="venue_name" class={labelClass}>Venue name</label>
+			<input
+				id="venue_name"
+				name="venue_name"
+				type="text"
+				maxlength={VENUE_NAME_MAX_LENGTH}
+				bind:value={venueName}
+				disabled={locationLocked || locationLoading}
+				placeholder="e.g. Rama IX Sports Center"
+				class={inputClass}
+			/>
+			<p class="mt-2 text-xs text-slate-500">
+				Default venue label for new sessions. Required when a map pin is set.
 			</p>
 		</div>
 
@@ -815,6 +838,7 @@
 					onclick={() => {
 						latitude = null;
 						longitude = null;
+						venueName = '';
 					}}
 				>
 					Clear location
@@ -823,7 +847,7 @@
 				<SubmitButton
 					loading={locationLoading}
 					loadingLabel="Saving…"
-					disabled={!hasLocationChanges || latitude === null || longitude === null}
+					disabled={!hasLocationChanges || latitude === null || longitude === null || !venueName.trim()}
 					class="!w-auto"
 				>
 					Save location

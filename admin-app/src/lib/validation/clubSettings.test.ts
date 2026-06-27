@@ -11,7 +11,6 @@ describe('shuttleInputSchema', () => {
 		const result = shuttleInputSchema.safeParse({
 			name: 'Yonex AS-30',
 			speed: '75',
-			original_price: '950',
 			price: '850',
 			number_per_box: '12'
 		});
@@ -19,11 +18,10 @@ describe('shuttleInputSchema', () => {
 		expect(result.success).toBe(true);
 	});
 
-	it('rejects invalid speed', () => {
+	it('rejects empty name', () => {
 		const result = shuttleInputSchema.safeParse({
-			name: 'Yonex AS-30',
-			speed: '77',
-			original_price: '950',
+			name: '',
+			speed: '75',
 			price: '850',
 			number_per_box: '12'
 		});
@@ -64,9 +62,10 @@ describe('promptPayInputSchema', () => {
 });
 
 describe('locationInputSchema', () => {
-	it('accepts coordinates', () => {
+	it('accepts coordinates with venue name', () => {
 		const result = locationInputSchema.safeParse({
 			clear: false,
+			venue_name: 'Rama IX Sports Center',
 			latitude: '13.7563',
 			longitude: '100.5018'
 		});
@@ -74,9 +73,21 @@ describe('locationInputSchema', () => {
 		expect(result.success).toBe(true);
 	});
 
+	it('requires venue name when coordinates are set', () => {
+		const result = locationInputSchema.safeParse({
+			clear: false,
+			venue_name: '',
+			latitude: '13.7563',
+			longitude: '100.5018'
+		});
+
+		expect(result.success).toBe(false);
+	});
+
 	it('allows clearing', () => {
 		const result = locationInputSchema.safeParse({
 			clear: true,
+			venue_name: '',
 			latitude: '',
 			longitude: ''
 		});
@@ -86,7 +97,7 @@ describe('locationInputSchema', () => {
 });
 
 describe('shuttlePricePerEach', () => {
-	it('computes per-shuttle price from box price', () => {
+	it('computes per-shuttle price from tube price', () => {
 		expect(shuttlePricePerEach({ price: 840, number_per_box: 12 })).toBe(70);
 	});
 });

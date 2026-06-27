@@ -1,9 +1,13 @@
 import {
 	getDashboardModeFromCookies,
 	hasClubAdminMembership,
+	resolveEffectiveAppRole,
 	sanitizeDashboardMode,
 	shouldUseClubDashboard
 } from '$lib/server/adminDashboardMode';
+import { loadManagedClubs } from '$lib/server/clubAccess';
+import { loadSessionsForAdmin } from '$lib/server/sessions';
+import { filterUpcomingSessions } from '$lib/sessions/list';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
@@ -12,7 +16,7 @@ export const load: PageServerLoad = async ({
 	locals: { supabase, user, appRole }
 }) => {
 	if (!user || !appRole) {
-		return { profileName: '' };
+		return { profileName: '', upcomingSessions: [], userId: '', canCreate: false };
 	}
 
 	const hasClubMembership =
@@ -27,6 +31,15 @@ export const load: PageServerLoad = async ({
 		redirect(303, '/');
 	}
 
+	const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
+	const managedClubs = await loadManagedClubs(supabase, user.id, effectiveAppRole);
+	const clubIds = managedClubs.map((club) => club.id);
+	const sessions = await loadSessionsForAdmin(supabase, {
+		appRole: effectiveAppRole,
+		userId: user.id,
+		clubIds
+	});
+
 	const { data: profile } = await supabase
 		.from('profiles')
 		.select('display_name')
@@ -34,6 +47,9 @@ export const load: PageServerLoad = async ({
 		.single();
 
 	return {
-		profileName: profile?.display_name ?? 'Club admin'
+		profileName: profile?.display_name ?? 'Club admin',
+		upcomingSessions: filterUpcomingSessions(sessions),
+		userId: user.id,
+		canCreate: effectiveAppRole === 'club_admin'
 	};
 };

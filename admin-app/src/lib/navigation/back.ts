@@ -45,6 +45,10 @@ export const getBackHref = (
 		return home;
 	}
 
+	if (pathname === '/sessions/new') {
+		return '/sessions';
+	}
+
 	if (pathname.startsWith('/clubs/') && pathname !== '/clubs/new') {
 		return home;
 	}

@@ -10,26 +10,27 @@ const thaiPhoneRegex = /^0[689]\d{8}$/;
 const nationalIdRegex = /^\d{13}$/;
 
 export const SHUTTLE_NAME_MAX_LENGTH = 120;
+export const VENUE_NAME_MAX_LENGTH = 120;
+
+export const SHUTTLE_SPEEDS = [75, 76] as const;
 
 export const shuttleInputSchema = z.object({
 	name: z
 		.string()
 		.trim()
-		.min(1, 'Shuttle name is required')
+		.min(1, 'Name is required')
 		.max(SHUTTLE_NAME_MAX_LENGTH, `Name must be ${SHUTTLE_NAME_MAX_LENGTH} characters or fewer`),
 	speed: z.coerce
-		.number({ invalid_type_error: 'Speed must be 75 or 76' })
+		.number({ invalid_type_error: 'Speed must be a number' })
+		.int('Speed must be a whole number')
 		.refine((value) => value === 75 || value === 76, 'Speed must be 75 or 76'),
-	original_price: z.coerce
-		.number({ invalid_type_error: 'Original price must be a number' })
-		.min(0, 'Original price cannot be negative'),
 	price: z.coerce
-		.number({ invalid_type_error: 'Price must be a number' })
-		.min(0, 'Price cannot be negative'),
+		.number({ invalid_type_error: 'Tube price must be a number' })
+		.min(0, 'Tube price cannot be negative'),
 	number_per_box: z.coerce
-		.number({ invalid_type_error: 'Number per box must be a number' })
-		.int('Number per box must be a whole number')
-		.min(1, 'Number per box must be at least 1')
+		.number({ invalid_type_error: 'Amount per tube must be a number' })
+		.int('Amount per tube must be a whole number')
+		.min(1, 'Amount per tube must be at least 1')
 });
 
 export const shuttleUpdateSchema = shuttleInputSchema.extend({
@@ -89,6 +90,15 @@ export const promptPayInputSchema = z
 export const locationInputSchema = z
 	.object({
 		clear: booleanField.optional().default(false),
+		venue_name: z
+			.string()
+			.trim()
+			.max(
+				VENUE_NAME_MAX_LENGTH,
+				`Venue name must be ${VENUE_NAME_MAX_LENGTH} characters or fewer`
+			)
+			.optional()
+			.transform((value) => value || null),
 		latitude: z.preprocess(
 			(val) => (val === '' || val === null || val === undefined ? null : val),
 			z.coerce.number().min(-90).max(90).nullable()
@@ -111,6 +121,14 @@ export const locationInputSchema = z
 				code: z.ZodIssueCode.custom,
 				message: 'Set a location pin on the map',
 				path: ['latitude']
+			});
+		}
+
+		if ((hasLat || hasLng) && !data.venue_name) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message: 'Venue name is required when a location is set',
+				path: ['venue_name']
 			});
 		}
 	});

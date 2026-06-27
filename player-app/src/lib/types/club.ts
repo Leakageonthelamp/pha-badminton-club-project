@@ -1,5 +1,3 @@
-export type ShuttleSpeed = 75 | 76;
-
 export type ClubPublic = {
 	id: string;
 	name: string;
@@ -15,11 +13,12 @@ export type ClubAdminPublic = {
 	avatar_url: string | null;
 };
 
+export type ShuttleSpeed = 75 | 76;
+
 export type ClubShuttlePublic = {
 	id: string;
 	name: string;
 	speed: ShuttleSpeed;
-	original_price: number;
 	price: number;
 	number_per_box: number;
 };

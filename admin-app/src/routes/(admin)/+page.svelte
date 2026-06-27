@@ -7,6 +7,7 @@
 	import BuildingIcon from '@repo/ui/icons/BuildingIcon.svelte';
 	import PlusIcon from '@repo/ui/icons/PlusIcon.svelte';
 	import UserIcon from '@repo/ui/icons/UserIcon.svelte';
+	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
 	import { adminRoleHeroBadgeClass } from '$lib/adminRoleHero';
 	import { appRoleLabel, type AppRole } from '$lib/types/auth';
 	import type { LayoutData } from '../$types';
@@ -67,6 +68,13 @@
 				description="View and manage all accounts"
 				icon={UserIcon}
 				accent="indigo"
+			/>
+			<ActionRowLink
+				href="/sessions"
+				title="Sessions"
+				description="View all club sessions"
+				icon={LayersIcon}
+				accent="violet"
 			/>
 		</div>
 	</div>

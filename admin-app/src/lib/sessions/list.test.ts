@@ -1,0 +1,67 @@
+import { describe, expect, it } from 'vitest';
+import {
+	filterHistorySessions,
+	filterUpcomingSessions,
+	isHistorySession,
+	isUpcomingSession
+} from './list';
+import type { SessionListItem } from '$lib/types/session';
+
+const baseSession = (overrides: Partial<SessionListItem>): SessionListItem => ({
+	id: '1',
+	club_id: 'club-1',
+	host_id: 'host-1',
+	name: 'Friday Night',
+	description: '',
+	status: 'open',
+	start_at: '2026-07-01T10:00:00.000Z',
+	end_at: '2026-07-01T14:00:00.000Z',
+	venue_name: 'Court A',
+	latitude: null,
+	longitude: null,
+	max_players: 12,
+	min_players: 4,
+	court_count: 2,
+	court_fee_per_hour: 200,
+	shuttle_id: null,
+	shuttle_price_per_each: 80,
+	match_score_type: 21,
+	match_type: 'one_round',
+	created_at: '2026-06-01T00:00:00.000Z',
+	updated_at: '2026-06-01T00:00:00.000Z',
+	club: { id: 'club-1', name: 'Test Club' },
+	host: { id: 'host-1', display_name: 'Admin', tag: '#abcd' },
+	...overrides
+});
+
+describe('session list filters', () => {
+	it('treats open sessions as upcoming', () => {
+		const session = baseSession({ status: 'open' });
+		expect(isUpcomingSession(session, Date.parse('2026-06-01T00:00:00.000Z'))).toBe(true);
+	});
+
+	it('treats closed sessions as history only', () => {
+		const session = baseSession({ status: 'closed' });
+		expect(isHistorySession(session)).toBe(true);
+		expect(isUpcomingSession(session)).toBe(false);
+	});
+
+	it('sorts history newest first', () => {
+		const sessions = filterHistorySessions([
+			baseSession({ id: '1', status: 'closed', start_at: '2026-05-01T10:00:00.000Z' }),
+			baseSession({ id: '2', status: 'cancelled', start_at: '2026-06-01T10:00:00.000Z' })
+		]);
+
+		expect(sessions.map((session) => session.id)).toEqual(['2', '1']);
+	});
+
+	it('filters upcoming sessions', () => {
+		const sessions = filterUpcomingSessions([
+			baseSession({ id: '1', status: 'open' }),
+			baseSession({ id: '2', status: 'closed' })
+		]);
+
+		expect(sessions).toHaveLength(1);
+		expect(sessions[0]?.id).toBe('1');
+	});
+});

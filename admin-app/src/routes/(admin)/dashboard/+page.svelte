@@ -3,9 +3,13 @@
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
 	import SectionHeading from '@repo/ui/components/SectionHeading.svelte';
+	import UpcomingSessionsPanel from '$lib/components/UpcomingSessionsPanel.svelte';
+	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
+	import PlusIcon from '@repo/ui/icons/PlusIcon.svelte';
 	import SettingsIcon from '@repo/ui/icons/SettingsIcon.svelte';
 	import { adminRoleHeroBadgeClass } from '$lib/adminRoleHero';
 	import { clubWorkspaceState } from '$lib/clubWorkspace.svelte';
+	import { filterSessionsByClub } from '$lib/sessions/list';
 	import { appRoleLabel, type AppRole } from '$lib/types/auth';
 	import type { LayoutData } from '../$types';
 	import type { PageData } from './$types';
@@ -21,6 +25,11 @@
 		effectiveAppRole ? appRoleLabel(effectiveAppRole as AppRole) : ''
 	);
 	const roleBadgeClass = $derived(adminRoleHeroBadgeClass(effectiveAppRole));
+	const upcomingSessions = $derived(
+		activeClub
+			? filterSessionsByClub(data.upcomingSessions, activeClub.id)
+			: data.upcomingSessions
+	);
 </script>
 
 <section class="space-y-6">
@@ -38,14 +47,43 @@
 	{#if clubs.length === 0}
 		<EmptyState message="No clubs assigned to you yet." />
 	{:else if activeClub}
-		<div class="space-y-4">
-			<SectionHeading title="Quick actions" />
-			<ActionRowLink
-				href="/clubs/{activeClub.id}"
-				title="Club settings"
-				description="Shuttles, PromptPay & location"
-				icon={SettingsIcon}
-			/>
+		{#if data.canCreate}
+			<div class="space-y-3">
+				<SectionHeading title="Quick actions" />
+				<ActionRowLink
+					href="/sessions/new"
+					title="Create session"
+					description="Schedule a new badminton session"
+					icon={PlusIcon}
+					accent="violet"
+				/>
+			</div>
+		{/if}
+
+		<UpcomingSessionsPanel
+			sessions={upcomingSessions}
+			userId={data.userId}
+			limit={5}
+			viewAllHref="/sessions"
+		/>
+
+		<div class="space-y-3">
+			<SectionHeading title="Menu" />
+			<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+				<ActionRowLink
+					href="/clubs/{activeClub.id}"
+					title="Club settings"
+					description="Shuttles, PromptPay, venue & location"
+					icon={SettingsIcon}
+				/>
+				<ActionRowLink
+					href="/sessions"
+					title="Sessions"
+					description="Manage upcoming sessions and history"
+					icon={LayersIcon}
+					accent="violet"
+				/>
+			</div>
 		</div>
 	{/if}
 </section>

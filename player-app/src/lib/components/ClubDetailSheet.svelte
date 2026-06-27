@@ -337,15 +337,11 @@
 								<li class="bg-white px-4 py-3">
 									<p class="font-medium text-slate-900">
 										{shuttle.name}
-										<span
-											class="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700"
-										>
-											{shuttle.speed}
-										</span>
+										<span class="text-slate-500">· {shuttle.speed}</span>
 									</p>
 									<p class="mt-1 text-sm text-slate-600">
-										{formatThb(shuttle.original_price)} original · {formatThb(shuttle.price)} per box ·
-										{shuttle.number_per_box} per box · {formatThb(shuttlePricePerEach(shuttle))} each
+										{formatThb(shuttle.price)} per tube · {shuttle.number_per_box} per tube ·
+										{formatThb(shuttlePricePerEach(shuttle))} each
 									</p>
 								</li>
 							{/each}
