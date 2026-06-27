@@ -150,6 +150,14 @@ export const load: PageServerLoad = async ({
 	const isSuperAdmin = effectiveAppRole === 'super_admin';
 	const shuttles = await loadClubShuttles(supabase, params.id);
 	let admins = await loadClubAdmins(supabase, params.id);
+	const { count: sessionCount, error: sessionCountError } = await supabase
+		.from('sessions')
+		.select('*', { count: 'exact', head: true })
+		.eq('club_id', params.id);
+
+	if (sessionCountError) {
+		console.error('Failed to count club sessions', sessionCountError);
+	}
 	let searchResults: ProfileSearchResult[] = [];
 	const searchQuery = url.searchParams.get('q')?.trim() ?? '';
 
@@ -198,6 +206,7 @@ export const load: PageServerLoad = async ({
 		club,
 		shuttles,
 		admins,
+		sessionCount: sessionCount ?? 0,
 		searchResults,
 		searchQuery,
 		appRole: effectiveAppRole,

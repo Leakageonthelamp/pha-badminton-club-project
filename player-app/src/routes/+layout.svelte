@@ -1,5 +1,6 @@
 <script lang="ts">
 	import '../app.css';
+	import { afterNavigate, beforeNavigate } from '$app/navigation';
 	import { appConfig } from '$lib/config/app';
 	import PwaHead from '$lib/components/PwaHead.svelte';
 	import PwaPrompts from '$lib/components/PwaPrompts.svelte';
@@ -11,6 +12,39 @@
 	let { data, children }: { data: LayoutData; children: import('svelte').Snippet } = $props();
 
 	const year = new Date().getFullYear();
+
+	// Show a loading spinner on the exact link the user tapped while its page loads.
+	let pendingLink: HTMLElement | null = null;
+	let pendingTimer: ReturnType<typeof setTimeout> | null = null;
+
+	$effect(() => {
+		const onClick = (event: MouseEvent) => {
+			const link = (event.target as Element | null)?.closest('a[href]');
+			pendingLink = link instanceof HTMLElement ? link : null;
+		};
+		document.addEventListener('click', onClick, true);
+		return () => document.removeEventListener('click', onClick, true);
+	});
+
+	const clearPending = () => {
+		if (pendingTimer) clearTimeout(pendingTimer);
+		pendingTimer = null;
+		pendingLink?.classList.remove('nav-loading');
+		pendingLink?.removeAttribute('aria-busy');
+		pendingLink = null;
+	};
+
+	beforeNavigate((nav) => {
+		if (nav.type !== 'link' || !nav.to || !pendingLink) return;
+		const link = pendingLink;
+		// Delay so fast (preloaded) navigations don't flash a spinner.
+		pendingTimer = setTimeout(() => {
+			link.classList.add('nav-loading');
+			link.setAttribute('aria-busy', 'true');
+		}, 120);
+	});
+
+	afterNavigate(clearPending);
 </script>
 
 <PwaHead />

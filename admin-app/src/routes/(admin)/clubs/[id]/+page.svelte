@@ -285,11 +285,12 @@
 		{:else}
 			<span class="app-hero-stat app-hero-stat--warn">Inactive</span>
 		{/if}
-		{#if isSuperAdmin}
-			<span class="app-hero-stat">
-				{data.admins.length} admin{data.admins.length === 1 ? '' : 's'}
-			</span>
-		{/if}
+		<span class="app-hero-stat">
+			{data.admins.length} admin{data.admins.length === 1 ? '' : 's'}
+		</span>
+		<span class="app-hero-stat">
+			{data.sessionCount} session{data.sessionCount === 1 ? '' : 's'}
+		</span>
 	</DashboardHero>
 
 	<form

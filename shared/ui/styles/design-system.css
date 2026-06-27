@@ -111,6 +111,42 @@ body {
 	}
 }
 
+/* Loading state applied to the exact link the user tapped while its page loads.
+ * The wiring lives in each app's root +layout.svelte (needs $app/navigation). */
+.nav-loading {
+	position: relative;
+	pointer-events: none;
+}
+
+.nav-loading > * {
+	opacity: 0.4;
+}
+
+.nav-loading::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	margin: auto;
+	width: 1.25rem;
+	height: 1.25rem;
+	border: 2px solid var(--app-accent);
+	border-top-color: transparent;
+	border-radius: 9999px;
+	animation: nav-loading-spin 0.7s linear infinite;
+}
+
+@keyframes nav-loading-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.nav-loading::after {
+		animation-duration: 1.4s;
+	}
+}
+
 .app-footer {
 	padding-top: 0.25rem;
 	padding-bottom: max(0.375rem, env(safe-area-inset-bottom));

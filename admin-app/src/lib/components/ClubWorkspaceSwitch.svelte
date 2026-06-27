@@ -12,6 +12,7 @@
 	let { clubs }: { clubs: ClubWorkspaceOption[] } = $props();
 
 	let open = $state(false);
+	let switching = $state(false);
 	let triggerEl = $state<HTMLButtonElement | null>(null);
 	let menuTop = $state(0);
 	let menuRight = $state(0);
@@ -30,6 +31,7 @@
 	}
 
 	function toggleMenu() {
+		if (switching) return;
 		open = !open;
 		if (open) updateMenuPosition();
 	}
@@ -39,22 +41,27 @@
 	}
 
 	async function switchClub(clubId: string) {
-		if (clubId === clubWorkspaceState.selectedClubId) {
+		if (switching || clubId === clubWorkspaceState.selectedClubId) {
 			closeMenu();
 			return;
 		}
 
+		switching = true;
 		selectClub(clubId);
 		closeMenu();
 
-		const clubMatch = page.url.pathname.match(/^\/clubs\/([^/]+)/);
-		if (clubMatch) {
-			await goto(`/clubs/${clubId}`, { invalidateAll: true, replaceState: true });
-			return;
-		}
+		try {
+			const clubMatch = page.url.pathname.match(/^\/clubs\/([^/]+)/);
+			if (clubMatch) {
+				await goto(`/clubs/${clubId}`, { invalidateAll: true, replaceState: true });
+				return;
+			}
 
-		if (page.url.pathname === '/dashboard') {
-			await invalidateAll();
+			if (page.url.pathname === '/dashboard') {
+				await invalidateAll();
+			}
+		} finally {
+			switching = false;
 		}
 	}
 
@@ -80,12 +87,21 @@
 			type="button"
 			class="app-nav-icon-btn app-nav-icon-btn--club-ws"
 			aria-expanded={open}
+			aria-busy={switching}
 			aria-haspopup="menu"
 			aria-label="Switch club workspace ({activeClub.name})"
 			title="Club workspace"
+			disabled={switching}
 			onclick={toggleMenu}
 		>
-			<BuildingIcon class="h-5 w-5 text-brand-700" />
+			{#if switching}
+				<span
+					class="h-5 w-5 animate-spin rounded-full border-2 border-brand-200 border-t-brand-700"
+					aria-hidden="true"
+				></span>
+			{:else}
+				<BuildingIcon class="h-5 w-5 text-brand-700" />
+			{/if}
 		</button>
 
 		{#if open}
@@ -115,7 +131,7 @@
 							type="button"
 							role="menuitem"
 							aria-current={club.id === clubWorkspaceState.selectedClubId ? 'true' : undefined}
-							disabled={club.id === clubWorkspaceState.selectedClubId}
+							disabled={switching || club.id === clubWorkspaceState.selectedClubId}
 							class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition {club.id ===
 							clubWorkspaceState.selectedClubId
 								? 'bg-brand-50 text-brand-800'
