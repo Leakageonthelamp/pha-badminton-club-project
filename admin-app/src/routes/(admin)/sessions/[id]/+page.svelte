@@ -123,7 +123,146 @@
 				playerActionLoading = null;
 			};
 		};
+
+	const showParticipantsAtTop = $derived(session.status === 'open');
 </script>
+
+{#snippet participantsSection()}
+	{#if data.canManage && session.status !== 'draft'}
+		<AppCard class="space-y-6">
+			<div>
+				<h2 class="text-lg font-semibold text-slate-900">Participants</h2>
+				<p class="mt-1 text-sm text-slate-600">
+					Confirm or reject waiting players from 15 minutes before start until session end.
+				</p>
+				{#if !data.adminActionWindowOpen}
+					<p class="mt-2 text-sm text-amber-800">
+						Confirm/reject actions open 15 minutes before the session starts.
+					</p>
+				{/if}
+			</div>
+
+			<div class="space-y-3">
+				<h3 class="app-section-heading">
+					Waiting list ({waitingPlayers.length})
+				</h3>
+				{#if waitingPlayers.length === 0}
+					<p class="text-sm text-slate-500">No players waiting.</p>
+				{:else}
+					<ul class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
+						{#each waitingPlayers as player (player.id)}
+							<li class="flex flex-wrap items-center gap-3 bg-white px-4 py-3">
+								<UserAvatar
+									displayName={player.profile?.display_name ?? 'Player'}
+									avatarUrl={player.profile?.avatar_url ?? null}
+									size="sm"
+								/>
+								<div class="min-w-0 flex-1">
+									<p class="truncate font-medium text-slate-900">
+										{player.profile?.display_name ?? 'Unknown'}
+									</p>
+									<p class="text-xs text-slate-500">
+										{sessionPlayerStatusLabel(player.status)} · joined {formatDateTime(player.joined_at)}
+									</p>
+								</div>
+								{#if player.profile?.tag}
+									<TagPill tag={player.profile.tag} />
+								{/if}
+								{#if data.adminActionWindowOpen}
+									<div class="flex w-full gap-2 sm:ml-auto sm:w-auto">
+										<form method="POST" action="?/confirm" use:enhance={handlePlayerAction(player.id)}>
+											<input type="hidden" name="session_id" value={session.id} />
+											<input type="hidden" name="player_id" value={player.id} />
+											<SubmitButton
+												class="!w-auto"
+												loading={playerActionLoading === player.id}
+												loadingLabel="…"
+											>
+												Confirm
+											</SubmitButton>
+										</form>
+										<form method="POST" action="?/reject" use:enhance={handlePlayerAction(player.id)}>
+											<input type="hidden" name="session_id" value={session.id} />
+											<input type="hidden" name="player_id" value={player.id} />
+											<SubmitButton
+												variant="secondary"
+												class="!w-auto"
+												loading={playerActionLoading === player.id}
+												loadingLabel="…"
+											>
+												Reject
+											</SubmitButton>
+										</form>
+									</div>
+								{/if}
+							</li>
+						{/each}
+					</ul>
+				{/if}
+			</div>
+
+			<div class="space-y-3">
+				<h3 class="app-section-heading">Buffer queue ({queuedPlayers.length}/{session.max_buffer})</h3>
+				{#if queuedPlayers.length === 0}
+					<p class="text-sm text-slate-500">No players in the buffer queue.</p>
+				{:else}
+					<ul class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
+						{#each queuedPlayers as player (player.id)}
+							<li class="flex items-center gap-3 bg-white px-4 py-3">
+								<UserAvatar
+									displayName={player.profile?.display_name ?? 'Player'}
+									avatarUrl={player.profile?.avatar_url ?? null}
+									size="sm"
+								/>
+								<div class="min-w-0 flex-1">
+									<p class="truncate font-medium text-slate-900">
+										{player.profile?.display_name ?? 'Unknown'}
+									</p>
+									<p class="text-xs text-slate-500">
+										{sessionPlayerStatusLabel(player.status)} · joined {formatDateTime(player.joined_at)}
+									</p>
+								</div>
+								{#if player.profile?.tag}
+									<TagPill tag={player.profile.tag} />
+								{/if}
+							</li>
+						{/each}
+					</ul>
+				{/if}
+			</div>
+
+			<div class="space-y-3">
+				<h3 class="app-section-heading">Confirmed ({confirmedPlayers.length})</h3>
+				{#if confirmedPlayers.length === 0}
+					<p class="text-sm text-slate-500">No confirmed players yet.</p>
+				{:else}
+					<ul class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
+						{#each confirmedPlayers as player (player.id)}
+							<li class="flex items-center gap-3 bg-white px-4 py-3">
+								<UserAvatar
+									displayName={player.profile?.display_name ?? 'Player'}
+									avatarUrl={player.profile?.avatar_url ?? null}
+									size="sm"
+								/>
+								<div class="min-w-0 flex-1">
+									<p class="truncate font-medium text-slate-900">
+										{player.profile?.display_name ?? 'Unknown'}
+									</p>
+									<p class="text-xs text-slate-500">
+										Confirmed {player.decided_at ? formatDateTime(player.decided_at) : '—'}
+									</p>
+								</div>
+								{#if player.profile?.tag}
+									<TagPill tag={player.profile.tag} />
+								{/if}
+							</li>
+						{/each}
+					</ul>
+				{/if}
+			</div>
+		</AppCard>
+	{/if}
+{/snippet}
 
 <FormToast message={toastMessage} variant={toastVariant} token={toastMessage ?? ''} />
 
@@ -198,6 +337,10 @@
 				</SubmitButton>
 			</div>
 		</AppCard>
+	{/if}
+
+	{#if showParticipantsAtTop}
+		{@render participantsSection()}
 	{/if}
 
 	<AppCard class="space-y-4">
@@ -374,139 +517,8 @@
 		</div>
 	</section>
 
-	{#if data.canManage && session.status !== 'draft'}
-		<AppCard class="space-y-6">
-			<div>
-				<h2 class="text-lg font-semibold text-slate-900">Participants</h2>
-				<p class="mt-1 text-sm text-slate-600">
-					Confirm or reject waiting players from 15 minutes before start until session end.
-				</p>
-				{#if !data.adminActionWindowOpen}
-					<p class="mt-2 text-sm text-amber-800">
-						Confirm/reject actions open 15 minutes before the session starts.
-					</p>
-				{/if}
-			</div>
-
-			<div class="space-y-3">
-				<h3 class="app-section-heading">
-					Waiting list ({waitingPlayers.length})
-				</h3>
-				{#if waitingPlayers.length === 0}
-					<p class="text-sm text-slate-500">No players waiting.</p>
-				{:else}
-					<ul class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
-						{#each waitingPlayers as player (player.id)}
-							<li class="flex flex-wrap items-center gap-3 bg-white px-4 py-3">
-								<UserAvatar
-									displayName={player.profile?.display_name ?? 'Player'}
-									avatarUrl={player.profile?.avatar_url ?? null}
-									size="sm"
-								/>
-								<div class="min-w-0 flex-1">
-									<p class="truncate font-medium text-slate-900">
-										{player.profile?.display_name ?? 'Unknown'}
-									</p>
-									<p class="text-xs text-slate-500">
-										{sessionPlayerStatusLabel(player.status)} · joined {formatDateTime(player.joined_at)}
-									</p>
-								</div>
-								{#if player.profile?.tag}
-									<TagPill tag={player.profile.tag} />
-								{/if}
-								{#if data.adminActionWindowOpen}
-									<div class="flex w-full gap-2 sm:ml-auto sm:w-auto">
-										<form method="POST" action="?/confirm" use:enhance={handlePlayerAction(player.id)}>
-											<input type="hidden" name="session_id" value={session.id} />
-											<input type="hidden" name="player_id" value={player.id} />
-											<SubmitButton
-												class="!w-auto"
-												loading={playerActionLoading === player.id}
-												loadingLabel="…"
-											>
-												Confirm
-											</SubmitButton>
-										</form>
-										<form method="POST" action="?/reject" use:enhance={handlePlayerAction(player.id)}>
-											<input type="hidden" name="session_id" value={session.id} />
-											<input type="hidden" name="player_id" value={player.id} />
-											<SubmitButton
-												variant="secondary"
-												class="!w-auto"
-												loading={playerActionLoading === player.id}
-												loadingLabel="…"
-											>
-												Reject
-											</SubmitButton>
-										</form>
-									</div>
-								{/if}
-							</li>
-						{/each}
-					</ul>
-				{/if}
-			</div>
-
-			<div class="space-y-3">
-				<h3 class="app-section-heading">Buffer queue ({queuedPlayers.length}/{session.max_buffer})</h3>
-				{#if queuedPlayers.length === 0}
-					<p class="text-sm text-slate-500">No players in the buffer queue.</p>
-				{:else}
-					<ul class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
-						{#each queuedPlayers as player (player.id)}
-							<li class="flex items-center gap-3 bg-white px-4 py-3">
-								<UserAvatar
-									displayName={player.profile?.display_name ?? 'Player'}
-									avatarUrl={player.profile?.avatar_url ?? null}
-									size="sm"
-								/>
-								<div class="min-w-0 flex-1">
-									<p class="truncate font-medium text-slate-900">
-										{player.profile?.display_name ?? 'Unknown'}
-									</p>
-									<p class="text-xs text-slate-500">
-										{sessionPlayerStatusLabel(player.status)} · joined {formatDateTime(player.joined_at)}
-									</p>
-								</div>
-								{#if player.profile?.tag}
-									<TagPill tag={player.profile.tag} />
-								{/if}
-							</li>
-						{/each}
-					</ul>
-				{/if}
-			</div>
-
-			<div class="space-y-3">
-				<h3 class="app-section-heading">Confirmed ({confirmedPlayers.length})</h3>
-				{#if confirmedPlayers.length === 0}
-					<p class="text-sm text-slate-500">No confirmed players yet.</p>
-				{:else}
-					<ul class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
-						{#each confirmedPlayers as player (player.id)}
-							<li class="flex items-center gap-3 bg-white px-4 py-3">
-								<UserAvatar
-									displayName={player.profile?.display_name ?? 'Player'}
-									avatarUrl={player.profile?.avatar_url ?? null}
-									size="sm"
-								/>
-								<div class="min-w-0 flex-1">
-									<p class="truncate font-medium text-slate-900">
-										{player.profile?.display_name ?? 'Unknown'}
-									</p>
-									<p class="text-xs text-slate-500">
-										Confirmed {player.decided_at ? formatDateTime(player.decided_at) : '—'}
-									</p>
-								</div>
-								{#if player.profile?.tag}
-									<TagPill tag={player.profile.tag} />
-								{/if}
-							</li>
-						{/each}
-					</ul>
-				{/if}
-			</div>
-		</AppCard>
+	{#if !showParticipantsAtTop}
+		{@render participantsSection()}
 	{/if}
 
 	{#if data.isSuperAdmin && session.status !== 'closed' && session.status !== 'cancelled'}

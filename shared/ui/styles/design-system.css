@@ -487,6 +487,18 @@ body {
 		@apply mb-2.5 flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-md shadow-brand-300/30 transition duration-200;
 	}
 
+	.app-tile-badges {
+		@apply mt-2 flex flex-wrap items-center justify-center gap-1.5;
+	}
+
+	.app-tile-badge {
+		@apply rounded-full bg-slate-100 px-2.5 py-0.5 text-[0.6875rem] font-medium text-slate-600;
+	}
+
+	.app-tile-badge--brand {
+		@apply bg-brand-50 text-brand-700;
+	}
+
 	.app-skeleton {
 		@apply animate-pulse rounded-xl bg-slate-200;
 	}

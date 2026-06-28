@@ -6,6 +6,7 @@
 	import RichTextDisplay from '@repo/ui/components/RichTextDisplay.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
+	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
 	import { toast } from '@repo/ui/toast/toast.svelte';
 	import {
 		formatDistanceKm,
@@ -157,6 +158,14 @@
 	);
 
 	const membership = $derived(session?.my_membership ?? preview?.my_membership ?? null);
+	const rosterReady = $derived(
+		session?.waiting_players !== undefined &&
+			session?.queued_players !== undefined &&
+			session?.confirmed_players !== undefined
+	);
+	const waitingPlayers = $derived(session?.waiting_players ?? []);
+	const queuedPlayers = $derived(session?.queued_players ?? []);
+	const confirmedPlayers = $derived(session?.confirmed_players ?? []);
 	const canJoin = $derived(
 		session &&
 			!membership &&
@@ -431,6 +440,122 @@
 									{#if session.host.tag}
 										<TagPill tag={session.host.tag} />
 									{/if}
+								</div>
+							</div>
+						{/if}
+
+						{#if membership && rosterReady}
+							<div class="rounded-2xl border border-slate-200 bg-white p-4">
+								<h3 class="text-base font-semibold text-slate-900">Participants</h3>
+								<p class="mt-1 text-xs text-slate-500">
+									Waiting list and buffer queue for this session.
+								</p>
+
+								<div class="mt-4 space-y-4">
+									<div>
+										<h4 class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+											Waiting list ({waitingPlayers.length})
+										</h4>
+										{#if waitingPlayers.length === 0}
+											<p class="mt-2 text-sm text-slate-500">No players waiting.</p>
+										{:else}
+											<ul class="mt-2 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
+												{#each waitingPlayers as player (player.id)}
+													<li class="flex items-center gap-3 bg-white px-3 py-2.5">
+														<UserAvatar
+															displayName={player.profile?.display_name ?? 'Player'}
+															avatarUrl={player.profile?.avatar_url ?? null}
+															size="sm"
+														/>
+														<div class="min-w-0 flex-1">
+															<p class="truncate text-sm font-medium text-slate-900">
+																{player.profile?.display_name ?? 'Unknown'}
+																{#if player.is_me}
+																	<span class="text-brand-700"> (you)</span>
+																{/if}
+															</p>
+															<p class="text-xs text-slate-500">
+																Joined {formatDateTime(player.joined_at)}
+															</p>
+														</div>
+														{#if player.profile?.tag}
+															<TagPill tag={player.profile.tag} />
+														{/if}
+													</li>
+												{/each}
+											</ul>
+										{/if}
+									</div>
+
+									<div>
+										<h4 class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+											Buffer queue ({queuedPlayers.length}/{session.max_buffer})
+										</h4>
+										{#if queuedPlayers.length === 0}
+											<p class="mt-2 text-sm text-slate-500">No players in the buffer queue.</p>
+										{:else}
+											<ul class="mt-2 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
+												{#each queuedPlayers as player (player.id)}
+													<li class="flex items-center gap-3 bg-white px-3 py-2.5">
+														<UserAvatar
+															displayName={player.profile?.display_name ?? 'Player'}
+															avatarUrl={player.profile?.avatar_url ?? null}
+															size="sm"
+														/>
+														<div class="min-w-0 flex-1">
+															<p class="truncate text-sm font-medium text-slate-900">
+																{player.profile?.display_name ?? 'Unknown'}
+																{#if player.is_me}
+																	<span class="text-brand-700"> (you)</span>
+																{/if}
+															</p>
+															<p class="text-xs text-slate-500">
+																Joined {formatDateTime(player.joined_at)}
+															</p>
+														</div>
+														{#if player.profile?.tag}
+															<TagPill tag={player.profile.tag} />
+														{/if}
+													</li>
+												{/each}
+											</ul>
+										{/if}
+									</div>
+
+									<div>
+										<h4 class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+											Confirmed ({confirmedPlayers.length})
+										</h4>
+										{#if confirmedPlayers.length === 0}
+											<p class="mt-2 text-sm text-slate-500">No confirmed players yet.</p>
+										{:else}
+											<ul class="mt-2 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
+												{#each confirmedPlayers as player (player.id)}
+													<li class="flex items-center gap-3 bg-white px-3 py-2.5">
+														<UserAvatar
+															displayName={player.profile?.display_name ?? 'Player'}
+															avatarUrl={player.profile?.avatar_url ?? null}
+															size="sm"
+														/>
+														<div class="min-w-0 flex-1">
+															<p class="truncate text-sm font-medium text-slate-900">
+																{player.profile?.display_name ?? 'Unknown'}
+																{#if player.is_me}
+																	<span class="text-brand-700"> (you)</span>
+																{/if}
+															</p>
+															<p class="text-xs text-slate-500">
+																Confirmed player
+															</p>
+														</div>
+														{#if player.profile?.tag}
+															<TagPill tag={player.profile.tag} />
+														{/if}
+													</li>
+												{/each}
+											</ul>
+										{/if}
+									</div>
 								</div>
 							</div>
 						{/if}

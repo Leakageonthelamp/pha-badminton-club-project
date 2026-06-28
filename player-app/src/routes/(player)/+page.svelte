@@ -3,8 +3,8 @@
 	import { invalidate } from '$app/navigation';
 	import ClubDetailSheet from '$lib/components/ClubDetailSheet.svelte';
 	import SessionDetailSheet from '$lib/components/SessionDetailSheet.svelte';
-	import { clubsWithDistance } from '$lib/clubs/nearby';
-	import { featuredSessions } from '$lib/sessions/nearby';
+	import { clubsWithDistance, formatOpenSessionBadge, openSessionCountByClub } from '$lib/clubs/nearby';
+	import { featuredSessions, myJoinedSessions } from '$lib/sessions/nearby';
 	import ActionRowLink from '@repo/ui/components/ActionRowLink.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import DashboardTile from '@repo/ui/components/DashboardTile.svelte';
@@ -29,6 +29,8 @@
 
 	let userLocation = $state(loadStoredUserLocation());
 	const clubs = $derived(clubsWithDistance(data.clubs ?? [], userLocation));
+	const openSessionCounts = $derived(openSessionCountByClub(data.sessions ?? []));
+	const mySessions = $derived(myJoinedSessions(data.sessions ?? [], userLocation));
 	const featured = $derived(featuredSessions(data.sessions ?? [], userLocation));
 	const sortedByDistance = $derived(userLocation !== null);
 	const profileName = $derived(data.profile?.display_name ?? 'Player');
@@ -42,8 +44,8 @@
 				? 'Nearest clubs appear here once available'
 				: 'Active clubs appear here once available'
 			: sortedByDistance
-				? `${clubCountLabel} · nearest first`
-				: `${clubCountLabel} · A–Z`
+				? `${clubCountLabel} · nearest first · open sessions shown on each club`
+				: `${clubCountLabel} · A–Z · open sessions shown on each club`
 	);
 	const featuredMeta = $derived(
 		featured.length === 0
@@ -52,6 +54,23 @@
 				? 'Nearest first · tap to view and join'
 				: 'Soonest first · tap to view and join'
 	);
+	const mySessionsMeta = $derived(
+		mySessions.length === 0
+			? 'Sessions you join will appear here with waiting list and queue'
+			: `${mySessions.length} joined · tap for details and roster`
+	);
+
+	const joinedSessionDescription = (session: SessionListItem) => {
+		const parts = [
+			session.club?.name,
+			formatDateTime(session.start_at),
+			`${session.waiting_count} waiting · ${session.queued_count} queued`
+		].filter(Boolean);
+		return parts.join(' · ');
+	};
+
+	const membershipBadge = (session: SessionListItem) =>
+		session.my_membership ? sessionPlayerStatusLabel(session.my_membership.status) : undefined;
 
 	let clubSheetOpen = $state(false);
 	let selectedClub = $state<ClubPublic | null>(null);
@@ -132,6 +151,9 @@
 		tag={data.profile?.tag}
 		subtitle="Join upcoming sessions or explore clubs near you."
 	>
+		{#if mySessions.length > 0}
+			<span class="app-hero-stat">{mySessions.length} joined</span>
+		{/if}
 		{#if featured.length > 0}
 			<span class="app-hero-stat">{featured.length} featured</span>
 		{/if}
@@ -142,6 +164,34 @@
 			<span class="app-hero-stat app-hero-stat--success">Sorted by distance</span>
 		{/if}
 	</DashboardHero>
+
+	<div class="space-y-4">
+		<header class="app-section-header">
+			<div class="min-w-0">
+				<h2 class="app-section-title">My sessions</h2>
+				<p class="app-section-meta">{mySessionsMeta}</p>
+			</div>
+		</header>
+
+		{#if mySessions.length === 0}
+			<EmptyState message="You haven't joined any upcoming sessions yet." />
+		{:else}
+			<div class="grid grid-cols-1 gap-3">
+				{#each mySessions as session (session.id)}
+					<DashboardTile
+						title={session.name}
+						description={joinedSessionDescription(session)}
+						icon={LayersIcon}
+						accent="brand"
+						badge={session.distanceKm !== null ? formatDistanceKm(session.distanceKm) : undefined}
+						secondaryBadge={membershipBadge(session)}
+						secondaryBadgeBrand={session.my_membership?.status === 'confirmed'}
+						onclick={() => openSession(session)}
+					/>
+				{/each}
+			</div>
+		{/if}
+	</div>
 
 	<div class="space-y-4">
 		<header class="app-section-header">
@@ -210,13 +260,17 @@
 		{:else}
 			<div class="grid grid-cols-2 gap-3">
 				{#each clubs as club (club.id)}
+					{@const openCount = openSessionCounts.get(club.id) ?? 0}
 					<DashboardTile
 						title={club.name}
 						description={isRichTextEmpty(club.description)
-							? 'Tap to view details'
+							? 'Tap to view club and sessions'
 							: richTextExcerpt(club.description)}
 						icon={BuildingIcon}
+						accent="indigo"
 						badge={club.distanceKm !== null ? formatDistanceKm(club.distanceKm) : undefined}
+						secondaryBadge={formatOpenSessionBadge(openCount)}
+						secondaryBadgeBrand={openCount > 0}
 						onclick={() => openClub(club)}
 					/>
 				{/each}

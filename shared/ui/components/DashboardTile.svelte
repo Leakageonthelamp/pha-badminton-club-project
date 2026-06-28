@@ -9,6 +9,8 @@
 		description,
 		icon: Icon,
 		badge,
+		secondaryBadge,
+		secondaryBadgeBrand = false,
 		accent = 'brand',
 		large = false
 	}: {
@@ -18,6 +20,8 @@
 		description?: string;
 		icon: Component<{ class?: string }>;
 		badge?: string;
+		secondaryBadge?: string;
+		secondaryBadgeBrand?: boolean;
 		accent?: DashboardIconAccent;
 		large?: boolean;
 	} = $props();
@@ -32,32 +36,37 @@
 		`mt-0.5 line-clamp-2 w-full text-xs leading-snug text-slate-500 ${large ? '' : 'min-h-8'}`
 	);
 	const iconSize = $derived(large ? 'lg' : 'md');
+	const hasBadges = $derived(Boolean(badge || secondaryBadge));
 </script>
+
+{#snippet tileBody()}
+	<DashboardIcon icon={Icon} {accent} size={iconSize} class="mb-2.5" />
+	<p class={titleClass}>{title}</p>
+	{#if description}
+		<p class={descriptionClass}>{description}</p>
+	{/if}
+	{#if hasBadges}
+		<div class="app-tile-badges">
+			{#if badge}
+				<span class="app-tile-badge">{badge}</span>
+			{/if}
+			{#if secondaryBadge}
+				<span
+					class="app-tile-badge {secondaryBadgeBrand ? 'app-tile-badge--brand' : ''}"
+				>
+					{secondaryBadge}
+				</span>
+			{/if}
+		</div>
+	{/if}
+{/snippet}
 
 {#if href}
 	<a {href} class={tileClass}>
-		<DashboardIcon icon={Icon} {accent} size={iconSize} class="mb-2.5" />
-		<p class={titleClass}>{title}</p>
-		{#if description}
-			<p class={descriptionClass}>{description}</p>
-		{/if}
-		{#if badge}
-			<span class="mt-2 rounded-full bg-slate-100 px-2.5 py-0.5 text-[0.6875rem] font-medium text-slate-600">
-				{badge}
-			</span>
-		{/if}
+		{@render tileBody()}
 	</a>
 {:else}
 	<button type="button" class={tileClass} {onclick}>
-		<DashboardIcon icon={Icon} {accent} size={iconSize} class="mb-2.5" />
-		<p class={titleClass}>{title}</p>
-		{#if description}
-			<p class={descriptionClass}>{description}</p>
-		{/if}
-		{#if badge}
-			<span class="mt-2 rounded-full bg-slate-100 px-2.5 py-0.5 text-[0.6875rem] font-medium text-slate-600">
-				{badge}
-			</span>
-		{/if}
+		{@render tileBody()}
 	</button>
 {/if}

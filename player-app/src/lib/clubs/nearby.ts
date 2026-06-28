@@ -3,6 +3,23 @@ import { haversineDistanceKm, type StoredUserLocation } from '@repo/ui/geolocati
 
 export type ClubWithDistance = ClubPublic & { distanceKm: number | null };
 
+export const openSessionCountByClub = (
+	sessions: { club_id: string }[]
+): Map<string, number> => {
+	const counts = new Map<string, number>();
+
+	for (const session of sessions) {
+		counts.set(session.club_id, (counts.get(session.club_id) ?? 0) + 1);
+	}
+
+	return counts;
+};
+
+export const formatOpenSessionBadge = (count: number): string => {
+	if (count === 0) return 'No open sessions';
+	return count === 1 ? '1 open session' : `${count} open sessions`;
+};
+
 export const clubsWithDistance = (
 	clubs: ClubPublic[],
 	userLocation: StoredUserLocation | null

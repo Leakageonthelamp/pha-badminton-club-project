@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { clubsWithDistance } from './nearby';
+import { clubsWithDistance, formatOpenSessionBadge, openSessionCountByClub } from './nearby';
 import type { ClubPublic } from '$lib/types/club';
 
 const clubs: ClubPublic[] = [
@@ -49,5 +49,25 @@ describe('clubsWithDistance', () => {
 		expect(sorted[1]?.distanceKm).toBeGreaterThan(0);
 		expect(sorted[2]?.id).toBe('c');
 		expect(sorted[2]?.distanceKm).toBeNull();
+	});
+});
+
+describe('openSessionCountByClub', () => {
+	it('counts sessions per club', () => {
+		const counts = openSessionCountByClub([
+			{ club_id: 'a' },
+			{ club_id: 'a' },
+			{ club_id: 'b' }
+		]);
+
+		expect(counts.get('a')).toBe(2);
+		expect(counts.get('b')).toBe(1);
+		expect(counts.get('c')).toBeUndefined();
+	});
+
+	it('formats open session badge labels', () => {
+		expect(formatOpenSessionBadge(0)).toBe('No open sessions');
+		expect(formatOpenSessionBadge(1)).toBe('1 open session');
+		expect(formatOpenSessionBadge(3)).toBe('3 open sessions');
 	});
 });

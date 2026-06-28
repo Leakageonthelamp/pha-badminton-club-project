@@ -65,6 +65,19 @@ export type SessionPlayerMembership = {
 	joined_at: string;
 };
 
+export type SessionPlayerPublic = {
+	id: string;
+	user_id: string;
+	status: SessionPlayerStatus;
+	joined_at: string;
+	profile: {
+		display_name: string;
+		tag: string;
+		avatar_url: string | null;
+	} | null;
+	is_me: boolean;
+};
+
 export type SessionDetail = SessionPublic & {
 	club: SessionClubSummary | null;
 	host: SessionHostProfile | null;
@@ -74,6 +87,9 @@ export type SessionDetail = SessionPublic & {
 	confirmed_count: number;
 	my_membership: SessionPlayerMembership | null;
 	has_outstanding_fee: boolean;
+	waiting_players: SessionPlayerPublic[];
+	queued_players: SessionPlayerPublic[];
+	confirmed_players: SessionPlayerPublic[];
 };
 
 export const matchTypeLabel = (matchType: MatchType): string =>

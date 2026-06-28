@@ -44,3 +44,18 @@ export const featuredSessions = (
 	userLocation: StoredUserLocation | null,
 	limit = FEATURED_SESSIONS_LIMIT
 ): SessionWithDistance[] => sessionsWithDistance(sessions, userLocation).slice(0, limit);
+
+const activeMembershipStatuses = new Set(['waiting', 'queued', 'confirmed']);
+
+export const myJoinedSessions = (
+	sessions: SessionListItem[],
+	userLocation: StoredUserLocation | null
+): SessionWithDistance[] =>
+	sessionsWithDistance(
+		sessions.filter(
+			(session) =>
+				session.my_membership !== null &&
+				activeMembershipStatuses.has(session.my_membership.status)
+		),
+		userLocation
+	);

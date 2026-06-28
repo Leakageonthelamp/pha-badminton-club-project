@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { featuredSessions, sessionsWithDistance } from './nearby';
+import { featuredSessions, myJoinedSessions, sessionsWithDistance } from './nearby';
 import type { SessionListItem } from '$lib/types/session';
 
 const sessions: SessionListItem[] = [
@@ -107,5 +107,21 @@ describe('featuredSessions', () => {
 	it('returns the top N sessions after distance sort', () => {
 		const featured = featuredSessions(sessions, null, 2);
 		expect(featured.map((s) => s.id)).toEqual(['c', 'b']);
+	});
+});
+
+describe('myJoinedSessions', () => {
+	it('returns only sessions with an active membership', () => {
+		const joined = myJoinedSessions(
+			[
+				{ ...sessions[0]!, my_membership: { id: 'm1', status: 'waiting', fee_owed: 0, joined_at: '2026-06-01T00:00:00.000Z' } },
+				sessions[1]!,
+				{ ...sessions[2]!, my_membership: { id: 'm2', status: 'confirmed', fee_owed: 0, joined_at: '2026-06-01T00:00:00.000Z' } }
+			],
+			null
+		);
+
+		expect(joined.map((session) => session.id)).toEqual(['c', 'a']);
+		expect(joined).toHaveLength(2);
 	});
 });

@@ -2,6 +2,7 @@ import type {
 	SessionDetail,
 	SessionListItem,
 	SessionPlayerMembership,
+	SessionPlayerPublic,
 	SessionPlayerStatus
 } from '$lib/types/session';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -115,6 +116,65 @@ const loadMyMemberships = async (
 	return map;
 };
 
+const rosterSelect = `
+	id,
+	user_id,
+	status,
+	joined_at,
+	profile:profiles ( display_name, tag, avatar_url )
+`;
+
+const mapSessionPlayerPublic = (
+	row: Record<string, unknown>,
+	userId: string
+): SessionPlayerPublic => ({
+	id: row.id as string,
+	user_id: row.user_id as string,
+	status: row.status as SessionPlayerPublic['status'],
+	joined_at: row.joined_at as string,
+	profile: normalizeRelation(
+		row.profile as SessionPlayerPublic['profile'] | SessionPlayerPublic['profile'][]
+	),
+	is_me: row.user_id === userId
+});
+
+const loadSessionRoster = async (
+	supabase: SupabaseClient,
+	sessionId: string,
+	userId: string
+): Promise<{
+	waiting: SessionPlayerPublic[];
+	queued: SessionPlayerPublic[];
+	confirmed: SessionPlayerPublic[];
+}> => {
+	const empty = { waiting: [], queued: [], confirmed: [] };
+
+	const { data, error } = await supabase
+		.from('session_players')
+		.select(rosterSelect)
+		.eq('session_id', sessionId)
+		.in('status', ['waiting', 'queued', 'confirmed'])
+		.order('joined_at', { ascending: true });
+
+	if (error) {
+		console.error('Failed to load session roster', error);
+		return empty;
+	}
+
+	const waiting: SessionPlayerPublic[] = [];
+	const queued: SessionPlayerPublic[] = [];
+	const confirmed: SessionPlayerPublic[] = [];
+
+	for (const row of data ?? []) {
+		const player = mapSessionPlayerPublic(row as Record<string, unknown>, userId);
+		if (player.status === 'waiting') waiting.push(player);
+		else if (player.status === 'queued') queued.push(player);
+		else if (player.status === 'confirmed') confirmed.push(player);
+	}
+
+	return { waiting, queued, confirmed };
+};
+
 export const hasOutstandingCancellationFee = async (
 	supabase: SupabaseClient,
 	userId: string
@@ -194,6 +254,11 @@ export const loadSessionDetailForPlayer = async (
 	const memberships = await loadMyMemberships(supabase, userId, [sessionId]);
 	const count = counts.get(sessionId) ?? { waiting: 0, queued: 0, confirmed: 0 };
 	const hasOutstandingFee = await hasOutstandingCancellationFee(supabase, userId);
+	const myMembership = memberships.get(sessionId) ?? null;
+	const roster =
+		myMembership !== null
+			? await loadSessionRoster(supabase, sessionId, userId)
+			: { waiting: [], queued: [], confirmed: [] };
 
 	return {
 		...(data as Omit<
@@ -206,6 +271,9 @@ export const loadSessionDetailForPlayer = async (
 			| 'confirmed_count'
 			| 'my_membership'
 			| 'has_outstanding_fee'
+			| 'waiting_players'
+			| 'queued_players'
+			| 'confirmed_players'
 		>),
 		club: normalizeRelation(data.club as SessionDetail['club'] | SessionDetail['club'][]),
 		host: normalizeRelation(data.host as SessionDetail['host'] | SessionDetail['host'][]),
@@ -213,8 +281,11 @@ export const loadSessionDetailForPlayer = async (
 		waiting_count: count.waiting + count.confirmed,
 		queued_count: count.queued,
 		confirmed_count: count.confirmed,
-		my_membership: memberships.get(sessionId) ?? null,
-		has_outstanding_fee: hasOutstandingFee
+		my_membership: myMembership,
+		has_outstanding_fee: hasOutstandingFee,
+		waiting_players: roster.waiting,
+		queued_players: roster.queued,
+		confirmed_players: roster.confirmed
 	};
 };
 
