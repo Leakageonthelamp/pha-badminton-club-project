@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { enhance } from '$app/forms';
-	import { invalidate } from '$app/navigation';
+	import { goto, invalidate } from '$app/navigation';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import RichTextDisplay from '@repo/ui/components/RichTextDisplay.svelte';
+	import SessionStartCountdown from '@repo/ui/components/SessionStartCountdown.svelte';
 	import AppModal from '@repo/ui/components/AppModal.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import CancellationFeeModal from '$lib/components/CancellationFeeModal.svelte';
@@ -19,8 +20,9 @@
 	} from '@repo/ui/geolocation';
 	import { formatDateTime } from '@repo/ui/datetime';
 	import { computeCourtShare } from '@repo/ui/payments';
-	import type { SessionDetail, SessionListItem } from '$lib/types/session';
-	import { SESSION_JOIN_CLOSE_LEAD_MINUTES } from '$lib/config/session';
+	import type { SessionDetail, SessionListItem, SessionStatus } from '$lib/types/session';
+	import { liveSessionHref, shouldOpenLiveSession } from '$lib/sessions/navigation';
+	import { SESSION_CANCEL_LOCK_LEAD_MINUTES, SESSION_JOIN_CLOSE_LEAD_MINUTES } from '$lib/config/session';
 	import {
 		formatThb,
 		matchTypeLabel,
@@ -58,6 +60,7 @@
 	let feeModalPlayerId = $state<string | null>(null);
 	let feeModalAmount = $state(0);
 	let feeModalStatus = $state<'owed' | 'submitted'>('owed');
+	let lastPolledSessionStatus = $state<SessionStatus | null>(null);
 
 	const DISMISS_DRAG_PX = 120;
 
@@ -69,7 +72,7 @@
 
 	const backdropOpacity = $derived.by(() => {
 		if (!visible) return 0;
-		const height = panelEl?.getBoundingClientRect().height ?? window.innerHeight * 0.75;
+		const height = panelEl?.getBoundingClientRect().height ?? window.innerHeight * 0.8;
 		if (dragOffset <= 0 || height <= 0) return 1;
 		return Math.max(0, 1 - dragOffset / height);
 	});
@@ -86,7 +89,7 @@
 	};
 
 	const dismissFromDrag = () => {
-		const height = panelEl?.getBoundingClientRect().height ?? window.innerHeight * 0.75;
+		const height = panelEl?.getBoundingClientRect().height ?? window.innerHeight * 0.8;
 		dragging = false;
 		dragOffset = height;
 		window.setTimeout(() => {
@@ -205,9 +208,21 @@
 			activePlayers
 		});
 	});
+	const isWithinCancelLockWindow = $derived(
+		session
+			? Date.now() >=
+					new Date(session.start_at).getTime() - SESSION_CANCEL_LOCK_LEAD_MINUTES * 60 * 1000
+			: false
+	);
 	const canCancel = $derived(
 		session?.status !== 'in_progress' &&
-			(membership?.status === 'waiting' || membership?.status === 'queued')
+			(membership?.status === 'queued' ||
+				(membership?.status === 'waiting' && !isWithinCancelLockWindow))
+	);
+	const cancelJoinLocked = $derived(
+		session?.status !== 'in_progress' &&
+			membership?.status === 'waiting' &&
+			isWithinCancelLockWindow
 	);
 	const isLateCancelWindow = $derived(
 		session ? Date.now() >= new Date(session.start_at).getTime() - 60 * 60 * 1000 : false
@@ -215,7 +230,22 @@
 	const requiresLateCancelFee = $derived(
 		membership?.status === 'waiting' && (session?.cancellation_fee ?? 0) > 0 && isLateCancelWindow
 	);
-	const canLeave = $derived(membership?.status === 'confirmed');
+	const canLeave = $derived(
+		membership?.status === 'confirmed' && session?.status === 'in_progress'
+	);
+	const hasActiveMembership = $derived(
+		membership !== null &&
+			(membership.status === 'waiting' ||
+				membership.status === 'queued' ||
+				membership.status === 'confirmed')
+	);
+
+	const goToLiveSession = () => {
+		if (!session) return;
+		const id = session.id;
+		close();
+		goto(liveSessionHref(id));
+	};
 
 	const spotsLabel = $derived.by(() => {
 		if (!session) return null;
@@ -377,6 +407,64 @@
 	});
 
 	$effect(() => {
+		if (!browser || !open || !sessionId || !visible || !hasActiveMembership) {
+			lastPolledSessionStatus = null;
+			return;
+		}
+
+		let navigating = false;
+
+		const pollSession = async () => {
+			if (navigating || !sessionId) return;
+
+			try {
+				const response = await fetch(`/api/sessions/${sessionId}`);
+				if (!response.ok) return;
+
+				const detail = (await response.json()) as SessionDetail;
+				const previousStatus = lastPolledSessionStatus ?? session?.status ?? detail.status;
+				lastPolledSessionStatus = detail.status;
+				session = detail;
+
+				const membershipForNav = detail.my_membership;
+				if (
+					previousStatus !== 'in_progress' &&
+					detail.status === 'in_progress' &&
+					membershipForNav &&
+					shouldOpenLiveSession({
+						status: detail.status,
+						my_membership: membershipForNav
+					})
+				) {
+					navigating = true;
+					close();
+					goto(liveSessionHref(sessionId));
+				}
+			} catch {
+				// ponytail: poll failure is transient; next interval retries
+			}
+		};
+
+		lastPolledSessionStatus = session?.status ?? null;
+		void pollSession();
+
+		const pollIntervalMs = () => {
+			if (!session) return 15_000;
+			const msToStart = new Date(session.start_at).getTime() - Date.now();
+			if (msToStart <= 60_000) return 2_000;
+			if (msToStart <= 5 * 60_000) return 5_000;
+			return 15_000;
+		};
+
+		const timer = window.setInterval(pollSession, pollIntervalMs());
+
+		return () => {
+			window.clearInterval(timer);
+			lastPolledSessionStatus = null;
+		};
+	});
+
+	$effect(() => {
 		if (!browser || !show) return;
 		window.addEventListener('keydown', onKeydown);
 		return () => window.removeEventListener('keydown', onKeydown);
@@ -444,6 +532,12 @@
 				</button>
 			</div>
 
+			{#if activeSession?.start_at && activeSession.status === 'open'}
+				<div class="px-4 pb-3">
+					<SessionStartCountdown startAt={activeSession.start_at} />
+				</div>
+			{/if}
+
 			<div class="min-h-0 flex-1 overflow-y-auto px-4 pb-6">
 				{#if loading && !session?.description}
 					<div class="mt-3 app-skeleton h-16 w-full" aria-hidden="true"></div>
@@ -461,10 +555,28 @@
 										This session is in progress. You cannot cancel your join. The admin may confirm
 										you to play at any time.
 									</p>
+								{:else if isWithinCancelLockWindow}
+									<p class="mt-2 text-sm text-brand-700">
+										The admin is reviewing waiting players now. You can no longer cancel — they may
+										confirm or reject you.
+									</p>
 								{:else}
 									<p class="mt-2 text-sm text-brand-700">
 										The admin will confirm your join request 15 minutes before the session starts.
 										Please be at the venue and ready by then.
+									</p>
+								{/if}
+							{:else if membership.status === 'confirmed'}
+								{#if session.status === 'in_progress'}
+									<p class="mt-2 text-sm text-brand-700">
+										Session is live. Open the live session page to see costs, courts, and request an
+										early leave.
+									</p>
+								{:else}
+									<p class="mt-2 text-sm text-brand-700">
+										You're confirmed for this session. Get ready — it starts
+										{formatDateTime(session.start_at)}. You'll be taken to the live session when play
+										begins.
 									</p>
 								{/if}
 							{/if}
@@ -729,13 +841,28 @@
 							{/if}
 						{/if}
 
+						{#if cancelJoinLocked}
+							<SubmitButton type="button" variant="secondary" disabled>
+								Cancel join
+							</SubmitButton>
+							<p class="text-xs text-slate-500">
+								Cancellation closed within 15 minutes of start. The admin may confirm or reject you. If
+								you play and leave early, you will be billed your court fee share.
+							</p>
+						{/if}
+
 						{#if canLeave}
-							<form method="POST" action="/sessions?/leave" use:enhance={enhanceAction()}>
-								<input type="hidden" name="session_id" value={session.id} />
-								<SubmitButton variant="secondary" loading={actionLoading}>
-									Leave session
-								</SubmitButton>
-							</form>
+							<SubmitButton type="button" variant="secondary" onclick={goToLiveSession}>
+								Leave session
+							</SubmitButton>
+							<p class="text-xs text-slate-500">
+								Early leave bills your court-fee share, requires admin payment confirmation, then admin
+								leave approval — same as on the live session page.
+							</p>
+						{:else if session.status === 'in_progress' && hasActiveMembership}
+							<SubmitButton type="button" onclick={goToLiveSession}>
+								Open live session
+							</SubmitButton>
 						{/if}
 					</div>
 				{/if}
@@ -768,8 +895,8 @@
 								so the admin can confirm your attendance.
 							</p>
 							<p>
-								You can cancel your join from session details at any time while you are on the waiting
-								list or in the buffer queue.
+								You can cancel from session details while on the waiting list until 15 minutes before
+								start, or anytime while in the buffer queue.
 							</p>
 							{#if session.cancellation_fee > 0}
 								<p>

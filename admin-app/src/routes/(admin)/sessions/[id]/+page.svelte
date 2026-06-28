@@ -6,6 +6,7 @@
 	import AppModal from '@repo/ui/components/AppModal.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import RichTextDisplay from '@repo/ui/components/RichTextDisplay.svelte';
+	import SessionStartCountdown from '@repo/ui/components/SessionStartCountdown.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import BuildingIcon from '@repo/ui/icons/BuildingIcon.svelte';
 	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
@@ -129,6 +130,8 @@
 			};
 		};
 
+	const participantActionClass = '!w-auto !rounded-lg !px-3 !py-1.5 !text-sm';
+
 </script>
 
 {#snippet participantsSection()}
@@ -155,50 +158,69 @@
 				{:else}
 					<ul class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
 						{#each waitingPlayers as player (player.id)}
-							<li class="flex flex-wrap items-center gap-3 bg-white px-4 py-3">
-								<UserAvatar
-									displayName={player.profile?.display_name ?? 'Player'}
-									avatarUrl={player.profile?.avatar_url ?? null}
-									size="sm"
-								/>
-								<div class="min-w-0 flex-1">
-									<p class="truncate font-medium text-slate-900">
-										{player.profile?.display_name ?? 'Unknown'}
-									</p>
-									<p class="text-xs text-slate-500">
-										{sessionPlayerStatusLabel(player.status)} · joined {formatDateTime(player.joined_at)}
-									</p>
-								</div>
-								{#if player.profile?.tag}
-									<TagPill tag={player.profile.tag} />
-								{/if}
-								{#if data.adminActionWindowOpen}
-									<div class="flex w-full gap-2 sm:ml-auto sm:w-auto">
-										<form method="POST" action="?/confirm" use:enhance={handlePlayerAction(player.id)}>
-											<input type="hidden" name="session_id" value={session.id} />
-											<input type="hidden" name="player_id" value={player.id} />
-											<SubmitButton
-												class="!w-auto"
-												loading={playerActionLoading === player.id}
-												loadingLabel="…"
-											>
-												Confirm
-											</SubmitButton>
-										</form>
-										<form method="POST" action="?/reject" use:enhance={handlePlayerAction(player.id)}>
-											<input type="hidden" name="session_id" value={session.id} />
-											<input type="hidden" name="player_id" value={player.id} />
-											<SubmitButton
-												variant="secondary"
-												class="!w-auto"
-												loading={playerActionLoading === player.id}
-												loadingLabel="…"
-											>
-												Reject
-											</SubmitButton>
-										</form>
+							<li class="bg-white px-4 py-3">
+								<div class="flex flex-wrap items-center justify-between gap-3">
+									<div class="flex min-w-0 items-center gap-3">
+										<UserAvatar
+											displayName={player.profile?.display_name ?? 'Player'}
+											avatarUrl={player.profile?.avatar_url ?? null}
+											size="sm"
+										/>
+										<div class="min-w-0">
+											<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+												<p class="truncate font-medium text-slate-900">
+													{player.profile?.display_name ?? 'Unknown'}
+												</p>
+												{#if player.profile?.tag}
+													<TagPill tag={player.profile.tag} />
+												{/if}
+											</div>
+											<p class="text-xs text-slate-500">
+												{sessionPlayerStatusLabel(player.status)} · joined
+												{formatDateTime(player.joined_at)}
+											</p>
+										</div>
 									</div>
-								{/if}
+									{#if data.adminActionWindowOpen}
+										<div class="flex shrink-0 items-center gap-2">
+											<form
+												method="POST"
+												action="?/confirm"
+												use:enhance={handlePlayerAction(player.id)}
+											>
+												<input type="hidden" name="session_id" value={session.id} />
+												<input type="hidden" name="player_id" value={player.id} />
+												<SubmitButton
+													class={participantActionClass}
+													loading={playerActionLoading === player.id}
+													loadingLabel="…"
+													disabled={playerActionLoading !== null &&
+														playerActionLoading !== player.id}
+												>
+													Confirm
+												</SubmitButton>
+											</form>
+											<form
+												method="POST"
+												action="?/reject"
+												use:enhance={handlePlayerAction(player.id)}
+											>
+												<input type="hidden" name="session_id" value={session.id} />
+												<input type="hidden" name="player_id" value={player.id} />
+												<SubmitButton
+													variant="secondary"
+													class={participantActionClass}
+													loading={playerActionLoading === player.id}
+													loadingLabel="…"
+													disabled={playerActionLoading !== null &&
+														playerActionLoading !== player.id}
+												>
+													Reject
+												</SubmitButton>
+											</form>
+										</div>
+									{/if}
+								</div>
 							</li>
 						{/each}
 					</ul>
@@ -219,16 +241,19 @@
 									size="sm"
 								/>
 								<div class="min-w-0 flex-1">
-									<p class="truncate font-medium text-slate-900">
-										{player.profile?.display_name ?? 'Unknown'}
-									</p>
+									<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+										<p class="truncate font-medium text-slate-900">
+											{player.profile?.display_name ?? 'Unknown'}
+										</p>
+										{#if player.profile?.tag}
+											<TagPill tag={player.profile.tag} />
+										{/if}
+									</div>
 									<p class="text-xs text-slate-500">
-										{sessionPlayerStatusLabel(player.status)} · joined {formatDateTime(player.joined_at)}
+										{sessionPlayerStatusLabel(player.status)} · joined
+										{formatDateTime(player.joined_at)}
 									</p>
 								</div>
-								{#if player.profile?.tag}
-									<TagPill tag={player.profile.tag} />
-								{/if}
 							</li>
 						{/each}
 					</ul>
@@ -249,16 +274,18 @@
 									size="sm"
 								/>
 								<div class="min-w-0 flex-1">
-									<p class="truncate font-medium text-slate-900">
-										{player.profile?.display_name ?? 'Unknown'}
-									</p>
+									<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+										<p class="truncate font-medium text-slate-900">
+											{player.profile?.display_name ?? 'Unknown'}
+										</p>
+										{#if player.profile?.tag}
+											<TagPill tag={player.profile.tag} />
+										{/if}
+									</div>
 									<p class="text-xs text-slate-500">
 										Confirmed {player.decided_at ? formatDateTime(player.decided_at) : '—'}
 									</p>
 								</div>
-								{#if player.profile?.tag}
-									<TagPill tag={player.profile.tag} />
-								{/if}
 							</li>
 						{/each}
 					</ul>
@@ -303,6 +330,8 @@
 			{/if}
 		</div>
 	</DashboardHero>
+
+	<SessionStartCountdown startAt={session.start_at} active={session.status === 'open'} class="mt-4" />
 
 	{@render participantsSection()}
 

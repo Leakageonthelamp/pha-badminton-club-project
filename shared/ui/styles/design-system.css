@@ -488,6 +488,18 @@ body {
 		@apply grid gap-3 sm:grid-cols-2;
 	}
 
+	.app-session-countdown {
+		@apply flex items-center justify-between gap-4 rounded-xl border border-brand-200 bg-brand-50/80 px-4 py-3;
+	}
+
+	.app-session-countdown-label {
+		@apply flex items-center gap-2 text-sm font-medium text-brand-800;
+	}
+
+	.app-session-countdown-value {
+		@apply font-mono text-2xl font-semibold tabular-nums text-brand-900;
+	}
+
 	.app-detail-meta-item {
 		@apply rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5;
 	}

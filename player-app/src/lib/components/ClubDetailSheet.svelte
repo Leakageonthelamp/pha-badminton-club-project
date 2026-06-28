@@ -61,7 +61,7 @@
 
 	const backdropOpacity = $derived.by(() => {
 		if (!visible) return 0;
-		const height = panelEl?.getBoundingClientRect().height ?? window.innerHeight * 0.75;
+		const height = panelEl?.getBoundingClientRect().height ?? window.innerHeight * 0.8;
 		if (dragOffset <= 0 || height <= 0) return 1;
 		return Math.max(0, 1 - dragOffset / height);
 	});
@@ -78,7 +78,7 @@
 	};
 
 	const dismissFromDrag = () => {
-		const height = panelEl?.getBoundingClientRect().height ?? window.innerHeight * 0.75;
+		const height = panelEl?.getBoundingClientRect().height ?? window.innerHeight * 0.8;
 		dragging = false;
 		dragOffset = height;
 		window.setTimeout(() => {

@@ -12,6 +12,8 @@
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
+	import BuildingIcon from '@repo/ui/icons/BuildingIcon.svelte';
+	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
 	import { formatDateTime, formatUptime } from '@repo/ui/datetime';
 	import { formatThb, paymentStatusLabel } from '@repo/ui/payments';
 	import PaymentQr from '$lib/components/PaymentQr.svelte';
@@ -47,6 +49,33 @@
 	const showPaymentModal = $derived(
 		shouldShowPaymentModal(uiState, data.myPayment?.status ?? null)
 	);
+
+	const sessionDurationLabel = $derived.by(() => {
+		const start = new Date(session.start_at);
+		const end = new Date(session.end_at);
+		const ms = end.getTime() - start.getTime();
+		if (ms <= 0) return '—';
+
+		const totalMinutes = Math.round(ms / 60_000);
+		const hours = Math.floor(totalMinutes / 60);
+		const minutes = totalMinutes % 60;
+
+		if (minutes === 0) return `${hours} hr`;
+		if (hours === 0) return `${minutes} min`;
+		return `${hours} hr ${minutes} min`;
+	});
+
+	const shuttlePriceLabel = $derived(formatThb(session.shuttle_price_per_each));
+
+	const shuttleDetailLabel = $derived.by(() => {
+		if (!session.shuttle) return shuttlePriceLabel;
+
+		const parts = [session.shuttle.name, `Speed ${session.shuttle.speed}`, shuttlePriceLabel];
+		if (session.shuttle.number_per_box > 0) {
+			parts.push(`${session.shuttle.number_per_box} per box`);
+		}
+		return parts.join(' · ');
+	});
 
 	$effect(() => {
 		if (!browser) return;
@@ -139,16 +168,12 @@
 	</DashboardHero>
 
 	{#if session.status === 'in_progress'}
-		<div
-			class="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-2.5"
-		>
-			<span class="flex items-center gap-2 text-sm text-slate-500">
+		<div class="app-session-countdown border-emerald-200 bg-emerald-50/80">
+			<span class="app-session-countdown-label text-emerald-800">
 				<span class="h-2 w-2 animate-pulse rounded-full bg-emerald-500" aria-hidden="true"></span>
 				Uptime
 			</span>
-			<span class="font-mono text-2xl font-semibold tabular-nums text-slate-900" aria-live="polite">
-				{uptimeLabel}
-			</span>
+			<span class="app-session-countdown-value text-emerald-900" aria-live="polite">{uptimeLabel}</span>
 		</div>
 	{/if}
 
@@ -187,25 +212,94 @@
 			{/if}
 		</AppCard>
 
-		<AppCard class="space-y-4">
-			<SectionHeading title="Session details" />
-			<dl class="grid gap-3 text-sm">
+		<section class="app-detail-section">
+			<div
+				class="grid gap-4 border-b border-brand-100 bg-gradient-to-br from-brand-50 via-white to-brand-50/50 px-4 py-5 sm:grid-cols-[1fr_auto_1fr_auto_1fr]"
+			>
 				<div>
-					<dt class="text-slate-500">Schedule</dt>
-					<dd class="font-medium text-slate-800">
-						{formatDateTime(session.start_at)} – {formatDateTime(session.end_at)}
-					</dd>
+					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600">Start</p>
+					<p class="mt-1 text-base font-semibold text-slate-900">
+						{formatDateTime(session.start_at)}
+					</p>
 				</div>
-				<div>
-					<dt class="text-slate-500">Venue</dt>
-					<dd class="font-medium text-slate-800">{session.venue_name ?? '—'}</dd>
+				<div class="hidden self-center sm:block" aria-hidden="true">
+					<div class="h-10 w-px bg-brand-200"></div>
 				</div>
-				<div>
-					<dt class="text-slate-500">Courts</dt>
-					<dd class="font-medium text-slate-800">{session.court_count}</dd>
+				<div
+					class="rounded-2xl border border-brand-100 bg-white/80 px-4 py-3 shadow-sm ring-1 ring-brand-100/80"
+				>
+					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600">Duration</p>
+					<p class="mt-1 text-lg font-semibold text-brand-800">{sessionDurationLabel}</p>
 				</div>
-			</dl>
-		</AppCard>
+				<div class="hidden self-center sm:block" aria-hidden="true">
+					<div class="h-10 w-px bg-brand-200"></div>
+				</div>
+				<div class="sm:text-right">
+					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600">End</p>
+					<p class="mt-1 text-base font-semibold text-slate-900">
+						{formatDateTime(session.end_at)}
+					</p>
+				</div>
+			</div>
+
+			<div class="app-detail-section-body space-y-5">
+				<div class="app-detail-section-header">
+					<span class="app-detail-section-icon" aria-hidden="true">
+						<LayersIcon class="h-5 w-5" />
+					</span>
+					<div>
+						<h2 class="text-lg font-semibold text-slate-900">Session details</h2>
+						<p class="text-sm text-slate-500">Venue, courts, and shuttle for this session</p>
+					</div>
+				</div>
+
+				<dl class="app-detail-contact-grid">
+					<div class="app-detail-contact-item app-detail-contact-item--wide">
+						<dt class="app-detail-contact-label">
+							<span class="inline-flex items-center gap-1.5">
+								<BuildingIcon class="h-4 w-4 text-brand-500" />
+								Venue
+							</span>
+						</dt>
+						<dd class="app-detail-contact-value text-base">{session.venue_name ?? '—'}</dd>
+					</div>
+				</dl>
+
+				<dl class="app-detail-meta-grid">
+					<div class="app-detail-meta-item">
+						<dt class="app-detail-meta-label">Courts</dt>
+						<dd class="app-detail-meta-value">
+							<span class="text-lg font-semibold text-brand-700">{session.court_count}</span>
+						</dd>
+					</div>
+					<div class="app-detail-meta-item">
+						<dt class="app-detail-meta-label">Court fee / hr</dt>
+						<dd class="app-detail-meta-value text-base text-brand-800">
+							{formatThb(session.court_fee_per_hour)}
+						</dd>
+					</div>
+					<div class="app-detail-meta-item sm:col-span-2">
+						<dt class="app-detail-meta-label">Shuttle</dt>
+						<dd class="app-detail-meta-value">
+							{#if session.shuttle}
+								<p class="text-base font-semibold text-slate-900">{session.shuttle.name}</p>
+								<p class="mt-1 text-sm text-slate-600">
+									Speed {session.shuttle.speed} · {shuttlePriceLabel} each
+									{#if session.shuttle.number_per_box > 0}
+										· {session.shuttle.number_per_box} per box
+									{/if}
+								</p>
+								<p class="mt-2 text-xs text-slate-500">
+									Your shuttle share appears in your cost when matches are recorded.
+								</p>
+							{:else}
+								<p class="text-sm text-slate-600">{shuttleDetailLabel}</p>
+							{/if}
+						</dd>
+					</div>
+				</dl>
+			</div>
+		</section>
 
 		<AppCard class="space-y-4">
 			<SectionHeading title="Active players" />

@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
 	addHoursToLocalInput,
 	dateToLocalInput,
+	formatCountdown,
 	formatDateTime,
 	formatUptime,
+	isWithinPreStartWindow,
 	localInputToDate,
 	localInputToUtc,
 	localInputToUtcSafe,
@@ -51,5 +53,24 @@ describe('device-timezone datetime helpers', () => {
 		expect(formatUptime(start, now)).toBe('02:30:45');
 		expect(formatUptime(start, Date.parse(start))).toBe('00:00:00');
 		expect(formatUptime(start, Date.parse(start) - 1)).toBe('00:00:00');
+	});
+});
+
+describe('pre-start countdown helpers', () => {
+	it('detects the 15-minute pre-start window', () => {
+		const start = '2026-06-27T12:00:00.000Z';
+		const atWindowOpen = Date.parse('2026-06-27T11:45:00.000Z');
+		const beforeWindow = Date.parse('2026-06-27T11:44:59.000Z');
+		const atStart = Date.parse(start);
+
+		expect(isWithinPreStartWindow(start, 15, atWindowOpen)).toBe(true);
+		expect(isWithinPreStartWindow(start, 15, beforeWindow)).toBe(false);
+		expect(isWithinPreStartWindow(start, 15, atStart)).toBe(false);
+	});
+
+	it('formats countdown as mm:ss under one hour', () => {
+		const target = '2026-06-27T12:00:00.000Z';
+		const now = Date.parse('2026-06-27T11:58:30.000Z');
+		expect(formatCountdown(target, now)).toBe('01:30');
 	});
 });
