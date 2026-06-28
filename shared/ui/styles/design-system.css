@@ -448,6 +448,47 @@ body {
 		fill: var(--color-brand-600);
 	}
 
+	.flatpickr-picker-actions {
+		display: flex;
+		gap: 0.5rem;
+		padding: 0.75rem;
+		border-top: 1px solid rgb(226 232 240);
+	}
+
+	.flatpickr-action {
+		flex: 1;
+		border-radius: 0.75rem;
+		padding: 0.5rem 0.75rem;
+		font-size: 0.875rem;
+		font-weight: 600;
+		line-height: 1.25rem;
+	}
+
+	.flatpickr-action-clear {
+		border: 1px solid rgb(226 232 240);
+		background: white;
+		color: rgb(71 85 105);
+	}
+
+	.flatpickr-action-clear:hover {
+		background: rgb(248 250 252);
+	}
+
+	.flatpickr-action-select {
+		border: 1px solid var(--color-brand-600);
+		background: var(--color-brand-600);
+		color: white;
+	}
+
+	.flatpickr-action-select:hover {
+		background: var(--color-brand-700);
+		border-color: var(--color-brand-700);
+	}
+
+	.datetime-picker-error {
+		@apply mt-1 text-sm text-red-600;
+	}
+
 	.app-detail-section {
 		@apply overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm ring-1 ring-slate-100;
 	}

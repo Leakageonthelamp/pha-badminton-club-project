@@ -30,6 +30,7 @@
 	let inputEl = $state<HTMLInputElement | null>(null);
 	let picker = $state<Instance | null>(null);
 	let isEditing = $state(false);
+	let validationError = $state('');
 	const displayId = $derived(`${id}-display`);
 	const labelId = $derived(`${id}-label`);
 
@@ -54,6 +55,7 @@
 
 		alt.id = displayId;
 		alt.setAttribute('aria-labelledby', labelId);
+		alt.setAttribute('aria-invalid', validationError ? 'true' : 'false');
 		alt.placeholder = placeholder;
 		alt.disabled = disabled;
 		alt.autocomplete = 'off';
@@ -73,12 +75,81 @@
 		return minDate;
 	};
 
-	const clampToMinDate = (instance: Instance, triggerChange: boolean) => {
-		const minDate = resolveMinDate();
-		const selected = instance.selectedDates[0];
-		if (!minDate || !selected || selected.getTime() >= minDate.getTime()) return;
+	const revertToCommitted = (instance: Instance) => {
+		syncPickerFromValue(instance);
+	};
 
-		instance.setDate(minDate, triggerChange);
+	const syncPickerFromValue = (instance: Instance) => {
+		if (!value) {
+			instance.clear(false);
+			if (instance.altInput) instance.altInput.value = '';
+			return;
+		}
+
+		const committed = localInputToDate(value);
+		if (committed) instance.setDate(committed, false);
+		else {
+			instance.clear(false);
+			if (instance.altInput) instance.altInput.value = '';
+		}
+	};
+
+	const validateSelected = (date: Date | undefined, instance: Instance): string | null => {
+		if (required && !date) return 'Choose a date and time.';
+		if (!date) return null;
+
+		const minDate = resolveMinDate();
+		if (minDate && date.getTime() < minDate.getTime()) {
+			return `Must be on or after ${instance.formatDate(minDate, instance.config.altFormat)}.`;
+		}
+
+		return null;
+	};
+
+	const attachPickerActions = (instance: Instance, committedThisOpen: { current: boolean }) => {
+		const footer = document.createElement('div');
+		footer.className = 'flatpickr-picker-actions';
+
+		const clearBtn = document.createElement('button');
+		clearBtn.type = 'button';
+		clearBtn.className = 'flatpickr-action flatpickr-action-clear';
+		clearBtn.textContent = 'Clear';
+
+		const selectBtn = document.createElement('button');
+		selectBtn.type = 'button';
+		selectBtn.className = 'flatpickr-action flatpickr-action-select';
+		selectBtn.textContent = 'Select';
+
+		const keepFocus = (event: MouseEvent) => event.preventDefault();
+
+		clearBtn.addEventListener('mousedown', keepFocus);
+		selectBtn.addEventListener('mousedown', keepFocus);
+
+		clearBtn.addEventListener('click', () => {
+			value = '';
+			validationError = required ? 'This field is required.' : '';
+			committedThisOpen.current = true;
+			instance.clear(false);
+			if (instance.altInput) instance.altInput.value = '';
+			instance.close();
+		});
+
+		selectBtn.addEventListener('click', () => {
+			const selected = instance.selectedDates[0];
+			const error = validateSelected(selected, instance);
+			if (error) {
+				validationError = error;
+				return;
+			}
+
+			validationError = '';
+			value = selected ? dateToLocalInput(selected) : '';
+			committedThisOpen.current = true;
+			instance.close();
+		});
+
+		footer.append(clearBtn, selectBtn);
+		instance.calendarContainer.appendChild(footer);
 	};
 
 	onMount(() => {
@@ -87,11 +158,13 @@
 		inputEl.autocomplete = 'off';
 
 		let instance: Instance | null = null;
+		const committedThisOpen = { current: false };
 
 		instance = flatpickr(inputEl, {
 			enableTime: true,
 			time_24hr: true,
 			clickOpens: false,
+			closeOnSelect: false,
 			allowInput: true,
 			disableMobile: true,
 			minuteIncrement: 1,
@@ -101,30 +174,31 @@
 			altInputClass: 'datetime-picker-input',
 			defaultDate: localInputToDate(value) ?? undefined,
 			minDate: resolveMinDate(),
-			onChange: (dates) => {
-				value = dates[0] ? dateToLocalInput(dates[0]) : '';
+			onOpen: (_dates, _str, fp) => {
+				committedThisOpen.current = false;
+				validationError = '';
+				refreshMinDate(fp);
+				revertToCommitted(fp);
 			},
-			onOpen: (_dates, _str, instance) => {
-				refreshMinDate(instance);
-			},
-			onClose: (_dates, _str, instance) => {
+			onClose: (_dates, _str, fp) => {
 				isEditing = false;
-				refreshMinDate(instance);
-				clampToMinDate(instance, true);
+				if (!committedThisOpen.current) revertToCommitted(fp);
+				committedThisOpen.current = false;
 			},
-			onReady: (_dates, _str, instance) => {
-				syncAltInput(instance);
-				const alt = instance.altInput;
+			onReady: (_dates, _str, fp) => {
+				syncAltInput(fp);
+				attachPickerActions(fp, committedThisOpen);
+
+				const alt = fp.altInput;
 				if (!alt) return;
 
 				alt.addEventListener('focus', () => {
 					isEditing = true;
-					if (!alt.disabled) instance.open();
+					if (!alt.disabled) fp.open();
 				});
 				alt.addEventListener('blur', () => {
+					if (fp.isOpen) return;
 					isEditing = false;
-					refreshMinDate(instance);
-					clampToMinDate(instance, true);
 				});
 			}
 		});
@@ -138,19 +212,32 @@
 	});
 
 	$effect(() => {
+		picker?.altInput?.setAttribute('aria-invalid', validationError ? 'true' : 'false');
+	});
+
+	$effect(() => {
 		if (!picker || isEditing) return;
 
 		refreshMinDate(picker);
 		syncAltInput(picker);
 
-		const externalDate = value ? localInputToDate(value) : null;
+		if (!value) {
+			picker.clear(false);
+			if (picker.altInput) picker.altInput.value = '';
+			return;
+		}
+
+		const externalDate = localInputToDate(value);
 		const selected = picker.selectedDates[0];
 		const externalMs = externalDate?.getTime() ?? null;
 		const selectedMs = selected?.getTime() ?? null;
 
 		if (externalMs !== selectedMs) {
 			if (externalDate) picker.setDate(externalDate, false);
-			else picker.clear(false);
+			else {
+				picker.clear(false);
+				if (picker.altInput) picker.altInput.value = '';
+			}
 		}
 	});
 </script>
@@ -159,4 +246,7 @@
 	<!-- svelte-ignore a11y_label_has_associated_control -->
 	<label id={labelId} class="mb-2 block text-sm font-medium text-slate-700">{label}</label>
 	<input bind:this={inputEl} {id} type="text" data-input class="hidden" autocomplete="off" />
+	{#if validationError}
+		<p class="datetime-picker-error" role="alert">{validationError}</p>
+	{/if}
 </div>
