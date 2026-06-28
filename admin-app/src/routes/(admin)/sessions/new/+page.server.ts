@@ -1,27 +1,10 @@
 import { resolveEffectiveAppRole } from '$lib/server/adminDashboardMode';
 import { assertCanManageClub, loadManagedClubs } from '$lib/server/clubAccess';
-import { countActiveClubSessions } from '$lib/server/sessions';
+import { countActiveClubSessions, loadShuttlesForClubs } from '$lib/server/sessions';
 import { sanitizeRichText } from '$lib/server/sanitizeHtml';
 import { sessionInputSchema } from '$lib/validation/session';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-
-const loadShuttlesForClubs = async (supabase: App.Locals['supabase'], clubIds: string[]) => {
-	if (!clubIds.length) return [];
-
-	const { data, error: loadError } = await supabase
-		.from('club_shuttles')
-		.select('id, club_id, name, speed, price, number_per_box')
-		.in('club_id', clubIds)
-		.order('name', { ascending: true });
-
-	if (loadError) {
-		console.error('Failed to load club shuttles', loadError);
-		return [];
-	}
-
-	return data ?? [];
-};
 
 export const load: PageServerLoad = async ({
 	cookies,
@@ -130,7 +113,7 @@ export const actions: Actions = {
 				host_id: user.id,
 				name: parsed.data.name,
 				description,
-				status: 'open',
+				status: 'draft',
 				start_at: parsed.data.start_at,
 				end_at: parsed.data.end_at,
 				venue_name: parsed.data.venue_name,

@@ -3,35 +3,27 @@
 	import AppCard from '@repo/ui/components/AppCard.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import SessionForm from '$lib/components/SessionForm.svelte';
-	import { clubWorkspaceState } from '$lib/clubWorkspace.svelte';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
-
-	const activeClub = $derived(
-		data.managedClubs.find((club) => club.id === clubWorkspaceState.selectedClubId) ??
-			data.managedClubs[0] ??
-			null
-	);
 </script>
 
 <FormToast message={form?.message} variant="error" token={form?.message ?? ''} />
 
 <section class="space-y-6">
 	<DashboardHero
-		title="Create session"
-		subtitle={activeClub
-			? `Schedule a new badminton session for ${activeClub.name}.`
-			: 'Schedule a new badminton session.'}
+		title="Edit session"
+		subtitle={data.session.club?.name ?? 'Update session details'}
 	/>
 
 	<AppCard class="space-y-4">
 		<SessionForm
-			mode="create"
+			mode="edit"
 			managedClubs={data.managedClubs}
 			shuttles={data.shuttles}
-			submitLabel="Create session"
-			loadingLabel="Creating…"
+			session={data.session}
+			submitLabel="Save changes"
+			loadingLabel="Saving…"
 		/>
 	</AppCard>
 </section>

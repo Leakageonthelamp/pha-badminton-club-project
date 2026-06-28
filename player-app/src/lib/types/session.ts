@@ -1,4 +1,4 @@
-export type SessionStatus = 'open' | 'in_progress' | 'closed' | 'cancelled';
+export type SessionStatus = 'draft' | 'open' | 'in_progress' | 'closed' | 'cancelled';
 export type MatchScoreType = 15 | 21;
 export type MatchType = 'one_round' | 'two_round';
 

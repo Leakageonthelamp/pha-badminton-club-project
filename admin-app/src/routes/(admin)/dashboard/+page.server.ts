@@ -6,7 +6,7 @@ import {
 	shouldUseClubDashboard
 } from '$lib/server/adminDashboardMode';
 import { loadManagedClubs } from '$lib/server/clubAccess';
-import { loadSessionsForAdmin } from '$lib/server/sessions';
+import { loadSessionsForAdmin, sweepOverdueDraftSessions } from '$lib/server/sessions';
 import { filterUpcomingSessions } from '$lib/sessions/list';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
@@ -34,6 +34,9 @@ export const load: PageServerLoad = async ({
 	const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
 	const managedClubs = await loadManagedClubs(supabase, user.id, effectiveAppRole);
 	const clubIds = managedClubs.map((club) => club.id);
+
+	await sweepOverdueDraftSessions(supabase, { clubIds });
+
 	const sessions = await loadSessionsForAdmin(supabase, {
 		appRole: effectiveAppRole,
 		userId: user.id,

@@ -1,3 +1,4 @@
+import { SESSION_DRAFT_OPEN_LEAD_MINUTES } from '$lib/config/session';
 import type { AppRole } from '$lib/types/auth';
 import type { SessionDetail, SessionListItem } from '$lib/types/session';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -113,7 +114,7 @@ export const countActiveClubSessions = async (
 		.from('sessions')
 		.select('*', { count: 'exact', head: true })
 		.eq('club_id', clubId)
-		.in('status', ['open', 'in_progress']);
+		.in('status', ['draft', 'open', 'in_progress']);
 
 	if (error) {
 		console.error('Failed to count active sessions', error);
@@ -121,4 +122,64 @@ export const countActiveClubSessions = async (
 	}
 
 	return count ?? 0;
+};
+
+/** ponytail: lazy sweep on read — stale drafts flip to cancelled when an admin loads sessions. */
+export const sweepOverdueDraftSessions = async (
+	supabase: SupabaseClient,
+	options?: { clubIds?: string[] }
+): Promise<void> => {
+	const deadline = new Date(Date.now() + SESSION_DRAFT_OPEN_LEAD_MINUTES * 60 * 1000).toISOString();
+
+	let query = supabase
+		.from('sessions')
+		.update({ status: 'cancelled' })
+		.eq('status', 'draft')
+		.lte('start_at', deadline);
+
+	if (options?.clubIds?.length) {
+		query = query.in('club_id', options.clubIds);
+	}
+
+	const { error } = await query;
+
+	if (error) {
+		console.error('Failed to sweep overdue draft sessions', error);
+	}
+};
+
+export const loadShuttlesForClubs = async (
+	supabase: SupabaseClient,
+	clubIds: string[]
+) => {
+	if (!clubIds.length) return [];
+
+	const { data, error } = await supabase
+		.from('club_shuttles')
+		.select('id, club_id, name, speed, price, number_per_box')
+		.in('club_id', clubIds)
+		.order('name', { ascending: true });
+
+	if (error) {
+		console.error('Failed to load club shuttles', error);
+		return [];
+	}
+
+	return data ?? [];
+};
+
+export const releaseActiveSessionPlayers = async (
+	supabase: SupabaseClient,
+	sessionId: string
+): Promise<{ ok: true } | { ok: false; message: string }> => {
+	const { error } = await supabase.rpc('release_active_session_players', {
+		p_session_id: sessionId
+	});
+
+	if (error) {
+		console.error('Failed to release session players', error);
+		return { ok: false, message: error.message };
+	}
+
+	return { ok: true };
 };

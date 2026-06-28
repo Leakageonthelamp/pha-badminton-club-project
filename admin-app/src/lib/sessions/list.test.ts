@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+	filterActiveSessions,
 	filterHistorySessions,
 	filterUpcomingSessions,
+	isDraftOpenWindowOpen,
 	isHistorySession,
+	isSessionMutable,
 	isUpcomingSession
 } from './list';
 import type { SessionListItem } from '$lib/types/session';
@@ -42,6 +45,23 @@ describe('session list filters', () => {
 		expect(isUpcomingSession(session, Date.parse('2026-06-01T00:00:00.000Z'))).toBe(true);
 	});
 
+	it('excludes draft sessions from upcoming', () => {
+		const session = baseSession({ status: 'draft' });
+		expect(isUpcomingSession(session)).toBe(false);
+	});
+
+	it('includes draft, open, and in_progress in active sessions', () => {
+		const sessions = filterActiveSessions([
+			baseSession({ id: '1', status: 'draft' }),
+			baseSession({ id: '2', status: 'open' }),
+			baseSession({ id: '3', status: 'in_progress' }),
+			baseSession({ id: '4', status: 'closed' }),
+			baseSession({ id: '5', status: 'cancelled' })
+		]);
+
+		expect(sessions.map((session) => session.id)).toEqual(['1', '2', '3']);
+	});
+
 	it('treats closed sessions as history only', () => {
 		const session = baseSession({ status: 'closed' });
 		expect(isHistorySession(session)).toBe(true);
@@ -60,10 +80,29 @@ describe('session list filters', () => {
 	it('filters upcoming sessions', () => {
 		const sessions = filterUpcomingSessions([
 			baseSession({ id: '1', status: 'open' }),
-			baseSession({ id: '2', status: 'closed' })
+			baseSession({ id: '2', status: 'closed' }),
+			baseSession({ id: '3', status: 'draft' })
 		]);
 
 		expect(sessions).toHaveLength(1);
 		expect(sessions[0]?.id).toBe('1');
+	});
+
+	it('allows opening a draft until start minus 1 hour', () => {
+		const startAt = '2026-07-01T10:00:00.000Z';
+		const openAtStartMinus90 = Date.parse('2026-07-01T08:30:00.000Z');
+		const openAtStartMinus30 = Date.parse('2026-07-01T09:30:00.000Z');
+
+		expect(isDraftOpenWindowOpen(startAt, openAtStartMinus90)).toBe(true);
+		expect(isDraftOpenWindowOpen(startAt, openAtStartMinus30)).toBe(false);
+	});
+
+	it('allows edit and cancel until start minus 15 minutes', () => {
+		const startAt = '2026-07-01T10:00:00.000Z';
+		const atStartMinus30 = Date.parse('2026-07-01T09:30:00.000Z');
+		const atStartMinus10 = Date.parse('2026-07-01T09:50:00.000Z');
+
+		expect(isSessionMutable(startAt, atStartMinus30)).toBe(true);
+		expect(isSessionMutable(startAt, atStartMinus10)).toBe(false);
 	});
 });

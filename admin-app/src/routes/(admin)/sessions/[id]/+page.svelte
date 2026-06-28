@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
 	import FormToast from '@repo/ui/components/FormToast.svelte';
 	import AppCard from '@repo/ui/components/AppCard.svelte';
 	import AppModal from '@repo/ui/components/AppModal.svelte';
@@ -27,14 +28,25 @@
 
 	let forceEndLoading = $state(false);
 	let forceEndModalOpen = $state(false);
+	let openLoading = $state(false);
+	let openModalOpen = $state(false);
+	let cancelLoading = $state(false);
+	let cancelModalOpen = $state(false);
 	let playerActionLoading = $state<string | null>(null);
 
 	const session = $derived(data.session);
 	const waitingPlayers = $derived(data.players.filter((p) => p.status === 'waiting'));
 	const queuedPlayers = $derived(data.players.filter((p) => p.status === 'queued'));
 	const confirmedPlayers = $derived(data.players.filter((p) => p.status === 'confirmed'));
-	const toastMessage = $derived(form?.message ?? (data.created ? 'Session created.' : null));
-	const toastVariant = $derived(form?.success || data.created ? 'success' : 'error');
+	const toastMessage = $derived(
+		form?.message ??
+			(data.edited
+				? 'Session updated and returned to draft. Open it again when ready.'
+				: data.created
+					? 'Session created.'
+					: null)
+	);
+	const toastVariant = $derived(form?.success || data.created || data.edited ? 'success' : 'error');
 
 	const sessionDurationLabel = $derived.by(() => {
 		const start = new Date(session.start_at);
@@ -80,6 +92,28 @@
 		};
 	};
 
+	const handleOpenSession: SubmitFunction = () => {
+		openLoading = true;
+		return async ({ result, update }) => {
+			await update({ reset: false });
+			openLoading = false;
+			if (result.type === 'success') {
+				openModalOpen = false;
+			}
+		};
+	};
+
+	const handleCancelSession: SubmitFunction = () => {
+		cancelLoading = true;
+		return async ({ result, update }) => {
+			await update({ reset: false });
+			cancelLoading = false;
+			if (result.type === 'success') {
+				cancelModalOpen = false;
+			}
+		};
+	};
+
 	const handlePlayerAction =
 		(playerId: string): SubmitFunction =>
 		() => {
@@ -112,6 +146,59 @@
 			</span>
 		{/if}
 	</DashboardHero>
+
+	{#if session.status === 'draft'}
+		<AppCard class="space-y-4 border-amber-200 bg-amber-50/60">
+			<div>
+				<h2 class="text-lg font-semibold text-amber-900">Draft session</h2>
+				<p class="mt-2 text-sm text-amber-800">
+					This session is hidden from players until you open it. Open by
+					{formatDateTime(data.draftOpenDeadline)} (1 hour before start) or it will be
+					auto-cancelled.
+				</p>
+			</div>
+			{#if data.canOpen}
+				<SubmitButton
+					type="button"
+					class="!w-auto"
+					onclick={() => (openModalOpen = true)}
+				>
+					Open session
+				</SubmitButton>
+			{:else if data.canManage}
+				<p class="text-sm text-amber-800">The open window has passed.</p>
+			{/if}
+		</AppCard>
+	{/if}
+
+	{#if data.canModify}
+		<AppCard class="space-y-4">
+			<div>
+				<h2 class="text-lg font-semibold text-slate-900">Manage session</h2>
+				<p class="mt-1 text-sm text-slate-600">
+					Edit or cancel until 15 minutes before start. After that, changes are locked.
+				</p>
+			</div>
+			<div class="flex flex-wrap gap-2">
+				<SubmitButton
+					type="button"
+					variant="secondary"
+					class="!w-auto"
+					onclick={() => goto(`/sessions/${session.id}/edit`)}
+				>
+					Edit session
+				</SubmitButton>
+				<SubmitButton
+					type="button"
+					variant="ghost"
+					class="!w-auto !text-red-700 hover:!bg-red-50"
+					onclick={() => (cancelModalOpen = true)}
+				>
+					Cancel session
+				</SubmitButton>
+			</div>
+		</AppCard>
+	{/if}
 
 	<AppCard class="space-y-4">
 		<h2 class="text-lg font-semibold text-slate-900">Description</h2>
@@ -287,7 +374,7 @@
 		</div>
 	</section>
 
-	{#if data.canManage}
+	{#if data.canManage && session.status !== 'draft'}
 		<AppCard class="space-y-6">
 			<div>
 				<h2 class="text-lg font-semibold text-slate-900">Participants</h2>
@@ -474,6 +561,82 @@
 					onclick={() => (forceEndModalOpen = false)}
 				>
 					Cancel
+				</SubmitButton>
+			</form>
+		</div>
+	</AppModal>
+{/if}
+
+{#if openModalOpen}
+	<AppModal
+		open={openModalOpen}
+		labelledBy="open-session-title"
+		onClose={() => (openModalOpen = false)}
+	>
+		<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
+			<div class="border-b border-brand-100 bg-brand-50 px-4 py-4">
+				<h2 id="open-session-title" class="text-lg font-semibold text-brand-900">
+					Open session?
+				</h2>
+				<p class="mt-2 text-sm text-brand-800">
+					Players will be able to discover and join this session once it is open.
+				</p>
+			</div>
+			<form
+				method="POST"
+				action="?/openSession"
+				class="flex flex-wrap gap-2 p-4"
+				use:enhance={handleOpenSession}
+			>
+				<SubmitButton loading={openLoading} loadingLabel="Opening…" class="!w-auto">
+					Open session
+				</SubmitButton>
+				<SubmitButton
+					type="button"
+					variant="secondary"
+					class="!w-auto"
+					disabled={openLoading}
+					onclick={() => (openModalOpen = false)}
+				>
+					Cancel
+				</SubmitButton>
+			</form>
+		</div>
+	</AppModal>
+{/if}
+
+{#if cancelModalOpen}
+	<AppModal
+		open={cancelModalOpen}
+		labelledBy="cancel-session-title"
+		onClose={() => (cancelModalOpen = false)}
+	>
+		<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
+			<div class="border-b border-red-100 bg-red-50 px-4 py-4">
+				<h2 id="cancel-session-title" class="text-lg font-semibold text-red-900">
+					Cancel session?
+				</h2>
+				<p class="mt-2 text-sm text-red-800">
+					This will cancel the session and release all waiting and queued players without a fee.
+				</p>
+			</div>
+			<form
+				method="POST"
+				action="?/cancel"
+				class="flex flex-wrap gap-2 p-4"
+				use:enhance={handleCancelSession}
+			>
+				<SubmitButton loading={cancelLoading} loadingLabel="Cancelling…" class="!w-auto">
+					Cancel session
+				</SubmitButton>
+				<SubmitButton
+					type="button"
+					variant="secondary"
+					class="!w-auto"
+					disabled={cancelLoading}
+					onclick={() => (cancelModalOpen = false)}
+				>
+					Keep session
 				</SubmitButton>
 			</form>
 		</div>

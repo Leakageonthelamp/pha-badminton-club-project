@@ -1,4 +1,4 @@
-export type SessionStatus = 'open' | 'in_progress' | 'closed' | 'cancelled';
+export type SessionStatus = 'draft' | 'open' | 'in_progress' | 'closed' | 'cancelled';
 export type MatchScoreType = 15 | 21;
 export type MatchType = 'one_round' | 'two_round';
 
@@ -60,6 +60,8 @@ export type SessionDetail = Session & {
 
 export const sessionStatusLabel = (status: SessionStatus): string => {
 	switch (status) {
+		case 'draft':
+			return 'Draft';
 		case 'open':
 			return 'Open';
 		case 'in_progress':
@@ -76,6 +78,8 @@ export const matchTypeLabel = (matchType: MatchType): string =>
 
 export const sessionStatusBadgeClass = (status: SessionStatus): string => {
 	switch (status) {
+		case 'draft':
+			return 'bg-amber-50 text-amber-800';
 		case 'open':
 			return 'bg-emerald-50 text-emerald-700';
 		case 'in_progress':

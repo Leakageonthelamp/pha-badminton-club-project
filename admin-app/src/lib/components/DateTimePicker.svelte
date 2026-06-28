@@ -17,6 +17,7 @@
 		required = false,
 		min,
 		minNow = false,
+		minOffsetMinutes = 0,
 		placeholder = 'dd/mm/yyyy, --:--'
 	}: {
 		id: string;
@@ -26,6 +27,7 @@
 		required?: boolean;
 		min?: string;
 		minNow?: boolean;
+		minOffsetMinutes?: number;
 		placeholder?: string;
 	} = $props();
 
@@ -35,7 +37,9 @@
 
 	const resolveMinDate = (): Date | undefined => {
 		const candidates: Date[] = [];
-		if (minNow) candidates.push(new Date());
+		if (minNow || minOffsetMinutes > 0) {
+			candidates.push(new Date(Date.now() + minOffsetMinutes * 60 * 1000));
+		}
 		if (min) {
 			const minDate = localInputToDate(min);
 			if (minDate) candidates.push(minDate);
@@ -76,7 +80,7 @@
 				value = dates[0] ? dateToLocalInput(dates[0]) : '';
 			},
 			onOpen: (_dates, _str, instance) => {
-				if (minNow) instance.set('minDate', resolveMinDate());
+				if (minNow || minOffsetMinutes > 0) instance.set('minDate', resolveMinDate());
 			},
 			onReady: (_dates, _str, instance) => {
 				syncAltInput(instance);
