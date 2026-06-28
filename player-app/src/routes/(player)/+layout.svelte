@@ -15,7 +15,22 @@
 	let { data, children }: { data: LayoutData; children: import('svelte').Snippet } = $props();
 
 	const showBack = $derived(shouldShowBack(page.url.pathname));
-	const backHref = $derived(getBackHref(page.url.pathname));
+	const backHref = $derived.by(() => {
+		const pathname = page.url.pathname;
+		if (/^\/sessions\/[^/]+\/live$/.test(pathname)) {
+			const session = (page.data as { session?: { status?: string } } | undefined)?.session;
+			return getBackHref(pathname, {
+				liveSessionStatus: session?.status as
+					| 'draft'
+					| 'open'
+					| 'in_progress'
+					| 'closed'
+					| 'cancelled'
+					| undefined
+			});
+		}
+		return getBackHref(page.url.pathname);
+	});
 
 	$effect(() => {
 		if (!browser) return;

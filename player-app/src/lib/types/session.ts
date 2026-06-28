@@ -112,6 +112,34 @@ export type SessionDetail = SessionPublic & {
 	confirmed_players: SessionPlayerPublic[];
 };
 
+export type SessionHistoryItem = {
+	id: string;
+	name: string;
+	club_id: string;
+	club_name: string;
+	status: SessionStatus;
+	start_at: string;
+	end_at: string;
+	membership_status: SessionPlayerStatus;
+};
+
+export type SessionHistoryClubOption = {
+	id: string;
+	name: string;
+};
+
+export type SessionHistoryPage = {
+	items: SessionHistoryItem[];
+	clubs: SessionHistoryClubOption[];
+	page: number;
+	totalCount: number;
+	hasNextPage: boolean;
+	hasPrevPage: boolean;
+	statusFilter: '' | SessionStatus;
+	clubFilter: string;
+	date: string;
+};
+
 export const matchTypeLabel = (matchType: MatchType): string =>
 	matchType === 'one_round' ? 'One round' : 'Two rounds';
 

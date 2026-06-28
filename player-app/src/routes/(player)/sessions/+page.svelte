@@ -110,24 +110,27 @@
 				<h2 class="app-section-title">{sectionTitle}</h2>
 				<p class="app-section-meta">{sectionMeta}</p>
 			</div>
-			<button
-				type="button"
-				class="app-section-action"
-				disabled={refreshing}
-				aria-label="Refresh sessions"
-				aria-busy={refreshing}
-				onclick={refreshSessions}
-			>
-				{#if refreshing}
-					<span
-						class="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-brand-600"
-						aria-hidden="true"
-					></span>
-				{:else}
-					<RefreshIcon class="h-4 w-4 text-brand-700" />
-				{/if}
-				Refresh
-			</button>
+			<div class="flex shrink-0 items-center gap-2">
+				<a href="/sessions/history" class="app-section-action">Session history</a>
+				<button
+					type="button"
+					class="app-section-action"
+					disabled={refreshing}
+					aria-label="Refresh sessions"
+					aria-busy={refreshing}
+					onclick={refreshSessions}
+				>
+					{#if refreshing}
+						<span
+							class="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-brand-600"
+							aria-hidden="true"
+						></span>
+					{:else}
+						<RefreshIcon class="h-4 w-4 text-brand-700" />
+					{/if}
+					Refresh
+				</button>
+			</div>
 		</header>
 
 		{#if sessions.length === 0}

@@ -48,3 +48,34 @@
 		transition: none;
 	}
 }
+
+/* Session history: tighter 2×2 filter grid on mobile, single row on sm+ */
+.history-filter-form {
+	@apply grid grid-cols-2 gap-x-2 gap-y-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_2.25rem] sm:items-end;
+}
+
+.history-filter-form .app-filter-label,
+.history-filter-form label {
+	@apply mb-1 block text-xs font-medium leading-4 text-slate-600;
+}
+
+.history-filter-form .app-filter-input,
+.history-filter-form .app-select-trigger {
+	@apply h-9 min-h-9 rounded-lg px-2.5 text-sm shadow-sm;
+}
+
+.history-filter-form .app-filter-submit {
+	@apply h-9 w-9 rounded-lg;
+}
+
+.history-filter-form .app-filter-submit-wrap {
+	@apply flex items-end justify-end;
+}
+
+.history-session-row:focus-visible {
+	@apply outline-none ring-2 ring-brand-600/30 ring-offset-2;
+}
+
+.history-list-body {
+	@apply mt-5 border-t border-slate-100 pt-5;
+}

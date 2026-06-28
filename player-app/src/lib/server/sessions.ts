@@ -5,6 +5,8 @@ import type {
 } from '$lib/types/payment';
 import type {
 	SessionDetail,
+	SessionHistoryItem,
+	SessionHistoryPage,
 	SessionListItem,
 	SessionPlayerMembership,
 	SessionPlayerPublic,
@@ -13,6 +15,13 @@ import type {
 } from '$lib/types/session';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { ensureSupabaseAuth } from '$lib/server/supabaseAuth';
+import {
+	filterSortPaginateHistory,
+	extractHistoryClubs,
+	parseHistoryClub,
+	type SessionHistoryStatusFilter
+} from '$lib/sessions/history';
+import { dateFilterBounds } from '$lib/transactions/list';
 import { computeCourtShare } from '@repo/ui/payments';
 import type { CancellationFeeStatus } from '@repo/ui/payments';
 
@@ -720,4 +729,93 @@ export const submitCancellationFee = async (
 	}
 
 	return { ok: true };
+};
+
+export const loadSessionHistoryForPlayer = async (
+	supabase: SupabaseClient,
+	userId: string,
+	options: {
+		page?: number;
+		statusFilter?: SessionHistoryStatusFilter;
+		clubFilter?: string;
+		date?: string;
+	}
+): Promise<SessionHistoryPage> => {
+	const page = Math.max(1, options.page ?? 1);
+	const statusFilter = options.statusFilter ?? '';
+	const date = options.date ?? '';
+
+	await ensureSupabaseAuth(supabase);
+
+	const { data, error } = await supabase
+		.from('session_players')
+		.select(
+			`
+			id,
+			status,
+			session:sessions (
+				id,
+				name,
+				status,
+				start_at,
+				end_at,
+				club:clubs ( id, name )
+			)
+		`
+		)
+		.eq('user_id', userId);
+
+	if (error) {
+		console.error('Failed to load session history', error);
+		return filterSortPaginateHistory([], { statusFilter, clubFilter: '', page, date });
+	}
+
+	const dateBounds = date ? dateFilterBounds(date) : null;
+
+	const items: SessionHistoryItem[] = (data ?? []).flatMap((row) => {
+		const session = normalizeRelation(
+			row.session as unknown as {
+				id: string;
+				name: string;
+				status: SessionHistoryItem['status'];
+				start_at: string;
+				end_at: string;
+				club: { id: string; name: string } | { id: string; name: string }[] | null;
+			} | null
+		);
+		if (!session) return [];
+
+		if (dateBounds) {
+			const startMs = new Date(session.start_at).getTime();
+			if (
+				startMs < new Date(dateBounds.fromIso).getTime() ||
+				startMs > new Date(dateBounds.toIso).getTime()
+			) {
+				return [];
+			}
+		}
+
+		const club = normalizeRelation(session.club);
+
+		return [
+			{
+				id: session.id,
+				name: session.name,
+				club_id: club?.id ?? '',
+				club_name: club?.name ?? 'Club session',
+				status: session.status,
+				start_at: session.start_at,
+				end_at: session.end_at,
+				membership_status: row.status as SessionPlayerStatus
+			}
+		];
+	});
+
+	const clubs = extractHistoryClubs(items);
+	const clubFilter = parseHistoryClub(
+		options.clubFilter ?? '',
+		new Set(clubs.map((club) => club.id))
+	);
+
+	return filterSortPaginateHistory(items, { statusFilter, clubFilter, page, date, clubs });
 };

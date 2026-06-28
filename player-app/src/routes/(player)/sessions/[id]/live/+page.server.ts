@@ -5,7 +5,7 @@ import {
 	setSessionBreak,
 	submitPayment
 } from '$lib/server/sessions';
-import { shouldOpenLiveSession } from '$lib/sessions/navigation';
+import { shouldViewSessionLivePage } from '$lib/sessions/navigation';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -23,11 +23,10 @@ export const load: PageServerLoad = async ({ params, depends, locals: { supabase
 	}
 
 	if (
-		!shouldOpenLiveSession({
+		!shouldViewSessionLivePage({
 			status: live.session.status,
 			my_membership: live.session.my_membership
-		}) &&
-		live.session.my_membership?.status !== 'left'
+		})
 	) {
 		redirect(303, '/sessions');
 	}

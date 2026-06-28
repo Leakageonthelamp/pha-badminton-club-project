@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { findLiveSession, liveSessionHref, shouldOpenLiveSession } from './navigation';
+import {
+	findLiveSession,
+	liveSessionHref,
+	shouldOpenHistorySessionSummary,
+	shouldOpenLiveSession,
+	shouldViewSessionLivePage
+} from './navigation';
 import type { SessionListItem } from '$lib/types/session';
 
 const session = (
@@ -42,6 +48,72 @@ describe('shouldOpenLiveSession', () => {
 				})
 			)
 		).toBe(false);
+	});
+});
+
+describe('shouldOpenHistorySessionSummary', () => {
+	it('returns true for closed sessions the player completed', () => {
+		expect(
+			shouldOpenHistorySessionSummary({
+				status: 'closed',
+				membership_status: 'confirmed'
+			})
+		).toBe(true);
+		expect(
+			shouldOpenHistorySessionSummary({
+				status: 'closed',
+				membership_status: 'left'
+			})
+		).toBe(true);
+	});
+
+	it('returns false for cancelled or incomplete sessions', () => {
+		expect(
+			shouldOpenHistorySessionSummary({
+				status: 'cancelled',
+				membership_status: 'confirmed'
+			})
+		).toBe(false);
+		expect(
+			shouldOpenHistorySessionSummary({
+				status: 'closed',
+				membership_status: 'cancelled'
+			})
+		).toBe(false);
+	});
+});
+
+describe('shouldViewSessionLivePage', () => {
+	const membership = {
+		id: 'm1',
+		status: 'confirmed' as const,
+		fee_owed: 0,
+		fee_status: 'none' as const,
+		joined_at: '2026-06-01T00:00:00.000Z',
+		activity: 'idle' as const,
+		idle_since: '2026-06-01T00:00:00.000Z'
+	};
+
+	it('allows closed sessions with confirmed membership', () => {
+		expect(
+			shouldViewSessionLivePage(
+				session({
+					status: 'closed',
+					my_membership: membership
+				})
+			)
+		).toBe(true);
+	});
+
+	it('allows left players on in-progress sessions', () => {
+		expect(
+			shouldViewSessionLivePage(
+				session({
+					status: 'in_progress',
+					my_membership: { ...membership, status: 'left' }
+				})
+			)
+		).toBe(true);
 	});
 });
 

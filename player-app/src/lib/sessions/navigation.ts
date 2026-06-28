@@ -15,5 +15,21 @@ export const shouldOpenLiveSession = (session: SessionWithMembership): boolean =
 	session.my_membership !== null &&
 	activeMembershipStatuses.has(session.my_membership.status);
 
+/** Closed sessions the player actually played — history opens live summary. */
+export const shouldOpenHistorySessionSummary = (item: {
+	status: SessionListItem['status'];
+	membership_status: SessionPlayerStatus;
+}): boolean =>
+	item.status === 'closed' &&
+	(item.membership_status === 'confirmed' || item.membership_status === 'left');
+
+export const shouldViewSessionLivePage = (session: SessionWithMembership): boolean => {
+	const membershipStatus = session.my_membership?.status;
+	if (!membershipStatus) return false;
+	if (shouldOpenLiveSession(session)) return true;
+	if (membershipStatus === 'left') return true;
+	return session.status === 'closed' && membershipStatus === 'confirmed';
+};
+
 export const findLiveSession = (sessions: SessionListItem[]): SessionListItem | null =>
 	sessions.find(shouldOpenLiveSession) ?? null;

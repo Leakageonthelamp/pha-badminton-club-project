@@ -203,6 +203,13 @@
 				accent="violet"
 			/>
 			<DashboardTile
+				href="/sessions/history"
+				title="Session history"
+				description="Past sessions you joined"
+				icon={LayersIcon}
+				accent="indigo"
+			/>
+			<DashboardTile
 				href="/profile"
 				title="Profile"
 				description="Account and payments"

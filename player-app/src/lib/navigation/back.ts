@@ -4,18 +4,28 @@ export const HOME_PATHS = new Set(['/', '/login']);
 const BACK_HREF: Record<string, string> = {
 	'/register': '/login',
 	'/profile': '/',
-	'/sessions': '/'
+	'/sessions': '/',
+	'/sessions/history': '/sessions'
+};
+
+const LIVE_SESSION_PATH = /^\/sessions\/[^/]+\/live$/;
+
+type BackContext = {
+	liveSessionStatus?: 'draft' | 'open' | 'in_progress' | 'closed' | 'cancelled';
 };
 
 export const shouldShowBack = (pathname: string): boolean => !HOME_PATHS.has(pathname);
 
-export const getBackHref = (pathname: string): string => {
+export const getBackHref = (pathname: string, context?: BackContext): string => {
 	if (BACK_HREF[pathname]) {
 		return BACK_HREF[pathname];
 	}
 
 	// ponytail: player live page has no /sessions/[id] parent route
-	if (/^\/sessions\/[^/]+\/live$/.test(pathname)) {
+	if (LIVE_SESSION_PATH.test(pathname)) {
+		if (context?.liveSessionStatus === 'closed') {
+			return '/sessions/history';
+		}
 		return '/';
 	}
 

@@ -27,6 +27,18 @@ describe('back navigation', () => {
 		expect(getBackHref('/sessions/f9b2b4d6-5fa9-4183-90d2-6beb26af4429/live')).toBe('/');
 	});
 
+	it('resolves closed live session back to session history', () => {
+		expect(
+			getBackHref('/sessions/f9b2b4d6-5fa9-4183-90d2-6beb26af4429/live', {
+				liveSessionStatus: 'closed'
+			})
+		).toBe('/sessions/history');
+	});
+
+	it('resolves session history back to sessions list', () => {
+		expect(getBackHref('/sessions/history')).toBe('/sessions');
+	});
+
 	it('detects forward and back transition direction', () => {
 		expect(getTransitionDirection('/login', '/register')).toBe('forward');
 		expect(getTransitionDirection('/register', '/login')).toBe('back');
