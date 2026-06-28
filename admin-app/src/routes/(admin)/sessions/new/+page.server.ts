@@ -7,11 +7,13 @@ import { sessionInputSchema } from '$lib/validation/session';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
-const loadClubShuttles = async (supabase: App.Locals['supabase'], clubId: string) => {
+const loadShuttlesForClubs = async (supabase: App.Locals['supabase'], clubIds: string[]) => {
+	if (!clubIds.length) return [];
+
 	const { data, error: loadError } = await supabase
 		.from('club_shuttles')
-		.select('id, name, speed, price, number_per_box')
-		.eq('club_id', clubId)
+		.select('id, club_id, name, speed, price, number_per_box')
+		.in('club_id', clubIds)
 		.order('name', { ascending: true });
 
 	if (loadError) {
@@ -23,7 +25,6 @@ const loadClubShuttles = async (supabase: App.Locals['supabase'], clubId: string
 };
 
 export const load: PageServerLoad = async ({
-	url,
 	cookies,
 	locals: { supabase, user, appRole }
 }) => {
@@ -42,17 +43,13 @@ export const load: PageServerLoad = async ({
 		error(403, 'No clubs assigned to you');
 	}
 
-	const requestedClubId = url.searchParams.get('club_id');
-	const activeClub =
-		(requestedClubId
-			? managedClubs.find((club) => club.id === requestedClubId)
-			: null) ?? managedClubs[0];
-
-	const shuttles = await loadClubShuttles(supabase, activeClub.id);
+	const shuttles = await loadShuttlesForClubs(
+		supabase,
+		managedClubs.map((club) => club.id)
+	);
 
 	return {
 		managedClubs,
-		activeClub,
 		shuttles
 	};
 };

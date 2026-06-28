@@ -13,6 +13,7 @@
 		loadStoredUserLocation,
 		USER_LOCATION_STORED_EVENT
 	} from '@repo/ui/geolocation';
+	import { isRichTextEmpty, richTextExcerpt } from '@repo/ui/richText';
 	import type { ClubPublic } from '$lib/types/club';
 	import type { LayoutData } from '../$types';
 	import type { PageData } from './$types';
@@ -125,7 +126,9 @@
 				{#each clubs as club (club.id)}
 					<DashboardTile
 						title={club.name}
-						description={club.description || 'Tap to view details'}
+						description={isRichTextEmpty(club.description)
+							? 'Tap to view details'
+							: richTextExcerpt(club.description)}
 						icon={BuildingIcon}
 						badge={club.distanceKm !== null ? formatDistanceKm(club.distanceKm) : undefined}
 						onclick={() => openClub(club)}

@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { goto } from '$app/navigation';
 	import FormToast from '@repo/ui/components/FormToast.svelte';
 	import AppCard from '@repo/ui/components/AppCard.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
@@ -8,6 +7,7 @@
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import MapPinPicker from '$lib/components/MapPinPicker.svelte';
 	import RichTextEditor from '$lib/components/RichTextEditor.svelte';
+	import { clubWorkspaceState } from '$lib/clubWorkspace.svelte';
 	import { SESSION_NAME_MAX_LENGTH } from '$lib/config/session';
 	import { whileSubmitting } from '$lib/forms/submitting';
 	import { formatThb, shuttlePricePerEach } from '$lib/types/club';
@@ -31,20 +31,29 @@
 	let shuttlePricePerEachValue = $state('');
 	let matchScoreType = $state('21');
 	let matchType = $state('one_round');
-	let selectedClubId = $state('');
+	let syncedClubId = $state('');
+
+	const activeClub = $derived(
+		data.managedClubs.find((club) => club.id === clubWorkspaceState.selectedClubId) ??
+			data.managedClubs[0] ??
+			null
+	);
+	const shuttles = $derived(
+		activeClub ? data.shuttles.filter((shuttle) => shuttle.club_id === activeClub.id) : []
+	);
 
 	const inputClass =
 		'w-full rounded-xl border border-slate-300 px-4 py-3 text-base focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20';
 	const labelClass = 'mb-2 block text-sm font-medium text-slate-700';
 
 	const shuttleOptions = $derived(
-		data.shuttles.map((shuttle) => ({
+		shuttles.map((shuttle) => ({
 			value: shuttle.id,
 			label: `${shuttle.name} ${shuttle.speed} (${formatThb(shuttlePricePerEach(shuttle))} each)`
 		}))
 	);
 
-	const selectedShuttle = $derived(data.shuttles.find((shuttle) => shuttle.id === shuttleId) ?? null);
+	const selectedShuttle = $derived(shuttles.find((shuttle) => shuttle.id === shuttleId) ?? null);
 
 	$effect.pre(() => {
 		if (selectedShuttle && !shuttlePricePerEachValue) {
@@ -58,20 +67,16 @@
 		}
 	};
 
-	async function handleClubChange(clubId: string) {
-		selectedClubId = clubId;
-		await goto(`/sessions/new?club_id=${encodeURIComponent(clubId)}`, { replaceState: true });
-	}
-
 	$effect.pre(() => {
-		selectedClubId = data.activeClub.id;
-		venueName = data.activeClub.venue_name ?? '';
-		latitude = data.activeClub.latitude;
-		longitude = data.activeClub.longitude;
-		shuttleId = data.shuttles[0]?.id ?? '';
-		shuttlePricePerEachValue = data.shuttles[0]
-			? String(shuttlePricePerEach(data.shuttles[0]))
-			: '';
+		const club = activeClub;
+		if (!club || club.id === syncedClubId) return;
+
+		syncedClubId = club.id;
+		venueName = club.venue_name ?? '';
+		latitude = club.latitude;
+		longitude = club.longitude;
+		shuttleId = shuttles[0]?.id ?? '';
+		shuttlePricePerEachValue = shuttles[0] ? String(shuttlePricePerEach(shuttles[0])) : '';
 	});
 </script>
 
@@ -80,22 +85,30 @@
 <section class="space-y-6">
 	<DashboardHero
 		title="Create session"
-		subtitle="Schedule a new badminton session for {data.activeClub.name}."
+		subtitle={activeClub
+			? `Schedule a new badminton session for ${activeClub.name}.`
+			: 'Schedule a new badminton session.'}
 	/>
 
 	<AppCard class="space-y-4">
 		<form method="POST" class="space-y-6" use:enhance={whileSubmitting((v) => (loading = v))}>
-			<input type="hidden" name="club_id" value={selectedClubId} />
+			{#if activeClub}
+				<input type="hidden" name="club_id" value={activeClub.id} />
+			{/if}
 
-			{#if data.managedClubs.length > 1}
+			{#if data.managedClubs.length > 1 && activeClub}
 				<div>
-					<SelectMenu
-						id="club_id_select"
-						label="Club"
-						options={data.managedClubs.map((club) => ({ value: club.id, label: club.name }))}
-						value={selectedClubId}
-						onchange={(value) => handleClubChange(value)}
+					<label for="club_name" class={labelClass}>Club</label>
+					<input
+						id="club_name"
+						type="text"
+						value={activeClub.name}
+						disabled
+						class="{inputClass} disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-700"
 					/>
+					<p class="mt-2 text-xs text-slate-500">
+						Use the club switcher in the navbar to create a session for a different club.
+					</p>
 				</div>
 			{/if}
 
@@ -278,7 +291,7 @@
 			<SubmitButton
 				loading={loading}
 				loadingLabel="Creating…"
-				disabled={data.shuttles.length === 0}
+				disabled={!activeClub || shuttles.length === 0}
 			>
 				Create session
 			</SubmitButton>

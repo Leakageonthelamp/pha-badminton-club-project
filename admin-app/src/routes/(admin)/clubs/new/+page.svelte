@@ -4,6 +4,7 @@
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import AppCard from '@repo/ui/components/AppCard.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
+	import RichTextEditor from '$lib/components/RichTextEditor.svelte';
 	import { CLUB_DESCRIPTION_MAX_LENGTH, CLUB_NAME_MAX_LENGTH } from '$lib/config/club';
 	import { whileSubmitting } from '$lib/forms/submitting';
 	import type { ActionData, PageData } from './$types';
@@ -11,6 +12,7 @@
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 	let loading = $state(false);
 	let isActive = $state(true);
+	let description = $state('');
 
 	const fieldErrors = $derived(
 		form && 'fieldErrors' in form
@@ -37,6 +39,12 @@
 					| undefined)
 			: null
 	);
+
+	$effect.pre(() => {
+		if (values?.description !== undefined) {
+			description = values.description;
+		}
+	});
 </script>
 
 <FormToast message={form?.message} variant="error" token={form?.message ?? ''} />
@@ -69,23 +77,18 @@
 			{/if}
 		</div>
 
-		<div>
-			<label for="description" class="mb-2 block text-sm font-medium text-slate-700">Description</label>
-			<textarea
-				id="description"
-				name="description"
-				rows="4"
-				maxlength={CLUB_DESCRIPTION_MAX_LENGTH}
-				class="w-full resize-y rounded-xl border border-slate-300 px-4 py-3 text-base focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
-				>{values?.description ?? ''}</textarea
-			>
-			<p class="mt-2 text-xs text-slate-500">
-				Optional. Up to {CLUB_DESCRIPTION_MAX_LENGTH} characters.
-			</p>
-			{#if fieldErrors?.description?.[0]}
-				<p class="mt-2 text-sm text-red-600">{fieldErrors.description[0]}</p>
-			{/if}
-		</div>
+		<RichTextEditor
+			name="description"
+			bind:value={description}
+			disabled={loading}
+			label="Description"
+		/>
+		<p class="text-xs text-slate-500">
+			Optional. Up to {CLUB_DESCRIPTION_MAX_LENGTH} characters of visible text.
+		</p>
+		{#if fieldErrors?.description?.[0]}
+			<p class="text-sm text-red-600">{fieldErrors.description[0]}</p>
+		{/if}
 
 		<div>
 			<label for="max_active_sessions" class="mb-2 block text-sm font-medium text-slate-700">

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
+	import RichTextDisplay from '@repo/ui/components/RichTextDisplay.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
 	import {
 		formatDistanceKm,
@@ -274,10 +275,13 @@
 			</div>
 
 			<div class="min-h-0 flex-1 overflow-y-auto px-4 pb-6">
-				{#if description}
-					<p class="mt-3 text-sm leading-relaxed text-slate-600">{description}</p>
-				{:else if !loading}
-					<p class="mt-3 text-sm text-slate-500">No description provided.</p>
+				{#if loading && !description}
+					<div class="mt-3 app-skeleton h-16 w-full" aria-hidden="true"></div>
+				{:else}
+					<RichTextDisplay
+						html={description}
+						class="prose prose-sm mt-3 max-w-none text-sm leading-relaxed text-slate-600"
+					/>
 				{/if}
 
 				<div class="mt-6 rounded-2xl border border-slate-200 bg-white p-4">

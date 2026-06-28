@@ -1,4 +1,5 @@
 import { CLUB_DESCRIPTION_MAX_LENGTH, CLUB_NAME_MAX_LENGTH } from '$lib/config/club';
+import { richTextPlainTextLength } from '@repo/ui/richText';
 import { z } from 'zod';
 
 const booleanField = z.preprocess(
@@ -142,9 +143,9 @@ export const clubAdminClubInputSchema = z.object({
 	description: z
 		.string()
 		.trim()
-		.max(
-			CLUB_DESCRIPTION_MAX_LENGTH,
+		.default('')
+		.refine(
+			(val) => richTextPlainTextLength(val) <= CLUB_DESCRIPTION_MAX_LENGTH,
 			`Description must be ${CLUB_DESCRIPTION_MAX_LENGTH} characters or fewer`
 		)
-		.default('')
 });

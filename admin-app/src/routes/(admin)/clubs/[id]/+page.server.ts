@@ -8,6 +8,7 @@ import {
 	CLUB_MAX_ADMINS_LIMIT
 } from '$lib/server/clubLimits';
 import { buildProfileSearchOrFilter } from '$lib/server/profileSearch';
+import { sanitizeRichText } from '$lib/server/sanitizeHtml';
 import { CLUB_DELETE_CONFIRM_PHRASE } from '$lib/config/club';
 import type { ClubShuttle } from '$lib/types/club';
 import { clubInputSchema } from '$lib/validation/club';
@@ -247,7 +248,7 @@ export const actions: Actions = {
 				.from('clubs')
 				.update({
 					name: parsed.data.name,
-					description: parsed.data.description
+					description: sanitizeRichText(parsed.data.description)
 				})
 				.eq('id', params.id);
 
@@ -295,7 +296,7 @@ export const actions: Actions = {
 			.from('clubs')
 			.update({
 				name: parsed.data.name,
-				description: parsed.data.description,
+				description: sanitizeRichText(parsed.data.description),
 				max_active_sessions: parsed.data.max_active_sessions,
 				max_admins: parsed.data.max_admins,
 				is_active: parsed.data.is_active

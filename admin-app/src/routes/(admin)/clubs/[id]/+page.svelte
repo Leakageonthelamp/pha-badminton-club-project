@@ -8,6 +8,7 @@
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import NotSetBadge from '@repo/ui/components/NotSetBadge.svelte';
 	import MapPinPicker from '$lib/components/MapPinPicker.svelte';
+	import RichTextEditor from '$lib/components/RichTextEditor.svelte';
 	import SelectMenu from '@repo/ui/components/SelectMenu.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
@@ -18,6 +19,7 @@
 		CLUB_NAME_MAX_LENGTH
 	} from '$lib/config/club';
 	import { whileSubmitting } from '$lib/forms/submitting';
+	import { isRichTextEmpty } from '@repo/ui/richText';
 	import { formatThb, shuttlePricePerEach, type ClubShuttle, type PromptPayType } from '$lib/types/club';
 	import {
 		SHUTTLE_NAME_MAX_LENGTH,
@@ -74,7 +76,7 @@
 			: 'Configure shuttles, PromptPay, venue, and location.'
 	);
 
-	const clubDescriptionNotSet = $derived(!data.club.description.trim());
+	const clubDescriptionNotSet = $derived(isRichTextEmpty(data.club.description));
 	const shuttlesNotSet = $derived(data.shuttles.length === 0);
 	const promptPayNotSet = $derived(
 		!data.club.promptpay_type || !data.club.promptpay_target?.trim()
@@ -327,19 +329,21 @@
 		</div>
 
 		<div>
-			<label for="description" class={labelClass}>Description</label>
 			<div class="relative">
 				{#if updateLoading}
 					<div class="app-skeleton absolute inset-0 z-10 min-h-[122px]" aria-hidden="true"></div>
 				{/if}
-				<textarea
-					id="description"
-					name="description"
-					rows="4"
-					maxlength={CLUB_DESCRIPTION_MAX_LENGTH}
-					bind:value={description}
-					disabled={updateLoading}
-					class="{settingsFieldClass} resize-y"></textarea>
+				<div class={updateLoading ? 'opacity-0' : ''}>
+					<RichTextEditor
+						name="description"
+						bind:value={description}
+						disabled={updateLoading}
+						label="Description"
+					/>
+					<p class="mt-2 text-xs text-slate-500">
+						Up to {CLUB_DESCRIPTION_MAX_LENGTH} characters of visible text.
+					</p>
+				</div>
 			</div>
 		</div>
 

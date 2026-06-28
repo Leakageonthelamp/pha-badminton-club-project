@@ -2440,6 +2440,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tiptap/extension-color@npm:^3.27.1":
+  version: 3.27.1
+  resolution: "@tiptap/extension-color@npm:3.27.1"
+  peerDependencies:
+    "@tiptap/extension-text-style": 3.27.1
+  checksum: 10c0/b5423800152b3bf118c1d0b57aa265071d191324e7345213e4a1e4ea84f6a7c6c9b414f4b0824e09d7e2922bf2e0ff3dce7eb2a0f93491c0b05473a2f4d2451d
+  languageName: node
+  linkType: hard
+
 "@tiptap/extension-document@npm:^3.27.1":
   version: 3.27.1
   resolution: "@tiptap/extension-document@npm:3.27.1"
@@ -2482,6 +2491,15 @@ __metadata:
   peerDependencies:
     "@tiptap/core": 3.27.1
   checksum: 10c0/d0cfc6bb29dd9bc0839672da5901a75f7b3b4799a324221162e9e3fb41cff1b85f3be34b0f1fbe008cb585119bb397f442a933eda2dd7ff2a20bd6f4be7d08ef
+  languageName: node
+  linkType: hard
+
+"@tiptap/extension-highlight@npm:^3.27.1":
+  version: 3.27.1
+  resolution: "@tiptap/extension-highlight@npm:3.27.1"
+  peerDependencies:
+    "@tiptap/core": 3.27.1
+  checksum: 10c0/280b4b25e59f784a25228ccab3a25d614e15e622fe17ffd1db0d57be846487c393e364d4da5caf7181d5cb3c1b260f29ab16ae55c4c42bcef18f9acc84277a3e
   languageName: node
   linkType: hard
 
@@ -2568,6 +2586,15 @@ __metadata:
   peerDependencies:
     "@tiptap/core": 3.27.1
   checksum: 10c0/7bdec226b37e143de81b7181a0ec62ed3281a53562817aa31bea4833f11f61c8360f72c4b698bd9a5f1bc9af84820b781a5ad6c2146b6cc313ea1b2bd78ac848
+  languageName: node
+  linkType: hard
+
+"@tiptap/extension-text-style@npm:^3.27.1":
+  version: 3.27.1
+  resolution: "@tiptap/extension-text-style@npm:3.27.1"
+  peerDependencies:
+    "@tiptap/core": 3.27.1
+  checksum: 10c0/c98776aa8b9ccfaaf515e26c8eb914517df80393a4ed34da0c9d6bd21941c290bdc88b7a13958dd8fa5462856df80cf1931b0775ff5b94b2e4946d22aec3558e
   languageName: node
   linkType: hard
 
@@ -3037,6 +3064,10 @@ __metadata:
     "@sveltejs/vite-plugin-svelte": "npm:^5.0.3"
     "@tailwindcss/vite": "npm:^4.1.8"
     "@tiptap/core": "npm:^3.27.1"
+    "@tiptap/extension-color": "npm:^3.27.1"
+    "@tiptap/extension-highlight": "npm:^3.27.1"
+    "@tiptap/extension-link": "npm:^3.27.1"
+    "@tiptap/extension-text-style": "npm:^3.27.1"
     "@tiptap/pm": "npm:^3.27.1"
     "@tiptap/starter-kit": "npm:^3.27.1"
     "@types/leaflet": "npm:^1.9.21"

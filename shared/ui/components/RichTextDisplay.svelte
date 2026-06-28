@@ -29,4 +29,9 @@
 		color: rgb(124 58 237);
 		text-decoration: underline;
 	}
+
+	:global(.prose mark) {
+		border-radius: 0.125rem;
+		padding: 0 0.125rem;
+	}
 </style>

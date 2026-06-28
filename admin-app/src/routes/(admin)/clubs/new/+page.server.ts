@@ -1,5 +1,6 @@
 import { assertSuperAdmin } from '$lib/server/clubAccess';
 import { CLUB_MAX_ACTIVE_SESSIONS_LIMIT, CLUB_MAX_ADMINS_LIMIT } from '$lib/server/clubLimits';
+import { sanitizeRichText } from '$lib/server/sanitizeHtml';
 import { clubInputSchema } from '$lib/validation/club';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
@@ -49,7 +50,7 @@ export const actions: Actions = {
 			.from('clubs')
 			.insert({
 				name: parsed.data.name,
-				description: parsed.data.description,
+				description: sanitizeRichText(parsed.data.description),
 				max_active_sessions: parsed.data.max_active_sessions,
 				max_admins: parsed.data.max_admins,
 				is_active: parsed.data.is_active,
