@@ -4,6 +4,7 @@
 	import { invalidate } from '$app/navigation';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import RichTextDisplay from '@repo/ui/components/RichTextDisplay.svelte';
+	import AppModal from '@repo/ui/components/AppModal.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
@@ -16,6 +17,7 @@
 		mapsSearchUrl
 	} from '@repo/ui/geolocation';
 	import { formatDateTime } from '@repo/ui/datetime';
+	import { computeCourtShare } from '@repo/ui/payments';
 	import type { SessionDetail, SessionListItem } from '$lib/types/session';
 	import { SESSION_JOIN_CLOSE_LEAD_MINUTES } from '$lib/config/session';
 	import {
@@ -49,6 +51,7 @@
 	let dragStartY = 0;
 	let dragStartOffset = 0;
 	let actionLoading = $state(false);
+	let joinModalOpen = $state(false);
 
 	const DISMISS_DRAG_PX = 120;
 
@@ -122,7 +125,13 @@
 	};
 
 	const onKeydown = (event: KeyboardEvent) => {
-		if (event.key === 'Escape') close();
+		if (event.key !== 'Escape') return;
+		if (joinModalOpen) return;
+		close();
+	};
+
+	const closeJoinModal = () => {
+		joinModalOpen = false;
 	};
 
 	const activeSession = $derived(session ?? preview);
@@ -177,8 +186,22 @@
 			Date.now() <
 				new Date(session.end_at).getTime() - SESSION_JOIN_CLOSE_LEAD_MINUTES * 60 * 1000
 	);
+	const isInProgressJoin = $derived(session?.status === 'in_progress');
+	const estimatedCourtShare = $derived.by(() => {
+		if (!session || !isInProgressJoin) return null;
+
+		const activePlayers = Math.max(session.confirmed_count + 1, 1);
+		return computeCourtShare({
+			courtFeePerHour: session.court_fee_per_hour,
+			startAt: session.start_at,
+			endAt: session.end_at,
+			courtCount: session.court_count,
+			activePlayers
+		});
+	});
 	const canCancel = $derived(
-		membership?.status === 'waiting' || membership?.status === 'queued'
+		session?.status !== 'in_progress' &&
+			(membership?.status === 'waiting' || membership?.status === 'queued')
 	);
 	const canLeave = $derived(membership?.status === 'confirmed');
 
@@ -187,41 +210,48 @@
 		return `${session.waiting_count}/${session.max_players} spots · ${session.queued_count}/${session.max_buffer} queue`;
 	});
 
-	const enhanceAction: SubmitFunction = () => {
-		actionLoading = true;
-		return async ({ result }) => {
-			actionLoading = false;
+	const enhanceAction =
+		(closeOnSuccess = false): SubmitFunction =>
+		() => {
+			actionLoading = true;
+			return async ({ result }) => {
+				actionLoading = false;
 
-			if (result.type === 'success') {
-				const data = result.data as { message?: string } | undefined;
-				if (data?.message) toast.success(data.message);
-				await invalidate('app:sessions');
-				if (sessionId) {
-					const response = await fetch(`/api/sessions/${sessionId}`);
-					if (response.ok) {
-						session = (await response.json()) as SessionDetail;
+				if (result.type === 'success') {
+					const data = result.data as { message?: string } | undefined;
+					if (data?.message) toast.success(data.message);
+					await invalidate('app:sessions');
+					if (closeOnSuccess) {
+						close();
+						return;
 					}
+					if (sessionId) {
+						const response = await fetch(`/api/sessions/${sessionId}`);
+						if (response.ok) {
+							session = (await response.json()) as SessionDetail;
+						}
+					}
+					return;
 				}
-				return;
-			}
 
-			if (result.type === 'failure') {
-				const data = result.data as { message?: string } | undefined;
-				toast.error(data?.message ?? 'Something went wrong.');
-				return;
-			}
+				if (result.type === 'failure') {
+					const data = result.data as { message?: string } | undefined;
+					toast.error(data?.message ?? 'Something went wrong.');
+					return;
+				}
 
-			if (result.type === 'error') {
-				toast.error('Something went wrong.');
-			}
+				if (result.type === 'error') {
+					toast.error('Something went wrong.');
+				}
+			};
 		};
-	};
 
 	$effect(() => {
 		if (!browser) return;
 
 		if (!open || !sessionId) {
 			visible = false;
+			joinModalOpen = false;
 			resetDrag();
 			const timer = window.setTimeout(() => {
 				show = false;
@@ -350,6 +380,19 @@
 							<p class="text-sm font-medium text-brand-800">
 								{sessionPlayerStatusLabel(membership.status)}
 							</p>
+							{#if membership.status === 'waiting'}
+								{#if session.status === 'in_progress'}
+									<p class="mt-2 text-sm text-brand-700">
+										This session is in progress. You cannot cancel your join. The admin may confirm
+										you to play at any time.
+									</p>
+								{:else}
+									<p class="mt-2 text-sm text-brand-700">
+										The admin will confirm your join request 15 minutes before the session starts.
+										Please be at the venue and ready by then.
+									</p>
+								{/if}
+							{/if}
 						</div>
 					{/if}
 
@@ -576,14 +619,13 @@
 
 					<div class="mt-6 space-y-3">
 						{#if canJoin}
-							<form method="POST" action="/sessions?/join" use:enhance={enhanceAction}>
-								<input type="hidden" name="session_id" value={session.id} />
-								<SubmitButton loading={actionLoading}>Join session</SubmitButton>
-							</form>
+							<SubmitButton type="button" onclick={() => (joinModalOpen = true)}>
+								Join session
+							</SubmitButton>
 						{/if}
 
 						{#if canCancel}
-							<form method="POST" action="/sessions?/cancel" use:enhance={enhanceAction}>
+							<form method="POST" action="/sessions?/cancel" use:enhance={enhanceAction(true)}>
 								<input type="hidden" name="session_id" value={session.id} />
 								<SubmitButton variant="secondary" loading={actionLoading}>
 									Cancel join
@@ -597,7 +639,7 @@
 						{/if}
 
 						{#if canLeave}
-							<form method="POST" action="/sessions?/leave" use:enhance={enhanceAction}>
+							<form method="POST" action="/sessions?/leave" use:enhance={enhanceAction()}>
 								<input type="hidden" name="session_id" value={session.id} />
 								<SubmitButton variant="secondary" loading={actionLoading}>
 									Leave session
@@ -609,4 +651,65 @@
 			</div>
 		</div>
 	</div>
+
+	{#if joinModalOpen && session}
+		<AppModal open={joinModalOpen} labelledBy="join-session-title" onClose={closeJoinModal}>
+			<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
+				<div class="border-b border-brand-100 bg-brand-50 px-4 py-4">
+					<h2 id="join-session-title" class="text-lg font-semibold text-brand-900">
+						{isInProgressJoin ? 'Join session in progress?' : 'Before you join'}
+					</h2>
+					<div class="mt-3 space-y-3 text-sm text-brand-800">
+						{#if isInProgressJoin}
+							<p>This session has already started.</p>
+							<p>
+								Once you join, you cannot cancel your membership. To leave, you must pay at least
+								your court fee share{#if estimatedCourtShare}
+									(currently about {formatThb(estimatedCourtShare)} based on active players){/if}.
+							</p>
+							<p>
+								Unpaid session fees will prevent you from joining other sessions until they are
+								settled.
+							</p>
+						{:else}
+							<p>
+								Please arrive at the venue at least 15 minutes before the session starts ({formatDateTime(session.start_at)})
+								so the admin can confirm your attendance.
+							</p>
+							<p>
+								You can cancel your join from session details at any time while you are on the waiting
+								list or in the buffer queue.
+							</p>
+							{#if session.cancellation_fee > 0}
+								<p>
+									Cancelling within 1 hour of the session start may incur a late cancellation fee of
+									{formatThb(session.cancellation_fee)}.
+								</p>
+							{/if}
+						{/if}
+					</div>
+				</div>
+				<form
+					method="POST"
+					action="/sessions?/join"
+					class="flex flex-wrap gap-2 p-4"
+					use:enhance={enhanceAction(true)}
+				>
+					<input type="hidden" name="session_id" value={session.id} />
+					<SubmitButton loading={actionLoading} loadingLabel="Joining…" class="!w-auto">
+						Join session
+					</SubmitButton>
+					<SubmitButton
+						type="button"
+						variant="secondary"
+						class="!w-auto"
+						disabled={actionLoading}
+						onclick={closeJoinModal}
+					>
+						Cancel
+					</SubmitButton>
+				</form>
+			</div>
+		</AppModal>
+	{/if}
 {/if}

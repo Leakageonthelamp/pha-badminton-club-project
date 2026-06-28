@@ -12,8 +12,6 @@
 		mapsSearchUrl
 	} from '@repo/ui/geolocation';
 	import {
-		formatThb,
-		shuttlePricePerEach,
 		type ClubAdminPublic,
 		type ClubDetail,
 		type ClubPublic,
@@ -431,7 +429,7 @@
 
 				<div class="mt-4 rounded-2xl border border-slate-200 bg-white p-4" aria-busy={loading}>
 					<h3 class="text-base font-semibold text-slate-900">Shuttlecocks</h3>
-					<p class="mt-1 text-sm text-slate-600">Brands and pricing this club uses.</p>
+					<p class="mt-1 text-sm text-slate-600">Brands and speeds this club uses.</p>
 
 					{#if loading}
 						<ul
@@ -441,14 +439,13 @@
 							{#each [0, 1] as row (row)}
 								<li class="bg-white px-4 py-3">
 									<div class="app-skeleton h-4 w-36"></div>
-									<div class="app-skeleton mt-2 h-3 w-52"></div>
 								</li>
 							{/each}
 						</ul>
 					{:else if loadError}
 						<p class="mt-4 text-sm text-red-600">{loadError}</p>
 					{:else if shuttles.length === 0}
-						<p class="mt-4 text-sm text-slate-500">No shuttle pricing listed yet.</p>
+						<p class="mt-4 text-sm text-slate-500">No shuttlecocks listed yet.</p>
 					{:else}
 						<ul
 							class="mt-4 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200"
@@ -458,10 +455,6 @@
 									<p class="font-medium text-slate-900">
 										{shuttle.name}
 										<span class="text-slate-500">· {shuttle.speed}</span>
-									</p>
-									<p class="mt-1 text-sm text-slate-600">
-										{formatThb(shuttle.price)} per tube · {shuttle.number_per_box} per tube ·
-										{formatThb(shuttlePricePerEach(shuttle))} each
 									</p>
 								</li>
 							{/each}

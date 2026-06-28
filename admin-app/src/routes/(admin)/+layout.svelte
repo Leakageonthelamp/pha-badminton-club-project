@@ -7,6 +7,7 @@
 	import AppLogo from '$lib/components/AppLogo.svelte';
 	import ProfileMenu from '$lib/components/ProfileMenu.svelte';
 	import BackLink from '@repo/ui/components/BackLink.svelte';
+	import HomeLink from '@repo/ui/components/HomeLink.svelte';
 	import PageTransition from '$lib/components/PageTransition.svelte';
 	import { syncSelectedClub, selectClub } from '$lib/clubWorkspace.svelte';
 	import { appConfig } from '$lib/config/app';
@@ -79,14 +80,17 @@
 </script>
 
 <header class="relative z-30 mb-8 flex items-center justify-between gap-3 overflow-visible">
-	{#if showBack}
-		<BackLink href={backHref} />
-	{:else}
-		<a href={homeHref} class="flex min-w-0 items-center gap-3">
-			<AppLogo size={36} title={appConfig.name} />
-			<span class="truncate text-lg font-semibold text-brand-800">{appConfig.name}</span>
-		</a>
-	{/if}
+	<div class="flex min-w-0 items-center gap-1">
+		{#if showBack}
+			<BackLink href={backHref} />
+			<HomeLink href={homeHref} />
+		{:else}
+			<a href={homeHref} class="flex min-w-0 items-center gap-3">
+				<AppLogo size={36} title={appConfig.name} />
+				<span class="truncate text-lg font-semibold text-brand-800">{appConfig.name}</span>
+			</a>
+		{/if}
+	</div>
 
 	<div class="flex shrink-0 items-center gap-2">
 		{#if clubWorkspaceOptions.length > 0}
