@@ -4,6 +4,14 @@ import type { AppRole } from '$lib/types/auth';
 /** Paths that never show a back arrow. */
 const AUTH_PATHS = new Set(['/login']);
 
+const SESSION_DETAIL_PATH = /^\/sessions\/(?!new$|history$)[^/]+$/;
+
+export type BackContext = {
+	isHistorySessionDetail?: boolean;
+};
+
+const isSessionDetailPath = (pathname: string): boolean => SESSION_DETAIL_PATH.test(pathname);
+
 export const getHomePath = (
 	appRole?: AppRole | null,
 	dashboardMode?: AdminDashboardMode,
@@ -37,9 +45,14 @@ export const getBackHref = (
 	pathname: string,
 	appRole?: AppRole | null,
 	dashboardMode?: AdminDashboardMode,
-	hasClubMembership?: boolean
+	hasClubMembership?: boolean,
+	context: BackContext = {}
 ): string => {
 	const home = getHomePath(appRole, dashboardMode, hasClubMembership);
+
+	if (context.isHistorySessionDetail && isSessionDetailPath(pathname)) {
+		return '/sessions/history';
+	}
 
 	if (pathname === '/clubs/new' || pathname === '/profile' || pathname === '/users') {
 		return home;
@@ -70,7 +83,8 @@ export const getTransitionDirection = (
 	toPath: string,
 	appRole?: AppRole | null,
 	dashboardMode?: AdminDashboardMode,
-	hasClubMembership?: boolean
+	hasClubMembership?: boolean,
+	context: BackContext = {}
 ): 'forward' | 'back' => {
 	if (!fromPath) {
 		return 'forward';
@@ -80,7 +94,11 @@ export const getTransitionDirection = (
 		return toPath === '/dashboard' ? 'forward' : 'back';
 	}
 
-	if (getBackHref(fromPath, appRole, dashboardMode, hasClubMembership) === toPath) {
+	if (getBackHref(fromPath, appRole, dashboardMode, hasClubMembership, context) === toPath) {
+		return 'back';
+	}
+
+	if (toPath === '/sessions/history' && isSessionDetailPath(fromPath)) {
 		return 'back';
 	}
 

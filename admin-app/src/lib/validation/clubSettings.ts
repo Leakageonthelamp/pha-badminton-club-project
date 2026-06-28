@@ -42,6 +42,36 @@ export const shuttleDeleteSchema = z.object({
 	shuttleId: z.string().uuid('Invalid shuttle')
 });
 
+const refinePromptPayTarget = (
+	data: { promptpay_type: 'phone' | 'national_id'; promptpay_target: string },
+	ctx: z.RefinementCtx
+) => {
+	if (data.promptpay_type === 'phone' && !thaiPhoneRegex.test(data.promptpay_target)) {
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			message: 'Enter a valid 10-digit Thai mobile number (e.g. 0812345678)',
+			path: ['promptpay_target']
+		});
+	}
+
+	if (data.promptpay_type === 'national_id' && !nationalIdRegex.test(data.promptpay_target)) {
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			message: 'Enter a valid 13-digit national ID',
+			path: ['promptpay_target']
+		});
+	}
+};
+
+export const requiredPromptPayFieldsSchema = z
+	.object({
+		promptpay_type: z.enum(['phone', 'national_id'], {
+			errorMap: () => ({ message: 'Select PromptPay type' })
+		}),
+		promptpay_target: z.string().trim().min(1, 'PromptPay target is required')
+	})
+	.superRefine(refinePromptPayTarget);
+
 export const promptPayInputSchema = z
 	.object({
 		clear: booleanField.optional().default(false),
@@ -71,21 +101,10 @@ export const promptPayInputSchema = z
 			return;
 		}
 
-		if (data.promptpay_type === 'phone' && !thaiPhoneRegex.test(data.promptpay_target)) {
-			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
-				message: 'Enter a valid 10-digit Thai mobile number (e.g. 0812345678)',
-				path: ['promptpay_target']
-			});
-		}
-
-		if (data.promptpay_type === 'national_id' && !nationalIdRegex.test(data.promptpay_target)) {
-			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
-				message: 'Enter a valid 13-digit national ID',
-				path: ['promptpay_target']
-			});
-		}
+		refinePromptPayTarget(
+			{ promptpay_type: data.promptpay_type, promptpay_target: data.promptpay_target },
+			ctx
+		);
 	});
 
 export const locationInputSchema = z

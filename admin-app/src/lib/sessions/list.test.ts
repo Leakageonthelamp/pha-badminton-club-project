@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	filterActiveSessions,
+	filterDraftSessions,
 	filterHistorySessions,
 	filterOngoingSessions,
 	filterUpcomingSessions,
@@ -20,6 +21,7 @@ const baseSession = (overrides: Partial<SessionListItem>): SessionListItem => ({
 	status: 'open',
 	start_at: '2026-07-01T10:00:00.000Z',
 	end_at: '2026-07-01T14:00:00.000Z',
+	finished_at: null,
 	venue_name: 'Court A',
 	latitude: null,
 	longitude: null,
@@ -33,6 +35,8 @@ const baseSession = (overrides: Partial<SessionListItem>): SessionListItem => ({
 	match_type: 'one_round',
 	cancellation_fee: 0,
 	max_buffer: 0,
+	promptpay_type: null,
+	promptpay_target: null,
 	created_at: '2026-06-01T00:00:00.000Z',
 	updated_at: '2026-06-01T00:00:00.000Z',
 	club: { id: 'club-1', name: 'Test Club' },
@@ -44,6 +48,22 @@ describe('session list filters', () => {
 	it('treats open sessions as upcoming', () => {
 		const session = baseSession({ status: 'open' });
 		expect(isUpcomingSession(session, Date.parse('2026-06-01T00:00:00.000Z'))).toBe(true);
+	});
+
+	it('filters draft sessions by status and start time', () => {
+		const sessions = filterDraftSessions([
+			baseSession({ id: '1', status: 'draft', start_at: '2026-07-02T10:00:00.000Z' }),
+			baseSession({ id: '2', status: 'open' }),
+			baseSession({ id: '3', status: 'draft', start_at: '2026-07-01T10:00:00.000Z' }),
+			baseSession({
+				id: '4',
+				status: 'draft',
+				start_at: '2026-05-01T10:00:00.000Z',
+				end_at: '2026-05-01T14:00:00.000Z'
+			})
+		]);
+
+		expect(sessions.map((session) => session.id)).toEqual(['3', '1']);
 	});
 
 	it('excludes draft sessions from upcoming', () => {

@@ -1,0 +1,121 @@
+import { computeCourtShare } from '@repo/ui/payments';
+import type { SessionPaymentWithProfile } from '$lib/types/payment';
+import type { SessionDetail, SessionPlayerStatus, SessionPlayerWithProfile } from '$lib/types/session';
+
+export const ATTENDED_PLAYER_STATUSES: SessionPlayerStatus[] = ['confirmed', 'left'];
+
+export const isAttendedPlayer = (status: SessionPlayerStatus): boolean =>
+	status === 'confirmed' || status === 'left';
+
+export const formatSessionDuration = (startAt: string, endAt: string): string => {
+	const ms = new Date(endAt).getTime() - new Date(startAt).getTime();
+	if (ms <= 0) return '—';
+
+	const totalMinutes = Math.round(ms / 60_000);
+	const hours = Math.floor(totalMinutes / 60);
+	const minutes = totalMinutes % 60;
+
+	if (minutes === 0) return `${hours} hr`;
+	if (hours === 0) return `${minutes} min`;
+	return `${hours} hr ${minutes} min`;
+};
+
+export const resolveSessionFinishedAt = (
+	session: Pick<SessionDetail, 'status' | 'finished_at' | 'updated_at'>
+): string | null => {
+	if (session.finished_at) {
+		return session.finished_at;
+	}
+
+	if (session.status === 'closed' || session.status === 'cancelled') {
+		return session.updated_at;
+	}
+
+	return null;
+};
+
+export const formatSessionUptime = (
+	startAt: string,
+	session: Pick<SessionDetail, 'status' | 'finished_at' | 'updated_at'>
+): string => {
+	const finishedAt = resolveSessionFinishedAt(session);
+	if (!finishedAt) return '—';
+
+	return formatSessionDuration(startAt, finishedAt);
+};
+
+export type SessionHistorySummary = {
+	durationLabel: string;
+	uptimeLabel: string;
+	attendedCount: number;
+	rosterCount: number;
+	matchCount: number;
+	totalShuttleUsage: number;
+	perPlayerCourtShare: number;
+	paymentsApprovedCount: number;
+	paymentsSubmittedCount: number;
+	paymentsPendingCount: number;
+	totalCollected: number;
+	totalBilled: number;
+};
+
+export const computeTotalShuttleUsage = (
+	payments: Pick<SessionPaymentWithProfile, 'shuttle_share'>[],
+	shuttlePricePerEach: number
+): number => {
+	if (shuttlePricePerEach <= 0) return 0;
+
+	const totalShuttleShare = payments.reduce((sum, payment) => sum + payment.shuttle_share, 0);
+	if (totalShuttleShare <= 0) return 0;
+
+	return Math.round(totalShuttleShare / shuttlePricePerEach);
+};
+
+export const buildSessionHistorySummary = (
+	session: Pick<
+		SessionDetail,
+		| 'start_at'
+		| 'end_at'
+		| 'status'
+		| 'finished_at'
+		| 'updated_at'
+		| 'court_fee_per_hour'
+		| 'court_count'
+		| 'shuttle_price_per_each'
+	>,
+	players: SessionPlayerWithProfile[],
+	payments: SessionPaymentWithProfile[],
+	matchCount = 0
+): SessionHistorySummary => {
+	const attendedCount = players.filter((player) => isAttendedPlayer(player.status)).length;
+	const perPlayerCourtShare = computeCourtShare({
+		courtFeePerHour: session.court_fee_per_hour,
+		startAt: session.start_at,
+		endAt: session.end_at,
+		courtCount: session.court_count,
+		activePlayers: attendedCount
+	});
+
+	const paymentsApprovedCount = payments.filter((payment) => payment.status === 'approved').length;
+	const paymentsSubmittedCount = payments.filter((payment) => payment.status === 'submitted').length;
+	const paymentsPendingCount = payments.filter((payment) => payment.status === 'pending').length;
+	const totalCollected = payments
+		.filter((payment) => payment.status === 'approved')
+		.reduce((sum, payment) => sum + payment.total_amount, 0);
+	const totalBilled = payments.reduce((sum, payment) => sum + payment.total_amount, 0);
+
+	return {
+		durationLabel: formatSessionDuration(session.start_at, session.end_at),
+		uptimeLabel: formatSessionUptime(session.start_at, session),
+		attendedCount,
+		rosterCount: players.length,
+		matchCount,
+		totalShuttleUsage: computeTotalShuttleUsage(payments, session.shuttle_price_per_each),
+		perPlayerCourtShare,
+		paymentsApprovedCount,
+		paymentsSubmittedCount,
+		paymentsPendingCount,
+		totalCollected,
+		totalBilled
+	};
+};

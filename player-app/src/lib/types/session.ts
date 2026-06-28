@@ -30,6 +30,8 @@ export type SessionPublic = {
 	match_type: MatchType;
 	cancellation_fee: number;
 	max_buffer: number;
+	promptpay_type: 'phone' | 'national_id' | null;
+	promptpay_target: string | null;
 };
 
 export type SessionClubSummary = {

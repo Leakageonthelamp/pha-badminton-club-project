@@ -42,6 +42,8 @@ const sessionListSelect = `
 	match_type,
 	cancellation_fee,
 	max_buffer,
+	promptpay_type,
+	promptpay_target,
 	club:clubs ( id, name )
 `;
 
@@ -441,6 +443,20 @@ const loadClubPromptPay = async (
 	};
 };
 
+const loadSessionPromptPay = async (
+	supabase: SupabaseClient,
+	session: Pick<SessionDetail, 'club_id' | 'promptpay_type' | 'promptpay_target'>
+): Promise<ClubPromptPay> => {
+	if (session.promptpay_type && session.promptpay_target?.trim()) {
+		return {
+			promptpay_type: session.promptpay_type,
+			promptpay_target: session.promptpay_target
+		};
+	}
+
+	return loadClubPromptPay(supabase, session.club_id);
+};
+
 const loadMyPayment = async (
 	supabase: SupabaseClient,
 	sessionId: string,
@@ -537,7 +553,7 @@ export const loadLiveSessionForPlayer = async (
 			loadMyPayment(supabase, sessionId, userId),
 			loadMyLeaveRequest(supabase, sessionId, userId),
 			countActiveSessionPlayers(supabase, sessionId),
-			loadClubPromptPay(supabase, session.club_id),
+			loadSessionPromptPay(supabase, session),
 			supabase
 				.from('payments')
 				.select('*', { count: 'exact', head: true })

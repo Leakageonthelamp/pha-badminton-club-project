@@ -32,6 +32,16 @@ export const isUpcomingSession = (session: SessionListItem, now = Date.now()): b
 export const filterOngoingSessions = (sessions: SessionListItem[]): SessionListItem[] =>
 	sessions.filter((session) => session.status === 'in_progress');
 
+export const filterDraftSessions = (
+	sessions: SessionListItem[],
+	now = Date.now()
+): SessionListItem[] =>
+	sessions
+		.filter(
+			(session) => session.status === 'draft' && new Date(session.end_at).getTime() >= now
+		)
+		.sort((a, b) => new Date(a.start_at).getTime() - new Date(b.start_at).getTime());
+
 export const filterActiveSessions = (sessions: SessionListItem[]): SessionListItem[] =>
 	sessions.filter(isActiveSession);
 
@@ -54,6 +64,9 @@ export const formatSessionMeta = (session: SessionListItem, options?: { showClub
 
 	return parts.join(' · ');
 };
+
+export const formatDraftOpenDeadline = (startAt: string): string =>
+	formatDateTime(new Date(draftOpenDeadlineMs(startAt)).toISOString());
 
 export const filterSessionsByClub = (
 	sessions: SessionListItem[],

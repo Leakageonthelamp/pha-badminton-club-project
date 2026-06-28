@@ -1,3 +1,5 @@
+import type { PromptPayType } from '$lib/types/club';
+
 export type SessionStatus = 'draft' | 'open' | 'in_progress' | 'closed' | 'cancelled';
 export type MatchScoreType = 15 | 21;
 export type MatchType = 'one_round' | 'two_round';
@@ -11,6 +13,7 @@ export type Session = {
 	status: SessionStatus;
 	start_at: string;
 	end_at: string;
+	finished_at: string | null;
 	venue_name: string | null;
 	latitude: number | null;
 	longitude: number | null;
@@ -24,6 +27,8 @@ export type Session = {
 	match_type: MatchType;
 	cancellation_fee: number;
 	max_buffer: number;
+	promptpay_type: PromptPayType | null;
+	promptpay_target: string | null;
 	created_at: string;
 	updated_at: string;
 };

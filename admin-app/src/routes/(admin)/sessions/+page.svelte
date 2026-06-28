@@ -42,7 +42,7 @@
 	/>
 
 	<div class="space-y-3">
-		<SectionHeading title="Quick actions" />
+		<SectionHeading title="Menu" />
 		<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
 			{#if canCreate}
 				<ActionRowLink

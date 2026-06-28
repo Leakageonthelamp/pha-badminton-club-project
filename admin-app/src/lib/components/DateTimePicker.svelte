@@ -33,12 +33,15 @@
 
 	let inputEl = $state<HTMLInputElement | null>(null);
 	let picker = $state<Instance | null>(null);
+	let isEditing = $state(false);
 	const displayId = $derived(`${id}-display`);
 
 	const resolveMinDate = (): Date | undefined => {
 		const candidates: Date[] = [];
-		if (minNow || minOffsetMinutes > 0) {
-			candidates.push(new Date(Date.now() + minOffsetMinutes * 60 * 1000));
+		if (minOffsetMinutes > 0) {
+			candidates.push(new Date(Date.now() + minOffsetMinutes * 60_000));
+		} else if (minNow) {
+			candidates.push(new Date());
 		}
 		if (min) {
 			const minDate = localInputToDate(min);
@@ -58,6 +61,20 @@
 		alt.classList.toggle('cursor-not-allowed', disabled);
 		alt.classList.toggle('opacity-50', disabled);
 		alt.required = required && !disabled;
+	};
+
+	const refreshMinDate = (instance: Instance) => {
+		const minDate = resolveMinDate();
+		instance.set('minDate', minDate ?? null);
+		return minDate;
+	};
+
+	const clampToMinDate = (instance: Instance, triggerChange: boolean) => {
+		const minDate = resolveMinDate();
+		const selected = instance.selectedDates[0];
+		if (!minDate || !selected || selected.getTime() >= minDate.getTime()) return;
+
+		instance.setDate(minDate, triggerChange);
 	};
 
 	onMount(() => {
@@ -80,10 +97,26 @@
 				value = dates[0] ? dateToLocalInput(dates[0]) : '';
 			},
 			onOpen: (_dates, _str, instance) => {
-				if (minNow || minOffsetMinutes > 0) instance.set('minDate', resolveMinDate());
+				refreshMinDate(instance);
+			},
+			onClose: (_dates, _str, instance) => {
+				isEditing = false;
+				refreshMinDate(instance);
+				clampToMinDate(instance, true);
 			},
 			onReady: (_dates, _str, instance) => {
 				syncAltInput(instance);
+				const alt = instance.altInput;
+				if (!alt) return;
+
+				alt.addEventListener('focus', () => {
+					isEditing = true;
+				});
+				alt.addEventListener('blur', () => {
+					isEditing = false;
+					refreshMinDate(instance);
+					clampToMinDate(instance, true);
+				});
 			}
 		});
 
@@ -94,9 +127,9 @@
 	});
 
 	$effect(() => {
-		if (!picker) return;
+		if (!picker || isEditing) return;
 
-		picker.set('minDate', resolveMinDate());
+		refreshMinDate(picker);
 		picker.set('clickOpens', !disabled);
 		syncAltInput(picker);
 

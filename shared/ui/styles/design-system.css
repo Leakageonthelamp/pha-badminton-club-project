@@ -119,7 +119,8 @@ body {
 }
 
 .nav-loading > * {
-	opacity: 0.4;
+	opacity: 0;
+	visibility: hidden;
 }
 
 .nav-loading::after {
@@ -387,6 +388,26 @@ body {
 
 	.app-detail-section {
 		@apply overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm ring-1 ring-slate-100;
+	}
+
+	.app-history-stat {
+		@apply min-h-[5.5rem] rounded-2xl border border-slate-200/80 bg-white/90 px-3 py-3 shadow-sm sm:px-4;
+	}
+
+	.app-history-stat-label {
+		@apply text-[0.65rem] font-semibold uppercase leading-snug tracking-wide text-slate-500;
+	}
+
+	.app-history-stat-value {
+		@apply mt-1.5 text-xl font-bold leading-none tracking-tight text-slate-900 tabular-nums;
+	}
+
+	.app-history-stat-value--money {
+		@apply text-base leading-tight;
+	}
+
+	.app-history-stat-hint {
+		@apply mt-1.5 text-xs leading-snug text-slate-500;
 	}
 
 	.app-detail-section-body {

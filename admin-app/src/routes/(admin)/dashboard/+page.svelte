@@ -10,7 +10,7 @@
 	import SettingsIcon from '@repo/ui/icons/SettingsIcon.svelte';
 	import { adminRoleHeroBadgeClass } from '$lib/adminRoleHero';
 	import { clubWorkspaceState } from '$lib/clubWorkspace.svelte';
-	import { filterOngoingSessions, filterSessionsByClub, filterUpcomingSessions } from '$lib/sessions/list';
+	import { filterDraftSessions, filterOngoingSessions, filterSessionsByClub, filterUpcomingSessions } from '$lib/sessions/list';
 	import { appRoleLabel, type AppRole } from '$lib/types/auth';
 	import type { LayoutData } from '../$types';
 	import type { PageData } from './$types';
@@ -36,6 +36,11 @@
 			? filterOngoingSessions(filterSessionsByClub(data.sessions ?? [], activeClub.id))
 			: filterOngoingSessions(data.sessions ?? [])
 	);
+	const draftSessions = $derived(
+		activeClub
+			? filterDraftSessions(filterSessionsByClub(data.sessions ?? [], activeClub.id))
+			: filterDraftSessions(data.sessions ?? [])
+	);
 </script>
 
 <section class="space-y-6">
@@ -53,10 +58,10 @@
 	{#if clubs.length === 0}
 		<EmptyState message="No clubs assigned to you yet." />
 	{:else if activeClub}
-		{#if data.canCreate}
-			<div class="space-y-3">
-				<SectionHeading title="Quick actions" />
-				<div class="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+		<div class="space-y-3">
+			<SectionHeading title="Quick actions" />
+			<div class="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+				{#if data.canCreate}
 					<DashboardTile
 						href="/sessions/new"
 						title="Create session"
@@ -64,9 +69,30 @@
 						icon={PlusIcon}
 						accent="violet"
 					/>
-				</div>
+				{/if}
+				<DashboardTile
+					href="/sessions/history"
+					title="Session history"
+					description="Closed and cancelled sessions"
+					icon={LayersIcon}
+					accent="indigo"
+				/>
 			</div>
-		{/if}
+		</div>
+
+		<UpcomingSessionsPanel
+			sessions={draftSessions}
+			userId={data.userId}
+			limit={5}
+			viewAllHref="/sessions"
+			tone="amber"
+			eyebrow="Draft sessions"
+			title={draftSessions.length === 0
+				? 'Nothing waiting for you'
+				: `${draftSessions.length} draft${draftSessions.length === 1 ? '' : 's'} need attention`}
+			subtitle="Review settings, then open each session so players can join."
+			emptyMessage="No draft sessions — create one or edit an open session to return it to draft."
+		/>
 
 		<UpcomingSessionsPanel
 			sessions={ongoingSessions}

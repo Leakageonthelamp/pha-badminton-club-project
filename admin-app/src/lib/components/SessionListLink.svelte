@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { formatSessionMeta } from '$lib/sessions/list';
+	import { formatDraftOpenDeadline, formatSessionMeta } from '$lib/sessions/list';
 	import {
 		sessionStatusBadgeClass,
 		sessionStatusLabel,
@@ -43,6 +43,11 @@
 				{/if}
 			</div>
 			<p class="mt-1 text-sm text-slate-600">{formatSessionMeta(session, { showClub })}</p>
+			{#if session.status === 'draft'}
+				<p class="mt-1 text-xs font-medium text-amber-800">
+					Open by {formatDraftOpenDeadline(session.start_at)} — tap to review or publish
+				</p>
+			{/if}
 			{#if session.venue_name}
 				<p class="mt-1 truncate text-xs text-slate-500">{session.venue_name}</p>
 			{/if}

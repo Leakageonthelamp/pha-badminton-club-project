@@ -23,7 +23,9 @@
 		shouldShowBack(page.url.pathname, appRole, dashboardMode, hasClubMembership)
 	);
 	const backHref = $derived(
-		getBackHref(page.url.pathname, appRole, dashboardMode, hasClubMembership)
+		getBackHref(page.url.pathname, appRole, dashboardMode, hasClubMembership, {
+			isHistorySessionDetail: page.data.isHistoryView === true
+		})
 	);
 	const homeHref = $derived(getHomePath(appRole, dashboardMode, hasClubMembership));
 	const clubWorkspaceOptions = $derived(

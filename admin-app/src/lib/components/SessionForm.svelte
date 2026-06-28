@@ -16,7 +16,7 @@
 	} from '@repo/ui/datetime';
 	import { SESSION_MIN_START_LEAD_MINUTES, SESSION_NAME_MAX_LENGTH } from '$lib/config/session';
 	import { whileSubmitting } from '$lib/forms/submitting';
-	import type { Club } from '$lib/types/club';
+	import type { Club, PromptPayType } from '$lib/types/club';
 	import { formatThb, shuttlePricePerEach } from '$lib/types/club';
 	import type { SessionDetail } from '$lib/types/session';
 
@@ -28,6 +28,55 @@
 		price: number;
 		number_per_box: number;
 	};
+
+	const sessionMatchesClubVenue = (club: Club, value: SessionDetail): boolean =>
+		(value.venue_name ?? '') === (club.venue_name ?? '') &&
+		value.latitude === club.latitude &&
+		value.longitude === club.longitude;
+
+	const sessionMatchesClubPromptPay = (
+		club: Club,
+		value: Pick<SessionDetail, 'promptpay_type' | 'promptpay_target'>
+	): boolean =>
+		(value.promptpay_type ?? '') === (club.promptpay_type ?? '') &&
+		(value.promptpay_target ?? '') === (club.promptpay_target ?? '');
+
+	function sessionFormInitialValues(
+		formMode: 'create' | 'edit',
+		formSession: SessionDetail | null | undefined,
+		clubs: Club[]
+	) {
+		const isEdit = formMode === 'edit' && formSession != null;
+		const editClub = isEdit
+			? (clubs.find((club) => club.id === formSession.club_id) ?? null)
+			: null;
+
+		return {
+			name: isEdit ? formSession.name : '',
+			description: isEdit ? formSession.description : '',
+			startAtLocal: isEdit ? utcToLocalInput(formSession.start_at) : '',
+			endAtLocal: isEdit ? utcToLocalInput(formSession.end_at) : '',
+			venueName: isEdit ? (formSession.venue_name ?? '') : '',
+			latitude: isEdit ? formSession.latitude : null,
+			longitude: isEdit ? formSession.longitude : null,
+			maxPlayers: isEdit ? String(formSession.max_players) : '',
+			minPlayers: isEdit ? String(formSession.min_players) : '',
+			courtCount: isEdit ? String(formSession.court_count) : '',
+			courtFeePerHour: isEdit ? String(formSession.court_fee_per_hour) : '',
+			shuttleId: isEdit ? (formSession.shuttle_id ?? '') : '',
+			shuttlePricePerEachValue: isEdit ? String(formSession.shuttle_price_per_each) : '',
+			matchScoreType: isEdit ? String(formSession.match_score_type) : '21',
+			matchType: isEdit ? formSession.match_type : ('one_round' as SessionDetail['match_type']),
+			cancellationFee: isEdit ? String(formSession.cancellation_fee) : '0',
+			maxBuffer: isEdit ? String(formSession.max_buffer) : '0',
+			venueEditing:
+				isEdit && editClub ? !sessionMatchesClubVenue(editClub, formSession) : false,
+			promptPayType: isEdit ? (formSession.promptpay_type ?? ('' as const)) : ('' as const),
+			promptPayTarget: isEdit ? (formSession.promptpay_target ?? '') : '',
+			promptPayEditing:
+				isEdit && editClub ? !sessionMatchesClubPromptPay(editClub, formSession) : false
+		};
+	}
 
 	let {
 		mode,
@@ -51,56 +100,58 @@
 			: null
 	);
 
-	const sessionMatchesClubVenue = (club: Club, value: SessionDetail): boolean =>
-		(value.venue_name ?? '') === (club.venue_name ?? '') &&
-		value.latitude === club.latitude &&
-		value.longitude === club.longitude;
-
-	const initialEditClub =
-		mode === 'edit' && session
-			? (managedClubs.find((club) => club.id === session.club_id) ?? null)
-			: null;
-
 	let loading = $state(false);
-	let name = $state(mode === 'edit' && session ? session.name : '');
-	let description = $state(mode === 'edit' && session ? session.description : '');
-	let startAtLocal = $state(
-		mode === 'edit' && session ? utcToLocalInput(session.start_at) : ''
-	);
-	let endAtLocal = $state(mode === 'edit' && session ? utcToLocalInput(session.end_at) : '');
-	let venueName = $state(mode === 'edit' && session ? (session.venue_name ?? '') : '');
-	let latitude = $state<number | null>(
-		mode === 'edit' && session ? session.latitude : null
-	);
-	let longitude = $state<number | null>(
-		mode === 'edit' && session ? session.longitude : null
-	);
-	let maxPlayers = $state(mode === 'edit' && session ? String(session.max_players) : '');
-	let minPlayers = $state(mode === 'edit' && session ? String(session.min_players) : '');
-	let courtCount = $state(mode === 'edit' && session ? String(session.court_count) : '');
-	let courtFeePerHour = $state(
-		mode === 'edit' && session ? String(session.court_fee_per_hour) : ''
-	);
-	let shuttleId = $state(mode === 'edit' && session ? (session.shuttle_id ?? '') : '');
-	let shuttlePricePerEachValue = $state(
-		mode === 'edit' && session ? String(session.shuttle_price_per_each) : ''
-	);
-	let matchScoreType = $state(
-		mode === 'edit' && session ? String(session.match_score_type) : '21'
-	);
-	let matchType = $state(
-		mode === 'edit' && session ? session.match_type : 'one_round'
-	);
-	let cancellationFee = $state(
-		mode === 'edit' && session ? String(session.cancellation_fee) : '0'
-	);
-	let maxBuffer = $state(mode === 'edit' && session ? String(session.max_buffer) : '0');
+	let editInitialized = $state(false);
+	let name = $state('');
+	let description = $state('');
+	let startAtLocal = $state('');
+	let endAtLocal = $state('');
+	let venueName = $state('');
+	let latitude = $state<number | null>(null);
+	let longitude = $state<number | null>(null);
+	let maxPlayers = $state('');
+	let minPlayers = $state('');
+	let courtCount = $state('');
+	let courtFeePerHour = $state('');
+	let shuttleId = $state('');
+	let shuttlePricePerEachValue = $state('');
+	let matchScoreType = $state('21');
+	let matchType = $state<SessionDetail['match_type']>('one_round');
+	let cancellationFee = $state('0');
+	let maxBuffer = $state('0');
 	let syncedClubId = $state('');
-	let venueEditing = $state(
-		mode === 'edit' && session && initialEditClub
-			? !sessionMatchesClubVenue(initialEditClub, session)
-			: false
-	);
+	let venueEditing = $state(false);
+	let promptPayType = $state<PromptPayType | ''>('');
+	let promptPayTarget = $state('');
+	let promptPayEditing = $state(false);
+
+	$effect.pre(() => {
+		if (mode !== 'edit' || !session || editInitialized) return;
+
+		editInitialized = true;
+		const initial = sessionFormInitialValues(mode, session, managedClubs);
+		name = initial.name;
+		description = initial.description;
+		startAtLocal = initial.startAtLocal;
+		endAtLocal = initial.endAtLocal;
+		venueName = initial.venueName;
+		latitude = initial.latitude;
+		longitude = initial.longitude;
+		maxPlayers = initial.maxPlayers;
+		minPlayers = initial.minPlayers;
+		courtCount = initial.courtCount;
+		courtFeePerHour = initial.courtFeePerHour;
+		shuttleId = initial.shuttleId;
+		shuttlePricePerEachValue = initial.shuttlePricePerEachValue;
+		matchScoreType = initial.matchScoreType;
+		matchType = initial.matchType;
+		cancellationFee = initial.cancellationFee;
+		maxBuffer = initial.maxBuffer;
+		venueEditing = initial.venueEditing;
+		promptPayType = initial.promptPayType;
+		promptPayTarget = initial.promptPayTarget;
+		promptPayEditing = initial.promptPayEditing;
+	});
 
 	const activeClub = $derived(
 		mode === 'edit'
@@ -139,6 +190,13 @@
 			: false
 	);
 	const venueLocked = $derived(hasClubVenueDefaults && !venueEditing);
+	const hasClubPromptPayDefaults = $derived(
+		activeClub
+			? Boolean(activeClub.promptpay_type && activeClub.promptpay_target?.trim())
+			: false
+	);
+	const promptPayLocked = $derived(hasClubPromptPayDefaults && !promptPayEditing);
+	const promptPayReady = $derived(Boolean(promptPayType && promptPayTarget.trim()));
 
 	const startAtUtc = $derived(startAtLocal ? localInputToUtcSafe(startAtLocal) : '');
 	const endAtUtc = $derived(endAtLocal ? localInputToUtcSafe(endAtLocal) : '');
@@ -176,6 +234,14 @@
 		venueEditing = false;
 	};
 
+	const useClubPromptPayDefaults = () => {
+		if (!activeClub) return;
+
+		promptPayType = activeClub.promptpay_type ?? '';
+		promptPayTarget = activeClub.promptpay_target ?? '';
+		promptPayEditing = false;
+	};
+
 	$effect.pre(() => {
 		if (mode !== 'create') return;
 
@@ -191,6 +257,10 @@
 		shuttlePricePerEachValue = clubShuttles[0]
 			? String(shuttlePricePerEach(clubShuttles[0]))
 			: '';
+		const hasClubPromptPay = Boolean(club.promptpay_type && club.promptpay_target?.trim());
+		promptPayEditing = !hasClubPromptPay;
+		promptPayType = club.promptpay_type ?? '';
+		promptPayTarget = club.promptpay_target ?? '';
 	});
 </script>
 
@@ -247,7 +317,6 @@
 					id="start_at_local"
 					label="Start"
 					required
-					minNow
 					minOffsetMinutes={mode === 'create' ? SESSION_MIN_START_LEAD_MINUTES : 0}
 					placeholder="dd/mm/yyyy, --:--"
 					bind:value={startAtLocal}
@@ -268,7 +337,8 @@
 			</div>
 		</div>
 		<p class="text-xs text-slate-500">
-			Times use your device's timezone. Minimum session length is 1 hour.
+			Times use your device's timezone. Start must be at least 1 hour from now. Minimum session
+			length is 1 hour.
 		</p>
 	</div>
 
@@ -457,6 +527,118 @@
 	</div>
 
 	<div class={formSectionClass}>
+		<div class="flex flex-wrap items-center gap-2">
+			<SectionHeading title="Payment" />
+			{#if activeClub && !hasClubPromptPayDefaults}
+				<NotSetBadge />
+			{/if}
+		</div>
+		<p class="text-sm text-slate-600">
+			PromptPay details for player payment QR codes. Required — sessions cannot be created without
+			this.
+		</p>
+
+		{#if hasClubPromptPayDefaults}
+			<div
+				class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
+			>
+				<p class="text-sm text-slate-600">
+					{#if promptPayLocked}
+						Using your club's default PromptPay ({promptPayType === 'national_id'
+							? 'National ID'
+							: 'Mobile phone'}). Edit to use different payment details for this session.
+					{:else}
+						Custom PromptPay for this session.
+					{/if}
+				</p>
+				{#if promptPayLocked}
+					<SubmitButton
+						type="button"
+						variant="secondary"
+						class="!w-auto shrink-0 !py-2 !text-sm"
+						disabled={loading}
+						onclick={() => (promptPayEditing = true)}
+					>
+						Edit
+					</SubmitButton>
+				{:else}
+					<SubmitButton
+						type="button"
+						variant="secondary"
+						class="!w-auto shrink-0 !py-2 !text-sm"
+						disabled={loading}
+						onclick={useClubPromptPayDefaults}
+					>
+						Use club default
+					</SubmitButton>
+				{/if}
+			</div>
+		{:else if activeClub}
+			<div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+				<p class="text-sm text-amber-900">
+					This club has no default PromptPay in settings. Enter payment details below, or
+					<a
+						href="/clubs/{activeClub.id}"
+						class="font-medium text-brand-700 underline decoration-brand-300 underline-offset-2 hover:text-brand-800"
+					>
+						set a club default
+					</a>
+					so future sessions pre-fill automatically.
+				</p>
+			</div>
+		{/if}
+
+		{#if promptPayLocked}
+			<input type="hidden" name="promptpay_type" value={promptPayType} />
+			<input type="hidden" name="promptpay_target" value={promptPayTarget} />
+		{/if}
+
+		<fieldset class="space-y-3" disabled={promptPayLocked || loading}>
+			<legend class="sr-only">PromptPay type</legend>
+			<label class="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3">
+				<input
+					type="radio"
+					name={promptPayLocked ? undefined : 'promptpay_type'}
+					value="phone"
+					bind:group={promptPayType}
+					required={!promptPayLocked}
+					class="h-4 w-4 border-slate-300 text-brand-600 focus:ring-brand-600"
+				/>
+				<span class="text-sm font-medium text-slate-900">Mobile phone</span>
+			</label>
+			<label class="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3">
+				<input
+					type="radio"
+					name={promptPayLocked ? undefined : 'promptpay_type'}
+					value="national_id"
+					bind:group={promptPayType}
+					required={!promptPayLocked}
+					class="h-4 w-4 border-slate-300 text-brand-600 focus:ring-brand-600"
+				/>
+				<span class="text-sm font-medium text-slate-900">National ID card</span>
+			</label>
+		</fieldset>
+
+		<div>
+			<label for="promptpay_target" class={labelClass}>
+				{promptPayType === 'national_id' ? 'National ID' : 'Phone number'}
+				<span class="text-red-600">*</span>
+			</label>
+			<input
+				id="promptpay_target"
+				name={promptPayLocked ? undefined : 'promptpay_target'}
+				type="text"
+				inputmode={promptPayType === 'national_id' ? 'numeric' : 'tel'}
+				required={!promptPayLocked}
+				bind:value={promptPayTarget}
+				disabled={promptPayLocked || loading}
+				placeholder={promptPayType === 'national_id' ? '1234567890123' : '0812345678'}
+				class="{inputClass} disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-700"
+			/>
+		</div>
+	</div>
+
+	<div class={formSectionClass}>
 		<SectionHeading title="Join settings" />
 		<div class="grid gap-4 sm:grid-cols-2">
 			<div>
@@ -537,7 +719,7 @@
 		<SubmitButton
 			loading={loading}
 			{loadingLabel}
-			disabled={!activeClub || clubShuttles.length === 0}
+			disabled={!activeClub || clubShuttles.length === 0 || !promptPayReady}
 		>
 			{submitLabel}
 		</SubmitButton>

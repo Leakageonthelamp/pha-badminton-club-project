@@ -3,6 +3,7 @@ import {
 	SESSION_MIN_START_LEAD_MINUTES,
 	SESSION_NAME_MAX_LENGTH
 } from '$lib/config/session';
+import { requiredPromptPayFieldsSchema } from '$lib/validation/clubSettings';
 import { z } from 'zod';
 
 const coordinateField = z.preprocess(
@@ -86,9 +87,22 @@ export const buildSessionInputSchema = (
 			max_buffer: z.coerce
 				.number({ invalid_type_error: 'Buffer queue must be a number' })
 				.int('Buffer queue must be a whole number')
-				.min(0, 'Buffer queue cannot be negative')
+				.min(0, 'Buffer queue cannot be negative'),
+			promptpay_type: z.enum(['phone', 'national_id'], {
+				errorMap: () => ({ message: 'Select PromptPay type' })
+			}),
+			promptpay_target: z.string().trim().min(1, 'PromptPay target is required')
 		})
 		.superRefine((data, ctx) => {
+			const promptPay = requiredPromptPayFieldsSchema.safeParse({
+				promptpay_type: data.promptpay_type,
+				promptpay_target: data.promptpay_target
+			});
+			if (!promptPay.success) {
+				for (const issue of promptPay.error.issues) {
+					ctx.addIssue(issue);
+				}
+			}
 			if (data.min_players > data.max_players) {
 				ctx.addIssue({
 					code: z.ZodIssueCode.custom,
@@ -150,7 +164,7 @@ export const buildSessionInputSchema = (
 				if (startAt.getTime() < minStartMs) {
 					ctx.addIssue({
 						code: z.ZodIssueCode.custom,
-						message: `Start time must be at least ${minStartLeadMinutes / 60} hours from now`,
+						message: `Start time must be at least ${minStartLeadMinutes} minutes from now`,
 						path: ['start_at']
 					});
 				}

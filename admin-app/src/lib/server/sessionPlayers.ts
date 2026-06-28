@@ -47,6 +47,29 @@ export const loadSessionPlayers = async (
 	}));
 };
 
+export const loadSessionPlayerHistory = async (
+	supabase: SupabaseClient,
+	sessionId: string
+): Promise<SessionPlayerWithProfile[]> => {
+	const { data, error } = await supabase
+		.from('session_players')
+		.select(playerSelect)
+		.eq('session_id', sessionId)
+		.order('joined_at', { ascending: true });
+
+	if (error) {
+		console.error('Failed to load session player history', error);
+		return [];
+	}
+
+	return (data ?? []).map((row) => ({
+		...(row as Omit<SessionPlayerWithProfile, 'profile'>),
+		profile: normalizeRelation(
+			row.profile as SessionPlayerWithProfile['profile'] | SessionPlayerWithProfile['profile'][]
+		)
+	}));
+};
+
 export const confirmSessionPlayer = async (
 	supabase: SupabaseClient,
 	playerId: string

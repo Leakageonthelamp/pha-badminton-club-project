@@ -19,7 +19,9 @@ const validSessionInput = {
 	match_score_type: 21,
 	match_type: 'one_round' as const,
 	cancellation_fee: 0,
-	max_buffer: 0
+	max_buffer: 0,
+	promptpay_type: 'phone' as const,
+	promptpay_target: '0812345678'
 };
 
 describe('sessionInputSchema start lead time', () => {
@@ -27,7 +29,20 @@ describe('sessionInputSchema start lead time', () => {
 		vi.useRealTimers();
 	});
 
-	it('rejects a start 1 hour ahead', () => {
+	it('rejects a start 59 minutes ahead', () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-06-01T10:00:00.000Z'));
+
+		const result = sessionInputSchema.safeParse({
+			...validSessionInput,
+			start_at: '2026-06-01T10:59:00.000Z',
+			end_at: '2026-06-01T11:59:00.000Z'
+		});
+
+		expect(result.success).toBe(false);
+	});
+
+	it('accepts a start 1 hour ahead', () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date('2026-06-01T10:00:00.000Z'));
 
@@ -37,7 +52,7 @@ describe('sessionInputSchema start lead time', () => {
 			end_at: '2026-06-01T12:00:00.000Z'
 		});
 
-		expect(result.success).toBe(false);
+		expect(result.success).toBe(true);
 	});
 
 	it('accepts a start 2 hours ahead', () => {
@@ -55,7 +70,7 @@ describe('buildSessionInputSchema for edits', () => {
 		vi.useRealTimers();
 	});
 
-	it('accepts a start 30 minutes ahead without the 90-minute create lead', () => {
+	it('accepts a start 30 minutes ahead without the create lead', () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date('2026-06-01T10:00:00.000Z'));
 

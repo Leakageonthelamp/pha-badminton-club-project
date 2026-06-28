@@ -3,11 +3,13 @@ import { assertCanManageClub, assertSuperAdmin } from '$lib/server/clubAccess';
 import {
 	confirmSessionPlayer,
 	isAdminActionWindowOpen,
+	loadSessionPlayerHistory,
 	loadSessionPlayers,
 	rejectSessionPlayer
 } from '$lib/server/sessionPlayers';
+import { loadSessionPayments } from '$lib/server/sessionControl';
 import { loadSessionDetail, releaseActiveSessionPlayers, sweepOverdueDraftSessions, sweepStartedSessions } from '$lib/server/sessions';
-import { draftOpenDeadlineMs, isDraftOpenWindowOpen, isSessionMutable } from '$lib/sessions/list';
+import { draftOpenDeadlineMs, isDraftOpenWindowOpen, isHistorySession, isSessionMutable } from '$lib/sessions/list';
 import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -42,7 +44,14 @@ export const load: PageServerLoad = async ({
 		canManage = false;
 	}
 
-	const players = canManage && session.status !== 'draft' ? await loadSessionPlayers(supabase, session.id) : [];
+	const isHistoryView = isHistorySession(session);
+
+	const players =
+		canManage && !isHistoryView && session.status !== 'draft'
+			? await loadSessionPlayers(supabase, session.id)
+			: [];
+	const historyPlayers = isHistoryView ? await loadSessionPlayerHistory(supabase, session.id) : [];
+	const historyPayments = isHistoryView ? await loadSessionPayments(supabase, session.id) : [];
 	const adminActionWindowOpen = isAdminActionWindowOpen(session.start_at, session.end_at);
 	const draftOpenDeadline = new Date(draftOpenDeadlineMs(session.start_at)).toISOString();
 	const canOpen =
@@ -58,6 +67,9 @@ export const load: PageServerLoad = async ({
 	return {
 		session,
 		players,
+		historyPlayers,
+		historyPayments,
+		isHistoryView,
 		canManage,
 		canOpen,
 		canModify,

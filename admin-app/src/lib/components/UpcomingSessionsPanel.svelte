@@ -12,7 +12,8 @@
 		eyebrow = 'Upcoming sessions',
 		title,
 		subtitle = 'Your next badminton sessions — tap to view details.',
-		emptyMessage = 'No upcoming sessions for this club.'
+		emptyMessage = 'No upcoming sessions for this club.',
+		tone = 'brand'
 	}: {
 		sessions: SessionListItem[];
 		userId?: string;
@@ -23,7 +24,22 @@
 		title?: string;
 		subtitle?: string;
 		emptyMessage?: string;
+		tone?: 'brand' | 'amber';
 	} = $props();
+
+	const toneClasses = $derived(
+		tone === 'amber'
+			? {
+					section: 'border-amber-200 from-amber-50 via-white to-orange-50',
+					header: 'border-amber-100/80 bg-amber-500/10',
+					eyebrow: 'text-amber-800'
+				}
+			: {
+					section: 'border-brand-200 from-brand-50 via-white to-violet-50',
+					header: 'border-brand-100/80 bg-brand-500/10',
+					eyebrow: 'text-brand-700'
+				}
+	);
 
 	const visibleSessions = $derived(limit ? sessions.slice(0, limit) : sessions);
 	const hasMore = $derived(limit !== undefined && sessions.length > limit);
@@ -36,11 +52,11 @@
 </script>
 
 <section
-	class="overflow-hidden rounded-3xl border-2 border-brand-200 bg-gradient-to-br from-brand-50 via-white to-violet-50 shadow-sm"
+	class="overflow-hidden rounded-3xl border-2 bg-gradient-to-br shadow-sm {toneClasses.section}"
 >
-	<div class="border-b border-brand-100/80 bg-brand-500/10 px-4 py-4 sm:px-6">
+	<div class="border-b px-4 py-4 sm:px-6 {toneClasses.header}">
 		<div>
-			<p class="text-xs font-semibold uppercase tracking-wide text-brand-700">{eyebrow}</p>
+			<p class="text-xs font-semibold uppercase tracking-wide {toneClasses.eyebrow}">{eyebrow}</p>
 			<h2 class="mt-1 text-xl font-bold text-slate-900 sm:text-2xl">
 				{panelTitle}
 			</h2>

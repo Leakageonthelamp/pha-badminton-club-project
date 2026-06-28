@@ -24,6 +24,7 @@
 		sessionStatusLabel,
 		sessionStatusShowsLiveDot
 	} from '$lib/types/session';
+	import SessionHistoryDetail from '$lib/components/SessionHistoryDetail.svelte';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -267,6 +268,13 @@
 
 <FormToast message={toastMessage} variant={toastVariant} token={toastMessage ?? ''} />
 
+{#if data.isHistoryView}
+	<SessionHistoryDetail
+		session={data.session}
+		players={data.historyPlayers}
+		payments={data.historyPayments}
+	/>
+{:else}
 <section class="space-y-6">
 	<DashboardHero
 		eyebrow="Session"
@@ -556,8 +564,9 @@
 		</AppCard>
 	{/if}
 </section>
+{/if}
 
-{#if forceEndModalOpen}
+{#if !data.isHistoryView && forceEndModalOpen}
 	<AppModal
 		open={forceEndModalOpen}
 		labelledBy="force-end-session-title"
@@ -595,7 +604,7 @@
 	</AppModal>
 {/if}
 
-{#if openModalOpen}
+{#if !data.isHistoryView && openModalOpen}
 	<AppModal
 		open={openModalOpen}
 		labelledBy="open-session-title"
@@ -633,7 +642,7 @@
 	</AppModal>
 {/if}
 
-{#if cancelModalOpen}
+{#if !data.isHistoryView && cancelModalOpen}
 	<AppModal
 		open={cancelModalOpen}
 		labelledBy="cancel-session-title"
