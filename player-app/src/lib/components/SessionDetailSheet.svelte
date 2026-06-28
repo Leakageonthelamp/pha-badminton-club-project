@@ -3,10 +3,10 @@
 	import { enhance } from '$app/forms';
 	import { invalidate } from '$app/navigation';
 	import type { SubmitFunction } from '@sveltejs/kit';
-	import FormToast from '@repo/ui/components/FormToast.svelte';
 	import RichTextDisplay from '@repo/ui/components/RichTextDisplay.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
+	import { toast } from '@repo/ui/toast/toast.svelte';
 	import {
 		formatDistanceKm,
 		haversineDistanceKm,
@@ -22,23 +22,15 @@
 		sessionPlayerStatusLabel
 	} from '$lib/types/session';
 
-	type SheetFormResult = {
-		message?: string;
-		success?: boolean;
-		sessionId?: string;
-	} | null;
-
 	let {
 		open = false,
 		sessionId = null,
 		preview = null,
-		form = null,
 		onClose
 	}: {
 		open?: boolean;
 		sessionId?: string | null;
 		preview?: SessionListItem | null;
-		form?: SheetFormResult;
 		onClose: () => void;
 	} = $props();
 
@@ -182,20 +174,32 @@
 		return `${session.waiting_count}/${session.max_players} spots · ${session.queued_count}/${session.max_buffer} queue`;
 	});
 
-	const toastMessage = $derived(form?.message ?? null);
-	const toastVariant = $derived(form?.success ? 'success' : 'error');
-
 	const enhanceAction: SubmitFunction = () => {
 		actionLoading = true;
-		return async ({ result, update }) => {
-			await update();
+		return async ({ result }) => {
 			actionLoading = false;
-			if (result.type === 'success' && sessionId) {
+
+			if (result.type === 'success') {
+				const data = result.data as { message?: string } | undefined;
+				if (data?.message) toast.success(data.message);
 				await invalidate('app:sessions');
-				const response = await fetch(`/api/sessions/${sessionId}`);
-				if (response.ok) {
-					session = (await response.json()) as SessionDetail;
+				if (sessionId) {
+					const response = await fetch(`/api/sessions/${sessionId}`);
+					if (response.ok) {
+						session = (await response.json()) as SessionDetail;
+					}
 				}
+				return;
+			}
+
+			if (result.type === 'failure') {
+				const data = result.data as { message?: string } | undefined;
+				toast.error(data?.message ?? 'Something went wrong.');
+				return;
+			}
+
+			if (result.type === 'error') {
+				toast.error('Something went wrong.');
 			}
 		};
 	};
@@ -262,8 +266,6 @@
 </script>
 
 {#if browser && show}
-	<FormToast message={toastMessage} variant={toastVariant} token={toastMessage ?? ''} />
-
 	<div class="bottom-sheet-root" class:bottom-sheet-root--open={visible}>
 		<button
 			type="button"
@@ -436,14 +438,14 @@
 
 					<div class="mt-6 space-y-3">
 						{#if canJoin}
-							<form method="POST" action="?/join" use:enhance={enhanceAction}>
+							<form method="POST" action="/sessions?/join" use:enhance={enhanceAction}>
 								<input type="hidden" name="session_id" value={session.id} />
 								<SubmitButton loading={actionLoading}>Join session</SubmitButton>
 							</form>
 						{/if}
 
 						{#if canCancel}
-							<form method="POST" action="?/cancel" use:enhance={enhanceAction}>
+							<form method="POST" action="/sessions?/cancel" use:enhance={enhanceAction}>
 								<input type="hidden" name="session_id" value={session.id} />
 								<SubmitButton variant="secondary" loading={actionLoading}>
 									Cancel join
@@ -457,7 +459,7 @@
 						{/if}
 
 						{#if canLeave}
-							<form method="POST" action="?/leave" use:enhance={enhanceAction}>
+							<form method="POST" action="/sessions?/leave" use:enhance={enhanceAction}>
 								<input type="hidden" name="session_id" value={session.id} />
 								<SubmitButton variant="secondary" loading={actionLoading}>
 									Leave session

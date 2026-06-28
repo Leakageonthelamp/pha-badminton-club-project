@@ -3,6 +3,8 @@ import { haversineDistanceKm, type StoredUserLocation } from '@repo/ui/geolocati
 
 export type SessionWithDistance = SessionListItem & { distanceKm: number | null };
 
+export const FEATURED_SESSIONS_LIMIT = 3;
+
 export const sessionsWithDistance = (
 	sessions: SessionListItem[],
 	userLocation: StoredUserLocation | null
@@ -36,3 +38,9 @@ export const sessionsWithDistance = (
 
 	return mapped.sort(byStart);
 };
+
+export const featuredSessions = (
+	sessions: SessionListItem[],
+	userLocation: StoredUserLocation | null,
+	limit = FEATURED_SESSIONS_LIMIT
+): SessionWithDistance[] => sessionsWithDistance(sessions, userLocation).slice(0, limit);

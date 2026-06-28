@@ -7,6 +7,7 @@ const clubs: ClubPublic[] = [
 		id: 'a',
 		name: 'Alpha',
 		description: '',
+		venue_name: null,
 		latitude: 13.7563,
 		longitude: 100.5018
 	},
@@ -14,6 +15,7 @@ const clubs: ClubPublic[] = [
 		id: 'b',
 		name: 'Bravo',
 		description: '',
+		venue_name: null,
 		latitude: 13.73,
 		longitude: 100.52
 	},
@@ -21,6 +23,7 @@ const clubs: ClubPublic[] = [
 		id: 'c',
 		name: 'Charlie',
 		description: '',
+		venue_name: null,
 		latitude: null,
 		longitude: null
 	}

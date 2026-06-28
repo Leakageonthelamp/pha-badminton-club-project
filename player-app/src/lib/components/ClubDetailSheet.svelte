@@ -16,19 +16,24 @@
 		type ClubAdminPublic,
 		type ClubDetail,
 		type ClubPublic,
+		type ClubSessionPublic,
 		type ClubShuttlePublic
 	} from '$lib/types/club';
+	import { sessionPlayerStatusLabel } from '$lib/types/session';
+	import { formatDateTime } from '@repo/ui/datetime';
 
 	let {
 		open = false,
 		clubId = null,
 		preview = null,
-		onClose
+		onClose,
+		onSessionSelect
 	}: {
 		open?: boolean;
 		clubId?: string | null;
 		preview?: ClubPublic | null;
 		onClose: () => void;
+		onSessionSelect?: (sessionId: string) => void;
 	} = $props();
 
 	let show = $state(false);
@@ -38,6 +43,8 @@
 	let club = $state<ClubPublic | null>(null);
 	let admins = $state<ClubAdminPublic[]>([]);
 	let shuttles = $state<ClubShuttlePublic[]>([]);
+	let openingSessions = $state<ClubSessionPublic[]>([]);
+	let upcomingSessions = $state<ClubSessionPublic[]>([]);
 	let panelEl = $state<HTMLDivElement | null>(null);
 	let dragOffset = $state(0);
 	let dragging = $state(false);
@@ -157,6 +164,23 @@
 			: null
 	);
 
+	const venueName = $derived(club?.venue_name ?? preview?.venue_name ?? null);
+	const hasSessions = $derived(openingSessions.length > 0 || upcomingSessions.length > 0);
+
+	const sessionMeta = (session: ClubSessionPublic) => {
+		const parts = [formatDateTime(session.start_at)];
+		if (session.my_membership) {
+			parts.push(sessionPlayerStatusLabel(session.my_membership.status));
+		} else {
+			parts.push(`${session.waiting_count}/${session.max_players} spots`);
+		}
+		return parts.join(' · ');
+	};
+
+	const selectSession = (sessionId: string) => {
+		onSessionSelect?.(sessionId);
+	};
+
 	$effect(() => {
 		if (!browser) return;
 
@@ -168,6 +192,8 @@
 				club = null;
 				admins = [];
 				shuttles = [];
+				openingSessions = [];
+				upcomingSessions = [];
 				loadError = null;
 				loading = false;
 			}, 240);
@@ -180,6 +206,8 @@
 		club = preview;
 		admins = [];
 		shuttles = [];
+		openingSessions = [];
+		upcomingSessions = [];
 		loading = true;
 
 		const frame = window.requestAnimationFrame(() => {
@@ -202,6 +230,8 @@
 				club = detail.club;
 				admins = detail.admins ?? [];
 				shuttles = detail.shuttles ?? [];
+				openingSessions = detail.openingSessions ?? [];
+				upcomingSessions = detail.upcomingSessions ?? [];
 			})
 			.catch((err) => {
 				if (cancelled) return;
@@ -288,8 +318,13 @@
 					<h3 class="text-base font-semibold text-slate-900">Venue</h3>
 					{#if loading}
 						<div class="mt-3 app-skeleton h-4 w-40"></div>
+					{:else if venueName}
+						<p class="mt-2 text-sm font-medium text-slate-900">{venueName}</p>
+					{/if}
+					{#if loading}
+						<div class="mt-3 app-skeleton h-4 w-52"></div>
 					{:else if hasLocation && googleMapsUrl && appleMapsUrl}
-						<p class="mt-1 text-sm text-slate-600">Get directions to this club on the map.</p>
+						<p class="mt-2 text-sm text-slate-600">Get directions on the map.</p>
 						<div class="mt-3 flex flex-wrap gap-x-4 gap-y-2">
 							<a
 								href={googleMapsUrl}
@@ -308,8 +343,81 @@
 								Open in Apple Maps
 							</a>
 						</div>
-					{:else}
+					{:else if !venueName}
 						<p class="mt-2 text-sm text-slate-500">Venue location has not been set yet.</p>
+					{/if}
+				</div>
+
+				<div class="mt-4 rounded-2xl border border-slate-200 bg-white p-4" aria-busy={loading}>
+					<h3 class="text-base font-semibold text-slate-900">Sessions</h3>
+					<p class="mt-1 text-sm text-slate-600">Open and upcoming games at this club.</p>
+
+					{#if loading}
+						<ul
+							class="mt-4 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200"
+							aria-label="Loading sessions"
+						>
+							{#each [0, 1] as row (row)}
+								<li class="bg-white px-4 py-3">
+									<div class="app-skeleton h-4 w-40"></div>
+									<div class="app-skeleton mt-2 h-3 w-56"></div>
+								</li>
+							{/each}
+						</ul>
+					{:else if loadError}
+						<p class="mt-4 text-sm text-red-600">{loadError}</p>
+					{:else if !hasSessions}
+						<p class="mt-4 text-sm text-slate-500">No open or upcoming sessions yet.</p>
+					{:else}
+						{#if openingSessions.length > 0}
+							<p class="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+								Open now
+							</p>
+							<ul
+								class="mt-2 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200"
+							>
+								{#each openingSessions as session (session.id)}
+									<li>
+										<button
+											type="button"
+											class="w-full bg-white px-4 py-3 text-left transition hover:bg-slate-50"
+											onclick={() => selectSession(session.id)}
+										>
+											<p class="font-medium text-slate-900">{session.name}</p>
+											<p class="mt-1 text-sm text-slate-600">{sessionMeta(session)}</p>
+											{#if session.venue_name}
+												<p class="mt-1 text-xs text-slate-500">{session.venue_name}</p>
+											{/if}
+										</button>
+									</li>
+								{/each}
+							</ul>
+						{/if}
+
+						{#if upcomingSessions.length > 0}
+							<p class="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+								Upcoming
+							</p>
+							<ul
+								class="mt-2 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200"
+							>
+								{#each upcomingSessions as session (session.id)}
+									<li>
+										<button
+											type="button"
+											class="w-full bg-white px-4 py-3 text-left transition hover:bg-slate-50"
+											onclick={() => selectSession(session.id)}
+										>
+											<p class="font-medium text-slate-900">{session.name}</p>
+											<p class="mt-1 text-sm text-slate-600">{sessionMeta(session)}</p>
+											{#if session.venue_name}
+												<p class="mt-1 text-xs text-slate-500">{session.venue_name}</p>
+											{/if}
+										</button>
+									</li>
+								{/each}
+							</ul>
+						{/if}
 					{/if}
 				</div>
 

@@ -32,7 +32,7 @@
 	<AppCard class="space-y-4">
 		<form
 			method="POST"
-			action="?/register"
+			action="/register?/register"
 			class="space-y-4"
 			use:enhance={whileSubmitting((v) => (registerLoading = v))}
 		>

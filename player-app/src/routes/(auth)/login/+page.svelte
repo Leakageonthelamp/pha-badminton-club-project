@@ -34,7 +34,7 @@
 	</DashboardHero>
 
 	<AppCard class="space-y-4">
-		<form method="POST" action="?/login" class="space-y-4" use:enhance={whileSubmitting((v) => (loginLoading = v))}>
+		<form method="POST" action="/login?/login" class="space-y-4" use:enhance={whileSubmitting((v) => (loginLoading = v))}>
 			<IdentifierField
 				value={form?.values?.identifier ?? ''}
 				serverError={form?.error?.identifier?.[0] ?? null}
@@ -48,7 +48,7 @@
 
 		<div class="space-y-3 border-t border-slate-100 pt-4">
 			<p class="text-center text-sm text-slate-500">Or continue with</p>
-			<form method="POST" action="?/oauth" onsubmit={() => (googleLoading = true)}>
+			<form method="POST" action="/login?/oauth" onsubmit={() => (googleLoading = true)}>
 				<input type="hidden" name="provider" value="google" />
 				<SubmitButton
 					variant="secondary"
@@ -60,7 +60,7 @@
 					Continue with Google
 				</SubmitButton>
 			</form>
-			<form method="POST" action="?/oauth" onsubmit={() => (facebookLoading = true)}>
+			<form method="POST" action="/login?/oauth" onsubmit={() => (facebookLoading = true)}>
 				<input type="hidden" name="provider" value="facebook" />
 				<SubmitButton variant="secondary" loading={facebookLoading} loadingLabel="Connecting…">
 					<FacebookIcon />

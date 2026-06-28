@@ -2,6 +2,7 @@ export type ClubPublic = {
 	id: string;
 	name: string;
 	description: string;
+	venue_name: string | null;
 	latitude: number | null;
 	longitude: number | null;
 };
@@ -23,10 +24,27 @@ export type ClubShuttlePublic = {
 	number_per_box: number;
 };
 
+import type { SessionPlayerMembership, SessionStatus } from '$lib/types/session';
+
+export type ClubSessionPublic = {
+	id: string;
+	name: string;
+	status: SessionStatus;
+	start_at: string;
+	end_at: string;
+	venue_name: string | null;
+	max_players: number;
+	waiting_count: number;
+	queued_count: number;
+	my_membership: SessionPlayerMembership | null;
+};
+
 export type ClubDetail = {
 	club: ClubPublic;
 	admins: ClubAdminPublic[];
 	shuttles: ClubShuttlePublic[];
+	openingSessions: ClubSessionPublic[];
+	upcomingSessions: ClubSessionPublic[];
 };
 
 export const shuttlePricePerEach = (

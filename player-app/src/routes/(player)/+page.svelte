@@ -2,20 +2,26 @@
 	import { browser } from '$app/environment';
 	import { invalidate } from '$app/navigation';
 	import ClubDetailSheet from '$lib/components/ClubDetailSheet.svelte';
+	import SessionDetailSheet from '$lib/components/SessionDetailSheet.svelte';
 	import { clubsWithDistance } from '$lib/clubs/nearby';
-	import RefreshIcon from '@repo/ui/icons/RefreshIcon.svelte';
+	import { featuredSessions } from '$lib/sessions/nearby';
+	import ActionRowLink from '@repo/ui/components/ActionRowLink.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import DashboardTile from '@repo/ui/components/DashboardTile.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
 	import BuildingIcon from '@repo/ui/icons/BuildingIcon.svelte';
 	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
+	import RefreshIcon from '@repo/ui/icons/RefreshIcon.svelte';
+	import { formatDateTime } from '@repo/ui/datetime';
 	import {
 		formatDistanceKm,
 		loadStoredUserLocation,
 		USER_LOCATION_STORED_EVENT
 	} from '@repo/ui/geolocation';
 	import { isRichTextEmpty, richTextExcerpt } from '@repo/ui/richText';
+	import { sessionPlayerStatusLabel } from '$lib/types/session';
 	import type { ClubPublic } from '$lib/types/club';
+	import type { SessionListItem } from '$lib/types/session';
 	import type { LayoutData } from '../$types';
 	import type { PageData } from './$types';
 
@@ -23,9 +29,12 @@
 
 	let userLocation = $state(loadStoredUserLocation());
 	const clubs = $derived(clubsWithDistance(data.clubs ?? [], userLocation));
+	const featured = $derived(featuredSessions(data.sessions ?? [], userLocation));
 	const sortedByDistance = $derived(userLocation !== null);
 	const profileName = $derived(data.profile?.display_name ?? 'Player');
 	const clubCountLabel = $derived(`${clubs.length} club${clubs.length === 1 ? '' : 's'}`);
+	const totalSessions = $derived(data.sessions?.length ?? 0);
+	const hasMoreSessions = $derived(totalSessions > featured.length);
 	const sectionTitle = $derived(sortedByDistance ? 'Nearby clubs' : 'Clubs');
 	const sectionMeta = $derived(
 		clubs.length === 0
@@ -36,30 +45,67 @@
 				? `${clubCountLabel} · nearest first`
 				: `${clubCountLabel} · A–Z`
 	);
+	const featuredMeta = $derived(
+		featured.length === 0
+			? 'Upcoming games appear here once clubs schedule them'
+			: sortedByDistance
+				? 'Nearest first · tap to view and join'
+				: 'Soonest first · tap to view and join'
+	);
 
-	let sheetOpen = $state(false);
+	let clubSheetOpen = $state(false);
 	let selectedClub = $state<ClubPublic | null>(null);
+	let sessionSheetOpen = $state(false);
+	let selectedSession = $state<SessionListItem | null>(null);
+	let sessionSheetId = $state<string | null>(null);
 	let refreshing = $state(false);
 
 	const openClub = (club: ClubPublic) => {
 		selectedClub = club;
-		sheetOpen = true;
+		clubSheetOpen = true;
 	};
 
-	const closeSheet = () => {
-		sheetOpen = false;
+	const closeClubSheet = () => {
+		clubSheetOpen = false;
 		selectedClub = null;
 	};
 
-	const refreshClubs = async () => {
+	const openSession = (session: SessionListItem) => {
+		sessionSheetId = null;
+		selectedSession = session;
+		sessionSheetOpen = true;
+	};
+
+	const closeSessionSheet = () => {
+		sessionSheetOpen = false;
+		selectedSession = null;
+		sessionSheetId = null;
+	};
+
+	const openSessionFromClub = (sessionId: string) => {
+		closeClubSheet();
+		selectedSession = null;
+		sessionSheetId = sessionId;
+		sessionSheetOpen = true;
+	};
+
+	const refreshDashboard = async () => {
 		if (refreshing) return;
 
 		refreshing = true;
 		try {
-			await invalidate('app:clubs');
+			await Promise.all([invalidate('app:clubs'), invalidate('app:sessions')]);
 		} finally {
 			refreshing = false;
 		}
+	};
+
+	const sessionDescription = (session: SessionListItem) => {
+		const parts = [session.club?.name, formatDateTime(session.start_at)].filter(Boolean);
+		if (session.my_membership) {
+			parts.push(sessionPlayerStatusLabel(session.my_membership.status));
+		}
+		return parts.join(' · ');
 	};
 
 	$effect(() => {
@@ -84,39 +130,32 @@
 		eyebrow="Welcome back"
 		title={profileName}
 		tag={data.profile?.tag}
-		subtitle="Find clubs and join sessions near you."
+		subtitle="Join upcoming sessions or explore clubs near you."
 	>
+		{#if featured.length > 0}
+			<span class="app-hero-stat">{featured.length} featured</span>
+		{/if}
 		{#if clubs.length > 0}
 			<span class="app-hero-stat">{clubCountLabel}</span>
-			{#if sortedByDistance}
-				<span class="app-hero-stat app-hero-stat--success">Sorted by distance</span>
-			{/if}
+		{/if}
+		{#if sortedByDistance}
+			<span class="app-hero-stat app-hero-stat--success">Sorted by distance</span>
 		{/if}
 	</DashboardHero>
-
-	<div class="grid grid-cols-2 gap-3">
-		<DashboardTile
-			href="/sessions"
-			title="Sessions"
-			description="Find and join upcoming games"
-			icon={LayersIcon}
-			accent="violet"
-		/>
-	</div>
 
 	<div class="space-y-4">
 		<header class="app-section-header">
 			<div class="min-w-0">
-				<h2 class="app-section-title">{sectionTitle}</h2>
-				<p class="app-section-meta">{sectionMeta}</p>
+				<h2 class="app-section-title">Featured sessions</h2>
+				<p class="app-section-meta">{featuredMeta}</p>
 			</div>
 			<button
 				type="button"
 				class="app-section-action"
 				disabled={refreshing}
-				aria-label="Refresh clubs"
+				aria-label="Refresh dashboard"
 				aria-busy={refreshing}
-				onclick={refreshClubs}
+				onclick={refreshDashboard}
 			>
 				{#if refreshing}
 					<span
@@ -128,6 +167,42 @@
 				{/if}
 				Refresh
 			</button>
+		</header>
+
+		{#if featured.length === 0}
+			<EmptyState message="No upcoming sessions yet. Check back soon or browse clubs below." />
+		{:else}
+			<div class="grid grid-cols-1 gap-3">
+				{#each featured as session (session.id)}
+					<DashboardTile
+						title={session.name}
+						description={sessionDescription(session)}
+						icon={LayersIcon}
+						accent="violet"
+						badge={session.distanceKm !== null ? formatDistanceKm(session.distanceKm) : undefined}
+						onclick={() => openSession(session)}
+					/>
+				{/each}
+			</div>
+		{/if}
+
+		<ActionRowLink
+			href="/sessions"
+			title="Browse all sessions"
+			description={hasMoreSessions
+				? `View all ${totalSessions} upcoming sessions`
+				: 'See the full sessions list'}
+			icon={LayersIcon}
+			accent="indigo"
+		/>
+	</div>
+
+	<div class="space-y-4">
+		<header class="app-section-header">
+			<div class="min-w-0">
+				<h2 class="app-section-title">{sectionTitle}</h2>
+				<p class="app-section-meta">{sectionMeta}</p>
+			</div>
 		</header>
 
 		{#if clubs.length === 0}
@@ -150,9 +225,17 @@
 	</div>
 </section>
 
+<SessionDetailSheet
+	open={sessionSheetOpen}
+	sessionId={sessionSheetId ?? selectedSession?.id ?? null}
+	preview={selectedSession}
+	onClose={closeSessionSheet}
+/>
+
 <ClubDetailSheet
-	open={sheetOpen}
+	open={clubSheetOpen}
 	clubId={selectedClub?.id ?? null}
 	preview={selectedClub}
-	onClose={closeSheet}
+	onClose={closeClubSheet}
+	onSessionSelect={openSessionFromClub}
 />

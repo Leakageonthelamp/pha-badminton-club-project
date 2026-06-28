@@ -3,7 +3,6 @@
 	import { invalidate } from '$app/navigation';
 	import SessionDetailSheet from '$lib/components/SessionDetailSheet.svelte';
 	import { sessionsWithDistance } from '$lib/sessions/nearby';
-	import FormToast from '@repo/ui/components/FormToast.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import DashboardTile from '@repo/ui/components/DashboardTile.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
@@ -18,9 +17,9 @@
 	import { sessionPlayerStatusLabel } from '$lib/types/session';
 	import type { SessionListItem } from '$lib/types/session';
 	import type { LayoutData } from '../$types';
-	import type { ActionData, PageData } from './$types';
+	import type { PageData } from './$types';
 
-	let { data, form }: { data: PageData & LayoutData; form: ActionData } = $props();
+	let { data }: { data: PageData & LayoutData } = $props();
 
 	let userLocation = $state(loadStoredUserLocation());
 	const sessions = $derived(sessionsWithDistance(data.sessions ?? [], userLocation));
@@ -38,9 +37,6 @@
 	let sheetOpen = $state(false);
 	let selectedSession = $state<SessionListItem | null>(null);
 	let refreshing = $state(false);
-
-	const toastMessage = $derived(form?.message ?? null);
-	const toastVariant = $derived(form?.success ? 'success' : 'error');
 
 	const openSession = (session: SessionListItem) => {
 		selectedSession = session;
@@ -86,8 +82,6 @@
 		};
 	});
 </script>
-
-<FormToast message={toastMessage} variant={toastVariant} token={toastMessage ?? ''} />
 
 <section class="space-y-6">
 	<DashboardHero
@@ -151,6 +145,5 @@
 	open={sheetOpen}
 	sessionId={selectedSession?.id ?? null}
 	preview={selectedSession}
-	{form}
 	onClose={closeSheet}
 />

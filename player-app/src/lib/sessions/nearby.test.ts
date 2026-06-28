@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sessionsWithDistance } from './nearby';
+import { featuredSessions, sessionsWithDistance } from './nearby';
 import type { SessionListItem } from '$lib/types/session';
 
 const sessions: SessionListItem[] = [
@@ -100,5 +100,12 @@ describe('sessionsWithDistance', () => {
 		expect(sorted[1]?.distanceKm).toBeGreaterThan(0);
 		expect(sorted[2]?.id).toBe('c');
 		expect(sorted[2]?.distanceKm).toBeNull();
+	});
+});
+
+describe('featuredSessions', () => {
+	it('returns the top N sessions after distance sort', () => {
+		const featured = featuredSessions(sessions, null, 2);
+		expect(featured.map((s) => s.id)).toEqual(['c', 'b']);
 	});
 });
