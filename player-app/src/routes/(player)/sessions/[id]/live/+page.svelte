@@ -14,6 +14,7 @@
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
 	import BuildingIcon from '@repo/ui/icons/BuildingIcon.svelte';
+	import HomeIcon from '@repo/ui/icons/HomeIcon.svelte';
 	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
 	import { formatDateTime, formatUptime } from '@repo/ui/datetime';
 	import { formatThb, paymentStatusLabel } from '@repo/ui/payments';
@@ -62,7 +63,11 @@
 		return formatUptime(idleSince, nowMs);
 	});
 	const showPaymentModal = $derived(
-		shouldShowPaymentModal(uiState, data.myPayment?.status ?? null)
+		shouldShowPaymentModal(
+			uiState,
+			data.myPayment?.status ?? null,
+			session.status === 'closed' || session.my_membership?.status === 'left'
+		)
 	);
 
 	const sessionDurationLabel = $derived.by(() => {
@@ -91,6 +96,26 @@
 		}
 		return parts.join(' · ');
 	});
+
+	const summaryCourtFee = $derived(data.myPayment?.total_amount ?? data.perPlayerCost);
+	const summaryPaymentStatus = $derived(data.myPayment?.status ?? null);
+	const summaryPaymentBadgeClass = $derived.by(() => {
+		switch (summaryPaymentStatus) {
+			case 'approved':
+				return 'bg-emerald-100 text-emerald-800 ring-emerald-200';
+			case 'submitted':
+				return 'bg-sky-100 text-sky-800 ring-sky-200';
+			case 'pending':
+				return 'bg-amber-100 text-amber-900 ring-amber-200';
+			default:
+				return 'bg-slate-100 text-slate-700 ring-slate-200';
+		}
+	});
+	const summaryHeadline = $derived(
+		session.my_membership?.status === 'left' && data.myLeaveRequest?.status === 'approved'
+			? 'You left early — all settled'
+			: 'Session complete'
+	);
 
 	$effect(() => {
 		if (!browser) return;
@@ -169,7 +194,7 @@
 
 <section class="space-y-6">
 	<DashboardHero
-		eyebrow="Live session"
+		eyebrow={uiState === 'summary' ? 'Wrap-up' : 'Live session'}
 		title={session.name}
 		subtitle={session.club?.name ?? 'Session'}
 	>
@@ -177,6 +202,9 @@
 			<span class="rounded-full px-2 py-0.5 text-xs font-medium {sessionStatusBadgeClass(session.status)}">
 				{sessionStatusLabel(session.status)}
 			</span>
+			{#if uiState === 'summary'}
+				<span class="app-hero-stat app-hero-stat--success">Done</span>
+			{/if}
 		</div>
 	</DashboardHero>
 
@@ -236,23 +264,111 @@
 	<FormToast message={toastMessage} variant={toastVariant} />
 
 	{#if uiState === 'summary'}
-		<AppCard class="space-y-4">
-			<SectionHeading title="Session summary" />
-			<p class="text-sm text-slate-600">
-				Your session is complete. Court fee
-				{#if data.myPayment}
-					of {formatThb(data.myPayment.total_amount)} was {paymentStatusLabel(data.myPayment.status).toLowerCase()}.
-				{:else}
-					was {formatThb(data.perPlayerCost)}.
-				{/if}
-			</p>
-			<p class="text-sm text-slate-600">
-				{formatDateTime(session.start_at)} – {formatDateTime(session.end_at)}
-			</p>
-			<button type="button" class="app-btn-primary w-full" onclick={() => goto('/')}>
-				Back to home
-			</button>
-		</AppCard>
+		<section
+			class="overflow-hidden rounded-3xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50 via-white to-brand-50 shadow-sm ring-1 ring-emerald-100/80"
+		>
+			<div class="relative px-4 pb-5 pt-8 text-center sm:px-6">
+				<div
+					class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 shadow-sm ring-4 ring-white"
+					aria-hidden="true"
+				>
+					<svg
+						class="h-8 w-8 text-emerald-600"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2.5"
+					>
+						<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+					</svg>
+				</div>
+				<h2 class="mt-4 text-xl font-bold tracking-tight text-slate-900">{summaryHeadline}</h2>
+				<p class="mt-2 text-sm leading-relaxed text-slate-600">
+					Thanks for playing{session.club?.name ? ` at ${session.club.name}` : ''}. Here is your
+					session recap.
+				</p>
+			</div>
+
+			<div
+				class="grid gap-4 border-y border-emerald-100/80 bg-white/70 px-4 py-5 sm:grid-cols-[1fr_auto_1fr_auto_1fr]"
+			>
+				<div>
+					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600">Start</p>
+					<p class="mt-1 text-sm font-semibold text-slate-900 sm:text-base">
+						{formatDateTime(session.start_at)}
+					</p>
+				</div>
+				<div class="hidden self-center sm:block" aria-hidden="true">
+					<div class="h-10 w-px bg-emerald-200"></div>
+				</div>
+				<div
+					class="rounded-2xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 shadow-sm ring-1 ring-emerald-100/80"
+				>
+					<p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Duration</p>
+					<p class="mt-1 text-lg font-semibold text-emerald-900">{sessionDurationLabel}</p>
+				</div>
+				<div class="hidden self-center sm:block" aria-hidden="true">
+					<div class="h-10 w-px bg-emerald-200"></div>
+				</div>
+				<div class="sm:text-right">
+					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600">End</p>
+					<p class="mt-1 text-sm font-semibold text-slate-900 sm:text-base">
+						{formatDateTime(session.end_at)}
+					</p>
+				</div>
+			</div>
+
+			<div class="grid grid-cols-2 gap-3 p-4 sm:p-6">
+				<div class="app-history-stat col-span-2 border-emerald-100/80 bg-white/90">
+					<p class="app-history-stat-label">Court fee</p>
+					<div class="mt-1.5 flex flex-wrap items-center gap-2">
+						<p class="text-2xl font-bold tabular-nums text-slate-900">
+							{formatThb(summaryCourtFee)}
+						</p>
+						{#if summaryPaymentStatus}
+							<span
+								class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 {summaryPaymentBadgeClass}"
+							>
+								{paymentStatusLabel(summaryPaymentStatus)}
+							</span>
+						{/if}
+					</div>
+					<p class="app-history-stat-hint">
+						{#if summaryPaymentStatus === 'approved'}
+							Payment confirmed — you are all set.
+						{:else if summaryPaymentStatus === 'submitted'}
+							Waiting for admin to confirm your transfer.
+						{:else if summaryPaymentStatus === 'pending'}
+							Complete your PromptPay transfer if you have not already.
+						{:else}
+							Your share for this session.
+						{/if}
+					</p>
+				</div>
+
+				<div class="app-history-stat">
+					<p class="app-history-stat-label">Venue</p>
+					<p class="app-history-stat-value text-base leading-snug">{session.venue_name ?? '—'}</p>
+				</div>
+
+				<div class="app-history-stat">
+					<p class="app-history-stat-label">Courts</p>
+					<p class="app-history-stat-value">{session.court_count}</p>
+					<p class="app-history-stat-hint">
+						{formatThb(session.court_fee_per_hour)}/hr
+					</p>
+				</div>
+			</div>
+
+			<div class="border-t border-emerald-100/80 bg-white/50 px-4 py-4 sm:px-6">
+				<button type="button" class="app-btn-primary w-full" onclick={() => goto('/')}>
+					<span class="inline-flex items-center justify-center gap-2">
+						<HomeIcon class="h-5 w-5" />
+						Back to home
+					</span>
+				</button>
+			</div>
+		</section>
 	{:else}
 		<AppCard class="space-y-4">
 			<SectionHeading title="Your cost" />

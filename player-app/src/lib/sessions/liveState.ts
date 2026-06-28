@@ -48,9 +48,12 @@ export const deriveLiveSessionUiState = ({
 /** Payment QR modal — only while the player still needs to pay or wait for admin to confirm. */
 export const shouldShowPaymentModal = (
 	uiState: LiveSessionUiState,
-	paymentStatus: PaymentStatus | null
+	paymentStatus: PaymentStatus | null,
+	sessionEnded = false
 ): boolean =>
-	paymentStatus !== 'approved' && (uiState === 'payment_due' || uiState === 'payment_submitted');
+	!sessionEnded &&
+	paymentStatus !== 'approved' &&
+	(uiState === 'payment_due' || uiState === 'payment_submitted');
 
 export const canRequestEarlyLeave = (
 	membership: SessionPlayerMembership | null,

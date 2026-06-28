@@ -147,6 +147,19 @@ export const beginSessionSettlement = async (
 	return { ok: true };
 };
 
+export const endSessionEarly = async (
+	supabase: SupabaseClient,
+	sessionId: string
+): Promise<{ ok: true } | { ok: false; message: string }> => {
+	const { error } = await supabase.rpc('end_session_early', { p_session_id: sessionId });
+
+	if (error) {
+		return { ok: false, message: error.message };
+	}
+
+	return { ok: true };
+};
+
 export const closeSession = async (
 	supabase: SupabaseClient,
 	sessionId: string

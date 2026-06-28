@@ -35,6 +35,7 @@ const sessionListSelect = `
 	start_at,
 	end_at,
 	finished_at,
+	ended_early,
 	venue_name,
 	latitude,
 	longitude,

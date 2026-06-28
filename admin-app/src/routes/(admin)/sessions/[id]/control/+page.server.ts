@@ -5,6 +5,7 @@ import {
 	approveSessionLeave,
 	beginSessionSettlement,
 	closeSession,
+	endSessionEarly,
 	countActiveSessionPlayers,
 	loadSessionLeaveRequests,
 	loadSessionPayments,
@@ -185,6 +186,32 @@ export const actions = {
 		}
 
 		return { success: true, message: 'Settlement started for all active players.' };
+	},
+
+	endSessionEarly: async ({ params, locals: { supabase, user, appRole }, cookies }) => {
+		if (!user || !appRole) {
+			return fail(401, { message: 'Sign in required' });
+		}
+
+		const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
+		const session = await loadSessionDetail(supabase, params.id);
+
+		if (!session) {
+			return fail(404, { message: 'Session not found' });
+		}
+
+		try {
+			await assertCanManageClub(supabase, user.id, session.club_id, effectiveAppRole);
+		} catch {
+			return fail(403, { message: 'Club admin access required' });
+		}
+
+		const result = await endSessionEarly(supabase, session.id);
+		if (!result.ok) {
+			return fail(400, { message: result.message });
+		}
+
+		return { success: true, message: 'Session ended early. All players have been billed.' };
 	},
 
 	closeSession: async ({ params, locals: { supabase, user, appRole }, cookies }) => {

@@ -34,6 +34,7 @@
 
 	$effect(() => {
 		if (open) mounted = true;
+		else mounted = false;
 	});
 
 	$effect(() => {

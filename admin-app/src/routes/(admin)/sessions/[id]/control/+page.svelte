@@ -32,6 +32,7 @@
 	let nowMs = $state(Date.now());
 	let settlementModalOpen = $state(false);
 	let closeModalOpen = $state(false);
+	let endEarlyModalOpen = $state(false);
 	let actionLoading = $state<string | null>(null);
 	let feeActionLoading = $state<string | null>(null);
 
@@ -59,8 +60,10 @@
 	const paymentForPlayer = (userId: string) =>
 		data.payments.find((payment) => payment.user_id === userId) ?? null;
 
+	const endedOrReached = $derived(data.endReached || session.ended_early);
+
 	const canCloseSession = $derived(
-		data.endReached &&
+		endedOrReached &&
 			data.settlementStarted &&
 			data.allPaymentsApproved &&
 			data.allCancellationFeesResolved
@@ -83,6 +86,8 @@
 	);
 
 	const timeUntilEndLabel = $derived.by(() => {
+		if (session.ended_early) return 'Ended early';
+
 		const diff = new Date(session.end_at).getTime() - nowMs;
 		if (diff <= 0) return 'Session ended';
 		const totalMinutes = Math.ceil(diff / 60_000);
@@ -94,7 +99,7 @@
 	});
 
 	const workflowStep = $derived(
-		!data.settlementStarted ? 1 : !data.allPaymentsApproved ? 2 : data.endReached ? 3 : 2
+		!data.settlementStarted ? 1 : !data.allPaymentsApproved ? 2 : endedOrReached ? 3 : 2
 	);
 
 	const paymentBadgeClass = (status: PaymentStatus | null): string => {
@@ -137,6 +142,10 @@
 
 		if (data.endReached) {
 			return 'Sorted by longest idle first · scheduled end reached — start settlement to bill players';
+		}
+
+		if (session.ended_early) {
+			return 'Sorted by longest idle first · session ended early — confirm each payment below';
 		}
 
 		return `Sorted by longest idle first · settlement opens at ${formatDateTime(session.end_at)}`;
@@ -218,6 +227,7 @@
 				if (result.type === 'success') {
 					settlementModalOpen = false;
 					closeModalOpen = false;
+					endEarlyModalOpen = false;
 				}
 			};
 		};
@@ -238,7 +248,7 @@
 				<span class="h-1.5 w-1.5 animate-pulse rounded-full bg-current opacity-80"></span>
 				{sessionStatusLabel(session.status)}
 			</span>
-			<span class="app-hero-stat {data.endReached ? 'app-hero-stat--warn' : 'app-hero-stat--success'}">
+			<span class="app-hero-stat {endedOrReached ? 'app-hero-stat--warn' : 'app-hero-stat--success'}">
 				{timeUntilEndLabel}
 			</span>
 		</div>
@@ -651,9 +661,27 @@
 		<div>
 			<h2 class="app-section-title">Finish the session</h2>
 			<p class="app-section-meta">
-				Two actions, in order: bill everyone at end time, then close once every payment is confirmed.
+				Bill everyone at scheduled end, or end early if play finishes ahead of time — then close once
+				every payment is confirmed.
 			</p>
 		</div>
+
+		{#if session.ended_early}
+			<div class="rounded-xl border border-amber-200 bg-amber-50/70 px-3 py-2.5 text-sm text-amber-900">
+				<strong>Ended early.</strong> Every active player was billed
+				{formatThb(data.perPlayerCost)} (full court fee share). Confirm each PromptPay transfer below,
+				then close when all payments are approved.
+			</div>
+		{:else if session.status === 'in_progress' && !data.endReached && !data.settlementStarted}
+			<div class="rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5 text-sm text-slate-700">
+				<strong>End session now</strong> — use when play finishes before
+				{formatDateTime(session.end_at)}. Bills all {activePlayers.length} active player{activePlayers.length ===
+				1
+					? ''
+					: 's'} immediately at {formatThb(data.perPlayerCost)} each (full scheduled court share).
+				Players must pay before leaving; you confirm each transfer, then close. Cannot be undone.
+			</div>
+		{/if}
 
 		<ul class="space-y-2 text-sm text-slate-700">
 			<li class="flex gap-2">
@@ -666,7 +694,9 @@
 				</span>
 				<span>
 					<strong>Start settlement</strong>
-					{#if !data.endReached}
+					{#if session.ended_early}
+						— done (session ended early)
+					{:else if !data.endReached}
 						— available when the session reaches {formatDateTime(session.end_at)}
 					{:else if data.settlementStarted}
 						— done
@@ -695,7 +725,7 @@
 						1
 							? ''
 							: 's'}
-					{:else if !data.endReached}
+					{:else if !endedOrReached}
 						— available after scheduled end
 					{:else}
 						— ready when you are
@@ -705,11 +735,22 @@
 		</ul>
 
 		<div class="flex flex-col gap-2 sm:flex-row">
+			{#if session.status === 'in_progress' && !data.endReached && !data.settlementStarted}
+				<SubmitButton
+					type="button"
+					variant="secondary"
+					class="!w-auto sm:flex-1"
+					onclick={() => (endEarlyModalOpen = true)}
+				>
+					End session now
+				</SubmitButton>
+			{/if}
+
 			<SubmitButton
 				type="button"
 				variant="secondary"
 				class="!w-auto sm:flex-1"
-				disabled={!data.endReached || data.settlementStarted}
+				disabled={!data.endReached || data.settlementStarted || session.ended_early}
 				onclick={() => (settlementModalOpen = true)}
 			>
 				Start settlement
@@ -726,6 +767,47 @@
 		</div>
 	</AppCard>
 </section>
+
+{#if endEarlyModalOpen}
+	<AppModal
+		open={endEarlyModalOpen}
+		labelledBy="end-early-modal-title"
+		onClose={() => (endEarlyModalOpen = false)}
+	>
+		<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
+			<div class="border-b border-amber-200 bg-amber-50 px-4 py-4">
+				<h2 id="end-early-modal-title" class="text-lg font-semibold text-amber-900">
+					End session now?
+				</h2>
+				<p class="mt-2 text-sm text-amber-900">
+					This ends the session immediately and cannot be undone. All {activePlayers.length} active
+					player{activePlayers.length === 1 ? '' : 's'} will be billed
+					<strong>{formatThb(data.perPlayerCost)}</strong> each (full court fee share). They must pay
+					before leaving — you confirm each transfer here, then close the session.
+				</p>
+			</div>
+			<form
+				method="POST"
+				action="?/endSessionEarly"
+				class="flex flex-wrap justify-end gap-2 p-4"
+				use:enhance={handleAction('endEarly')}
+			>
+				<SubmitButton
+					type="button"
+					variant="secondary"
+					class="!w-auto"
+					disabled={actionLoading === 'endEarly'}
+					onclick={() => (endEarlyModalOpen = false)}
+				>
+					Cancel
+				</SubmitButton>
+				<SubmitButton loading={actionLoading === 'endEarly'} class="!w-auto">
+					End session now
+				</SubmitButton>
+			</form>
+		</div>
+	</AppModal>
+{/if}
 
 {#if settlementModalOpen}
 	<AppModal

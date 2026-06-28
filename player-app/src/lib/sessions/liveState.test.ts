@@ -47,6 +47,12 @@ describe('shouldShowPaymentModal', () => {
 		expect(shouldShowPaymentModal('payment_submitted', 'approved')).toBe(false);
 		expect(shouldShowPaymentModal('active', 'approved')).toBe(false);
 	});
+
+	it('closes when the session ends or the player has left', () => {
+		expect(shouldShowPaymentModal('summary', 'pending', true)).toBe(false);
+		expect(shouldShowPaymentModal('payment_due', 'pending', true)).toBe(false);
+		expect(shouldShowPaymentModal('payment_submitted', 'submitted', true)).toBe(false);
+	});
 });
 
 describe('canRequestEarlyLeave', () => {
