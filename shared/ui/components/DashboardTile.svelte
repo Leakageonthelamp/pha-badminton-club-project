@@ -11,6 +11,8 @@
 		badge,
 		secondaryBadge,
 		secondaryBadgeBrand = false,
+		tertiaryBadge,
+		tertiaryBadgeBrand = false,
 		accent = 'brand',
 		large = false
 	}: {
@@ -22,6 +24,8 @@
 		badge?: string;
 		secondaryBadge?: string;
 		secondaryBadgeBrand?: boolean;
+		tertiaryBadge?: string;
+		tertiaryBadgeBrand?: boolean;
 		accent?: DashboardIconAccent;
 		large?: boolean;
 	} = $props();
@@ -36,7 +40,7 @@
 		`mt-0.5 line-clamp-2 w-full text-xs leading-snug text-slate-500 ${large ? '' : 'min-h-8'}`
 	);
 	const iconSize = $derived(large ? 'lg' : 'md');
-	const hasBadges = $derived(Boolean(badge || secondaryBadge));
+	const hasBadges = $derived(Boolean(badge || secondaryBadge || tertiaryBadge));
 </script>
 
 {#snippet tileBody()}
@@ -55,6 +59,13 @@
 					class="app-tile-badge {secondaryBadgeBrand ? 'app-tile-badge--brand' : ''}"
 				>
 					{secondaryBadge}
+				</span>
+			{/if}
+			{#if tertiaryBadge}
+				<span
+					class="app-tile-badge {tertiaryBadgeBrand ? 'app-tile-badge--brand' : ''}"
+				>
+					{tertiaryBadge}
 				</span>
 			{/if}
 		</div>

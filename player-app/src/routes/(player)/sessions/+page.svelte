@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { invalidate } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	import SessionDetailSheet from '$lib/components/SessionDetailSheet.svelte';
 	import { sessionsWithDistance } from '$lib/sessions/nearby';
+	import { liveSessionHref, shouldOpenLiveSession } from '$lib/sessions/navigation';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import DashboardTile from '@repo/ui/components/DashboardTile.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
@@ -39,6 +41,11 @@
 	let refreshing = $state(false);
 
 	const openSession = (session: SessionListItem) => {
+		if (shouldOpenLiveSession(session)) {
+			void goto(liveSessionHref(session.id));
+			return;
+		}
+
 		selectedSession = session;
 		sheetOpen = true;
 	};

@@ -8,17 +8,31 @@
 		userId,
 		showClub = false,
 		limit,
-		viewAllHref = '/sessions'
+		viewAllHref = '/sessions',
+		eyebrow = 'Upcoming sessions',
+		title,
+		subtitle = 'Your next badminton sessions — tap to view details.',
+		emptyMessage = 'No upcoming sessions for this club.'
 	}: {
 		sessions: SessionListItem[];
 		userId?: string;
 		showClub?: boolean;
 		limit?: number;
 		viewAllHref?: string;
+		eyebrow?: string;
+		title?: string;
+		subtitle?: string;
+		emptyMessage?: string;
 	} = $props();
 
 	const visibleSessions = $derived(limit ? sessions.slice(0, limit) : sessions);
 	const hasMore = $derived(limit !== undefined && sessions.length > limit);
+	const panelTitle = $derived(
+		title ??
+			(sessions.length === 0
+				? 'Nothing scheduled yet'
+				: `${sessions.length} session${sessions.length === 1 ? '' : 's'} coming up`)
+	);
 </script>
 
 <section
@@ -26,23 +40,19 @@
 >
 	<div class="border-b border-brand-100/80 bg-brand-500/10 px-4 py-4 sm:px-6">
 		<div>
-			<p class="text-xs font-semibold uppercase tracking-wide text-brand-700">Upcoming sessions</p>
+			<p class="text-xs font-semibold uppercase tracking-wide text-brand-700">{eyebrow}</p>
 			<h2 class="mt-1 text-xl font-bold text-slate-900 sm:text-2xl">
-				{#if sessions.length === 0}
-					Nothing scheduled yet
-				{:else}
-					{sessions.length} session{sessions.length === 1 ? '' : 's'} coming up
-				{/if}
+				{panelTitle}
 			</h2>
 			<p class="mt-1 text-sm text-slate-600">
-				Your next badminton sessions — tap to view details.
+				{subtitle}
 			</p>
 		</div>
 	</div>
 
 	<div class="space-y-3 p-4 sm:p-6">
 		{#if visibleSessions.length === 0}
-			<EmptyState message="No upcoming sessions for this club." />
+			<EmptyState message={emptyMessage} />
 		{:else}
 			<div class="space-y-3">
 				{#each visibleSessions as session (session.id)}

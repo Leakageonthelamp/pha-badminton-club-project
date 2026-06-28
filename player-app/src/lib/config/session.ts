@@ -1,0 +1,1 @@
+export const SESSION_JOIN_CLOSE_LEAD_MINUTES = 30;

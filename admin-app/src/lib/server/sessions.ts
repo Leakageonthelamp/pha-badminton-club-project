@@ -148,6 +148,15 @@ export const sweepOverdueDraftSessions = async (
 	}
 };
 
+/** ponytail: lazy fallback when pg_cron is unavailable (local dev). */
+export const sweepStartedSessions = async (supabase: SupabaseClient): Promise<void> => {
+	const { error } = await supabase.rpc('start_due_sessions');
+
+	if (error) {
+		console.error('Failed to sweep started sessions', error);
+	}
+};
+
 export const loadShuttlesForClubs = async (
 	supabase: SupabaseClient,
 	clubIds: string[]

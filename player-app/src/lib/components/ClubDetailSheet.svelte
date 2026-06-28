@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import { goto } from '$app/navigation';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import RichTextDisplay from '@repo/ui/components/RichTextDisplay.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
@@ -20,6 +21,7 @@
 		type ClubShuttlePublic
 	} from '$lib/types/club';
 	import { sessionPlayerStatusLabel, sessionStatusLabel } from '$lib/types/session';
+	import { liveSessionHref, shouldOpenLiveSession } from '$lib/sessions/navigation';
 	import { formatDateTime } from '@repo/ui/datetime';
 
 	let {
@@ -177,8 +179,14 @@
 		return parts.join(' · ');
 	};
 
-	const selectSession = (sessionId: string) => {
-		onSessionSelect?.(sessionId);
+	const selectSession = (session: ClubSessionPublic) => {
+		if (shouldOpenLiveSession(session)) {
+			close();
+			void goto(liveSessionHref(session.id));
+			return;
+		}
+
+		onSessionSelect?.(session.id);
 	};
 
 	$effect(() => {
@@ -381,7 +389,7 @@
 										<button
 											type="button"
 											class="w-full bg-white px-4 py-3 text-left transition hover:bg-slate-50"
-											onclick={() => selectSession(session.id)}
+											onclick={() => selectSession(session)}
 										>
 											<p class="font-medium text-slate-900">{session.name}</p>
 											<p class="mt-1 text-sm text-slate-600">{sessionMeta(session)}</p>
@@ -406,7 +414,7 @@
 										<button
 											type="button"
 											class="w-full bg-white px-4 py-3 text-left transition hover:bg-slate-50"
-											onclick={() => selectSession(session.id)}
+											onclick={() => selectSession(session)}
 										>
 											<p class="font-medium text-slate-900">{session.name}</p>
 											<p class="mt-1 text-sm text-slate-600">{sessionMeta(session)}</p>

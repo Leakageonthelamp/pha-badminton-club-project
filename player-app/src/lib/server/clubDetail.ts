@@ -5,6 +5,7 @@ import type {
 	ClubShuttlePublic
 } from '$lib/types/club';
 import type { SessionPlayerMembership, SessionPlayerStatus } from '$lib/types/session';
+import { sweepStartedSessions } from '$lib/server/sessions';
 import { ensureSupabaseAuth } from '$lib/server/supabaseAuth';
 
 const loadClubAdmins = async (
@@ -169,6 +170,8 @@ const loadClubSessions = async (
 	clubId: string,
 	userId: string
 ): Promise<{ openingSessions: ClubSessionPublic[]; upcomingSessions: ClubSessionPublic[] }> => {
+	await sweepStartedSessions(supabase);
+
 	const now = new Date().toISOString();
 
 	const { data, error } = await supabase

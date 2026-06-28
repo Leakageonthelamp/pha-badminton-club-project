@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { invalidate } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	import ClubDetailSheet from '$lib/components/ClubDetailSheet.svelte';
 	import SessionDetailSheet from '$lib/components/SessionDetailSheet.svelte';
 	import { clubsWithDistance, formatOpenSessionBadge, openSessionCountByClub } from '$lib/clubs/nearby';
 	import { featuredSessions, myJoinedSessions } from '$lib/sessions/nearby';
+	import { liveSessionHref, shouldOpenLiveSession } from '$lib/sessions/navigation';
 	import ActionRowLink from '@repo/ui/components/ActionRowLink.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import DashboardTile from '@repo/ui/components/DashboardTile.svelte';
@@ -62,7 +64,6 @@
 
 	const joinedSessionDescription = (session: SessionListItem) => {
 		const parts = [
-			sessionStatusLabel(session.status),
 			session.club?.name,
 			formatDateTime(session.start_at),
 			`${session.waiting_count} waiting · ${session.queued_count} queued`
@@ -91,6 +92,11 @@
 	};
 
 	const openSession = (session: SessionListItem) => {
+		if (shouldOpenLiveSession(session)) {
+			void goto(liveSessionHref(session.id));
+			return;
+		}
+
 		sessionSheetId = null;
 		selectedSession = session;
 		sessionSheetOpen = true;
@@ -185,8 +191,10 @@
 						icon={LayersIcon}
 						accent="brand"
 						badge={session.distanceKm !== null ? formatDistanceKm(session.distanceKm) : undefined}
-						secondaryBadge={membershipBadge(session)}
-						secondaryBadgeBrand={session.my_membership?.status === 'confirmed'}
+						secondaryBadge={sessionStatusLabel(session.status)}
+						secondaryBadgeBrand={session.status === 'open' || session.status === 'in_progress'}
+						tertiaryBadge={membershipBadge(session)}
+						tertiaryBadgeBrand={session.my_membership?.status === 'confirmed'}
 						onclick={() => openSession(session)}
 					/>
 				{/each}

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	filterActiveSessions,
 	filterHistorySessions,
+	filterOngoingSessions,
 	filterUpcomingSessions,
 	isDraftOpenWindowOpen,
 	isHistorySession,
@@ -86,6 +87,18 @@ describe('session list filters', () => {
 
 		expect(sessions).toHaveLength(1);
 		expect(sessions[0]?.id).toBe('1');
+	});
+
+	it('excludes in_progress from upcoming and filters ongoing sessions', () => {
+		const sessions = [
+			baseSession({ id: '1', status: 'open' }),
+			baseSession({ id: '2', status: 'in_progress' }),
+			baseSession({ id: '3', status: 'closed' })
+		];
+
+		expect(isUpcomingSession(sessions[1]!)).toBe(false);
+		expect(filterUpcomingSessions(sessions).map((session) => session.id)).toEqual(['1']);
+		expect(filterOngoingSessions(sessions).map((session) => session.id)).toEqual(['2']);
 	});
 
 	it('allows opening a draft until start minus 1 hour', () => {

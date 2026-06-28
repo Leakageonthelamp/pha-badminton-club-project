@@ -10,7 +10,7 @@
 	import SettingsIcon from '@repo/ui/icons/SettingsIcon.svelte';
 	import { adminRoleHeroBadgeClass } from '$lib/adminRoleHero';
 	import { clubWorkspaceState } from '$lib/clubWorkspace.svelte';
-	import { filterSessionsByClub } from '$lib/sessions/list';
+	import { filterOngoingSessions, filterSessionsByClub, filterUpcomingSessions } from '$lib/sessions/list';
 	import { appRoleLabel, type AppRole } from '$lib/types/auth';
 	import type { LayoutData } from '../$types';
 	import type { PageData } from './$types';
@@ -30,6 +30,11 @@
 		activeClub
 			? filterSessionsByClub(data.upcomingSessions, activeClub.id)
 			: data.upcomingSessions
+	);
+	const ongoingSessions = $derived(
+		activeClub
+			? filterOngoingSessions(filterSessionsByClub(data.sessions ?? [], activeClub.id))
+			: filterOngoingSessions(data.sessions ?? [])
 	);
 </script>
 
@@ -62,6 +67,19 @@
 				</div>
 			</div>
 		{/if}
+
+		<UpcomingSessionsPanel
+			sessions={ongoingSessions}
+			userId={data.userId}
+			limit={5}
+			viewAllHref="/sessions"
+			eyebrow="Ongoing sessions"
+			title={ongoingSessions.length === 0
+				? 'Nothing in progress'
+				: `${ongoingSessions.length} session${ongoingSessions.length === 1 ? '' : 's'} live now`}
+			subtitle="Sessions currently in progress — tap to manage."
+			emptyMessage="No sessions in progress right now."
+		/>
 
 		<UpcomingSessionsPanel
 			sessions={upcomingSessions}

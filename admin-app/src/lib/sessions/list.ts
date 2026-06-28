@@ -22,12 +22,15 @@ export const isUpcomingSession = (session: SessionListItem, now = Date.now()): b
 		return false;
 	}
 
-	return (
-		session.status === 'open' ||
-		session.status === 'in_progress' ||
-		new Date(session.end_at).getTime() >= now
-	);
+	if (session.status === 'in_progress') {
+		return false;
+	}
+
+	return session.status === 'open' || new Date(session.end_at).getTime() >= now;
 };
+
+export const filterOngoingSessions = (sessions: SessionListItem[]): SessionListItem[] =>
+	sessions.filter((session) => session.status === 'in_progress');
 
 export const filterActiveSessions = (sessions: SessionListItem[]): SessionListItem[] =>
 	sessions.filter(isActiveSession);

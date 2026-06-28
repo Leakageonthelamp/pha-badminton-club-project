@@ -23,6 +23,10 @@ describe('back navigation', () => {
 		expect(getBackHref('/profile')).toBe('/');
 	});
 
+	it('resolves live session back to dashboard (no session detail route)', () => {
+		expect(getBackHref('/sessions/f9b2b4d6-5fa9-4183-90d2-6beb26af4429/live')).toBe('/');
+	});
+
 	it('detects forward and back transition direction', () => {
 		expect(getTransitionDirection('/login', '/register')).toBe('forward');
 		expect(getTransitionDirection('/register', '/login')).toBe('back');

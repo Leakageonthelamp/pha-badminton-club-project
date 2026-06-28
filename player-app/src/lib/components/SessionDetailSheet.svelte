@@ -17,6 +17,7 @@
 	} from '@repo/ui/geolocation';
 	import { formatDateTime } from '@repo/ui/datetime';
 	import type { SessionDetail, SessionListItem } from '$lib/types/session';
+	import { SESSION_JOIN_CLOSE_LEAD_MINUTES } from '$lib/config/session';
 	import {
 		formatThb,
 		matchTypeLabel,
@@ -173,7 +174,8 @@
 			!membership &&
 			!session.has_outstanding_fee &&
 			(session.status === 'open' || session.status === 'in_progress') &&
-			new Date(session.end_at).getTime() > Date.now()
+			Date.now() <
+				new Date(session.end_at).getTime() - SESSION_JOIN_CLOSE_LEAD_MINUTES * 60 * 1000
 	);
 	const canCancel = $derived(
 		membership?.status === 'waiting' || membership?.status === 'queued'

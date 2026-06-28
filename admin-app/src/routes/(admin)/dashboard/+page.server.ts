@@ -6,7 +6,7 @@ import {
 	shouldUseClubDashboard
 } from '$lib/server/adminDashboardMode';
 import { loadManagedClubs } from '$lib/server/clubAccess';
-import { loadSessionsForAdmin, sweepOverdueDraftSessions } from '$lib/server/sessions';
+import { loadSessionsForAdmin, sweepOverdueDraftSessions, sweepStartedSessions } from '$lib/server/sessions';
 import { filterUpcomingSessions } from '$lib/sessions/list';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
@@ -16,7 +16,7 @@ export const load: PageServerLoad = async ({
 	locals: { supabase, user, appRole }
 }) => {
 	if (!user || !appRole) {
-		return { profileName: '', upcomingSessions: [], userId: '', canCreate: false };
+		return { profileName: '', sessions: [], upcomingSessions: [], userId: '', canCreate: false };
 	}
 
 	const hasClubMembership =
@@ -36,6 +36,7 @@ export const load: PageServerLoad = async ({
 	const clubIds = managedClubs.map((club) => club.id);
 
 	await sweepOverdueDraftSessions(supabase, { clubIds });
+	await sweepStartedSessions(supabase);
 
 	const sessions = await loadSessionsForAdmin(supabase, {
 		appRole: effectiveAppRole,
@@ -51,6 +52,7 @@ export const load: PageServerLoad = async ({
 
 	return {
 		profileName: profile?.display_name ?? 'Club admin',
+		sessions,
 		upcomingSessions: filterUpcomingSessions(sessions),
 		userId: user.id,
 		canCreate: effectiveAppRole === 'club_admin'

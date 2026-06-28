@@ -339,6 +339,24 @@
 		</AppCard>
 	{/if}
 
+	{#if data.canControl}
+		<AppCard class="space-y-4 border-sky-200 bg-sky-50/60">
+			<div>
+				<h2 class="text-lg font-semibold text-sky-900">Session in progress</h2>
+				<p class="mt-1 text-sm text-sky-800">
+					Open session control to manage live play, courts, and participants.
+				</p>
+			</div>
+			<SubmitButton
+				type="button"
+				class="!w-auto"
+				onclick={() => goto(`/sessions/${session.id}/control`)}
+			>
+				Session control
+			</SubmitButton>
+		</AppCard>
+	{/if}
+
 	{#if showParticipantsAtTop}
 		{@render participantsSection()}
 	{/if}

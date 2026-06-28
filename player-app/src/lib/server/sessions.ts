@@ -194,10 +194,21 @@ export const hasOutstandingCancellationFee = async (
 	return (count ?? 0) > 0;
 };
 
+/** ponytail: lazy fallback when pg_cron is unavailable (local dev). */
+export const sweepStartedSessions = async (supabase: SupabaseClient): Promise<void> => {
+	const { error } = await supabase.rpc('start_due_sessions');
+
+	if (error) {
+		console.error('Failed to sweep started sessions', error);
+	}
+};
+
 export const loadUpcomingSessionsForPlayer = async (
 	supabase: SupabaseClient,
 	userId: string
 ): Promise<SessionListItem[]> => {
+	await sweepStartedSessions(supabase);
+
 	const now = new Date().toISOString();
 
 	const { data, error } = await supabase
@@ -242,6 +253,8 @@ export const loadSessionDetailForPlayer = async (
 	sessionId: string,
 	userId: string
 ): Promise<SessionDetail | null> => {
+	await sweepStartedSessions(supabase);
+
 	const { data, error } = await supabase
 		.from('sessions')
 		.select(sessionDetailSelect)

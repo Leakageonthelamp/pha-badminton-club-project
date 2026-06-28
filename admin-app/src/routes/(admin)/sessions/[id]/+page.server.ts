@@ -6,7 +6,7 @@ import {
 	loadSessionPlayers,
 	rejectSessionPlayer
 } from '$lib/server/sessionPlayers';
-import { loadSessionDetail, releaseActiveSessionPlayers, sweepOverdueDraftSessions } from '$lib/server/sessions';
+import { loadSessionDetail, releaseActiveSessionPlayers, sweepOverdueDraftSessions, sweepStartedSessions } from '$lib/server/sessions';
 import { draftOpenDeadlineMs, isDraftOpenWindowOpen, isSessionMutable } from '$lib/sessions/list';
 import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
@@ -30,6 +30,7 @@ export const load: PageServerLoad = async ({
 	}
 
 	await sweepOverdueDraftSessions(supabase, { clubIds: [initialSession.club_id] });
+	await sweepStartedSessions(supabase);
 
 	const session = (await loadSessionDetail(supabase, params.id)) ?? initialSession;
 
@@ -52,6 +53,7 @@ export const load: PageServerLoad = async ({
 		canManage &&
 		(session.status === 'draft' || session.status === 'open') &&
 		isSessionMutable(session.start_at);
+	const canControl = canManage && session.status === 'in_progress';
 
 	return {
 		session,
@@ -59,6 +61,7 @@ export const load: PageServerLoad = async ({
 		canManage,
 		canOpen,
 		canModify,
+		canControl,
 		draftOpenDeadline,
 		adminActionWindowOpen,
 		isSuperAdmin: effectiveAppRole === 'super_admin',

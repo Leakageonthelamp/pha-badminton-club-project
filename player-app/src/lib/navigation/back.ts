@@ -14,6 +14,11 @@ export const getBackHref = (pathname: string): string => {
 		return BACK_HREF[pathname];
 	}
 
+	// ponytail: player live page has no /sessions/[id] parent route
+	if (/^\/sessions\/[^/]+\/live$/.test(pathname)) {
+		return '/';
+	}
+
 	const segments = pathname.split('/').filter(Boolean);
 	if (segments.length > 1) {
 		return `/${segments.slice(0, -1).join('/')}`;
