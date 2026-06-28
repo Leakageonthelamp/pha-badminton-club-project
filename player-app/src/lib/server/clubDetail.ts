@@ -5,6 +5,7 @@ import type {
 	ClubShuttlePublic
 } from '$lib/types/club';
 import type { SessionPlayerMembership, SessionPlayerStatus } from '$lib/types/session';
+import { ensureSupabaseAuth } from '$lib/server/supabaseAuth';
 
 const loadClubAdmins = async (
 	supabase: App.Locals['supabase'],
@@ -79,6 +80,10 @@ const loadSessionMembershipMeta = async (
 	const memberships = new Map<string, SessionPlayerMembership>();
 
 	if (!sessionIds.length) {
+		return { counts, memberships };
+	}
+
+	if (!(await ensureSupabaseAuth(supabase))) {
 		return { counts, memberships };
 	}
 

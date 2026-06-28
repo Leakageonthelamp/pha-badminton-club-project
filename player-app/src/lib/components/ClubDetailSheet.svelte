@@ -19,7 +19,7 @@
 		type ClubSessionPublic,
 		type ClubShuttlePublic
 	} from '$lib/types/club';
-	import { sessionPlayerStatusLabel } from '$lib/types/session';
+	import { sessionPlayerStatusLabel, sessionStatusLabel } from '$lib/types/session';
 	import { formatDateTime } from '@repo/ui/datetime';
 
 	let {
@@ -168,7 +168,7 @@
 	const hasSessions = $derived(openingSessions.length > 0 || upcomingSessions.length > 0);
 
 	const sessionMeta = (session: ClubSessionPublic) => {
-		const parts = [formatDateTime(session.start_at)];
+		const parts = [sessionStatusLabel(session.status), formatDateTime(session.start_at)];
 		if (session.my_membership) {
 			parts.push(sessionPlayerStatusLabel(session.my_membership.status));
 		} else {

@@ -14,7 +14,7 @@
 		loadStoredUserLocation,
 		USER_LOCATION_STORED_EVENT
 	} from '@repo/ui/geolocation';
-	import { sessionPlayerStatusLabel } from '$lib/types/session';
+	import { sessionPlayerStatusLabel, sessionStatusLabel } from '$lib/types/session';
 	import type { SessionListItem } from '$lib/types/session';
 	import type { LayoutData } from '../$types';
 	import type { PageData } from './$types';
@@ -133,6 +133,8 @@
 						description={sessionDescription(session)}
 						icon={LayersIcon}
 						badge={session.distanceKm !== null ? formatDistanceKm(session.distanceKm) : undefined}
+						secondaryBadge={sessionStatusLabel(session.status)}
+						secondaryBadgeBrand={session.status === 'open' || session.status === 'in_progress'}
 						onclick={() => openSession(session)}
 					/>
 				{/each}

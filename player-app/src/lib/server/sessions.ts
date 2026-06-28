@@ -6,6 +6,7 @@ import type {
 	SessionPlayerStatus
 } from '$lib/types/session';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { ensureSupabaseAuth } from '$lib/server/supabaseAuth';
 
 const normalizeRelation = <T>(value: T | T[] | null | undefined): T | null => {
 	if (Array.isArray(value)) {
@@ -213,10 +214,14 @@ export const loadUpcomingSessionsForPlayer = async (
 
 	const rows = data ?? [];
 	const sessionIds = rows.map((row) => row.id as string);
-	const [counts, memberships] = await Promise.all([
-		loadMembershipCounts(supabase, sessionIds),
-		loadMyMemberships(supabase, userId, sessionIds)
-	]);
+
+	const authReady = await ensureSupabaseAuth(supabase);
+	const [counts, memberships] = authReady
+		? await Promise.all([
+				loadMembershipCounts(supabase, sessionIds),
+				loadMyMemberships(supabase, userId, sessionIds)
+			])
+		: [new Map<string, { waiting: number; queued: number; confirmed: number }>(), new Map<string, SessionPlayerMembership>()];
 
 	return rows.map((row) => {
 		const sessionId = row.id as string;
@@ -250,13 +255,20 @@ export const loadSessionDetailForPlayer = async (
 
 	if (!data) return null;
 
-	const counts = await loadMembershipCounts(supabase, [sessionId]);
-	const memberships = await loadMyMemberships(supabase, userId, [sessionId]);
+	const authReady = await ensureSupabaseAuth(supabase);
+	const counts = authReady
+		? await loadMembershipCounts(supabase, [sessionId])
+		: new Map<string, { waiting: number; queued: number; confirmed: number }>();
+	const memberships = authReady
+		? await loadMyMemberships(supabase, userId, [sessionId])
+		: new Map<string, SessionPlayerMembership>();
 	const count = counts.get(sessionId) ?? { waiting: 0, queued: 0, confirmed: 0 };
-	const hasOutstandingFee = await hasOutstandingCancellationFee(supabase, userId);
+	const hasOutstandingFee = authReady
+		? await hasOutstandingCancellationFee(supabase, userId)
+		: false;
 	const myMembership = memberships.get(sessionId) ?? null;
 	const roster =
-		myMembership !== null
+		authReady && myMembership !== null
 			? await loadSessionRoster(supabase, sessionId, userId)
 			: { waiting: [], queued: [], confirmed: [] };
 

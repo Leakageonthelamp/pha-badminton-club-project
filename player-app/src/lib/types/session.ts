@@ -95,6 +95,36 @@ export type SessionDetail = SessionPublic & {
 export const matchTypeLabel = (matchType: MatchType): string =>
 	matchType === 'one_round' ? 'One round' : 'Two rounds';
 
+export const sessionStatusLabel = (status: SessionStatus): string => {
+	switch (status) {
+		case 'draft':
+			return 'Draft';
+		case 'open':
+			return 'Open';
+		case 'in_progress':
+			return 'In progress';
+		case 'closed':
+			return 'Closed';
+		case 'cancelled':
+			return 'Cancelled';
+	}
+};
+
+export const sessionStatusBadgeClass = (status: SessionStatus): string => {
+	switch (status) {
+		case 'draft':
+			return 'bg-amber-50 text-amber-800';
+		case 'open':
+			return 'bg-emerald-50 text-emerald-700';
+		case 'in_progress':
+			return 'bg-sky-50 text-sky-700';
+		case 'closed':
+			return 'bg-slate-100 text-slate-700';
+		case 'cancelled':
+			return 'bg-red-50 text-red-700';
+	}
+};
+
 export const sessionPlayerStatusLabel = (status: SessionPlayerStatus): string => {
 	switch (status) {
 		case 'waiting':

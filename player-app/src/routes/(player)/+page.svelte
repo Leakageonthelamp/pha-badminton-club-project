@@ -19,7 +19,7 @@
 		USER_LOCATION_STORED_EVENT
 	} from '@repo/ui/geolocation';
 	import { isRichTextEmpty, richTextExcerpt } from '@repo/ui/richText';
-	import { sessionPlayerStatusLabel } from '$lib/types/session';
+	import { sessionPlayerStatusLabel, sessionStatusLabel } from '$lib/types/session';
 	import type { ClubPublic } from '$lib/types/club';
 	import type { SessionListItem } from '$lib/types/session';
 	import type { LayoutData } from '../$types';
@@ -62,6 +62,7 @@
 
 	const joinedSessionDescription = (session: SessionListItem) => {
 		const parts = [
+			sessionStatusLabel(session.status),
 			session.club?.name,
 			formatDateTime(session.start_at),
 			`${session.waiting_count} waiting · ${session.queued_count} queued`
@@ -230,6 +231,8 @@
 						icon={LayersIcon}
 						accent="violet"
 						badge={session.distanceKm !== null ? formatDistanceKm(session.distanceKm) : undefined}
+						secondaryBadge={sessionStatusLabel(session.status)}
+						secondaryBadgeBrand={session.status === 'open' || session.status === 'in_progress'}
 						onclick={() => openSession(session)}
 					/>
 				{/each}

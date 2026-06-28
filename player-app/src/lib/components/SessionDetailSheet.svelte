@@ -20,7 +20,9 @@
 	import {
 		formatThb,
 		matchTypeLabel,
-		sessionPlayerStatusLabel
+		sessionPlayerStatusLabel,
+		sessionStatusBadgeClass,
+		sessionStatusLabel
 	} from '$lib/types/session';
 
 	let {
@@ -312,6 +314,15 @@
 					<h2 id="session-sheet-title" class="text-xl font-semibold text-slate-900">{title}</h2>
 					{#if activeSession?.club?.name}
 						<p class="mt-1 text-sm text-slate-600">{activeSession.club.name}</p>
+					{/if}
+					{#if activeSession?.status}
+						<p class="mt-2">
+							<span
+								class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium {sessionStatusBadgeClass(activeSession.status)}"
+							>
+								{sessionStatusLabel(activeSession.status)}
+							</span>
+						</p>
 					{/if}
 					{#if distanceLabel}
 						<p class="mt-1 text-sm font-medium text-brand-700">{distanceLabel} away</p>
