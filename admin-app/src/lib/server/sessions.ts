@@ -21,7 +21,8 @@ const mapSessionDetail = (row: Record<string, unknown>): SessionDetail => ({
 	...mapSessionListItem(row),
 	shuttle: normalizeRelation(
 		row.shuttle as SessionDetail['shuttle'] | SessionDetail['shuttle'][]
-	)
+	),
+	cancelled_by_profile: null
 });
 
 const sessionListSelect = `
@@ -49,6 +50,9 @@ const sessionListSelect = `
 	max_buffer,
 	promptpay_type,
 	promptpay_target,
+	cancel_source,
+	cancel_reason,
+	cancelled_by,
 	created_at,
 	updated_at,
 	club:clubs ( id, name ),
@@ -106,7 +110,21 @@ export const loadSessionDetail = async (
 		return null;
 	}
 
-	return mapSessionDetail(data as Record<string, unknown>);
+	const session = mapSessionDetail(data as Record<string, unknown>);
+
+	if (session.cancelled_by) {
+		const { data: cancelledByProfile } = await supabase
+			.from('profiles')
+			.select('id, display_name')
+			.eq('id', session.cancelled_by)
+			.maybeSingle();
+
+		if (cancelledByProfile) {
+			session.cancelled_by_profile = cancelledByProfile;
+		}
+	}
+
+	return session;
 };
 
 export const countActiveClubSessions = async (
@@ -136,7 +154,13 @@ export const sweepOverdueDraftSessions = async (
 
 	let query = supabase
 		.from('sessions')
-		.update({ status: 'cancelled' })
+		.update({
+			status: 'cancelled',
+			cancel_source: 'system',
+			cancel_reason:
+				'Draft was not opened at least 1 hour before start.',
+			cancelled_by: null
+		})
 		.eq('status', 'draft')
 		.lte('start_at', deadline);
 

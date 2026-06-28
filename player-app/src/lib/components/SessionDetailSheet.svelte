@@ -6,6 +6,7 @@
 	import RichTextDisplay from '@repo/ui/components/RichTextDisplay.svelte';
 	import AppModal from '@repo/ui/components/AppModal.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
+	import CancellationFeeModal from '$lib/components/CancellationFeeModal.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
 	import { toast } from '@repo/ui/toast/toast.svelte';
@@ -52,6 +53,11 @@
 	let dragStartOffset = 0;
 	let actionLoading = $state(false);
 	let joinModalOpen = $state(false);
+	let cancelConfirmOpen = $state(false);
+	let feeModalOpen = $state(false);
+	let feeModalPlayerId = $state<string | null>(null);
+	let feeModalAmount = $state(0);
+	let feeModalStatus = $state<'owed' | 'submitted'>('owed');
 
 	const DISMISS_DRAG_PX = 120;
 
@@ -126,7 +132,7 @@
 
 	const onKeydown = (event: KeyboardEvent) => {
 		if (event.key !== 'Escape') return;
-		if (joinModalOpen) return;
+		if (joinModalOpen || cancelConfirmOpen || feeModalOpen) return;
 		close();
 	};
 
@@ -203,11 +209,23 @@
 		session?.status !== 'in_progress' &&
 			(membership?.status === 'waiting' || membership?.status === 'queued')
 	);
+	const isLateCancelWindow = $derived(
+		session ? Date.now() >= new Date(session.start_at).getTime() - 60 * 60 * 1000 : false
+	);
+	const requiresLateCancelFee = $derived(
+		membership?.status === 'waiting' && (session?.cancellation_fee ?? 0) > 0 && isLateCancelWindow
+	);
 	const canLeave = $derived(membership?.status === 'confirmed');
 
 	const spotsLabel = $derived.by(() => {
 		if (!session) return null;
 		return `${session.waiting_count}/${session.max_players} spots · ${session.queued_count}/${session.max_buffer} queue`;
+	});
+
+	const shuttleLabel = $derived.by(() => {
+		if (!session) return '—';
+		const price = `${formatThb(session.shuttle_price_per_each)} each`;
+		return session.shuttle?.name ? `${session.shuttle.name} · ${price}` : price;
 	});
 
 	const enhanceAction =
@@ -246,12 +264,69 @@
 			};
 		};
 
+	const enhanceCancel: SubmitFunction = () => {
+		actionLoading = true;
+		return async ({ result }) => {
+			actionLoading = false;
+			cancelConfirmOpen = false;
+
+			if (result.type === 'success') {
+				const data = result.data as {
+					message?: string;
+					feeOwed?: number;
+					playerId?: string;
+					feeStatus?: 'owed' | 'submitted';
+				};
+				if (data?.message) toast.success(data.message);
+				await invalidate('app:sessions');
+
+				if ((data?.feeOwed ?? 0) > 0 && data.playerId) {
+					feeModalPlayerId = data.playerId;
+					feeModalAmount = data.feeOwed ?? 0;
+					feeModalStatus = data.feeStatus === 'submitted' ? 'submitted' : 'owed';
+					feeModalOpen = true;
+					if (sessionId) {
+						const response = await fetch(`/api/sessions/${sessionId}`);
+						if (response.ok) {
+							session = (await response.json()) as SessionDetail;
+						}
+					}
+					return;
+				}
+
+				close();
+				return;
+			}
+
+			if (result.type === 'failure') {
+				const data = result.data as { message?: string } | undefined;
+				toast.error(data?.message ?? 'Something went wrong.');
+			} else if (result.type === 'error') {
+				toast.error('Something went wrong.');
+			}
+		};
+	};
+
+	const closeFeeModal = () => {
+		feeModalOpen = false;
+		feeModalPlayerId = null;
+		close();
+	};
+
+	const onFeeSubmitted = async () => {
+		feeModalStatus = 'submitted';
+		toast.success('Payment submitted. Waiting for admin confirmation.');
+		await invalidate('app:sessions');
+	};
+
 	$effect(() => {
 		if (!browser) return;
 
 		if (!open || !sessionId) {
 			visible = false;
 			joinModalOpen = false;
+			cancelConfirmOpen = false;
+			feeModalOpen = false;
 			resetDrag();
 			const timer = window.setTimeout(() => {
 				show = false;
@@ -466,9 +541,7 @@
 								</div>
 								<div class="flex justify-between gap-4">
 									<dt class="text-slate-500">Shuttle</dt>
-									<dd class="font-medium text-slate-900">
-										{formatThb(session.shuttle_price_per_each)} each
-									</dd>
+									<dd class="text-right font-medium text-slate-900">{shuttleLabel}</dd>
 								</div>
 								{#if session.cancellation_fee > 0}
 									<div class="flex justify-between gap-4">
@@ -625,11 +698,29 @@
 						{/if}
 
 						{#if canCancel}
-							<form method="POST" action="/sessions?/cancel" use:enhance={enhanceAction(true)}>
+							<SubmitButton
+								type="button"
+								variant="secondary"
+								onclick={() => {
+									if (requiresLateCancelFee) {
+										cancelConfirmOpen = true;
+									} else {
+										const form = document.getElementById('cancel-membership-form') as HTMLFormElement | null;
+										form?.requestSubmit();
+									}
+								}}
+								loading={actionLoading}
+							>
+								Cancel join
+							</SubmitButton>
+							<form
+								id="cancel-membership-form"
+								method="POST"
+								action="/sessions?/cancel"
+								class="hidden"
+								use:enhance={enhanceCancel}
+							>
 								<input type="hidden" name="session_id" value={session.id} />
-								<SubmitButton variant="secondary" loading={actionLoading}>
-									Cancel join
-								</SubmitButton>
 							</form>
 							{#if membership?.status === 'waiting' && session.cancellation_fee > 0}
 								<p class="text-xs text-slate-500">
@@ -711,5 +802,54 @@
 				</form>
 			</div>
 		</AppModal>
+	{/if}
+
+	{#if cancelConfirmOpen && session}
+		<AppModal open={cancelConfirmOpen} labelledBy="cancel-confirm-title" onClose={() => (cancelConfirmOpen = false)}>
+			<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
+				<div class="border-b border-amber-100 bg-amber-50 px-4 py-4">
+					<h2 id="cancel-confirm-title" class="text-lg font-semibold text-amber-900">
+						Late cancellation fee
+					</h2>
+					<p class="mt-3 text-sm text-amber-900">
+						Cancelling within 1 hour of start will record a late cancellation fee of
+						{formatThb(session.cancellation_fee)}. You must pay this fee before joining another session.
+					</p>
+				</div>
+				<form
+					method="POST"
+					action="/sessions?/cancel"
+					class="flex flex-wrap gap-2 p-4"
+					use:enhance={enhanceCancel}
+				>
+					<input type="hidden" name="session_id" value={session.id} />
+					<SubmitButton loading={actionLoading} loadingLabel="Cancelling…" class="!w-auto">
+						Accept and cancel
+					</SubmitButton>
+					<SubmitButton
+						type="button"
+						variant="secondary"
+						class="!w-auto"
+						disabled={actionLoading}
+						onclick={() => (cancelConfirmOpen = false)}
+					>
+						Keep my spot
+					</SubmitButton>
+				</form>
+			</div>
+		</AppModal>
+	{/if}
+
+	{#if feeModalOpen && feeModalPlayerId && session}
+		<CancellationFeeModal
+			open={feeModalOpen}
+			playerId={feeModalPlayerId}
+			amount={feeModalAmount}
+			promptpayTarget={session.promptpay_target}
+			feeStatus={feeModalStatus}
+			sessionLabel="{session.name} · {session.club?.name ?? 'Club session'}"
+			onClose={closeFeeModal}
+			onSubmitted={onFeeSubmitted}
+		/>
 	{/if}
 {/if}

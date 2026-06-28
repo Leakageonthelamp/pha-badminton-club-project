@@ -12,6 +12,24 @@
  * CLIENT (never the server, whose timezone differs from the device).
  */
 
+/** Parse a date-only value (YYYY-MM-DD) in the device-local calendar. */
+export const localDateToDate = (value: string): Date | null => {
+	const trimmed = value.trim();
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return null;
+
+	const [year, month, day] = trimmed.split('-').map(Number);
+	if ([year, month, day].some((n) => Number.isNaN(n))) return null;
+
+	const date = new Date(year, month - 1, day);
+	return Number.isNaN(date.getTime()) ? null : date;
+};
+
+/** Build a date-only value (YYYY-MM-DD) from a Date in the device timezone. */
+export const dateToLocalDate = (date: Date): string => {
+	const pad = (value: number) => String(value).padStart(2, '0');
+	return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+};
+
 /** Parse a datetime-local value (device-local) to a Date. */
 export const localInputToDate = (localValue: string): Date | null => {
 	const trimmed = localValue.trim();

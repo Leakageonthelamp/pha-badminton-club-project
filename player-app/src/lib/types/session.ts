@@ -2,6 +2,8 @@ export type SessionStatus = 'draft' | 'open' | 'in_progress' | 'closed' | 'cance
 export type MatchScoreType = 15 | 21;
 export type MatchType = 'one_round' | 'two_round';
 
+import type { CancellationFeeStatus } from '@repo/ui/payments';
+
 export type SessionPlayerStatus =
 	| 'waiting'
 	| 'queued'
@@ -64,7 +66,18 @@ export type SessionPlayerMembership = {
 	id: string;
 	status: SessionPlayerStatus;
 	fee_owed: number;
+	fee_status: CancellationFeeStatus;
 	joined_at: string;
+};
+
+export type OutstandingFee = {
+	player_id: string;
+	session_id: string;
+	session_name: string;
+	club_name: string;
+	fee_owed: number;
+	fee_status: CancellationFeeStatus;
+	promptpay_target: string | null;
 };
 
 export type SessionPlayerPublic = {

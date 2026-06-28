@@ -1,6 +1,8 @@
 import type { PromptPayType } from '$lib/types/club';
+import type { CancellationFeeStatus } from '@repo/ui/payments';
 
 export type SessionStatus = 'draft' | 'open' | 'in_progress' | 'closed' | 'cancelled';
+export type SessionCancelSource = 'club_admin' | 'super_admin' | 'system';
 export type MatchScoreType = 15 | 21;
 export type MatchType = 'one_round' | 'two_round';
 
@@ -29,8 +31,16 @@ export type Session = {
 	max_buffer: number;
 	promptpay_type: PromptPayType | null;
 	promptpay_target: string | null;
+	cancel_source: SessionCancelSource | null;
+	cancel_reason: string | null;
+	cancelled_by: string | null;
 	created_at: string;
 	updated_at: string;
+};
+
+export type SessionCancelledByProfile = {
+	id: string;
+	display_name: string;
 };
 
 export type SessionHostProfile = {
@@ -61,6 +71,7 @@ export type SessionDetail = Session & {
 	club: SessionClubSummary | null;
 	host: SessionHostProfile | null;
 	shuttle: SessionShuttleSummary | null;
+	cancelled_by_profile: SessionCancelledByProfile | null;
 };
 
 export const sessionStatusLabel = (status: SessionStatus): string => {
@@ -136,6 +147,8 @@ export type SessionPlayer = {
 	user_id: string;
 	status: SessionPlayerStatus;
 	fee_owed: number;
+	fee_status: CancellationFeeStatus;
+	fee_paid_at: string | null;
 	joined_at: string;
 	decided_at: string | null;
 	left_at: string | null;

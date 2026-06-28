@@ -17,6 +17,7 @@
 	import type { PaymentStatus } from '@repo/ui/payments';
 	import { createSupabaseBrowserClient } from '$lib/supabase/client';
 	import { sessionStatusBadgeClass, sessionStatusLabel } from '$lib/types/session';
+	import SessionCancellationFees from '$lib/components/SessionCancellationFees.svelte';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { ActionData, PageData } from './$types';
 
@@ -26,6 +27,7 @@
 	let settlementModalOpen = $state(false);
 	let closeModalOpen = $state(false);
 	let actionLoading = $state<string | null>(null);
+	let feeActionLoading = $state<string | null>(null);
 
 	const session = $derived(data.session);
 	const activePlayers = $derived(data.players.filter((player) => player.status === 'confirmed'));
@@ -40,7 +42,10 @@
 		data.payments.find((payment) => payment.user_id === userId) ?? null;
 
 	const canCloseSession = $derived(
-		data.endReached && data.settlementStarted && data.allPaymentsApproved
+		data.endReached &&
+			data.settlementStarted &&
+			data.allPaymentsApproved &&
+			data.allCancellationFeesResolved
 	);
 
 	const paymentsApprovedCount = $derived(
@@ -515,6 +520,24 @@
 		{/if}
 	</AppCard>
 
+	{#if data.cancellationFees.length > 0}
+		<AppCard class="space-y-4">
+			<div class="app-section-header">
+				<div>
+					<h2 class="app-section-title">Cancellation fees</h2>
+					<p class="app-section-meta">
+						Resolve all late cancellation fees before closing the session.
+					</p>
+				</div>
+			</div>
+			<SessionCancellationFees
+				fees={data.cancellationFees}
+				sessionId={session.id}
+				bind:feeActionLoading
+			/>
+		</AppCard>
+	{/if}
+
 	<!-- Courts & matches -->
 	<section class="app-detail-section">
 		<div class="app-detail-section-body space-y-4">
@@ -571,7 +594,9 @@
 				</span>
 				<span>
 					<strong>Close session</strong>
-					{#if !data.settlementStarted}
+					{#if !data.allCancellationFeesResolved}
+						— resolve outstanding cancellation fees first
+					{:else if !data.settlementStarted}
 						— unlocks after settlement starts
 					{:else if !data.allPaymentsApproved}
 						— waiting for {activePlayers.length - paymentsApprovedCount} more payment{activePlayers.length -

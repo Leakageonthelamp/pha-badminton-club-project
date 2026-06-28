@@ -1,7 +1,8 @@
 import {
 	cancelSessionMembership,
 	joinSession,
-	leaveSession
+	leaveSession,
+	submitCancellationFee
 } from '$lib/server/sessions';
 import { fail, type Actions } from '@sveltejs/kit';
 
@@ -47,7 +48,14 @@ export const sessionMembershipActions = {
 				? `Membership cancelled. Cancellation fee of ${result.feeOwed.toFixed(2)} THB recorded.`
 				: 'Membership cancelled.';
 
-		return { success: true, message, sessionId };
+		return {
+			success: true,
+			message,
+			sessionId,
+			feeOwed: result.feeOwed,
+			playerId: result.playerId,
+			feeStatus: result.feeStatus
+		};
 	},
 
 	leave: async ({ request, locals: { supabase, user } }) => {
@@ -66,5 +74,27 @@ export const sessionMembershipActions = {
 		}
 
 		return { success: true, message: 'Left session.', sessionId };
+	},
+
+	submitFee: async ({ request, locals: { supabase, user } }) => {
+		if (!user) {
+			return fail(401, { message: 'Sign in required' });
+		}
+
+		const playerId = (await request.formData()).get('player_id');
+		if (typeof playerId !== 'string' || !playerId) {
+			return fail(400, { message: 'Fee record is required' });
+		}
+
+		const result = await submitCancellationFee(supabase, playerId);
+		if (!result.ok) {
+			return fail(400, { message: result.message });
+		}
+
+		return {
+			success: true,
+			message: 'Payment submitted. Waiting for admin confirmation.',
+			playerId
+		};
 	}
 } satisfies Actions;

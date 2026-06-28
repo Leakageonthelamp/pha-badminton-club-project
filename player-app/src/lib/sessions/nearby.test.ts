@@ -120,9 +120,9 @@ describe('myJoinedSessions', () => {
 	it('returns only sessions with an active membership', () => {
 		const joined = myJoinedSessions(
 			[
-				{ ...sessions[0]!, my_membership: { id: 'm1', status: 'waiting', fee_owed: 0, joined_at: '2026-06-01T00:00:00.000Z' } },
+				{ ...sessions[0]!, my_membership: { id: 'm1', status: 'waiting', fee_owed: 0, fee_status: 'none', joined_at: '2026-06-01T00:00:00.000Z' } },
 				sessions[1]!,
-				{ ...sessions[2]!, my_membership: { id: 'm2', status: 'confirmed', fee_owed: 0, joined_at: '2026-06-01T00:00:00.000Z' } }
+				{ ...sessions[2]!, my_membership: { id: 'm2', status: 'confirmed', fee_owed: 0, fee_status: 'none', joined_at: '2026-06-01T00:00:00.000Z' } }
 			],
 			null
 		);

@@ -10,20 +10,22 @@
 		session,
 		userId,
 		showClub = false,
-		compact = false
+		compact = false,
+		pendingCancellationFees = 0
 	}: {
 		session: SessionListItem;
 		userId?: string;
 		showClub?: boolean;
 		compact?: boolean;
+		pendingCancellationFees?: number;
 	} = $props();
 </script>
 
 <a
 	href="/sessions/{session.id}"
-	class="group block rounded-2xl border border-white/60 bg-white/90 px-4 py-3 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-md {compact
-		? ''
-		: 'sm:px-5 sm:py-4'}"
+	class="group block rounded-2xl border bg-white/90 px-4 py-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md {pendingCancellationFees > 0
+		? 'border-amber-300 bg-amber-50/50 hover:border-amber-400'
+		: 'border-white/60 hover:border-brand-200'} {compact ? '' : 'sm:px-5 sm:py-4'}"
 >
 	<div class="flex items-start justify-between gap-3">
 		<div class="min-w-0 flex-1">
@@ -46,6 +48,20 @@
 			{#if session.status === 'draft'}
 				<p class="mt-1 text-xs font-medium text-amber-800">
 					Open by {formatDraftOpenDeadline(session.start_at)} — tap to review or publish
+				</p>
+			{/if}
+			{#if pendingCancellationFees > 0}
+				<p
+					class="mt-2 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900"
+				>
+					<span
+						class="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white"
+					>
+						{pendingCancellationFees}
+					</span>
+					<span>
+						Cancellation fee{pendingCancellationFees === 1 ? '' : 's'} need confirmation or waiver
+					</span>
 				</p>
 			{/if}
 			{#if session.venue_name}

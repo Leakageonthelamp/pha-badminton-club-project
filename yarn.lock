@@ -5785,6 +5785,7 @@ __metadata:
     "@types/node": "npm:^22.15.21"
     "@types/qrcode": "npm:^1.5.6"
     "@vite-pwa/sveltekit": "npm:^1.0.0"
+    flatpickr: "npm:^4.6.13"
     promptpay-qr: "npm:^0.5.0"
     qrcode: "npm:^1.5.4"
     svelte: "npm:^5.33.14"

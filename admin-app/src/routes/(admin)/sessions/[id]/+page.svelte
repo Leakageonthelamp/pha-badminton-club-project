@@ -25,6 +25,7 @@
 		sessionStatusShowsLiveDot
 	} from '$lib/types/session';
 	import SessionHistoryDetail from '$lib/components/SessionHistoryDetail.svelte';
+	import SessionCancellationFees from '$lib/components/SessionCancellationFees.svelte';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -36,6 +37,7 @@
 	let cancelLoading = $state(false);
 	let cancelModalOpen = $state(false);
 	let playerActionLoading = $state<string | null>(null);
+	let feeActionLoading = $state<string | null>(null);
 
 	const session = $derived(data.session);
 	const waitingPlayers = $derived(data.players.filter((p) => p.status === 'waiting'));
@@ -273,6 +275,10 @@
 		session={data.session}
 		players={data.historyPlayers}
 		payments={data.historyPayments}
+		canManageFees={data.canManage}
+		cancellationFees={data.cancellationFees}
+		sessionId={session.id}
+		bind:feeActionLoading
 	/>
 {:else}
 <section class="space-y-6">
@@ -299,6 +305,22 @@
 	</DashboardHero>
 
 	{@render participantsSection()}
+
+	{#if data.canManage && data.cancellationFees.length > 0}
+		<AppCard class="space-y-4">
+			<div>
+				<h2 class="text-lg font-semibold text-slate-900">Cancellation fees</h2>
+				<p class="mt-1 text-sm text-slate-600">
+					Late cancellations waiting for payment or admin confirmation.
+				</p>
+			</div>
+			<SessionCancellationFees
+				fees={data.cancellationFees}
+				sessionId={session.id}
+				bind:feeActionLoading
+			/>
+		</AppCard>
+	{/if}
 
 	{#if session.status === 'draft'}
 		<AppCard class="space-y-4 border-amber-200 bg-amber-50/60">

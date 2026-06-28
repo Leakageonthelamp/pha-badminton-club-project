@@ -8,11 +8,13 @@ import type {
 	SessionListItem,
 	SessionPlayerMembership,
 	SessionPlayerPublic,
-	SessionPlayerStatus
+	SessionPlayerStatus,
+	OutstandingFee
 } from '$lib/types/session';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { ensureSupabaseAuth } from '$lib/server/supabaseAuth';
 import { computeCourtShare } from '@repo/ui/payments';
+import type { CancellationFeeStatus } from '@repo/ui/payments';
 
 const normalizeRelation = <T>(value: T | T[] | null | undefined): T | null => {
 	if (Array.isArray(value)) {
@@ -59,6 +61,7 @@ type SessionPlayerRow = {
 	user_id: string;
 	status: SessionPlayerStatus;
 	fee_owed: number;
+	fee_status: CancellationFeeStatus;
 	joined_at: string;
 };
 
@@ -104,7 +107,7 @@ const loadMyMemberships = async (
 
 	const { data, error } = await supabase
 		.from('session_players')
-		.select('id, session_id, status, fee_owed, joined_at')
+		.select('id, session_id, status, fee_owed, fee_status, joined_at')
 		.eq('user_id', userId)
 		.in('session_id', sessionIds)
 		.in('status', statuses);
@@ -119,6 +122,7 @@ const loadMyMemberships = async (
 			id: row.id,
 			status: row.status as SessionPlayerStatus,
 			fee_owed: Number(row.fee_owed),
+			fee_status: row.fee_status as CancellationFeeStatus,
 			joined_at: row.joined_at
 		});
 	}
@@ -131,7 +135,7 @@ const rosterSelect = `
 	user_id,
 	status,
 	joined_at,
-	profile:profiles ( display_name, tag, avatar_url )
+	profile:profiles!session_players_user_id_fkey ( display_name, tag, avatar_url )
 `;
 
 const mapSessionPlayerPublic = (
@@ -193,7 +197,8 @@ export const hasOutstandingCancellationFee = async (
 		.from('session_players')
 		.select('*', { count: 'exact', head: true })
 		.eq('user_id', userId)
-		.gt('fee_owed', 0);
+		.gt('fee_owed', 0)
+		.in('fee_status', ['owed', 'submitted']);
 
 	if (error) {
 		console.error('Failed to check outstanding fees', error);
@@ -359,7 +364,9 @@ export const joinSession = async (
 export const cancelSessionMembership = async (
 	supabase: SupabaseClient,
 	sessionId: string
-): Promise<{ ok: true; feeOwed: number } | { ok: false; message: string }> => {
+): Promise<
+	{ ok: true; feeOwed: number; playerId: string; feeStatus: CancellationFeeStatus } | { ok: false; message: string }
+> => {
 	const { data, error } = await supabase.rpc('cancel_session_membership', {
 		p_session_id: sessionId
 	});
@@ -369,7 +376,12 @@ export const cancelSessionMembership = async (
 	}
 
 	const row = data as SessionPlayerRow;
-	return { ok: true, feeOwed: Number(row.fee_owed) };
+	return {
+		ok: true,
+		feeOwed: Number(row.fee_owed),
+		playerId: row.id,
+		feeStatus: row.fee_status
+	};
 };
 
 export const leaveSession = async (
@@ -611,6 +623,74 @@ export const submitPayment = async (
 	sessionId: string
 ): Promise<{ ok: true } | { ok: false; message: string }> => {
 	const { error } = await supabase.rpc('submit_payment', { p_session_id: sessionId });
+
+	if (error) {
+		return { ok: false, message: error.message };
+	}
+
+	return { ok: true };
+};
+
+export const loadOutstandingFees = async (
+	supabase: SupabaseClient,
+	userId: string
+): Promise<OutstandingFee[]> => {
+	const { data, error } = await supabase
+		.from('session_players')
+		.select(
+			`
+			id,
+			session_id,
+			fee_owed,
+			fee_status,
+			session:sessions (
+				name,
+				promptpay_target,
+				club:clubs ( name )
+			)
+		`
+		)
+		.eq('user_id', userId)
+		.gt('fee_owed', 0)
+		.in('fee_status', ['owed', 'submitted'])
+		.order('updated_at', { ascending: false });
+
+	if (error) {
+		console.error('Failed to load outstanding fees', error);
+		return [];
+	}
+
+	return (data ?? []).flatMap((row) => {
+		const session = normalizeRelation(
+			row.session as unknown as {
+				name: string;
+				promptpay_target: string | null;
+				club: { name: string } | { name: string }[] | null;
+			} | null
+		);
+		if (!session) return [];
+
+		const club = normalizeRelation(session.club);
+
+		return [
+			{
+				player_id: row.id as string,
+				session_id: row.session_id as string,
+				session_name: session.name,
+				club_name: club?.name ?? 'Club session',
+				fee_owed: Number(row.fee_owed),
+				fee_status: row.fee_status as CancellationFeeStatus,
+				promptpay_target: session.promptpay_target
+			}
+		];
+	});
+};
+
+export const submitCancellationFee = async (
+	supabase: SupabaseClient,
+	playerId: string
+): Promise<{ ok: true } | { ok: false; message: string }> => {
+	const { error } = await supabase.rpc('submit_cancellation_fee', { p_player_id: playerId });
 
 	if (error) {
 		return { ok: false, message: error.message };

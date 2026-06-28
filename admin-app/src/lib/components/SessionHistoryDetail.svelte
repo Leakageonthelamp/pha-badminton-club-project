@@ -7,12 +7,10 @@
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
 	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
 	import { formatDateTime } from '@repo/ui/datetime';
-	import { formatThb, paymentStatusLabel } from '@repo/ui/payments';
+	import { formatThb, paymentStatusLabel, cancellationFeeStatusLabel } from '@repo/ui/payments';
 	import type { PaymentStatus } from '@repo/ui/payments';
-	import {
-		buildSessionHistorySummary,
-		isAttendedPlayer
-	} from '$lib/sessions/sessionHistory';
+import type { CancellationFeeStatus } from '@repo/ui/payments';
+import { buildSessionHistorySummary, isAttendedPlayer, isOutstandingCancellationFee } from '$lib/sessions/sessionHistory';
 	import { formatThb as formatClubThb } from '$lib/types/club';
 	import type { SessionPaymentWithProfile } from '$lib/types/payment';
 	import {
@@ -24,20 +22,31 @@
 		type SessionDetail,
 		type SessionPlayerWithProfile
 	} from '$lib/types/session';
+	import { sessionCancelDetail } from '$lib/sessions/sessionCancel';
+	import SessionCancellationFees from '$lib/components/SessionCancellationFees.svelte';
 
 	let {
 		session,
 		players,
-		payments
+		payments,
+		canManageFees = false,
+		cancellationFees = [],
+		sessionId = '',
+		feeActionLoading = $bindable<string | null>(null)
 	}: {
 		session: SessionDetail;
 		players: SessionPlayerWithProfile[];
 		payments: SessionPaymentWithProfile[];
+		canManageFees?: boolean;
+		cancellationFees?: SessionPlayerWithProfile[];
+		sessionId?: string;
+		feeActionLoading?: string | null;
 	} = $props();
 
 	const summary = $derived(buildSessionHistorySummary(session, players, payments));
 	const attendedPlayers = $derived(players.filter((player) => isAttendedPlayer(player.status)));
 	const otherPlayers = $derived(players.filter((player) => !isAttendedPlayer(player.status)));
+	const cancellationFeePlayers = $derived(players.filter((player) => player.fee_owed > 0));
 
 	const paymentForUser = (userId: string) =>
 		payments.find((payment) => payment.user_id === userId) ?? null;
@@ -60,6 +69,15 @@
 			? `${session.shuttle.name} · ${formatClubThb(session.shuttle_price_per_each)} each`
 			: '—'
 	);
+
+	const cancelDetail = $derived(
+		sessionCancelDetail({
+			status: session.status,
+			cancel_source: session.cancel_source,
+			cancel_reason: session.cancel_reason,
+			cancelled_by_name: session.cancelled_by_profile?.display_name ?? null
+		})
+	);
 </script>
 
 <section class="space-y-6">
@@ -73,6 +91,9 @@
 			<div class="min-w-0 flex-1">
 				<p class="app-hero-status-label">Final status</p>
 				<p class="app-hero-status-value">{sessionStatusLabel(session.status)}</p>
+				{#if cancelDetail}
+					<p class="mt-2 text-sm leading-snug text-white/90">{cancelDetail}</p>
+				{/if}
 			</div>
 		</div>
 	</DashboardHero>
@@ -115,10 +136,10 @@
 			<div class="app-history-stat">
 				<p class="app-history-stat-label">Collected</p>
 				<p class="app-history-stat-value app-history-stat-value--money">
-					{formatThb(summary.totalCollected)}
+					{formatThb(summary.totalCollected + summary.cancellationFeesCollected)}
 				</p>
 				<p class="app-history-stat-hint">
-					{summary.paymentsApprovedCount}/{payments.length || summary.attendedCount} paid
+					Court {formatThb(summary.totalCollected)} · Cancel fees {formatThb(summary.cancellationFeesCollected)}
 				</p>
 			</div>
 			<div class="app-history-stat">
@@ -225,9 +246,63 @@
 		</AppCard>
 	{/if}
 
+	{#if cancellationFeePlayers.length > 0}
+		<AppCard class="space-y-4">
+			<div>
+				<h2 class="text-lg font-semibold text-slate-900">Cancellation fees</h2>
+				<p class="mt-1 text-sm text-slate-600">
+					{summary.cancellationFeesPaidCount} paid · {summary.cancellationFeesOutstandingCount} outstanding ·
+					{summary.cancellationFeesWaivedCount} waived
+				</p>
+			</div>
+			{#if canManageFees && cancellationFees.length > 0}
+				<SessionCancellationFees
+					fees={cancellationFees}
+					{sessionId}
+					bind:feeActionLoading
+				/>
+			{:else}
+				<ul class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
+					{#each cancellationFeePlayers as player (player.id)}
+						<li class="flex items-center justify-between gap-3 bg-white px-4 py-3">
+							<div class="min-w-0 flex-1">
+								<p class="truncate font-medium text-slate-900">
+									{player.profile?.display_name ?? 'Unknown player'}
+								</p>
+								<p class="text-xs text-slate-500">
+									{sessionPlayerStatusLabel(player.status)} · late cancel
+								</p>
+							</div>
+							<div class="flex shrink-0 flex-col items-end gap-1">
+								<p class="text-sm font-semibold tabular-nums text-slate-900">
+									{formatThb(player.fee_owed)}
+								</p>
+								<span
+									class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {isOutstandingCancellationFee(
+										player.fee_owed,
+										player.fee_status
+									)
+										? 'bg-amber-50 text-amber-800 ring-amber-100'
+										: player.fee_status === 'paid'
+											? 'bg-emerald-50 text-emerald-700 ring-emerald-100'
+											: 'bg-slate-100 text-slate-600 ring-slate-200'}"
+								>
+									{cancellationFeeStatusLabel(player.fee_status)}
+								</span>
+							</div>
+						</li>
+					{/each}
+				</ul>
+			{/if}
+			<p class="text-sm text-slate-600">
+				Cancellation fees collected {formatThb(summary.cancellationFeesCollected)}
+			</p>
+		</AppCard>
+	{/if}
+
 	<AppCard class="space-y-4">
 		<div>
-			<h2 class="text-lg font-semibold text-slate-900">Payment breakdown</h2>
+			<h2 class="text-lg font-semibold text-slate-900">Court fee breakdown</h2>
 			<p class="mt-1 text-sm text-slate-600">
 				{summary.paymentsApprovedCount} paid · {summary.paymentsSubmittedCount} awaiting confirmation ·
 				{summary.paymentsPendingCount} pending

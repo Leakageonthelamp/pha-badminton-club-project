@@ -1,0 +1,175 @@
+<script lang="ts">
+	import { navigating } from '$app/state';
+	import AppCard from '@repo/ui/components/AppCard.svelte';
+	import DatePicker from '@repo/ui/components/DatePicker.svelte';
+	import SelectMenu from '@repo/ui/components/SelectMenu.svelte';
+	import SearchIcon from '@repo/ui/icons/SearchIcon.svelte';
+	import { formatDate } from '@repo/ui/datetime';
+	import { formatThb } from '@repo/ui/payments';
+	import type { PlayerTransaction, PlayerTransactionPage } from '$lib/types/transaction';
+	import {
+		transactionStatusBadgeClass,
+		transactionStatusFilterOptions,
+		transactionStatusLabel
+	} from '$lib/transactions/list';
+
+	let {
+		transactions,
+		onOpenCancellationFee
+	}: {
+		transactions: PlayerTransactionPage;
+		onOpenCancellationFee?: (playerId: string) => void;
+	} = $props();
+
+	let statusFilter = $state('');
+	let dateFilter = $state('');
+
+	const isFetching = $derived(
+		navigating.to !== null && navigating.to.url.pathname === '/profile'
+	);
+
+	const hasActiveFilters = $derived(
+		Boolean(transactions.statusFilter || transactions.date)
+	);
+
+	$effect(() => {
+		statusFilter = transactions.statusFilter;
+		dateFilter = transactions.date;
+	});
+
+	const buildPageUrl = (page: number): string => {
+		const params = new URLSearchParams();
+		if (transactions.statusFilter) params.set('txStatus', transactions.statusFilter);
+		if (transactions.date) params.set('txDate', transactions.date);
+		if (page > 1) params.set('txPage', String(page));
+		const query = params.toString();
+		return query ? `/profile?${query}` : '/profile';
+	};
+
+	const canOpenCancellationFee = (transaction: PlayerTransaction): boolean =>
+		transaction.kind === 'cancellation_fee' &&
+		(transaction.filter_status === 'pending' || transaction.filter_status === 'submitted');
+
+	const kindShort = (kind: PlayerTransaction['kind']): string =>
+		kind === 'session_fee' ? 'Session' : 'Late cancel';
+
+	const metaLine = (transaction: PlayerTransaction): string =>
+		`${transaction.club_name} · ${kindShort(transaction.kind)} · ${formatDate(transaction.session_start_at)}`;
+</script>
+
+{#snippet transactionRow(transaction: PlayerTransaction)}
+	<div class="flex min-w-0 items-center gap-3">
+		<div class="min-w-0 flex-1">
+			<p class="truncate text-sm font-medium text-slate-900">{transaction.session_name}</p>
+			<p class="truncate text-xs text-slate-500">{metaLine(transaction)}</p>
+		</div>
+		<div class="flex shrink-0 items-center gap-2">
+			<p class="text-sm font-semibold tabular-nums text-slate-900">{formatThb(transaction.amount)}</p>
+			<span
+				class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 {transactionStatusBadgeClass(
+					transaction.filter_status
+				)}"
+			>
+				{transactionStatusLabel(transaction)}
+			</span>
+		</div>
+	</div>
+{/snippet}
+
+<AppCard class="space-y-3">
+	<div class="flex items-baseline justify-between gap-3">
+		<h2 class="font-medium text-slate-900">Payment history</h2>
+		{#if !isFetching && transactions.totalCount > 0}
+			<span class="text-xs text-slate-500">{transactions.totalCount} total</span>
+		{/if}
+	</div>
+
+	<form method="GET" action="/profile" class="app-filter-row">
+		<DatePicker id="tx-date" label="Date" variant="filter" bind:value={dateFilter} />
+		<input type="hidden" name="txDate" value={dateFilter} />
+		<div class="min-w-0">
+			<SelectMenu
+				id="tx-status"
+				label="Status"
+				options={transactionStatusFilterOptions}
+				bind:value={statusFilter}
+			/>
+			<input type="hidden" name="txStatus" value={statusFilter} />
+		</div>
+		<div class="app-filter-submit-wrap">
+			<span class="app-filter-label invisible" aria-hidden="true">Filter</span>
+			<button
+				type="submit"
+				class="app-filter-submit"
+				aria-label="Filter transactions"
+				title="Filter"
+				disabled={isFetching}
+				aria-busy={isFetching}
+			>
+				{#if isFetching}
+					<span
+						class="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-brand-700"
+						aria-hidden="true"
+					></span>
+				{:else}
+					<SearchIcon class="h-5 w-5 text-brand-700" />
+				{/if}
+			</button>
+		</div>
+	</form>
+
+	{#if hasActiveFilters && !isFetching}
+		<p class="text-xs text-slate-500">
+			Filtered
+			{#if transactions.date}
+				· {transactions.date}
+			{/if}
+			{#if transactions.statusFilter}
+				· {transactionStatusFilterOptions.find((option) => option.value === transactions.statusFilter)?.label ??
+					transactions.statusFilter}
+			{/if}
+		</p>
+	{/if}
+
+	{#if isFetching}
+		<ul class="divide-y divide-slate-100 rounded-lg border border-slate-200" aria-busy="true">
+			{#each Array(3) as _, index (index)}
+				<li class="px-3 py-2.5">
+					<div class="app-skeleton h-3.5 w-36 max-w-full rounded"></div>
+				</li>
+			{/each}
+		</ul>
+	{:else if transactions.items.length === 0}
+		<p class="text-sm text-slate-500">No transactions found.</p>
+	{:else}
+		<ul class="divide-y divide-slate-100 rounded-lg border border-slate-200">
+			{#each transactions.items as transaction (transaction.id)}
+				<li class="px-3 py-2.5">
+					{#if canOpenCancellationFee(transaction) && onOpenCancellationFee}
+						<button
+							type="button"
+							class="w-full text-left"
+							onclick={() => onOpenCancellationFee(transaction.record_id)}
+						>
+							{@render transactionRow(transaction)}
+						</button>
+					{:else}
+						{@render transactionRow(transaction)}
+					{/if}
+				</li>
+			{/each}
+		</ul>
+
+		{#if transactions.hasPrevPage || transactions.hasNextPage}
+			<div class="flex items-center justify-center gap-3 text-xs">
+				{#if transactions.hasPrevPage}
+					<a href={buildPageUrl(transactions.page - 1)} class="font-medium text-brand-700">← Prev</a>
+				{/if}
+				<span class="text-slate-500">{transactions.page}</span>
+				{#if transactions.hasNextPage}
+					<a href={buildPageUrl(transactions.page + 1)} class="font-medium text-brand-700">Next →</a>
+				{/if}
+			</div>
+		{/if}
+	{/if}
+</AppCard>

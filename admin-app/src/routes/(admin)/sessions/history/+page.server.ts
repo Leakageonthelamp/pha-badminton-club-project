@@ -1,5 +1,6 @@
 import { resolveEffectiveAppRole } from '$lib/server/adminDashboardMode';
 import { loadManagedClubs } from '$lib/server/clubAccess';
+import { loadOutstandingCancellationFeeCountsBySession } from '$lib/server/sessionPlayers';
 import { loadSessionsForAdmin } from '$lib/server/sessions';
 import { filterHistorySessions } from '$lib/sessions/list';
 import { error } from '@sveltejs/kit';
@@ -23,8 +24,15 @@ export const load: PageServerLoad = async ({
 		clubIds: isSuperAdmin ? undefined : clubIds
 	});
 
+	const historySessions = filterHistorySessions(sessions);
+	const outstandingCancellationFeesBySession = await loadOutstandingCancellationFeeCountsBySession(
+		supabase,
+		historySessions.map((session) => session.id)
+	);
+
 	return {
-		historySessions: filterHistorySessions(sessions),
+		historySessions,
+		outstandingCancellationFeesBySession,
 		isSuperAdmin,
 		effectiveAppRole,
 		userId: user.id,

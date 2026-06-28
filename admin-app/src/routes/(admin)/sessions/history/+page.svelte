@@ -47,6 +47,7 @@
 						userId={data.userId}
 						showClub={data.isSuperAdmin}
 						compact
+						pendingCancellationFees={data.outstandingCancellationFeesBySession[session.id] ?? 0}
 					/>
 				{/each}
 			</div>

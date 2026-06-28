@@ -42,6 +42,28 @@ export const paymentStatusLabel = (status: PaymentStatus): string => {
 	}
 };
 
+export type CancellationFeeStatus = 'none' | 'owed' | 'submitted' | 'paid' | 'waived';
+
+export const isOutstandingCancellationFee = (
+	feeOwed: number,
+	feeStatus: CancellationFeeStatus
+): boolean => feeOwed > 0 && (feeStatus === 'owed' || feeStatus === 'submitted');
+
+export const cancellationFeeStatusLabel = (status: CancellationFeeStatus): string => {
+	switch (status) {
+		case 'none':
+			return 'No fee';
+		case 'owed':
+			return 'Payment due';
+		case 'submitted':
+			return 'Awaiting confirmation';
+		case 'paid':
+			return 'Paid';
+		case 'waived':
+			return 'Waived';
+	}
+};
+
 export type LeaveRequestStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
 
 export const leaveRequestStatusLabel = (status: LeaveRequestStatus): string => {

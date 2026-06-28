@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { invalidate } from '$app/navigation';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import AvatarCropModal from '$lib/components/AvatarCropModal.svelte';
 	import UploadIcon from '@repo/ui/icons/UploadIcon.svelte';
@@ -12,6 +13,10 @@
 	import SegmentedControl from '@repo/ui/components/SegmentedControl.svelte';
 	import AppCard from '@repo/ui/components/AppCard.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
+	import CancellationFeeModal from '$lib/components/CancellationFeeModal.svelte';
+	import PlayerTransactionsPanel from '$lib/components/PlayerTransactionsPanel.svelte';
+	import { cancellationFeeStatusLabel, formatThb } from '@repo/ui/payments';
+	import type { OutstandingFee } from '$lib/types/session';
 	import { toast } from '@repo/ui/toast/toast.svelte';
 	import { AVATAR_OUTPUT_SIZE, normalizeImageForCrop } from '$lib/images/cropAvatar';
 	import { validateAvatarFile, validateAvatarInput } from '$lib/validation/avatar';
@@ -83,6 +88,8 @@
 	let credentialPhone = $state('');
 	let signInPreference = $state<PasswordSignInPreference>('email');
 	let currentPassword = $state('');
+	let selectedFee = $state<OutstandingFee | null>(null);
+	let feeModalOpen = $state(false);
 
 	const displayedTag = $derived(toFullTag(tagSuffix));
 
@@ -328,6 +335,31 @@
 			revokePreviewUrl();
 		};
 	});
+	function openFeeModal(fee: OutstandingFee) {
+		selectedFee = fee;
+		feeModalOpen = true;
+	}
+
+	function openFeeModalByPlayerId(playerId: string) {
+		const fee = data.outstandingFees.find((entry) => entry.player_id === playerId);
+		if (fee) {
+			openFeeModal(fee);
+		}
+	}
+
+	function closeFeeModal() {
+		feeModalOpen = false;
+		selectedFee = null;
+	}
+
+	const onFeeSubmitted = async () => {
+		if (selectedFee) {
+			selectedFee = { ...selectedFee, fee_status: 'submitted' };
+		}
+		toast.success('Payment submitted. Waiting for admin confirmation.');
+		await invalidate('app:profile');
+	};
+
 	function onTagSuffixInput(event: Event) {
 		const input = event.currentTarget as HTMLInputElement;
 		tagSuffix = input.value.replace(/[^a-zA-Z0-9]/g, '').slice(0, 4);
@@ -337,6 +369,7 @@
 		'w-full rounded-xl border border-slate-300 px-4 py-3 text-base focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20';
 	const profileFieldClass = $derived(`${inputClass}${saveLoading ? ' opacity-0' : ''}`);
 	const labelClass = 'mb-2 block text-sm font-medium text-slate-700';
+	const hasOutstandingFees = $derived(data.outstandingFees.length > 0);
 </script>
 
 <FormToast message={data.loadError} variant="warning" token={data.loadError ?? ''} />
@@ -349,10 +382,66 @@
 />
 <FormToast message={credentialsForm?.error ?? null} variant="error" token={credentialsForm?.error ?? ''} />
 
+{#snippet outstandingFeesSection()}
+	<AppCard
+		class="space-y-4 {hasOutstandingFees
+			? 'border-amber-300 bg-gradient-to-br from-amber-50 via-white to-orange-50/60'
+			: 'border-dashed border-slate-200 bg-slate-50/60'}"
+	>
+		<div>
+			<h2 class="font-medium text-slate-900">
+				{hasOutstandingFees ? 'Action required' : 'Outstanding fees'}
+			</h2>
+			<p class="mt-1 text-sm {hasOutstandingFees ? 'text-amber-900/80' : 'text-slate-500'}">
+				{#if hasOutstandingFees}
+					Pay or wait for admin confirmation before joining another session.
+				{:else}
+					Late cancellation fees must be settled before you can join another session.
+				{/if}
+			</p>
+		</div>
+		{#if hasOutstandingFees}
+			<ul class="divide-y divide-amber-100 overflow-hidden rounded-xl border border-amber-200 bg-white">
+				{#each data.outstandingFees as fee (fee.player_id)}
+					<li>
+						<button
+							type="button"
+							class="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition hover:bg-amber-50/80"
+							onclick={() => openFeeModal(fee)}
+						>
+							<div class="min-w-0">
+								<p class="truncate font-semibold text-slate-900">{fee.session_name}</p>
+								<p class="text-xs text-slate-500">{fee.club_name}</p>
+							</div>
+							<div class="flex shrink-0 items-center gap-3">
+								<div class="text-right">
+									<p class="text-sm font-semibold tabular-nums text-slate-900">
+										{formatThb(fee.fee_owed)}
+									</p>
+									<p class="text-xs font-medium text-amber-800">
+										{cancellationFeeStatusLabel(fee.fee_status)}
+									</p>
+								</div>
+								<span class="text-brand-600" aria-hidden="true">→</span>
+							</div>
+						</button>
+					</li>
+				{/each}
+			</ul>
+		{:else}
+			<p class="text-sm text-slate-500">You're all clear — no fees owed.</p>
+		{/if}
+	</AppCard>
+{/snippet}
+
 <section class="space-y-6">
 	<DashboardHero title="Profile" subtitle="Update your display name, tag, and avatar." />
 
 	{#if data.profile}
+		{#if hasOutstandingFees}
+			{@render outstandingFeesSection()}
+		{/if}
+
 		<AppCard class="flex items-center gap-4">
 			{#if avatarPreviewUrl}
 				<img
@@ -619,6 +708,11 @@
 			</form>
 		</AppCard>
 
+		<PlayerTransactionsPanel
+			transactions={data.transactions}
+			onOpenCancellationFee={openFeeModalByPlayerId}
+		/>
+
 		<div class="app-muted-panel">
 			<h2 class="mb-3 font-medium text-slate-900">Account details</h2>
 			<dl class="space-y-3">
@@ -648,6 +742,10 @@
 				{/if}
 			</dl>
 		</div>
+
+		{#if !hasOutstandingFees}
+			{@render outstandingFeesSection()}
+		{/if}
 	{/if}
 </section>
 
@@ -657,3 +755,17 @@
 	onConfirm={onCropConfirm}
 	onCancel={onCropCancel}
 />
+
+{#if selectedFee}
+	<CancellationFeeModal
+		open={feeModalOpen}
+		playerId={selectedFee.player_id}
+		amount={selectedFee.fee_owed}
+		promptpayTarget={selectedFee.promptpay_target}
+		feeStatus={selectedFee.fee_status}
+		sessionLabel="{selectedFee.session_name} · {selectedFee.club_name}"
+		submitAction="?/submitFee"
+		onClose={closeFeeModal}
+		onSubmitted={onFeeSubmitted}
+	/>
+{/if}

@@ -1,6 +1,8 @@
-import { computeCourtShare } from '@repo/ui/payments';
+import { computeCourtShare, isOutstandingCancellationFee } from '@repo/ui/payments';
 import type { SessionPaymentWithProfile } from '$lib/types/payment';
 import type { SessionDetail, SessionPlayerStatus, SessionPlayerWithProfile } from '$lib/types/session';
+
+export { isOutstandingCancellationFee };
 
 export const ATTENDED_PLAYER_STATUSES: SessionPlayerStatus[] = ['confirmed', 'left'];
 
@@ -57,6 +59,10 @@ export type SessionHistorySummary = {
 	paymentsPendingCount: number;
 	totalCollected: number;
 	totalBilled: number;
+	cancellationFeesCollected: number;
+	cancellationFeesOutstandingCount: number;
+	cancellationFeesPaidCount: number;
+	cancellationFeesWaivedCount: number;
 };
 
 export const computeTotalShuttleUsage = (
@@ -104,6 +110,20 @@ export const buildSessionHistorySummary = (
 		.reduce((sum, payment) => sum + payment.total_amount, 0);
 	const totalBilled = payments.reduce((sum, payment) => sum + payment.total_amount, 0);
 
+	const cancellationFeePlayers = players.filter((player) => player.fee_owed > 0);
+	const cancellationFeesCollected = cancellationFeePlayers
+		.filter((player) => player.fee_status === 'paid')
+		.reduce((sum, player) => sum + player.fee_owed, 0);
+	const cancellationFeesOutstandingCount = cancellationFeePlayers.filter((player) =>
+		isOutstandingCancellationFee(player.fee_owed, player.fee_status)
+	).length;
+	const cancellationFeesPaidCount = cancellationFeePlayers.filter(
+		(player) => player.fee_status === 'paid'
+	).length;
+	const cancellationFeesWaivedCount = cancellationFeePlayers.filter(
+		(player) => player.fee_status === 'waived'
+	).length;
+
 	return {
 		durationLabel: formatSessionDuration(session.start_at, session.end_at),
 		uptimeLabel: formatSessionUptime(session.start_at, session),
@@ -116,6 +136,10 @@ export const buildSessionHistorySummary = (
 		paymentsSubmittedCount,
 		paymentsPendingCount,
 		totalCollected,
-		totalBilled
+		totalBilled,
+		cancellationFeesCollected,
+		cancellationFeesOutstandingCount,
+		cancellationFeesPaidCount,
+		cancellationFeesWaivedCount
 	};
 };

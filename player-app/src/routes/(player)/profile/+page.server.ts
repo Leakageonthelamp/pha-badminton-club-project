@@ -7,19 +7,38 @@ import {
 	type CredentialsInput
 } from '$lib/server/profileCredentials';
 import { authLoadDepends } from '$lib/navigation/authCache';
+import { loadOutstandingFees, submitCancellationFee } from '$lib/server/sessions';
+import { loadPlayerTransactions } from '$lib/server/transactions';
+import {
+	parseTransactionDateFilter,
+	parseTransactionPage,
+	parseTransactionStatusFilter
+} from '$lib/transactions/list';
 import { createSupabaseAdminClient } from '$lib/supabase/server';
 import { fail } from '@sveltejs/kit';
-import type { Actions, PageServerLoad } from './$types';
+import type { PlayerTransactionPage } from '$lib/types/transaction';
 import type { PasswordSignInPreference } from '$lib/types/auth';
+import type { Actions, PageServerLoad } from './$types';
 import { z } from 'zod';
+
+const emptyTransactions = (): PlayerTransactionPage => ({
+	items: [],
+	page: 1,
+	totalCount: 0,
+	hasNextPage: false,
+	hasPrevPage: false,
+	statusFilter: '',
+	date: ''
+});
 
 const profileSchema = z.object({
 	displayName: displayNameSchema,
 	tag: tagSchema
 });
 
-export const load: PageServerLoad = async ({ locals: { supabase, user }, depends }) => {
+export const load: PageServerLoad = async ({ url, locals: { supabase, user }, depends }) => {
 	authLoadDepends(user!.id, depends);
+	depends('app:profile');
 
 	const admin = createSupabaseAdminClient();
 	await ensureOAuthSignInMethod(admin, user!);
@@ -31,10 +50,25 @@ export const load: PageServerLoad = async ({ locals: { supabase, user }, depends
 		.single();
 
 	if (error) {
-		return { profile: null, loadError: 'Could not load your profile.' };
+		return {
+			profile: null,
+			loadError: 'Could not load your profile.',
+			outstandingFees: [],
+			transactions: emptyTransactions()
+		};
 	}
 
-	return { profile, loadError: null };
+	const [outstandingFees, transactions] = await Promise.all([
+		loadOutstandingFees(supabase, user!.id),
+		loadPlayerTransactions(supabase, {
+			userId: user!.id,
+			page: parseTransactionPage(url.searchParams.get('txPage')),
+			statusFilter: parseTransactionStatusFilter(url.searchParams.get('txStatus')),
+			date: parseTransactionDateFilter(url.searchParams.get('txDate'))
+		})
+	]);
+
+	return { profile, loadError: null, outstandingFees, transactions };
 };
 
 export const actions: Actions = {
@@ -173,6 +207,29 @@ export const actions: Actions = {
 			credentialsSuccess: true,
 			credentialsAt: Date.now(),
 			signInPreference: result.signInPreference
+		};
+	},
+
+	submitFee: async ({ request, locals: { supabase, user } }) => {
+		if (!user) {
+			return fail(401, { error: 'Sign in required' });
+		}
+
+		const playerId = String((await request.formData()).get('player_id') ?? '');
+		if (!playerId) {
+			return fail(400, { error: 'Fee record is required' });
+		}
+
+		const result = await submitCancellationFee(supabase, playerId);
+		if (!result.ok) {
+			return fail(400, { error: result.message });
+		}
+
+		return {
+			feeAction: true,
+			feeSuccess: true,
+			feeAt: Date.now(),
+			playerId
 		};
 	}
 };

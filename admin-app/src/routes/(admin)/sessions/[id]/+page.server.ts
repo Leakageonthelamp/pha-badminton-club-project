@@ -2,10 +2,13 @@ import { resolveEffectiveAppRole } from '$lib/server/adminDashboardMode';
 import { assertCanManageClub, assertSuperAdmin } from '$lib/server/clubAccess';
 import {
 	confirmSessionPlayer,
+	confirmCancellationFee,
 	isAdminActionWindowOpen,
+	loadSessionCancellationFees,
 	loadSessionPlayerHistory,
 	loadSessionPlayers,
-	rejectSessionPlayer
+	rejectSessionPlayer,
+	waiveCancellationFee
 } from '$lib/server/sessionPlayers';
 import { loadSessionPayments } from '$lib/server/sessionControl';
 import { loadSessionDetail, releaseActiveSessionPlayers, sweepOverdueDraftSessions, sweepStartedSessions } from '$lib/server/sessions';
@@ -52,6 +55,9 @@ export const load: PageServerLoad = async ({
 			: [];
 	const historyPlayers = isHistoryView ? await loadSessionPlayerHistory(supabase, session.id) : [];
 	const historyPayments = isHistoryView ? await loadSessionPayments(supabase, session.id) : [];
+	const cancellationFees = canManage
+		? await loadSessionCancellationFees(supabase, session.id)
+		: [];
 	const adminActionWindowOpen = isAdminActionWindowOpen(session.start_at, session.end_at);
 	const draftOpenDeadline = new Date(draftOpenDeadlineMs(session.start_at)).toISOString();
 	const canOpen =
@@ -69,6 +75,7 @@ export const load: PageServerLoad = async ({
 		players,
 		historyPlayers,
 		historyPayments,
+		cancellationFees,
 		isHistoryView,
 		canManage,
 		canOpen,
@@ -162,9 +169,20 @@ export const actions: Actions = {
 			});
 		}
 
+		const cancelSource = effectiveAppRole === 'super_admin' ? 'super_admin' : 'club_admin';
+		const cancelReason =
+			cancelSource === 'super_admin'
+				? 'Cancelled by super admin.'
+				: 'Cancelled by club admin.';
+
 		const { data, error: updateError } = await supabase
 			.from('sessions')
-			.update({ status: 'cancelled' })
+			.update({
+				status: 'cancelled',
+				cancel_source: cancelSource,
+				cancel_reason: cancelReason,
+				cancelled_by: user.id
+			})
 			.eq('id', params.id)
 			.in('status', ['draft', 'open'])
 			.select('id')
@@ -267,5 +285,71 @@ export const actions: Actions = {
 		}
 
 		return { success: true, message: 'Player rejected.' };
+	},
+
+	confirmFee: async ({ request, cookies, locals: { supabase, user, appRole } }) => {
+		if (!user || !appRole) {
+			return fail(401, { message: 'Sign in required' });
+		}
+
+		const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
+		const formData = await request.formData();
+		const sessionId = formData.get('session_id');
+		const playerId = formData.get('player_id');
+
+		if (typeof sessionId !== 'string' || !sessionId || typeof playerId !== 'string' || !playerId) {
+			return fail(400, { message: 'Invalid request' });
+		}
+
+		const sessionDetail = await loadSessionDetail(supabase, sessionId);
+		if (!sessionDetail) {
+			return fail(404, { message: 'Session not found' });
+		}
+
+		try {
+			await assertCanManageClub(supabase, user.id, sessionDetail.club_id, effectiveAppRole);
+		} catch {
+			return fail(403, { message: 'Club admin access required' });
+		}
+
+		const result = await confirmCancellationFee(supabase, playerId);
+		if (!result.ok) {
+			return fail(400, { message: result.message });
+		}
+
+		return { success: true, message: 'Cancellation fee confirmed.' };
+	},
+
+	waiveFee: async ({ request, cookies, locals: { supabase, user, appRole } }) => {
+		if (!user || !appRole) {
+			return fail(401, { message: 'Sign in required' });
+		}
+
+		const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
+		const formData = await request.formData();
+		const sessionId = formData.get('session_id');
+		const playerId = formData.get('player_id');
+
+		if (typeof sessionId !== 'string' || !sessionId || typeof playerId !== 'string' || !playerId) {
+			return fail(400, { message: 'Invalid request' });
+		}
+
+		const sessionDetail = await loadSessionDetail(supabase, sessionId);
+		if (!sessionDetail) {
+			return fail(404, { message: 'Session not found' });
+		}
+
+		try {
+			await assertCanManageClub(supabase, user.id, sessionDetail.club_id, effectiveAppRole);
+		} catch {
+			return fail(403, { message: 'Club admin access required' });
+		}
+
+		const result = await waiveCancellationFee(supabase, playerId);
+		if (!result.ok) {
+			return fail(400, { message: result.message });
+		}
+
+		return { success: true, message: 'Cancellation fee waived.' };
 	}
 };

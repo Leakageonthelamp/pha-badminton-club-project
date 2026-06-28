@@ -4,7 +4,7 @@
 	import SectionHeading from '@repo/ui/components/SectionHeading.svelte';
 	import SelectMenu from '@repo/ui/components/SelectMenu.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
-	import DateTimePicker from '$lib/components/DateTimePicker.svelte';
+	import DateTimePicker from '@repo/ui/components/DateTimePicker.svelte';
 	import MapPinPicker from '$lib/components/MapPinPicker.svelte';
 	import RichTextEditor from '$lib/components/RichTextEditor.svelte';
 	import { clubWorkspaceState } from '$lib/clubWorkspace.svelte';

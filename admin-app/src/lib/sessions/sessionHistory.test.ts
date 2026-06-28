@@ -6,6 +6,7 @@ import {
 	formatSessionUptime,
 	isAttendedPlayer
 } from './sessionHistory';
+import { isOutstandingCancellationFee } from '@repo/ui/payments';
 import type { SessionPaymentWithProfile } from '$lib/types/payment';
 import type { SessionPlayerWithProfile } from '$lib/types/session';
 
@@ -15,6 +16,8 @@ const basePlayer = (overrides: Partial<SessionPlayerWithProfile>): SessionPlayer
 	user_id: 'u1',
 	status: 'confirmed',
 	fee_owed: 0,
+	fee_status: 'none',
+	fee_paid_at: null,
 	joined_at: '2026-06-28T10:00:00.000Z',
 	decided_at: null,
 	left_at: null,
@@ -124,5 +127,26 @@ describe('sessionHistory helpers', () => {
 				updated_at: '2026-06-28T23:00:00.000Z'
 			})
 		).toBe('5 hr');
+	});
+
+	it('tracks cancellation fees separately from court payments', () => {
+		expect(isOutstandingCancellationFee(100, 'paid')).toBe(false);
+		expect(isOutstandingCancellationFee(100, 'waived')).toBe(false);
+		expect(isOutstandingCancellationFee(100, 'owed')).toBe(true);
+		expect(isOutstandingCancellationFee(100, 'submitted')).toBe(true);
+
+		const summary = buildSessionHistorySummary(
+			baseSession,
+			[
+				basePlayer({ id: 'p1', user_id: 'u1', status: 'cancelled', fee_owed: 200, fee_status: 'paid' }),
+				basePlayer({ id: 'p2', user_id: 'u2', status: 'cancelled', fee_owed: 150, fee_status: 'owed' })
+			],
+			[basePayment({ user_id: 'u1', total_amount: 150, status: 'approved' })]
+		);
+
+		expect(summary.cancellationFeesCollected).toBe(200);
+		expect(summary.cancellationFeesOutstandingCount).toBe(1);
+		expect(summary.cancellationFeesPaidCount).toBe(1);
+		expect(summary.totalCollected).toBe(150);
 	});
 });

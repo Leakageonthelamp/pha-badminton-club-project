@@ -386,6 +386,56 @@ body {
 		@apply flex justify-end sm:block;
 	}
 
+	.datetime-picker-input {
+		@apply w-full cursor-pointer rounded-xl border border-slate-300 px-4 py-3 text-base placeholder:text-slate-400 focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20;
+	}
+
+	.flatpickr-calendar {
+		border-radius: 1rem;
+		border: 1px solid rgb(226 232 240);
+		box-shadow:
+			0 10px 15px -3px rgb(0 0 0 / 0.1),
+			0 4px 6px -4px rgb(0 0 0 / 0.1);
+		font-family: inherit;
+	}
+
+	.flatpickr-months .flatpickr-month,
+	.flatpickr-current-month .flatpickr-monthDropdown-months,
+	.flatpickr-weekdays,
+	span.flatpickr-weekday {
+		background: white;
+	}
+
+	.flatpickr-day.selected,
+	.flatpickr-day.startRange,
+	.flatpickr-day.endRange,
+	.flatpickr-day.selected:hover,
+	.flatpickr-day.startRange:hover,
+	.flatpickr-day.endRange:hover {
+		background: var(--color-brand-600);
+		border-color: var(--color-brand-600);
+	}
+
+	.flatpickr-day.today {
+		border-color: var(--color-brand-600);
+	}
+
+	.flatpickr-day:hover,
+	.flatpickr-day:focus {
+		background: rgb(244 236 249);
+		border-color: rgb(244 236 249);
+	}
+
+	.flatpickr-time input:hover,
+	.flatpickr-time input:focus {
+		background: rgb(244 236 249);
+	}
+
+	.flatpickr-months .flatpickr-prev-month:hover svg,
+	.flatpickr-months .flatpickr-next-month:hover svg {
+		fill: var(--color-brand-600);
+	}
+
 	.app-detail-section {
 		@apply overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm ring-1 ring-slate-100;
 	}

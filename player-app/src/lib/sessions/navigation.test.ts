@@ -21,7 +21,7 @@ describe('shouldOpenLiveSession', () => {
 					my_membership: {
 						id: 'm1',
 						status: 'confirmed',
-						fee_owed: 0,
+						fee_owed: 0, fee_status: 'none',
 						joined_at: '2026-06-01T00:00:00.000Z'
 					}
 				})

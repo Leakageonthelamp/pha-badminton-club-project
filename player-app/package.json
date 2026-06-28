@@ -30,6 +30,7 @@
 	"dependencies": {
 		"@supabase/ssr": "^0.6.1",
 		"@supabase/supabase-js": "^2.49.8",
+		"flatpickr": "^4.6.13",
 		"promptpay-qr": "^0.5.0",
 		"qrcode": "^1.5.4",
 		"svelte-easy-crop": "^5.0.1",

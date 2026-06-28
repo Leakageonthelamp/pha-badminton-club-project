@@ -3,11 +3,7 @@
 	import flatpickr from 'flatpickr';
 	import type { Instance } from 'flatpickr/dist/types/instance';
 	import 'flatpickr/dist/flatpickr.min.css';
-	import { dateToLocalInput, localInputToDate } from '@repo/ui/datetime';
-
-	const inputClass =
-		'datetime-picker-input w-full rounded-xl border border-slate-300 px-4 py-3 text-base placeholder:text-slate-400 focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20 cursor-pointer';
-	const labelClass = 'mb-2 block text-sm font-medium text-slate-700';
+	import { dateToLocalInput, localInputToDate } from '../datetime';
 
 	let {
 		id,
@@ -90,7 +86,7 @@
 			dateFormat: 'Y-m-d H:i',
 			altInput: true,
 			altFormat: 'd/m/Y, H:i',
-			altInputClass: inputClass,
+			altInputClass: 'datetime-picker-input',
 			defaultDate: localInputToDate(value) ?? undefined,
 			minDate: resolveMinDate(),
 			onChange: (dates) => {
@@ -146,54 +142,6 @@
 </script>
 
 <div>
-	<label for={displayId} class={labelClass}>{label}</label>
-	<input bind:this={inputEl} {id} type="text" data-input />
+	<label for={displayId} class="mb-2 block text-sm font-medium text-slate-700">{label}</label>
+	<input bind:this={inputEl} {id} type="text" data-input class="hidden" />
 </div>
-
-<style>
-	:global(.flatpickr-calendar) {
-		border-radius: 1rem;
-		border: 1px solid rgb(226 232 240);
-		box-shadow:
-			0 10px 15px -3px rgb(0 0 0 / 0.1),
-			0 4px 6px -4px rgb(0 0 0 / 0.1);
-		font-family: inherit;
-	}
-
-	:global(.flatpickr-months .flatpickr-month),
-	:global(.flatpickr-current-month .flatpickr-monthDropdown-months),
-	:global(.flatpickr-weekdays),
-	:global(span.flatpickr-weekday) {
-		background: white;
-	}
-
-	:global(.flatpickr-day.selected),
-	:global(.flatpickr-day.startRange),
-	:global(.flatpickr-day.endRange),
-	:global(.flatpickr-day.selected:hover),
-	:global(.flatpickr-day.startRange:hover),
-	:global(.flatpickr-day.endRange:hover) {
-		background: var(--color-brand-600);
-		border-color: var(--color-brand-600);
-	}
-
-	:global(.flatpickr-day.today) {
-		border-color: var(--color-brand-600);
-	}
-
-	:global(.flatpickr-day:hover),
-	:global(.flatpickr-day:focus) {
-		background: rgb(244 236 249);
-		border-color: rgb(244 236 249);
-	}
-
-	:global(.flatpickr-time input:hover),
-	:global(.flatpickr-time input:focus) {
-		background: rgb(244 236 249);
-	}
-
-	:global(.flatpickr-months .flatpickr-prev-month:hover svg),
-	:global(.flatpickr-months .flatpickr-next-month:hover svg) {
-		fill: var(--color-brand-600);
-	}
-</style>

@@ -56,7 +56,7 @@ describe('canRequestEarlyLeave', () => {
 				{
 					id: 'm1',
 					status: 'confirmed',
-					fee_owed: 0,
+					fee_owed: 0, fee_status: 'none',
 					joined_at: '2026-06-01T00:00:00.000Z'
 				},
 				null
@@ -70,7 +70,7 @@ describe('canRequestEarlyLeave', () => {
 				{
 					id: 'm1',
 					status: 'confirmed',
-					fee_owed: 0,
+					fee_owed: 0, fee_status: 'none',
 					joined_at: '2026-06-01T00:00:00.000Z'
 				},
 				'pending'
