@@ -23,6 +23,8 @@
 	});
 
 	$effect(() => {
+		if (!browser) return;
+
 		const userId = page.data.user?.id;
 		const profileId = data.profile?.id;
 		if (userId && profileId && userId !== profileId) {
@@ -34,6 +36,8 @@
 	// (e.g. display name updated in admin-app) show without a manual reload.
 	// ponytail: invalidateAll re-runs every load on focus; fine at this scale.
 	$effect(() => {
+		if (!browser) return;
+
 		const revalidate = () => {
 			if (document.visibilityState === 'visible') invalidateAll();
 		};

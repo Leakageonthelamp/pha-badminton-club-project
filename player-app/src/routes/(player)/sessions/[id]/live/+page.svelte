@@ -25,6 +25,7 @@
 	import { createSupabaseBrowserClient } from '$lib/supabase/client';
 	import { sessionStatusBadgeClass, sessionStatusLabel } from '$lib/types/session';
 	import type { SubmitFunction } from '@sveltejs/kit';
+	import { onMount } from 'svelte';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -87,9 +88,7 @@
 		return () => window.clearInterval(timer);
 	});
 
-	$effect(() => {
-		if (!browser) return;
-
+	onMount(() => {
 		const supabase = createSupabaseBrowserClient();
 		const sessionId = session.id;
 		const invalidateLive = () => void invalidate('app:live-session');

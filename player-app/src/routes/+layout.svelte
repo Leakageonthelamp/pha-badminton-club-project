@@ -1,5 +1,6 @@
 <script lang="ts">
 	import '../app.css';
+	import { browser } from '$app/environment';
 	import { afterNavigate, beforeNavigate } from '$app/navigation';
 	import { appConfig } from '$lib/config/app';
 	import PwaHead from '$lib/components/PwaHead.svelte';
@@ -18,6 +19,8 @@
 	let pendingTimer: ReturnType<typeof setTimeout> | null = null;
 
 	$effect(() => {
+		if (!browser) return;
+
 		const onClick = (event: MouseEvent) => {
 			const link = (event.target as Element | null)?.closest('a[href]');
 			pendingLink = link instanceof HTMLElement ? link : null;
