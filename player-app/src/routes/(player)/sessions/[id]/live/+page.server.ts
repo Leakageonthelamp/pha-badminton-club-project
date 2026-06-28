@@ -2,6 +2,7 @@ import {
 	cancelSessionLeave,
 	loadLiveSessionForPlayer,
 	requestSessionLeave,
+	setSessionBreak,
 	submitPayment
 } from '$lib/server/sessions';
 import { shouldOpenLiveSession } from '$lib/sessions/navigation';
@@ -72,5 +73,24 @@ export const actions = {
 		}
 
 		return { success: true, message: 'Payment submitted. Waiting for admin confirmation.' };
+	},
+
+	toggleBreak: async ({ params, request, locals: { supabase, user } }) => {
+		if (!user) {
+			return fail(401, { message: 'Sign in required' });
+		}
+
+		const formData = await request.formData();
+		const onBreak = formData.get('on_break') === 'true';
+
+		const result = await setSessionBreak(supabase, params.id, onBreak);
+		if (!result.ok) {
+			return fail(400, { message: result.message });
+		}
+
+		return {
+			success: true,
+			message: onBreak ? 'You are on break.' : 'Welcome back — you are idle again.'
+		};
 	}
 } satisfies Actions;

@@ -8,6 +8,7 @@
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
 	import FormToast from '@repo/ui/components/FormToast.svelte';
+	import PlayerStatusBadge from '@repo/ui/components/PlayerStatusBadge.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
@@ -15,6 +16,11 @@
 	import { formatDateTime, formatUptime } from '@repo/ui/datetime';
 	import { formatThb, paymentStatusLabel } from '@repo/ui/payments';
 	import type { PaymentStatus } from '@repo/ui/payments';
+	import {
+		clampIdleSince,
+		derivePlayerLiveStatus,
+		idleSinceSortKey
+	} from '@repo/ui/sessionStatus';
 	import { createSupabaseBrowserClient } from '$lib/supabase/client';
 	import { sessionStatusBadgeClass, sessionStatusLabel } from '$lib/types/session';
 	import SessionCancellationFees from '$lib/components/SessionCancellationFees.svelte';
@@ -31,6 +37,18 @@
 
 	const session = $derived(data.session);
 	const activePlayers = $derived(data.players.filter((player) => player.status === 'confirmed'));
+	const checklistPlayers = $derived.by(() => {
+		const confirmed = data.players.filter((player) => player.status === 'confirmed');
+		const left = data.players.filter((player) => player.status === 'left');
+
+		const sortedConfirmed = [...confirmed].sort(
+			(a, b) =>
+				idleSinceSortKey(a.idle_since, session.start_at) -
+				idleSinceSortKey(b.idle_since, session.start_at)
+		);
+
+		return [...sortedConfirmed, ...left];
+	});
 	const pendingLeaveRequests = $derived(
 		data.leaveRequests.filter((request) => request.status === 'pending')
 	);
@@ -104,6 +122,25 @@
 				return 'Bill created at settlement';
 		}
 	};
+
+	const playerIdleLabel = (idleSince: string | null): string | null => {
+		const clamped = clampIdleSince(idleSince, session.start_at);
+		if (!clamped) return null;
+
+		return formatUptime(clamped, nowMs);
+	};
+
+	const rosterSectionMeta = $derived.by(() => {
+		if (data.settlementStarted) {
+			return `${paymentsApprovedCount} of ${activePlayers.length} players confirmed paid · sorted by longest idle first`;
+		}
+
+		if (data.endReached) {
+			return 'Sorted by longest idle first · scheduled end reached — start settlement to bill players';
+		}
+
+		return `Sorted by longest idle first · settlement opens at ${formatDateTime(session.end_at)}`;
+	});
 
 	$effect(() => {
 		if (!browser) return;
@@ -368,7 +405,7 @@
 
 						{#if !payment || payment.status !== 'approved'}
 							<p class="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">
-								Approve their payment in the checklist below before you can approve leave.
+								Approve their payment in the roster below before you can approve leave.
 							</p>
 						{/if}
 
@@ -402,20 +439,12 @@
 		</AppCard>
 	{/if}
 
-	<!-- Payment checklist -->
+	<!-- Active players, status & payments -->
 	<AppCard class="space-y-4">
 		<div class="app-section-header">
 			<div>
-				<h2 class="app-section-title">Payment checklist</h2>
-				<p class="app-section-meta">
-					{#if data.settlementStarted}
-						{paymentsApprovedCount} of {activePlayers.length} players confirmed paid
-					{:else if data.endReached}
-						Scheduled end reached — start settlement to bill active players.
-					{:else}
-						Settlement opens at {formatDateTime(session.end_at)}.
-					{/if}
-				</p>
+				<h2 class="app-section-title">Active players & payments</h2>
+				<p class="app-section-meta">{rosterSectionMeta}</p>
 			</div>
 		</div>
 
@@ -434,35 +463,73 @@
 			</div>
 		{/if}
 
-		{#if activePlayers.length === 0}
+		{#if checklistPlayers.length === 0}
 			<EmptyState message="No active players in this session." />
 		{:else if !data.settlementStarted}
 			<div class="app-muted-panel">
-				Payments appear here after you tap <strong>Start settlement</strong> at session end. Early
-				leavers get a bill as soon as they request to leave.
+				Live player status and idle time below — assign matches to those idle longest first.
+				Payments appear after you tap <strong>Start settlement</strong> at session end. Early leavers
+				get a bill as soon as they request to leave.
 			</div>
-			<ul class="divide-y divide-slate-100 rounded-2xl border border-slate-200">
-				{#each activePlayers as player (player.id)}
-					<li class="flex items-center gap-3 px-4 py-3">
-						<UserAvatar
-							displayName={player.profile?.display_name ?? 'Player'}
-							avatarUrl={player.profile?.avatar_url ?? null}
-							size="sm"
-						/>
-						<div class="min-w-0 flex-1">
-							<p class="truncate font-medium text-slate-900">
-								{player.profile?.display_name ?? 'Unknown player'}
-							</p>
-							<p class="text-xs text-slate-500">Playing · not billed yet</p>
+			<ul class="space-y-3">
+				{#each checklistPlayers as player (player.id)}
+					{@const liveStatus = derivePlayerLiveStatus({
+						membershipStatus: player.status,
+						activity: player.activity
+					})}
+					{@const idleLabel = playerIdleLabel(player.idle_since)}
+					<li class="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+						<div class="flex items-center gap-3">
+							<UserAvatar
+								displayName={player.profile?.display_name ?? 'Player'}
+								avatarUrl={player.profile?.avatar_url ?? null}
+								size="sm"
+							/>
+							<div class="min-w-0 flex-1">
+								<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+									<p class="truncate font-semibold text-slate-900">
+										{player.profile?.display_name ?? 'Unknown player'}
+									</p>
+									{#if player.profile?.tag}
+										<TagPill tag={player.profile.tag} />
+									{/if}
+									<PlayerStatusBadge status={liveStatus} />
+								</div>
+								{#if liveStatus === 'break'}
+									<p class="mt-1 text-xs text-amber-700">On break — not available for assignment</p>
+								{:else if liveStatus === 'billing'}
+									<p class="mt-1 text-xs text-sky-700">Waiting for payment confirmation</p>
+								{:else if liveStatus === 'leave'}
+									<p class="mt-1 text-xs text-slate-500">Left the session</p>
+								{/if}
+							</div>
+							{#if idleLabel && liveStatus === 'idle'}
+								<div class="shrink-0 text-right">
+									<p
+										class="font-mono text-xl font-bold tabular-nums leading-none text-brand-800"
+										aria-live="polite"
+									>
+										{idleLabel}
+									</p>
+									<p class="mt-1 text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
+										Idle time
+									</p>
+								</div>
+							{/if}
 						</div>
 					</li>
 				{/each}
 			</ul>
 		{:else}
 			<ul class="space-y-3">
-				{#each activePlayers as player (player.id)}
+				{#each checklistPlayers as player (player.id)}
 					{@const payment = paymentForPlayer(player.user_id)}
 					{@const status = payment?.status ?? null}
+					{@const liveStatus = derivePlayerLiveStatus({
+						membershipStatus: player.status,
+						activity: player.activity
+					})}
+					{@const idleLabel = playerIdleLabel(player.idle_since)}
 					<li
 						class="rounded-2xl border p-4 {status === 'submitted'
 							? 'border-sky-200 bg-sky-50/40'
@@ -470,7 +537,7 @@
 								? 'border-emerald-200 bg-emerald-50/30'
 								: 'border-slate-200 bg-white'}"
 					>
-						<div class="flex flex-wrap items-center justify-between gap-3">
+						<div class="flex flex-wrap items-start justify-between gap-3">
 							<div class="flex min-w-0 items-center gap-3">
 								<UserAvatar
 									displayName={player.profile?.display_name ?? 'Player'}
@@ -478,41 +545,65 @@
 									size="sm"
 								/>
 								<div class="min-w-0">
-									<p class="truncate font-semibold text-slate-900">
-										{player.profile?.display_name ?? 'Unknown player'}
-									</p>
-									<p class="text-xs text-slate-500">{paymentRowHint(status)}</p>
+									<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+										<p class="truncate font-semibold text-slate-900">
+											{player.profile?.display_name ?? 'Unknown player'}
+										</p>
+										{#if player.profile?.tag}
+											<TagPill tag={player.profile.tag} />
+										{/if}
+										<PlayerStatusBadge status={liveStatus} />
+									</div>
+									<p class="mt-1 text-xs text-slate-500">{paymentRowHint(status)}</p>
 								</div>
 							</div>
 
-							<div class="flex flex-wrap items-center gap-2">
-								<span class="text-sm font-semibold text-slate-800">
-									{payment ? formatThb(payment.total_amount) : formatThb(data.perPlayerCost)}
-								</span>
-								<span
-									class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 {paymentBadgeClass(
-										status
-									)}"
-								>
-									{payment ? paymentStatusLabel(payment.status) : 'Not billed'}
-								</span>
-								{#if payment && payment.status !== 'approved'}
-									<form
-										method="POST"
-										action="?/approvePayment"
-										use:enhance={handleAction(`pay-${payment.id}`)}
+							{#if idleLabel && liveStatus === 'idle'}
+								<div class="shrink-0 text-right">
+									<p
+										class="font-mono text-xl font-bold tabular-nums leading-none text-brand-800"
+										aria-live="polite"
 									>
-										<input type="hidden" name="payment_id" value={payment.id} />
-										<SubmitButton
-											loading={actionLoading === `pay-${payment.id}`}
-											loadingLabel="…"
-											class="!w-auto !px-3 !py-1.5 !text-xs"
-										>
-											Confirm paid
-										</SubmitButton>
-									</form>
-								{/if}
-							</div>
+										{idleLabel}
+									</p>
+									<p
+										class="mt-1 text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500"
+									>
+										Idle time
+									</p>
+								</div>
+							{/if}
+						</div>
+
+						<div
+							class="mt-3 flex flex-wrap items-center justify-end gap-2 border-t border-slate-100/80 pt-3"
+						>
+							<span class="text-sm font-semibold text-slate-800">
+								{payment ? formatThb(payment.total_amount) : formatThb(data.perPlayerCost)}
+							</span>
+							<span
+								class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 {paymentBadgeClass(
+									status
+								)}"
+							>
+								{payment ? paymentStatusLabel(payment.status) : 'Not billed'}
+							</span>
+							{#if payment && payment.status !== 'approved'}
+								<form
+									method="POST"
+									action="?/approvePayment"
+									use:enhance={handleAction(`pay-${payment.id}`)}
+								>
+									<input type="hidden" name="payment_id" value={payment.id} />
+									<SubmitButton
+										loading={actionLoading === `pay-${payment.id}`}
+										loadingLabel="…"
+										class="!w-auto !px-3 !py-1.5 !text-xs"
+									>
+										Confirm paid
+									</SubmitButton>
+								</form>
+							{/if}
 						</div>
 					</li>
 				{/each}

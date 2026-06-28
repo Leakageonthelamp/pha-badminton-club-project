@@ -107,7 +107,7 @@ const loadMyMemberships = async (
 
 	const { data, error } = await supabase
 		.from('session_players')
-		.select('id, session_id, status, fee_owed, fee_status, joined_at')
+		.select('id, session_id, status, fee_owed, fee_status, joined_at, activity, idle_since')
 		.eq('user_id', userId)
 		.in('session_id', sessionIds)
 		.in('status', statuses);
@@ -123,7 +123,9 @@ const loadMyMemberships = async (
 			status: row.status as SessionPlayerStatus,
 			fee_owed: Number(row.fee_owed),
 			fee_status: row.fee_status as CancellationFeeStatus,
-			joined_at: row.joined_at
+			joined_at: row.joined_at,
+			activity: row.activity as SessionPlayerMembership['activity'],
+			idle_since: row.idle_since as string | null
 		});
 	}
 
@@ -135,6 +137,8 @@ const rosterSelect = `
 	user_id,
 	status,
 	joined_at,
+	activity,
+	idle_since,
 	profile:profiles!session_players_user_id_fkey ( display_name, tag, avatar_url )
 `;
 
@@ -146,6 +150,8 @@ const mapSessionPlayerPublic = (
 	user_id: row.user_id as string,
 	status: row.status as SessionPlayerPublic['status'],
 	joined_at: row.joined_at as string,
+	activity: row.activity as SessionPlayerPublic['activity'],
+	idle_since: (row.idle_since as string | null) ?? null,
 	profile: normalizeRelation(
 		row.profile as SessionPlayerPublic['profile'] | SessionPlayerPublic['profile'][]
 	),
@@ -520,7 +526,7 @@ const loadActivePlayers = async (
 		.from('session_players')
 		.select(rosterSelect)
 		.eq('session_id', sessionId)
-		.eq('status', 'confirmed')
+		.in('status', ['confirmed', 'left'])
 		.order('joined_at', { ascending: true });
 
 	if (error) {
@@ -623,6 +629,23 @@ export const submitPayment = async (
 	sessionId: string
 ): Promise<{ ok: true } | { ok: false; message: string }> => {
 	const { error } = await supabase.rpc('submit_payment', { p_session_id: sessionId });
+
+	if (error) {
+		return { ok: false, message: error.message };
+	}
+
+	return { ok: true };
+};
+
+export const setSessionBreak = async (
+	supabase: SupabaseClient,
+	sessionId: string,
+	onBreak: boolean
+): Promise<{ ok: true } | { ok: false; message: string }> => {
+	const { error } = await supabase.rpc('set_session_break', {
+		p_session_id: sessionId,
+		p_break: onBreak
+	});
 
 	if (error) {
 		return { ok: false, message: error.message };

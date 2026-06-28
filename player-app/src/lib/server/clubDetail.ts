@@ -97,7 +97,7 @@ const loadSessionMembershipMeta = async (
 				.in('status', ['waiting', 'queued', 'confirmed']),
 			supabase
 				.from('session_players')
-				.select('id, session_id, status, fee_owed, fee_status, joined_at')
+				.select('id, session_id, status, fee_owed, fee_status, joined_at, activity, idle_since')
 				.eq('user_id', userId)
 				.in('session_id', sessionIds)
 				.in('status', ['waiting', 'queued', 'confirmed'])
@@ -124,7 +124,9 @@ const loadSessionMembershipMeta = async (
 				status: row.status as SessionPlayerStatus,
 				fee_owed: Number(row.fee_owed),
 				fee_status: row.fee_status as SessionPlayerMembership['fee_status'],
-				joined_at: row.joined_at
+				joined_at: row.joined_at,
+				activity: row.activity as SessionPlayerMembership['activity'],
+				idle_since: row.idle_since as string | null
 			});
 		}
 	}

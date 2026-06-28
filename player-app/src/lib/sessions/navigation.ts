@@ -14,3 +14,6 @@ export const shouldOpenLiveSession = (session: SessionWithMembership): boolean =
 	session.status === 'in_progress' &&
 	session.my_membership !== null &&
 	activeMembershipStatuses.has(session.my_membership.status);
+
+export const findLiveSession = (sessions: SessionListItem[]): SessionListItem | null =>
+	sessions.find(shouldOpenLiveSession) ?? null;

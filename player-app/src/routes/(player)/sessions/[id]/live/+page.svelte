@@ -8,6 +8,7 @@
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
 	import FormToast from '@repo/ui/components/FormToast.svelte';
+	import PlayerStatusBadge from '@repo/ui/components/PlayerStatusBadge.svelte';
 	import SectionHeading from '@repo/ui/components/SectionHeading.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
@@ -16,6 +17,7 @@
 	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
 	import { formatDateTime, formatUptime } from '@repo/ui/datetime';
 	import { formatThb, paymentStatusLabel } from '@repo/ui/payments';
+	import { clampIdleSince, derivePlayerLiveStatus } from '@repo/ui/sessionStatus';
 	import PaymentQr from '$lib/components/PaymentQr.svelte';
 	import {
 		canRequestEarlyLeave,
@@ -47,6 +49,18 @@
 	const toastMessage = $derived(form?.message ?? null);
 	const toastVariant = $derived(form?.success ? 'success' : 'error');
 	const uptimeLabel = $derived(formatUptime(session.start_at, nowMs));
+	const myLiveStatus = $derived(
+		derivePlayerLiveStatus({
+			membershipStatus: session.my_membership?.status ?? 'confirmed',
+			activity: session.my_membership?.activity ?? 'idle'
+		})
+	);
+	const myIdleLabel = $derived.by(() => {
+		const idleSince = clampIdleSince(session.my_membership?.idle_since ?? null, session.start_at);
+		if (!idleSince) return null;
+
+		return formatUptime(idleSince, nowMs);
+	});
 	const showPaymentModal = $derived(
 		shouldShowPaymentModal(uiState, data.myPayment?.status ?? null)
 	);
@@ -167,12 +181,55 @@
 	</DashboardHero>
 
 	{#if session.status === 'in_progress'}
-		<div class="app-session-countdown border-emerald-200 bg-emerald-50/80">
-			<span class="app-session-countdown-label text-emerald-800">
-				<span class="h-2 w-2 animate-pulse rounded-full bg-emerald-500" aria-hidden="true"></span>
-				Uptime
-			</span>
-			<span class="app-session-countdown-value text-emerald-900" aria-live="polite">{uptimeLabel}</span>
+		<div class="grid gap-3 sm:grid-cols-2">
+			<div class="app-session-countdown border-emerald-200 bg-emerald-50/80">
+				<span class="app-session-countdown-label text-emerald-800">
+					<span class="h-2 w-2 animate-pulse rounded-full bg-emerald-500" aria-hidden="true"></span>
+					Uptime
+				</span>
+				<span class="app-session-countdown-value text-emerald-900" aria-live="polite">{uptimeLabel}</span>
+			</div>
+
+			{#if myLiveStatus === 'idle' || myLiveStatus === 'break'}
+				<div class="app-session-countdown flex flex-col gap-3 border-slate-200 bg-slate-50/80">
+					<div class="flex items-center justify-between gap-3">
+						<span class="app-session-countdown-label text-slate-700">Your status</span>
+						<PlayerStatusBadge status={myLiveStatus} />
+					</div>
+
+					{#if myLiveStatus === 'idle' && myIdleLabel}
+						<div>
+							<p class="text-xs font-medium text-slate-500">Idle time</p>
+							<p
+								class="font-mono text-2xl font-semibold tabular-nums text-slate-900"
+								aria-live="polite"
+							>
+								{myIdleLabel}
+							</p>
+						</div>
+					{/if}
+
+					{#if myLiveStatus === 'idle'}
+						<p class="text-sm leading-relaxed text-slate-600">
+							You are available for the admin to assign to a match.
+						</p>
+						<form method="POST" action="?/toggleBreak" use:enhance={handleAction('breakOn')}>
+							<input type="hidden" name="on_break" value="true" />
+							<SubmitButton variant="secondary" loading={actionLoading === 'breakOn'}>
+								Take a break
+							</SubmitButton>
+						</form>
+					{:else}
+						<p class="text-sm leading-relaxed text-slate-600">
+							You are on break. The admin cannot assign you until you continue.
+						</p>
+						<form method="POST" action="?/toggleBreak" use:enhance={handleAction('breakOff')}>
+							<input type="hidden" name="on_break" value="false" />
+							<SubmitButton loading={actionLoading === 'breakOff'}>Continue playing</SubmitButton>
+						</form>
+					{/if}
+				</div>
+			{/if}
 		</div>
 	{/if}
 
@@ -307,13 +364,17 @@
 			{:else}
 				<ul class="divide-y divide-slate-100">
 					{#each data.activePlayers as player (player.id)}
+						{@const liveStatus = derivePlayerLiveStatus({
+							membershipStatus: player.status,
+							activity: player.activity
+						})}
 						<li class="flex items-center gap-3 py-3">
 							<UserAvatar
 								displayName={player.profile?.display_name ?? 'Player'}
 								avatarUrl={player.profile?.avatar_url ?? null}
 								size="sm"
 							/>
-							<div class="min-w-0">
+							<div class="min-w-0 flex-1">
 								<p class="truncate font-medium text-slate-800">
 									{player.profile?.display_name ?? 'Unknown player'}
 									{#if player.is_me}
@@ -324,6 +385,7 @@
 									<TagPill tag={player.profile.tag} />
 								{/if}
 							</div>
+							<PlayerStatusBadge status={liveStatus} />
 						</li>
 					{/each}
 				</ul>

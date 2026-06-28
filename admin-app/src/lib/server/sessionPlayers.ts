@@ -12,6 +12,8 @@ const playerSelect = `
 	joined_at,
 	decided_at,
 	left_at,
+	activity,
+	idle_since,
 	created_at,
 	updated_at,
 	profile:profiles!session_players_user_id_fkey ( id, display_name, tag, avatar_url )
@@ -33,7 +35,7 @@ export const loadSessionPlayers = async (
 		.from('session_players')
 		.select(playerSelect)
 		.eq('session_id', sessionId)
-		.in('status', ['waiting', 'queued', 'confirmed'])
+		.in('status', ['waiting', 'queued', 'confirmed', 'left'])
 		.order('joined_at', { ascending: true });
 
 	if (error) {

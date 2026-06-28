@@ -21,6 +21,8 @@ const basePlayer = (overrides: Partial<SessionPlayerWithProfile>): SessionPlayer
 	joined_at: '2026-06-28T10:00:00.000Z',
 	decided_at: null,
 	left_at: null,
+	activity: 'idle',
+	idle_since: '2026-06-28T10:00:00.000Z',
 	created_at: '2026-06-28T10:00:00.000Z',
 	updated_at: '2026-06-28T10:00:00.000Z',
 	profile: { id: 'u1', display_name: 'Player One', tag: '#abc', avatar_url: null },

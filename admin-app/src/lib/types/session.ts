@@ -1,5 +1,6 @@
 import type { PromptPayType } from '$lib/types/club';
 import type { CancellationFeeStatus } from '@repo/ui/payments';
+import type { PlayerActivity } from '@repo/ui/sessionStatus';
 
 export type SessionStatus = 'draft' | 'open' | 'in_progress' | 'closed' | 'cancelled';
 export type SessionCancelSource = 'club_admin' | 'super_admin' | 'system';
@@ -152,6 +153,8 @@ export type SessionPlayer = {
 	joined_at: string;
 	decided_at: string | null;
 	left_at: string | null;
+	activity: PlayerActivity;
+	idle_since: string | null;
 	created_at: string;
 	updated_at: string;
 };

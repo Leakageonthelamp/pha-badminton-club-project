@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { liveSessionHref, shouldOpenLiveSession } from './navigation';
+import { findLiveSession, liveSessionHref, shouldOpenLiveSession } from './navigation';
 import type { SessionListItem } from '$lib/types/session';
 
 const session = (
@@ -21,8 +21,11 @@ describe('shouldOpenLiveSession', () => {
 					my_membership: {
 						id: 'm1',
 						status: 'confirmed',
-						fee_owed: 0, fee_status: 'none',
-						joined_at: '2026-06-01T00:00:00.000Z'
+						fee_owed: 0,
+						fee_status: 'none',
+						joined_at: '2026-06-01T00:00:00.000Z',
+						activity: 'idle',
+						idle_since: '2026-06-01T00:00:00.000Z'
 					}
 				})
 			)
@@ -45,5 +48,44 @@ describe('shouldOpenLiveSession', () => {
 describe('liveSessionHref', () => {
 	it('builds the live session route', () => {
 		expect(liveSessionHref('abc-123')).toBe('/sessions/abc-123/live');
+	});
+});
+
+describe('findLiveSession', () => {
+	it('returns the in-progress session the player has joined', () => {
+		const sessions = [
+			session({
+				id: 'open',
+				my_membership: {
+					id: 'm1',
+					status: 'confirmed',
+					fee_owed: 0,
+					fee_status: 'none',
+					joined_at: '2026-06-01T00:00:00.000Z',
+					activity: 'idle',
+					idle_since: '2026-06-01T00:00:00.000Z'
+				}
+			}),
+			session({
+				id: 'live',
+				status: 'in_progress',
+				name: 'Friday night',
+				my_membership: {
+					id: 'm2',
+					status: 'confirmed',
+					fee_owed: 0,
+					fee_status: 'none',
+					joined_at: '2026-06-01T00:00:00.000Z',
+					activity: 'idle',
+					idle_since: '2026-06-01T00:00:00.000Z'
+				}
+			})
+		];
+
+		expect(findLiveSession(sessions)?.id).toBe('live');
+	});
+
+	it('returns null when no live session exists', () => {
+		expect(findLiveSession([session({ status: 'open' })])).toBeNull();
 	});
 });

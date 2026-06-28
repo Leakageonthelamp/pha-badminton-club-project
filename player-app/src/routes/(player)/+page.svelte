@@ -6,7 +6,7 @@
 	import SessionDetailSheet from '$lib/components/SessionDetailSheet.svelte';
 	import { clubsWithDistance, formatOpenSessionBadge, openSessionCountByClub } from '$lib/clubs/nearby';
 	import { featuredSessions, isJoinableFeaturedSession, myJoinedSessions } from '$lib/sessions/nearby';
-	import { liveSessionHref, shouldOpenLiveSession } from '$lib/sessions/navigation';
+	import { findLiveSession, liveSessionHref, shouldOpenLiveSession } from '$lib/sessions/navigation';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import DashboardTile from '@repo/ui/components/DashboardTile.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
@@ -38,6 +38,15 @@
 	const featured = $derived(featuredSessions(data.sessions ?? [], userLocation));
 	const sortedByDistance = $derived(userLocation !== null);
 	const profileName = $derived(data.profile?.display_name ?? 'Player');
+	const liveSession = $derived(findLiveSession(data.sessions ?? []));
+	const liveSessionSubtitle = $derived.by(() => {
+		if (!liveSession) return '';
+
+		const parts: string[] = [];
+		if (liveSession.club?.name) parts.push(liveSession.club.name);
+		parts.push(`Playing as ${profileName}`);
+		return parts.join(' · ');
+	});
 	const clubCountLabel = $derived(`${clubs.length} club${clubs.length === 1 ? '' : 's'}`);
 	const totalSessions = $derived(data.sessions?.length ?? 0);
 	const joinableSessionCount = $derived(
@@ -157,25 +166,31 @@
 </script>
 
 <section class="space-y-6">
-	<DashboardHero
-		eyebrow="Welcome back"
-		title={profileName}
-		tag={data.profile?.tag}
-		subtitle="Join upcoming sessions or explore clubs near you."
-	>
-		{#if mySessions.length > 0}
-			<span class="app-hero-stat">{mySessions.length} joined</span>
-		{/if}
-		{#if featured.length > 0}
-			<span class="app-hero-stat">{featured.length} featured</span>
-		{/if}
-		{#if clubs.length > 0}
-			<span class="app-hero-stat">{clubCountLabel}</span>
-		{/if}
-		{#if sortedByDistance}
-			<span class="app-hero-stat app-hero-stat--success">Sorted by distance</span>
-		{/if}
-	</DashboardHero>
+	{#if liveSession}
+		<DashboardHero eyebrow="Live session" title={liveSession.name} subtitle={liveSessionSubtitle}>
+			<a href={liveSessionHref(liveSession.id)} class="app-hero-action">Go to live session</a>
+		</DashboardHero>
+	{:else}
+		<DashboardHero
+			eyebrow="Welcome back"
+			title={profileName}
+			tag={data.profile?.tag}
+			subtitle="Join upcoming sessions or explore clubs near you."
+		>
+			{#if mySessions.length > 0}
+				<span class="app-hero-stat">{mySessions.length} joined</span>
+			{/if}
+			{#if featured.length > 0}
+				<span class="app-hero-stat">{featured.length} featured</span>
+			{/if}
+			{#if clubs.length > 0}
+				<span class="app-hero-stat">{clubCountLabel}</span>
+			{/if}
+			{#if sortedByDistance}
+				<span class="app-hero-stat app-hero-stat--success">Sorted by distance</span>
+			{/if}
+		</DashboardHero>
+	{/if}
 
 	<div class="space-y-3">
 		<SectionHeading title="Quick actions" />

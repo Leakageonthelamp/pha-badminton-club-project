@@ -3,6 +3,7 @@ export type MatchScoreType = 15 | 21;
 export type MatchType = 'one_round' | 'two_round';
 
 import type { CancellationFeeStatus } from '@repo/ui/payments';
+import type { PlayerActivity } from '@repo/ui/sessionStatus';
 
 export type SessionPlayerStatus =
 	| 'waiting'
@@ -68,6 +69,8 @@ export type SessionPlayerMembership = {
 	fee_owed: number;
 	fee_status: CancellationFeeStatus;
 	joined_at: string;
+	activity: PlayerActivity;
+	idle_since: string | null;
 };
 
 export type OutstandingFee = {
@@ -85,6 +88,8 @@ export type SessionPlayerPublic = {
 	user_id: string;
 	status: SessionPlayerStatus;
 	joined_at: string;
+	activity: PlayerActivity;
+	idle_since: string | null;
 	profile: {
 		display_name: string;
 		tag: string;
