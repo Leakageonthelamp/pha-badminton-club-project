@@ -91,6 +91,25 @@ export const sessionStatusBadgeClass = (status: SessionStatus): string => {
 	}
 };
 
+/** Hero banner modifier for session detail (dark gradient background). */
+export const sessionStatusHeroClass = (status: SessionStatus): string => {
+	switch (status) {
+		case 'draft':
+			return 'app-hero-status--draft';
+		case 'open':
+			return 'app-hero-status--open';
+		case 'in_progress':
+			return 'app-hero-status--live';
+		case 'closed':
+			return 'app-hero-status--closed';
+		case 'cancelled':
+			return 'app-hero-status--cancelled';
+	}
+};
+
+export const sessionStatusShowsLiveDot = (status: SessionStatus): boolean =>
+	status === 'open' || status === 'in_progress';
+
 export type SessionPlayerStatus =
 	| 'waiting'
 	| 'queued'

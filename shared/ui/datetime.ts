@@ -91,3 +91,17 @@ export const formatDate = (utcISO: string): string =>
 /** Format only the time portion in the current device timezone. */
 export const formatTime = (utcISO: string): string =>
 	formatDateTime(utcISO, { timeStyle: 'short' });
+
+/** Elapsed time since a UTC start timestamp (e.g. session uptime). Returns HH:mm:ss. */
+export const formatUptime = (startAtUtc: string, nowMs: number = Date.now()): string => {
+	const startMs = new Date(startAtUtc).getTime();
+	if (Number.isNaN(startMs) || nowMs <= startMs) return '00:00:00';
+
+	const totalSeconds = Math.floor((nowMs - startMs) / 1000);
+	const hours = Math.floor(totalSeconds / 3600);
+	const minutes = Math.floor((totalSeconds % 3600) / 60);
+	const seconds = totalSeconds % 60;
+	const pad = (value: number) => String(value).padStart(2, '0');
+
+	return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+};

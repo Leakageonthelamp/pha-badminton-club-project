@@ -83,13 +83,13 @@
 	>
 		<button
 			type="button"
-			class="absolute inset-0 cursor-default"
+			class="absolute inset-0 z-0 cursor-default"
 			aria-label={closeLabel}
 			onclick={() => onClose?.()}
 		></button>
 
 		<div
-			class="relative w-full max-w-lg"
+			class="relative z-10 w-full max-w-lg"
 			in:fly={panelTransition}
 			out:fly={panelTransition}
 			onoutroend={onPanelOutroEnd}

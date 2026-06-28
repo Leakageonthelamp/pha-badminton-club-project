@@ -1,4 +1,9 @@
 import type {
+	ClubPromptPay,
+	SessionLeaveRequest,
+	SessionPayment
+} from '$lib/types/payment';
+import type {
 	SessionDetail,
 	SessionListItem,
 	SessionPlayerMembership,
@@ -7,6 +12,7 @@ import type {
 } from '$lib/types/session';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { ensureSupabaseAuth } from '$lib/server/supabaseAuth';
+import { computeCourtShare } from '@repo/ui/payments';
 
 const normalizeRelation = <T>(value: T | T[] | null | undefined): T | null => {
 	if (Array.isArray(value)) {
@@ -87,7 +93,8 @@ const loadMembershipCounts = async (
 const loadMyMemberships = async (
 	supabase: SupabaseClient,
 	userId: string,
-	sessionIds: string[]
+	sessionIds: string[],
+	statuses: SessionPlayerStatus[] = ['waiting', 'queued', 'confirmed']
 ): Promise<Map<string, SessionPlayerMembership>> => {
 	const map = new Map<string, SessionPlayerMembership>();
 
@@ -98,7 +105,7 @@ const loadMyMemberships = async (
 		.select('id, session_id, status, fee_owed, joined_at')
 		.eq('user_id', userId)
 		.in('session_id', sessionIds)
-		.in('status', ['waiting', 'queued', 'confirmed']);
+		.in('status', statuses);
 
 	if (error) {
 		console.error('Failed to load my session memberships', error);
@@ -314,6 +321,25 @@ export const loadSessionDetailForPlayer = async (
 	};
 };
 
+const loadSessionDetailForLive = async (
+	supabase: SupabaseClient,
+	sessionId: string,
+	userId: string
+): Promise<SessionDetail | null> => {
+	const session = await loadSessionDetailForPlayer(supabase, sessionId, userId);
+	if (!session) return null;
+
+	if (session.my_membership) return session;
+
+	await ensureSupabaseAuth(supabase);
+	const leftMemberships = await loadMyMemberships(supabase, userId, [sessionId], ['left']);
+	const leftMembership = leftMemberships.get(sessionId) ?? null;
+
+	if (!leftMembership) return session;
+
+	return { ...session, my_membership: leftMembership };
+};
+
 export const joinSession = async (
 	supabase: SupabaseClient,
 	sessionId: string
@@ -349,6 +375,226 @@ export const leaveSession = async (
 	sessionId: string
 ): Promise<{ ok: true } | { ok: false; message: string }> => {
 	const { error } = await supabase.rpc('leave_session', { p_session_id: sessionId });
+
+	if (error) {
+		return { ok: false, message: error.message };
+	}
+
+	return { ok: true };
+};
+
+export type LiveSessionData = {
+	session: SessionDetail;
+	activePlayers: SessionPlayerPublic[];
+	myPayment: SessionPayment | null;
+	myLeaveRequest: SessionLeaveRequest | null;
+	perPlayerCost: number;
+	activePlayerCount: number;
+	clubPromptPay: ClubPromptPay;
+	settlementStarted: boolean;
+};
+
+const mapPaymentRow = (row: Record<string, unknown>): SessionPayment => ({
+	id: row.id as string,
+	session_id: row.session_id as string,
+	user_id: row.user_id as string,
+	court_share: Number(row.court_share),
+	shuttle_share: Number(row.shuttle_share),
+	total_amount: Number(row.total_amount),
+	status: row.status as SessionPayment['status'],
+	decided_by: (row.decided_by as string | null) ?? null,
+	decided_at: (row.decided_at as string | null) ?? null,
+	created_at: row.created_at as string,
+	updated_at: row.updated_at as string
+});
+
+const mapLeaveRequestRow = (row: Record<string, unknown>): SessionLeaveRequest => ({
+	id: row.id as string,
+	session_id: row.session_id as string,
+	user_id: row.user_id as string,
+	status: row.status as SessionLeaveRequest['status'],
+	requested_at: row.requested_at as string,
+	decided_by: (row.decided_by as string | null) ?? null,
+	decided_at: (row.decided_at as string | null) ?? null,
+	created_at: row.created_at as string,
+	updated_at: row.updated_at as string
+});
+
+const loadClubPromptPay = async (
+	supabase: SupabaseClient,
+	clubId: string
+): Promise<ClubPromptPay> => {
+	const { data, error } = await supabase
+		.from('clubs')
+		.select('promptpay_type, promptpay_target')
+		.eq('id', clubId)
+		.maybeSingle();
+
+	if (error || !data) {
+		console.error('Failed to load club PromptPay settings', error);
+		return { promptpay_type: null, promptpay_target: null };
+	}
+
+	return {
+		promptpay_type: data.promptpay_type as ClubPromptPay['promptpay_type'],
+		promptpay_target: data.promptpay_target
+	};
+};
+
+const loadMyPayment = async (
+	supabase: SupabaseClient,
+	sessionId: string,
+	userId: string
+): Promise<SessionPayment | null> => {
+	const { data, error } = await supabase
+		.from('payments')
+		.select('*')
+		.eq('session_id', sessionId)
+		.eq('user_id', userId)
+		.maybeSingle();
+
+	if (error) {
+		console.error('Failed to load my payment', error);
+		return null;
+	}
+
+	return data ? mapPaymentRow(data as Record<string, unknown>) : null;
+};
+
+const loadMyLeaveRequest = async (
+	supabase: SupabaseClient,
+	sessionId: string,
+	userId: string
+): Promise<SessionLeaveRequest | null> => {
+	const { data, error } = await supabase
+		.from('session_leave_requests')
+		.select('*')
+		.eq('session_id', sessionId)
+		.eq('user_id', userId)
+		.order('requested_at', { ascending: false })
+		.limit(1)
+		.maybeSingle();
+
+	if (error) {
+		console.error('Failed to load my leave request', error);
+		return null;
+	}
+
+	return data ? mapLeaveRequestRow(data as Record<string, unknown>) : null;
+};
+
+const loadActivePlayers = async (
+	supabase: SupabaseClient,
+	sessionId: string,
+	userId: string
+): Promise<SessionPlayerPublic[]> => {
+	const { data, error } = await supabase
+		.from('session_players')
+		.select(rosterSelect)
+		.eq('session_id', sessionId)
+		.eq('status', 'confirmed')
+		.order('joined_at', { ascending: true });
+
+	if (error) {
+		console.error('Failed to load active players', error);
+		return [];
+	}
+
+	return (data ?? []).map((row) => mapSessionPlayerPublic(row as Record<string, unknown>, userId));
+};
+
+const countActiveSessionPlayers = async (
+	supabase: SupabaseClient,
+	sessionId: string
+): Promise<number> => {
+	const { count, error } = await supabase
+		.from('session_players')
+		.select('*', { count: 'exact', head: true })
+		.eq('session_id', sessionId)
+		.in('status', ['confirmed', 'left']);
+
+	if (error) {
+		console.error('Failed to count active session players', error);
+		return 0;
+	}
+
+	return count ?? 0;
+};
+
+export const loadLiveSessionForPlayer = async (
+	supabase: SupabaseClient,
+	sessionId: string,
+	userId: string
+): Promise<LiveSessionData | null> => {
+	const session = await loadSessionDetailForLive(supabase, sessionId, userId);
+	if (!session) return null;
+
+	await ensureSupabaseAuth(supabase);
+
+	const [activePlayers, myPayment, myLeaveRequest, activePlayerCount, clubPromptPay, settlementCount] =
+		await Promise.all([
+			loadActivePlayers(supabase, sessionId, userId),
+			loadMyPayment(supabase, sessionId, userId),
+			loadMyLeaveRequest(supabase, sessionId, userId),
+			countActiveSessionPlayers(supabase, sessionId),
+			loadClubPromptPay(supabase, session.club_id),
+			supabase
+				.from('payments')
+				.select('*', { count: 'exact', head: true })
+				.eq('session_id', sessionId)
+		]);
+
+	const perPlayerCost = computeCourtShare({
+		courtFeePerHour: session.court_fee_per_hour,
+		startAt: session.start_at,
+		endAt: session.end_at,
+		courtCount: session.court_count,
+		activePlayers: activePlayerCount
+	});
+
+	return {
+		session,
+		activePlayers,
+		myPayment,
+		myLeaveRequest,
+		perPlayerCost,
+		activePlayerCount,
+		clubPromptPay,
+		settlementStarted: (settlementCount.count ?? 0) > 0
+	};
+};
+
+export const requestSessionLeave = async (
+	supabase: SupabaseClient,
+	sessionId: string
+): Promise<{ ok: true } | { ok: false; message: string }> => {
+	const { error } = await supabase.rpc('request_session_leave', { p_session_id: sessionId });
+
+	if (error) {
+		return { ok: false, message: error.message };
+	}
+
+	return { ok: true };
+};
+
+export const cancelSessionLeave = async (
+	supabase: SupabaseClient,
+	sessionId: string
+): Promise<{ ok: true } | { ok: false; message: string }> => {
+	const { error } = await supabase.rpc('cancel_session_leave', { p_session_id: sessionId });
+
+	if (error) {
+		return { ok: false, message: error.message };
+	}
+
+	return { ok: true };
+};
+
+export const submitPayment = async (
+	supabase: SupabaseClient,
+	sessionId: string
+): Promise<{ ok: true } | { ok: false; message: string }> => {
+	const { error } = await supabase.rpc('submit_payment', { p_session_id: sessionId });
 
 	if (error) {
 		return { ok: false, message: error.message };

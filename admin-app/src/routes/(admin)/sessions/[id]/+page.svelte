@@ -20,7 +20,9 @@
 		matchTypeLabel,
 		sessionPlayerStatusLabel,
 		sessionStatusBadgeClass,
-		sessionStatusLabel
+		sessionStatusHeroClass,
+		sessionStatusLabel,
+		sessionStatusShowsLiveDot
 	} from '$lib/types/session';
 	import type { ActionData, PageData } from './$types';
 
@@ -124,7 +126,6 @@
 			};
 		};
 
-	const showParticipantsAtTop = $derived(session.status === 'open');
 </script>
 
 {#snippet participantsSection()}
@@ -272,19 +273,24 @@
 		title={session.name}
 		subtitle={session.club?.name ?? 'Club session'}
 	>
-		<span class="rounded-full px-2 py-0.5 text-xs font-medium {sessionStatusBadgeClass(session.status)}">
-			{sessionStatusLabel(session.status)}
-		</span>
-		{#if data.isHost}
-			<span class="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
-				You created this
-			</span>
-		{:else}
-			<span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
-				Observation only
-			</span>
-		{/if}
+		<div class="app-hero-status {sessionStatusHeroClass(session.status)}">
+			<span
+				class="app-hero-status-dot {sessionStatusShowsLiveDot(session.status) ? 'animate-pulse' : ''}"
+				aria-hidden="true"
+			></span>
+			<div class="min-w-0 flex-1">
+				<p class="app-hero-status-label">Session status</p>
+				<p class="app-hero-status-value">{sessionStatusLabel(session.status)}</p>
+			</div>
+			{#if data.isHost}
+				<span class="app-hero-badge shrink-0">You created this</span>
+			{:else}
+				<span class="app-hero-badge shrink-0">Observation only</span>
+			{/if}
+		</div>
 	</DashboardHero>
+
+	{@render participantsSection()}
 
 	{#if session.status === 'draft'}
 		<AppCard class="space-y-4 border-amber-200 bg-amber-50/60">
@@ -355,10 +361,6 @@
 				Session control
 			</SubmitButton>
 		</AppCard>
-	{/if}
-
-	{#if showParticipantsAtTop}
-		{@render participantsSection()}
 	{/if}
 
 	<AppCard class="space-y-4">
@@ -534,10 +536,6 @@
 			</div>
 		</div>
 	</section>
-
-	{#if !showParticipantsAtTop}
-		{@render participantsSection()}
-	{/if}
 
 	{#if data.isSuperAdmin && session.status !== 'closed' && session.status !== 'cancelled'}
 		<AppCard class="space-y-4 border-red-200 bg-red-50/40">

@@ -3,6 +3,7 @@ import {
 	addHoursToLocalInput,
 	dateToLocalInput,
 	formatDateTime,
+	formatUptime,
 	localInputToDate,
 	localInputToUtc,
 	localInputToUtcSafe,
@@ -42,5 +43,13 @@ describe('device-timezone datetime helpers', () => {
 
 	it('formats a UTC timestamp without throwing', () => {
 		expect(formatDateTime('2026-06-27T12:00:00.000Z')).toBeTruthy();
+	});
+
+	it('formats uptime as HH:mm:ss', () => {
+		const start = '2026-06-27T12:00:00.000Z';
+		const now = Date.parse('2026-06-27T14:30:45.000Z');
+		expect(formatUptime(start, now)).toBe('02:30:45');
+		expect(formatUptime(start, Date.parse(start))).toBe('00:00:00');
+		expect(formatUptime(start, Date.parse(start) - 1)).toBe('00:00:00');
 	});
 });
