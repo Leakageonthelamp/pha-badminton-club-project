@@ -83,11 +83,11 @@ Migrations create the public `avatars` bucket and RLS. No extra dashboard step u
 
 ### pg_cron (session lifecycle)
 
-Migrations `0021` / `0022` / `0028` schedule `start_due_sessions()` every minute when `pg_cron` is available on hosted Supabase. If cron is unavailable, status updates still run via **lazy sweep** when someone loads admin or player pages (`sweepStartedSessions()`).
+Migrations `0021` / `0022` / `0028` schedule `start_due_sessions()` every minute when `pg_cron` is available on hosted Supabase. Migrations `0029`–`0031` add cancel-lock, live player activity, and end-session-early RPCs (no extra cron). If cron is unavailable, status updates still run via **lazy sweep** when someone loads admin or player pages (`sweepStartedSessions()`).
 
 ### Realtime (live session)
 
-Migrations `0023` / `0024` add `sessions`, `session_players`, `payments`, and `session_leave_requests` to the `supabase_realtime` publication so the player live page and admin control page update live. Realtime is enabled by default on hosted Supabase — no dashboard step. If a live page never refreshes, confirm **Database → Replication** has these tables published.
+Migrations `0023` / `0024` add `sessions`, `session_players`, `payments`, and `session_leave_requests` to the `supabase_realtime` publication so the player live page and admin control page update live. Migration `0030` adds `activity` / `idle_since` columns (same Realtime channel — `session_players` already published). Realtime is enabled by default on hosted Supabase — no dashboard step. If a live page never refreshes, confirm **Database → Replication** has these tables published.
 
 ---
 
@@ -206,8 +206,8 @@ Add staging callback URLs to Supabase Auth allowlist.
 - [ ] OAuth redirects work on both domains (no “redirect URL mismatch”)
 - [ ] PWA: manifest and install prompt on player app (mobile)
 - [ ] Session lifecycle: open session transitions at `start_at` (cron or page-load sweep)
-- [ ] Live session: player `/sessions/[id]/live` and admin `/sessions/[id]/control` update in realtime
-- [ ] Payments: settlement → PromptPay QR renders → submit → admin approve → close session
+- [ ] Live session: player `/sessions/[id]/live` and admin `/sessions/[id]/control` update in realtime (activity badges, break toggle, idle timer)
+- [ ] Payments: settlement → PromptPay QR renders → submit → admin approve → close session (or end early → approve → close before `end_at`)
 - [ ] Cancellation fee: late cancel shows QR; admin confirm/waive works
 - [ ] Super admin promoted; backdoor key handled safely
 
@@ -230,8 +230,8 @@ yarn build:player && yarn build:admin
 | Avatar files | Supabase Storage |
 | `start_due_sessions` cron | Supabase `pg_cron` (hosted) |
 | Lazy session sweep | Server load handlers in both apps |
-| Live session updates | Supabase Realtime (sessions, players, payments, leave requests) |
-| Payment settlement / close | Supabase RPCs (`begin_session_settlement`, `approve_payment`, `close_session`) |
+| Live session updates | Supabase Realtime (`sessions`, `session_players`, `payments`, `session_leave_requests`; activity/idle_since via `0030`) |
+| Payment settlement / close | Supabase RPCs (`begin_session_settlement`, `end_session_early`, `approve_payment`, `close_session`) |
 | PromptPay QR | Client-side in player-app (`promptpay-qr` + `qrcode`) — no extra host |
 | Edge Functions (Phase 4+) | `supabase functions deploy` — same Supabase project |
 

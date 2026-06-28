@@ -104,8 +104,8 @@ Single source of truth; ELO is global per player for v1 (simplest correct model)
 - `clubs`: name, owner_id (super admin), max_active_sessions
 - `club_admins`: club_id, user_id (membership = who can admin a club)
 - `player_ratings`: user_id, elo (default 1500), matches_played, wins, losses, status (active|suspended)
-- `sessions`: club_id, host_id, name, description, start_at, end_at, **finished_at**, venue_name, latitude, longitude, court_count, court_fee_per_hour, shuttle_id, shuttle_price_per_each, max_players, min_players, match_score_type, match_type, **cancellation_fee**, **max_buffer**, **promptpay_type**, **promptpay_target**, **cancel_source / cancel_reason / cancelled_by**, status (**draft**|open|in_progress|closed|cancelled). Target (not yet): `geography(Point)`, elo_min, elo_max.
-- `session_players`: session_id, user_id, status (**waiting|queued|confirmed|rejected|cancelled|left**), fee_owed, **fee_status (none|owed|submitted|paid|waived)**, **fee_paid_at**, **fee_decided_by**, joined_at, decided_at, left_at. Writes via RPC only (`join_session`, `cancel_session_membership`, `confirm_session_player`, `reject_session_player`, `leave_session`, `submit_cancellation_fee`, `confirm_cancellation_fee`, `waive_cancellation_fee`).
+- `sessions`: club_id, host_id, name, description, start_at, end_at, **finished_at**, **ended_early**, venue_name, latitude, longitude, court_count, court_fee_per_hour, shuttle_id, shuttle_price_per_each, max_players, min_players, match_score_type, match_type, **cancellation_fee**, **max_buffer**, **promptpay_type**, **promptpay_target**, **cancel_source / cancel_reason / cancelled_by**, status (**draft**|open|in_progress|closed|cancelled). Target (not yet): `geography(Point)`, elo_min, elo_max.
+- `session_players`: session_id, user_id, status (**waiting|queued|confirmed|rejected|cancelled|left**), **activity (idle|playing|break|billing)**, **idle_since**, fee_owed, **fee_status (none|owed|submitted|paid|waived)**, **fee_paid_at**, **fee_decided_by**, joined_at, decided_at, left_at. Writes via RPC only (`join_session`, `cancel_session_membership`, `confirm_session_player`, `reject_session_player`, `leave_session`, `set_session_break`, `submit_cancellation_fee`, `confirm_cancellation_fee`, `waive_cancellation_fee`).
 - `session_leave_requests`: session_id, user_id, status (pending|approved|rejected|cancelled), requested_at, decided_by, decided_at. Early-leave during `in_progress`; one pending per player. Writes via RPC only.
 - `session_courts`: session_id, court_number, status (idle|occupied)
 - `matches`: session_id, court_number, mode (auto|manual), status (offered|accepted|in_progress|awaiting_score|disputed|completed|cancelled), started_at, ended_at
@@ -120,7 +120,7 @@ Single source of truth; ELO is global per player for v1 (simplest correct model)
 
 ### 1. Session discovery + join
 
-**Implemented (Phase 3):** Player browses upcoming open sessions at `/sessions`, sorted client-side by haversine distance (stored user location in localStorage) then soonest `start_at`. Home dashboard shows **My sessions** (joined upcoming + in_progress). Player opens detail bottom sheet, joins via `join_session` RPC → **waiting** (counts toward `max_players`) or **queued** (overflow up to `max_buffer`). Join allowed on **`in_progress`** until 30 min before `end_at`. Club admin confirms/rejects waiting players on session detail from **15 min before start until end** (page refresh, no realtime yet). Auto-cancel underfilled sessions at T−15 min and at `start_at`; enough confirmed players → **`in_progress`**. Player can cancel waiting (free if >1 hr before start; else `fee_owed = cancellation_fee`, `fee_status = 'owed'`, collected via PromptPay QR → admin confirm/waive) or cancel queued anytime (free). One non-overlapping session membership at a time; blocked while any `fee_owed > 0`.
+**Implemented (Phase 3):** Player browses upcoming open sessions at `/sessions`, sorted client-side by haversine distance (stored user location in localStorage) then soonest `start_at`. Home dashboard shows **My sessions** (joined upcoming + in_progress). Player opens detail bottom sheet, joins via `join_session` RPC → **waiting** (counts toward `max_players`) or **queued** (overflow up to `max_buffer`). Join allowed on **`in_progress`** until 30 min before `end_at`. Club admin confirms/rejects waiting players on session detail from **15 min before start until end** (page refresh, no realtime yet). Auto-cancel underfilled sessions at T−15 min and at `start_at`; enough confirmed players → **`in_progress`**. Player can cancel waiting (free if >1 hr before start; else `fee_owed = cancellation_fee`, `fee_status = 'owed'`, collected via PromptPay QR → admin confirm/waive) or cancel queued anytime (free). **Waiting players cannot self-cancel within 15 min of `start_at`** — must ask admin to reject, or play and request early leave (`0029`). One non-overlapping session membership at a time; blocked while any `fee_owed > 0`.
 
 **Target (later):** PostGIS `ST_DWithin` for server-side geo filter; Supabase Realtime for join notifications; ELO min/max gates.
 
@@ -181,8 +181,10 @@ Settlement runs in `security definer` RPCs (no Edge Function needed yet), surfac
 on player `/sessions/[id]/live` and admin `/sessions/[id]/control`:
 
 - **court_share** = `compute_session_court_share` = court_fee_per_hour × hours × court_count ÷ active_players (`confirmed` + `left`). **shuttle_share** stays 0 until Phase 4 records matches.
-- **Early leave (during `in_progress`):** player `request_session_leave` → snapshots a `pending` payment → pays via client PromptPay QR (`PaymentQr`) → `submit_payment` → admin `approve_payment` → admin `approve_session_leave` (requires approved payment) → player set `left`.
-- **Close:** admin `begin_session_settlement` writes each confirmed player a payment → players pay → admin `approve_payment` each → `close_session` (only after `end_at`, all confirmed players have an `approved` payment, and all cancellation fees resolved) → players `left`, session `closed`.
+- **Live activity (`0030`):** confirmed players have `activity` (`idle|playing|break|billing`) + `idle_since`. Player toggles break via `set_session_break`. Leave/settlement sets `activity='billing'`; cancel leave resets to `idle`. UI labels/badges via `@repo/ui/sessionStatus`; idle timer uses `clampIdleSince` so pre-start idle never shows negative uptime.
+- **Early leave (during `in_progress`):** player `request_session_leave` → snapshots a `pending` payment → `activity='billing'` → pays via client PromptPay QR (`PaymentQr`) → `submit_payment` → admin `approve_payment` → admin `approve_session_leave` (requires approved payment) → player set `left`.
+- **End early (`0031`):** admin `end_session_early` during `in_progress` → sets `ended_early`, bills all confirmed players immediately → admin approves payments → `close_session` allowed before scheduled `end_at` when `ended_early`.
+- **Close:** admin `begin_session_settlement` writes each confirmed player a payment → players pay → admin `approve_payment` each → `close_session` (after `end_at` **or** `ended_early`, all confirmed players have an `approved` payment, and all cancellation fees resolved) → players `left`, session `closed`.
 - PromptPay target snapshots per session (`promptpay_type` / `promptpay_target`, falling back to club defaults); QR rendered client-side with `promptpay-qr` + `qrcode` (player-app only).
 
 ## Module mapping (scaffold -> build)
@@ -399,7 +401,7 @@ Admin-app: **create + edit + list + detail + participant management + draft/open
 | ---- | --------------- | ------------ |
 | **Super Admin** | `/sessions`, `/sessions/[id]`, `/sessions/history` | View all sessions; **force end** (danger zone); read-only in club workspace for create/edit |
 | **Club Admin** | `/sessions`, `/sessions/new`, `/sessions/[id]`, `/sessions/[id]/edit` | Create/edit/cancel own-club sessions; **confirm/reject waiting players** (15 min before start → session end); **Session control** link when `in_progress` |
-| **Player** | `/sessions`, `/`, club sheets | Browse upcoming sessions (distance-sorted when location granted); **My sessions** on home; join until 30 min before `end_at`; live page when joined + `in_progress` |
+| **Player** | `/sessions`, `/sessions/history`, `/`, club sheets | Browse upcoming sessions (distance-sorted when location granted); **My sessions** on home; **session history** (filter by status/club/date); join until 30 min before `end_at`; live page when joined + `in_progress` |
 
 ### Admin routes (Phase 3)
 
@@ -408,7 +410,7 @@ Admin-app: **create + edit + list + detail + participant management + draft/open
 - `(admin)/sessions/new/` — create form (club admin / super-admin in club workspace only)
 - `(admin)/sessions/[id]/` — session detail + waiting list, buffer queue, confirmed roster; open draft; super-admin force-end
 - `(admin)/sessions/[id]/edit/` — edit open/draft session; cancel releases players (`release_active_session_players`)
-- `(admin)/sessions/[id]/control/` — **live session control** (in_progress only): start settlement, approve payments, approve/reject early-leave requests, confirm/waive cancellation fees, close session. Realtime via `depends('app:session-control')`. Courts/matches still placeholder (Phase 4).
+- `(admin)/sessions/[id]/control/` — **live session control** (in_progress only): **end session early** (bills all), start settlement, approve payments, approve/reject early-leave requests, confirm/waive cancellation fees, close session. Realtime via `depends('app:session-control')`. Courts/matches still placeholder (Phase 4).
 - `(admin)/transactions/` — cross-session payment + cancellation-fee history
 - `(admin)/dashboard/` — **Ongoing** + **Upcoming** session panels (`UpcomingSessionsPanel`)
 
@@ -416,12 +418,13 @@ Admin-app: **create + edit + list + detail + participant management + draft/open
 
 - `(player)/` — home: **My sessions**, featured sessions, nearby clubs
 - `(player)/sessions/` — upcoming session list (`depends('app:sessions')`)
-- `(player)/sessions/[id]/live/` — **live session** (joined + `in_progress`): uptime, cost estimate, roster, early-leave request, PromptPay payment modal; Realtime via `depends('app:live-session')`
+- `(player)/sessions/history/` — past sessions (filter by status, club, date; paginated)
+- `(player)/sessions/[id]/live/` — **live session** (joined + `in_progress`): uptime, idle timer, break toggle, roster activity badges, cost estimate, early-leave request, PromptPay payment modal; Realtime via `depends('app:live-session')`
 - `(player)/profile/` — outstanding cancellation fees + transaction history (`PlayerTransactionsPanel`)
 - `api/sessions/[id]/`, `api/clubs/[id]/` — JSON for bottom sheets
 - Form actions on `/sessions`: `join`, `cancel`, `leave`, `submitFee` → Supabase RPCs
 
-### Data (`0012`–`0028` migrations)
+### Data (`0012`–`0031` migrations)
 
 - `0012`–`0016` — sessions table, shuttles, venue, `session_players` + join RPCs
 - `0017_session_draft.sql` — status includes **`draft`**; default draft on create; must open before start−1 hr
@@ -435,10 +438,13 @@ Admin-app: **create + edit + list + detail + participant management + draft/open
 - `0026_session_finished_at.sql` — `finished_at` set on close/cancel (distinct from scheduled `end_at`)
 - `0027_cancellation_fee_payments.sql` — `fee_status` lifecycle (owed→submitted→paid/waived) + submit/confirm/waive RPCs
 - `0028_session_cancel_reason.sql` — `cancel_source` / `cancel_reason` / `cancelled_by` audit on sessions
+- `0029_cancel_lock_before_start.sql` — waiting players cannot self-cancel within 15 min of `start_at`
+- `0030_session_player_activity.sql` — `activity` / `idle_since` on `session_players`; `set_session_break`; leave/settlement sets `billing`
+- `0031_session_end_early.sql` — `ended_early` flag; `end_session_early` RPC; `close_session` allows close before `end_at` when ended early
 
 - `clubs.venue_name` — default venue label prefilled on session create
-- `sessions`: … `status` (`draft` \| `open` \| `in_progress` \| `closed` \| `cancelled`), …
-- `session_players`: … All writes through security-definer RPCs.
+- `sessions`: … `status` (`draft` \| `open` \| `in_progress` \| `closed` \| `cancelled`), **`ended_early`**, …
+- `session_players`: … **`activity`**, **`idle_since`**. All writes through security-definer RPCs.
 
 All session datetimes stored as `timestamptz` (UTC); UI inputs/display use the **viewer's device timezone** (see `shared/ui/datetime.ts`).
 
@@ -454,7 +460,7 @@ Session lifecycle (`start_due_sessions` RPC + pg_cron every minute when availabl
 
 Draft lifecycle (separate): overdue drafts auto-cancel if not opened 1 hr before start (`sweepOverdueDraftSessions` on admin load). All cancels (system sweeps + admin) record `cancel_source` / `cancel_reason` / `cancelled_by`; `finished_at` is stamped on close/cancel.
 
-Close is **admin-driven** (`close_session`, gated on `end_at` + all payments approved + fees resolved) — there is no automatic `closed` transition yet.
+Close is **admin-driven** (`close_session`, gated on `end_at` **or** `ended_early`, all payments approved, fees resolved) — there is no automatic `closed` transition yet.
 
 ### Payment formulas (locked)
 
@@ -472,7 +478,7 @@ When a player leaves or a session ends, per-player charges:
 
 - PostGIS server-side nearby filter (client haversine only today)
 - ELO min/max on join
-- Live match/court control UI — court assignment, matchmaking (Phase 4; `CourtGrid` idle, "match control arrives later")
+- Live match/court control UI — court assignment, matchmaking, `playing` activity from matches (Phase 4; `CourtGrid` idle, "match control arrives later"; break/idle/billing activity is done)
 - Auto-close sessions at `end_at` (close is admin-driven today)
 - **Shuttle share** in settlement (needs Phase 4 match/shuttle data)
 - Free-text admin cancel reason field (admin cancel writes a fixed role-based string today)
@@ -481,7 +487,8 @@ When a player leaves or a session ends, per-player charges:
 
 - Description: TipTap rich text (admin) → sanitized HTML stored → `RichTextDisplay` (shared) on detail; list excerpts via `@repo/ui/richText`
 - Venue: prefilled from club `venue_name` + lat/lng; editable per session via `MapPinPicker`
-- Datetime helpers: `shared/ui/datetime.ts` (UTC storage, device-timezone display)
+- Datetime helpers: `shared/ui/datetime.ts` (UTC storage, device-timezone display, `formatUptime` for idle timer)
+- Live player status: `@repo/ui/sessionStatus` (`derivePlayerLiveStatus`, labels/badges, `clampIdleSince`)
 - Player: `DashboardTile` grids with **session status** + membership badges; detail via `SessionDetailSheet`; joined `in_progress` → `/sessions/[id]/live`
 - Player geo sort: `player-app/src/lib/sessions/nearby.ts` + `shared/ui/geolocation.ts` (localStorage location)
 - Admin: `SessionListLink`; participants (waiting confirm/reject, queue, confirmed); super-admin **All clubs** searchable list on `/`
@@ -491,6 +498,8 @@ When a player leaves or a session ends, per-player charges:
 
 - `player-app/src/lib/sessions/nearby.test.ts` — distance + soonest tie-break (+ `fee_status` on list items)
 - `player-app/src/lib/sessions/navigation.test.ts` — live session routing
+- `player-app/src/lib/sessions/sessionStatus.test.ts` — live activity labels, `clampIdleSince`, sort keys
+- `player-app/src/lib/sessions/history.test.ts` — player history filters + pagination
 - `player-app/src/lib/sessions/liveState.test.ts` — live UI state machine + payment modal + early-leave eligibility
 - `player-app/src/lib/payments.test.ts` — `computeCourtShare` (`@repo/ui/payments`)
 - `player-app/src/lib/transactions/list.test.ts` — transaction filter/status mapping

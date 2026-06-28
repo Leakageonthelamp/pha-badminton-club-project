@@ -62,6 +62,7 @@ keep it per-app. App-specific branding stays per-app too.
 ### Shared UI modules (non-component)
 
 - `@repo/ui/datetime` — UTC storage, device-timezone display/input conversion; `formatUptime` (live timer)
+- `@repo/ui/sessionStatus` — live player activity status (`derivePlayerLiveStatus`, `playerLiveStatusLabel`/`BadgeClass`, `clampIdleSince`/`idleSinceSortKey` for idle timer)
 - `@repo/ui/richText` — `richTextPlainText`, `richTextExcerpt`, `isRichTextEmpty` (list cards + empty checks)
 - `@repo/ui/geolocation` — stored user location helpers (player distance sort)
 - `@repo/ui/payments` — `computeCourtShare`, `formatThb` (THB money formatting), payment/leave/fee status labels
@@ -119,7 +120,7 @@ These hold across both apps and all phases. Follow them before inventing a new p
 1. **Sensitive domain tables are write-via-RPC only.** App code NEVER `insert`/`update`/`delete`
    `sessions`, `session_players`, `payments`, or `session_leave_requests` directly. All state
    transitions go through `security definer` RPCs (`join_session`, `cancel_session_membership`,
-   `approve_payment`, `close_session`, `confirm_cancellation_fee`, …). RLS on these tables grants
+   `set_session_break`, `end_session_early`, `approve_payment`, `close_session`, `confirm_cancellation_fee`, …). RLS on these tables grants
    **select only**; the RPC is the single enforcement point for every rule (capacity, timing windows,
    fees, role checks). Add the rule once in the RPC, not per caller.
 2. **Realtime = subscribe then invalidate, never mutate local state.** For live data, open a browser
@@ -145,7 +146,7 @@ These hold across both apps and all phases. Follow them before inventing a new p
 - **DB:** `supabase/migrations/0016_session_players.sql` — `session_players` table + RPCs
   (`join_session`, `cancel_session_membership`, `confirm_session_player`, `reject_session_player`,
   `leave_session`). Never insert/update `session_players` from app code directly.
-- **Player:** `(player)/sessions/` list + `SessionDetailSheet`; server helpers in
+- **Player:** `(player)/sessions/` list + `SessionDetailSheet`; `(player)/sessions/history/` past sessions; server helpers in
   `player-app/src/lib/server/sessions.ts`; distance sort in `player-app/src/lib/sessions/nearby.ts`
   (same pattern as `player-app/src/lib/clubs/nearby.ts`).
 - **Admin:** participant lists on `(admin)/sessions/[id]/`; helpers in
@@ -157,6 +158,8 @@ These hold across both apps and all phases. Follow them before inventing a new p
   (`fee_status = 'submitted'`); admin confirms/waives via `SessionCancellationFees` →
   `confirm_cancellation_fee` / `waive_cancellation_fee`. Join is blocked while any
   `fee_owed > 0 and fee_status in ('owed','submitted')`.
+- **Cancel lock (`0029`):** waiting players cannot self-cancel within **15 min** of `start_at` — RPC raises
+  a user-facing error; queued players still cancel free anytime. Admin can still reject waiting players.
 
 ## Session lifecycle (Phase 3 — DB + lazy sweep)
 
@@ -175,6 +178,9 @@ These hold across both apps and all phases. Follow them before inventing a new p
   `cancel_reason`, `cancelled_by`. System reasons (min-players sweeps, overdue draft) are set in the
   RPC/sweep; admin cancel currently writes a fixed role-based string (no free-text reason field yet).
   `finished_at` (`0026`) records the real close/cancel time, distinct from scheduled `end_at`.
+- **End early (`0031`):** admin `end_session_early` during `in_progress` sets `ended_early`, bills all
+  confirmed players immediately. `close_session` gate is `now() >= end_at OR ended_early` (plus all
+  payments approved and fees resolved).
 
 ## Live session, payments & settlement (Phase 7 — implemented)
 
@@ -184,19 +190,25 @@ inside them is still Phase 4 (`CourtGrid` shows idle courts; "match control arri
 - **DB:** `0023_session_live_realtime.sql` (Realtime publication on `sessions` + `session_players`),
   `0024_session_payments_leave.sql` (`payments` + `session_leave_requests` tables; RPCs
   `request_session_leave`, `cancel_session_leave`, `submit_payment`, `approve_payment`,
-  `begin_session_settlement`, `approve_session_leave`, `reject_session_leave`, `close_session`;
-  `compute_session_court_share`), `0025_session_promptpay.sql` (session-level `promptpay_type` /
-  `promptpay_target` snapshot, required on create/edit).
+  `begin_session_settlement`, `approve_session_leave`, `reject_session_leave`, `close_session`,
+  `end_session_early`; `compute_session_court_share`), `0025_session_promptpay.sql` (session-level `promptpay_type` /
+  `promptpay_target` snapshot, required on create/edit), `0030_session_player_activity.sql` (`activity` /
+  `idle_since` on `session_players`; `set_session_break`), `0031_session_end_early.sql` (`ended_early`).
 - **Player live (`(player)/sessions/[id]/live/`):** `loadLiveSessionForPlayer` +
-  `requestSessionLeave` / `cancelSessionLeave` / `submitPayment` in
+  `requestSessionLeave` / `cancelSessionLeave` / `submitPayment` / `setSessionBreak` in
   `player-app/src/lib/server/sessions.ts`; UI state machine in `player-app/src/lib/sessions/liveState.ts`;
-  PromptPay QR via `PaymentQr.svelte`; payment modal auto-opens when the bill is `pending`/`submitted`.
+  activity labels/badges + idle timer via `@repo/ui/sessionStatus` (`clampIdleSince` so pre-start idle
+  never shows negative uptime); PromptPay QR via `PaymentQr.svelte`; payment modal auto-opens when the bill is `pending`/`submitted`.
 - **Admin control (`(admin)/sessions/[id]/control/`):** helpers in
   `admin-app/src/lib/server/sessionControl.ts` (`loadSessionPayments`, `loadSessionLeaveRequests`,
-  approve payment/leave, settlement, close). Flow: `begin_session_settlement` → per-player
-  `approve_payment` → `close_session` (only after `end_at`, all confirmed players have an `approved`
-  payment, and all cancellation fees resolved). Leave requests need an approved payment before
+  approve payment/leave, settlement, `endSessionEarly`, close). Flow: `begin_session_settlement` or
+  `end_session_early` → per-player `approve_payment` → `close_session` (after `end_at` **or** `ended_early`,
+  all confirmed players have an `approved` payment, and all cancellation fees resolved). Leave requests need an approved payment before
   `approve_session_leave`.
+- **Activity mirror (`0030`):** `session_players.activity` (`idle|playing|break|billing`) is a
+  roster-visible mirror of billing/leave state; `payments` stays the source of truth for money.
+  `request_session_leave` / `begin_session_settlement` set `billing`; `cancel_session_leave` resets to
+  `idle`. `playing` is reserved for Phase 4 match data.
 - **Court share only today:** `compute_session_court_share` =
   `court_fee_per_hour × hours × court_count ÷ active_players` (`confirmed` + `left`). Shuttle share is
   schema-ready but UI says "appears when matches are recorded" (Phase 4).
@@ -206,6 +218,8 @@ inside them is still Phase 4 (`CourtGrid` shows idle courts; "match control arri
 - **Transactions:** unified payment history (session court bills + cancellation fees) — player
   `PlayerTransactionsPanel` (profile), admin `(admin)/transactions/`; helpers in each app's
   `src/lib/server/transactions.ts` + `@repo/ui/transactions`.
+- **Session history:** admin `(admin)/sessions/history/` + `SessionHistoryDetail`; player
+  `(player)/sessions/history/` with filters (status, club, date) — parallel pattern, app-local helpers.
 
 ## Super admin home (`admin-app` `/`)
 
