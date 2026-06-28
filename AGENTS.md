@@ -53,14 +53,20 @@ keep it per-app. App-specific branding stays per-app too.
 - `PageTransition` — direction logic depends on app-specific `navigation/back`.
 - `IdentifierField` — depends on `$lib/validation/identifier`.
 - `AvatarCropModal` — depends on `$lib/images/cropAvatar`.
-- Single-app components: `MapPinPicker`, `UpcomingSessionsPanel`, `SessionListLink`, `SessionForm` (admin);
-  `ClubDetailSheet`, `SessionDetailSheet`, `DisplayNameField`, `PwaHead`, `PwaPrompts` (player).
+- Single-app components: `MapPinPicker`, `UpcomingSessionsPanel`, `SessionListLink`, `SessionForm`,
+  `SessionCancellationFees`, `SessionHistoryDetail` (admin); `ClubDetailSheet`, `SessionDetailSheet`,
+  `DisplayNameField`, `PwaHead`, `PwaPrompts`, `PaymentQr`, `CancellationFeeModal`,
+  `PlayerTransactionsPanel` (player). PromptPay QR (`PaymentQr`, depends on `promptpay-qr` + `qrcode`)
+  lives **player-only** — admin never renders QR.
 
 ### Shared UI modules (non-component)
 
-- `@repo/ui/datetime` — UTC storage, device-timezone display/input conversion
+- `@repo/ui/datetime` — UTC storage, device-timezone display/input conversion; `formatUptime` (live timer)
 - `@repo/ui/richText` — `richTextPlainText`, `richTextExcerpt`, `isRichTextEmpty` (list cards + empty checks)
 - `@repo/ui/geolocation` — stored user location helpers (player distance sort)
+- `@repo/ui/payments` — `computeCourtShare`, `formatThb` (THB money formatting), payment/leave/fee status labels
+- `@repo/ui/transactions` — unified transaction filter/status helpers (both apps' transaction lists)
+- `CourtGrid` (`@repo/ui/components/CourtGrid.svelte`) — shared court display (live + control; idle until Phase 4 matches)
 
 ## Styles
 
@@ -106,6 +112,34 @@ Applies to **both apps**. Use the shared helpers in `shared/ui/datetime.ts`
 - DB migrations: `yarn db:push` from repo root after adding/editing `supabase/migrations/*.sql`.
 - Keep diffs small. Reuse before adding. Prefer deletion over duplication.
 
+## Project rules (cross-cutting — apply everywhere)
+
+These hold across both apps and all phases. Follow them before inventing a new pattern.
+
+1. **Sensitive domain tables are write-via-RPC only.** App code NEVER `insert`/`update`/`delete`
+   `sessions`, `session_players`, `payments`, or `session_leave_requests` directly. All state
+   transitions go through `security definer` RPCs (`join_session`, `cancel_session_membership`,
+   `approve_payment`, `close_session`, `confirm_cancellation_fee`, …). RLS on these tables grants
+   **select only**; the RPC is the single enforcement point for every rule (capacity, timing windows,
+   fees, role checks). Add the rule once in the RPC, not per caller.
+2. **Realtime = subscribe then invalidate, never mutate local state.** For live data, open a browser
+   Supabase channel (`createSupabaseBrowserClient().channel(...).on('postgres_changes', …)`) and on any
+   event call `invalidate('app:<key>')` so the server `load` re-runs (pages declare the matching
+   `depends('app:<key>')`). Don't patch `$state` from realtime payloads — let the load be the source of
+   truth. There is no shared subscription helper; inline it per page with its own `depends` key.
+3. **Money is `numeric` in the DB, formatted only via `@repo/ui/payments`.** Use `formatThb` to render
+   and `computeCourtShare` (or the DB `compute_session_court_share`) to split. Never hardcode `฿`/`THB`
+   or an inline `÷ 4` / `÷ players` anywhere.
+4. **Auth before RLS in player server loads.** Call `ensureSupabaseAuth()`
+   (`player-app/src/lib/server/supabaseAuth.ts`) before any RLS-gated query, or hard refresh races the
+   session cookie and RLS returns empty.
+5. **Time-based lifecycle = DB RPC + lazy sweep on page load.** Anything that should change "when a time
+   passes" (start, cancel-if-underfilled, draft expiry) is a `security definer` RPC scheduled by
+   `pg_cron` **and** invoked lazily via a `sweep*()` call on relevant admin/player loads. Never rely on
+   cron alone — local dev and the free tier may not have it.
+6. **RPC error strings are user-facing.** Exceptions raised in RPCs bubble up to toasts; keep them short,
+   human-readable, and free of internal identifiers.
+
 ## Session join (Phase 3 — both apps, shared Supabase)
 
 - **DB:** `supabase/migrations/0016_session_players.sql` — `session_players` table + RPCs
@@ -118,8 +152,11 @@ Applies to **both apps**. Use the shared helpers in `shared/ui/datetime.ts`
   `admin-app/src/lib/server/sessionPlayers.ts`.
 - **Types:** `player-app/src/lib/types/session.ts` (player-facing); `admin-app/src/lib/types/session.ts`
   (includes `SessionPlayer` types). Not in `shared/` — app-local domain types.
-- **Fees:** `cancellation_fee` on session is recorded as `fee_owed` on late cancel; collection is
-  Phase 7 (PromptPay), not implemented yet.
+- **Cancellation fees (implemented, `0027`):** late cancel records `fee_owed = cancellation_fee` and
+  `fee_status = 'owed'`. Player pays via PromptPay QR (`CancellationFeeModal`) → `submit_cancellation_fee`
+  (`fee_status = 'submitted'`); admin confirms/waives via `SessionCancellationFees` →
+  `confirm_cancellation_fee` / `waive_cancellation_fee`. Join is blocked while any
+  `fee_owed > 0 and fee_status in ('owed','submitted')`.
 
 ## Session lifecycle (Phase 3 — DB + lazy sweep)
 
@@ -134,18 +171,41 @@ Applies to **both apps**. Use the shared helpers in `shared/ui/datetime.ts`
   Local dev without pg_cron relies on this.
 - **Draft:** status `draft` → admin must open before start−1 hr (`0017_session_draft.sql`);
   `sweepOverdueDraftSessions()` on admin load.
+- **Cancel audit (`0028`):** cancelling sets `cancel_source` (`club_admin`|`super_admin`|`system`),
+  `cancel_reason`, `cancelled_by`. System reasons (min-players sweeps, overdue draft) are set in the
+  RPC/sweep; admin cancel currently writes a fixed role-based string (no free-text reason field yet).
+  `finished_at` (`0026`) records the real close/cancel time, distinct from scheduled `end_at`.
 
-## Session in_progress UI (Phase 3 shell — match flow Phase 4)
+## Live session, payments & settlement (Phase 7 — implemented)
 
-- **Player:** joined + `in_progress` → navigate to `/sessions/[id]/live` (placeholder) via
-  `shouldOpenLiveSession` / `liveSessionHref` in `player-app/src/lib/sessions/navigation.ts`.
-  Used on home, sessions list, `ClubDetailSheet`, `SessionDetailSheet` back nav.
-- **Admin:** dashboard splits **Ongoing** vs **Upcoming** (`filterOngoingSessions` in
-  `admin-app/src/lib/sessions/list.ts`); session detail shows **Session control** when
-  `in_progress` → `/sessions/[id]/control` (placeholder).
+The `/live` (player) and `/control` (admin) pages are **real**, not placeholders. Match/court control
+inside them is still Phase 4 (`CourtGrid` shows idle courts; "match control arrives later").
+
+- **DB:** `0023_session_live_realtime.sql` (Realtime publication on `sessions` + `session_players`),
+  `0024_session_payments_leave.sql` (`payments` + `session_leave_requests` tables; RPCs
+  `request_session_leave`, `cancel_session_leave`, `submit_payment`, `approve_payment`,
+  `begin_session_settlement`, `approve_session_leave`, `reject_session_leave`, `close_session`;
+  `compute_session_court_share`), `0025_session_promptpay.sql` (session-level `promptpay_type` /
+  `promptpay_target` snapshot, required on create/edit).
+- **Player live (`(player)/sessions/[id]/live/`):** `loadLiveSessionForPlayer` +
+  `requestSessionLeave` / `cancelSessionLeave` / `submitPayment` in
+  `player-app/src/lib/server/sessions.ts`; UI state machine in `player-app/src/lib/sessions/liveState.ts`;
+  PromptPay QR via `PaymentQr.svelte`; payment modal auto-opens when the bill is `pending`/`submitted`.
+- **Admin control (`(admin)/sessions/[id]/control/`):** helpers in
+  `admin-app/src/lib/server/sessionControl.ts` (`loadSessionPayments`, `loadSessionLeaveRequests`,
+  approve payment/leave, settlement, close). Flow: `begin_session_settlement` → per-player
+  `approve_payment` → `close_session` (only after `end_at`, all confirmed players have an `approved`
+  payment, and all cancellation fees resolved). Leave requests need an approved payment before
+  `approve_session_leave`.
+- **Court share only today:** `compute_session_court_share` =
+  `court_fee_per_hour × hours × court_count ÷ active_players` (`confirmed` + `left`). Shuttle share is
+  schema-ready but UI says "appears when matches are recorded" (Phase 4).
 - **Roster RLS:** `0019`/`0020` — members see roster via `is_active_session_member()` security
   definer; player loads must call `ensureSupabaseAuth()` before RLS queries
   (`player-app/src/lib/server/supabaseAuth.ts`).
+- **Transactions:** unified payment history (session court bills + cancellation fees) — player
+  `PlayerTransactionsPanel` (profile), admin `(admin)/transactions/`; helpers in each app's
+  `src/lib/server/transactions.ts` + `@repo/ui/transactions`.
 
 ## Super admin home (`admin-app` `/`)
 
