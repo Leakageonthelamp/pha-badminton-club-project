@@ -27,6 +27,7 @@
 	let picker = $state<Instance | null>(null);
 	let isEditing = $state(false);
 	const displayId = $derived(`${id}-display`);
+	const labelId = $derived(`${id}-label`);
 	const labelClass = $derived(variant === 'filter' ? 'app-filter-label' : 'mb-2 block text-sm font-medium text-slate-700');
 
 	const syncAltInput = (instance: Instance) => {
@@ -34,8 +35,15 @@
 		if (!alt) return;
 
 		alt.id = displayId;
+		alt.setAttribute('aria-labelledby', labelId);
 		alt.placeholder = placeholder;
 		alt.disabled = disabled;
+		alt.autocomplete = 'off';
+		alt.setAttribute('autocomplete', 'off');
+		alt.setAttribute('autocorrect', 'off');
+		alt.setAttribute('autocapitalize', 'off');
+		alt.setAttribute('spellcheck', 'false');
+		alt.removeAttribute('name');
 		alt.classList.toggle('cursor-not-allowed', disabled);
 		alt.classList.toggle('opacity-50', disabled);
 		alt.required = required && !disabled;
@@ -44,11 +52,15 @@
 	onMount(() => {
 		if (!inputEl) return;
 
+		inputEl.autocomplete = 'off';
+
 		const altClass = variant === 'filter' ? 'app-filter-input cursor-pointer' : 'datetime-picker-input';
 
-		picker = flatpickr(inputEl, {
+		let instance: Instance | null = null;
+
+		instance = flatpickr(inputEl, {
 			enableTime: false,
-			clickOpens: true,
+			clickOpens: false,
 			allowInput: true,
 			disableMobile: true,
 			dateFormat: 'Y-m-d',
@@ -69,6 +81,7 @@
 
 				alt.addEventListener('focus', () => {
 					isEditing = true;
+					if (!alt.disabled) instance.open();
 				});
 				alt.addEventListener('blur', () => {
 					isEditing = false;
@@ -76,8 +89,10 @@
 			}
 		});
 
+		picker = instance;
+
 		return () => {
-			picker?.destroy();
+			instance?.destroy();
 			picker = null;
 		};
 	});
@@ -85,7 +100,6 @@
 	$effect(() => {
 		if (!picker || isEditing) return;
 
-		picker.set('clickOpens', !disabled);
 		syncAltInput(picker);
 
 		const externalDate = value ? localDateToDate(value) : null;
@@ -101,6 +115,7 @@
 </script>
 
 <div>
-	<label for={displayId} class={labelClass}>{label}</label>
-	<input bind:this={inputEl} {id} type="text" data-input class="hidden" />
+	<!-- svelte-ignore a11y_label_has_associated_control -->
+	<label id={labelId} class={labelClass}>{label}</label>
+	<input bind:this={inputEl} {id} type="text" data-input class="hidden" autocomplete="off" />
 </div>

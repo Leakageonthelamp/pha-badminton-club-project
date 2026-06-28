@@ -99,7 +99,7 @@ export const utcToLocalInput = (utcISO: string): string => {
 /** Format a UTC ISO timestamp for display in the current device timezone. */
 export const formatDateTime = (
 	utcISO: string,
-	options: Intl.DateTimeFormatOptions = { dateStyle: 'medium', timeStyle: 'short' }
+	options: Intl.DateTimeFormatOptions = { dateStyle: 'medium', timeStyle: 'short', hour12: false }
 ): string => new Intl.DateTimeFormat(undefined, options).format(new Date(utcISO));
 
 /** Format only the date portion in the current device timezone. */
@@ -108,7 +108,7 @@ export const formatDate = (utcISO: string): string =>
 
 /** Format only the time portion in the current device timezone. */
 export const formatTime = (utcISO: string): string =>
-	formatDateTime(utcISO, { timeStyle: 'short' });
+	formatDateTime(utcISO, { timeStyle: 'short', hour12: false });
 
 /** Elapsed time since a UTC start timestamp (e.g. session uptime). Returns HH:mm:ss. */
 export const formatUptime = (startAtUtc: string, nowMs: number = Date.now()): string => {

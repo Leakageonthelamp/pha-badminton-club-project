@@ -57,7 +57,8 @@
 		if (!value) return '—';
 		return new Date(value).toLocaleString(undefined, {
 			dateStyle: 'medium',
-			timeStyle: 'short'
+			timeStyle: 'short',
+			hour12: false
 		});
 	}
 

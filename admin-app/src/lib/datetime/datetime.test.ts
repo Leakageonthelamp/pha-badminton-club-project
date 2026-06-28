@@ -4,6 +4,7 @@ import {
 	dateToLocalInput,
 	formatCountdown,
 	formatDateTime,
+	formatTime,
 	formatUptime,
 	isWithinPreStartWindow,
 	localInputToDate,
@@ -45,6 +46,10 @@ describe('device-timezone datetime helpers', () => {
 
 	it('formats a UTC timestamp without throwing', () => {
 		expect(formatDateTime('2026-06-27T12:00:00.000Z')).toBeTruthy();
+	});
+
+	it('formats time in 24-hour clock without AM/PM', () => {
+		expect(formatTime('2026-06-27T15:00:00.000Z')).not.toMatch(/[AP]M/i);
 	});
 
 	it('formats uptime as HH:mm:ss', () => {

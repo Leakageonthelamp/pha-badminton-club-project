@@ -31,6 +31,7 @@
 	let picker = $state<Instance | null>(null);
 	let isEditing = $state(false);
 	const displayId = $derived(`${id}-display`);
+	const labelId = $derived(`${id}-label`);
 
 	const resolveMinDate = (): Date | undefined => {
 		const candidates: Date[] = [];
@@ -52,8 +53,15 @@
 		if (!alt) return;
 
 		alt.id = displayId;
+		alt.setAttribute('aria-labelledby', labelId);
 		alt.placeholder = placeholder;
 		alt.disabled = disabled;
+		alt.autocomplete = 'off';
+		alt.setAttribute('autocomplete', 'off');
+		alt.setAttribute('autocorrect', 'off');
+		alt.setAttribute('autocapitalize', 'off');
+		alt.setAttribute('spellcheck', 'false');
+		alt.removeAttribute('name');
 		alt.classList.toggle('cursor-not-allowed', disabled);
 		alt.classList.toggle('opacity-50', disabled);
 		alt.required = required && !disabled;
@@ -76,10 +84,14 @@
 	onMount(() => {
 		if (!inputEl) return;
 
-		picker = flatpickr(inputEl, {
+		inputEl.autocomplete = 'off';
+
+		let instance: Instance | null = null;
+
+		instance = flatpickr(inputEl, {
 			enableTime: true,
 			time_24hr: true,
-			clickOpens: true,
+			clickOpens: false,
 			allowInput: true,
 			disableMobile: true,
 			minuteIncrement: 1,
@@ -107,6 +119,7 @@
 
 				alt.addEventListener('focus', () => {
 					isEditing = true;
+					if (!alt.disabled) instance.open();
 				});
 				alt.addEventListener('blur', () => {
 					isEditing = false;
@@ -116,8 +129,10 @@
 			}
 		});
 
+		picker = instance;
+
 		return () => {
-			picker?.destroy();
+			instance?.destroy();
 			picker = null;
 		};
 	});
@@ -126,7 +141,6 @@
 		if (!picker || isEditing) return;
 
 		refreshMinDate(picker);
-		picker.set('clickOpens', !disabled);
 		syncAltInput(picker);
 
 		const externalDate = value ? localInputToDate(value) : null;
@@ -142,6 +156,7 @@
 </script>
 
 <div>
-	<label for={displayId} class="mb-2 block text-sm font-medium text-slate-700">{label}</label>
-	<input bind:this={inputEl} {id} type="text" data-input class="hidden" />
+	<!-- svelte-ignore a11y_label_has_associated_control -->
+	<label id={labelId} class="mb-2 block text-sm font-medium text-slate-700">{label}</label>
+	<input bind:this={inputEl} {id} type="text" data-input class="hidden" autocomplete="off" />
 </div>
