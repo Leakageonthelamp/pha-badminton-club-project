@@ -22,6 +22,8 @@ export type Session = {
 	shuttle_price_per_each: number;
 	match_score_type: MatchScoreType;
 	match_type: MatchType;
+	cancellation_fee: number;
+	max_buffer: number;
 	created_at: string;
 	updated_at: string;
 };
@@ -82,5 +84,54 @@ export const sessionStatusBadgeClass = (status: SessionStatus): string => {
 			return 'bg-slate-100 text-slate-700';
 		case 'cancelled':
 			return 'bg-red-50 text-red-700';
+	}
+};
+
+export type SessionPlayerStatus =
+	| 'waiting'
+	| 'queued'
+	| 'confirmed'
+	| 'rejected'
+	| 'cancelled'
+	| 'left';
+
+export type SessionPlayerProfile = {
+	id: string;
+	display_name: string;
+	tag: string;
+	avatar_url: string | null;
+};
+
+export type SessionPlayer = {
+	id: string;
+	session_id: string;
+	user_id: string;
+	status: SessionPlayerStatus;
+	fee_owed: number;
+	joined_at: string;
+	decided_at: string | null;
+	left_at: string | null;
+	created_at: string;
+	updated_at: string;
+};
+
+export type SessionPlayerWithProfile = SessionPlayer & {
+	profile: SessionPlayerProfile | null;
+};
+
+export const sessionPlayerStatusLabel = (status: SessionPlayerStatus): string => {
+	switch (status) {
+		case 'waiting':
+			return 'Waiting';
+		case 'queued':
+			return 'In queue';
+		case 'confirmed':
+			return 'Confirmed';
+		case 'rejected':
+			return 'Rejected';
+		case 'cancelled':
+			return 'Cancelled';
+		case 'left':
+			return 'Left';
 	}
 };

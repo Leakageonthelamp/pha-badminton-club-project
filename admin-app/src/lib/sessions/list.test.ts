@@ -27,6 +27,8 @@ const baseSession = (overrides: Partial<SessionListItem>): SessionListItem => ({
 	shuttle_price_per_each: 80,
 	match_score_type: 21,
 	match_type: 'one_round',
+	cancellation_fee: 0,
+	max_buffer: 0,
 	created_at: '2026-06-01T00:00:00.000Z',
 	updated_at: '2026-06-01T00:00:00.000Z',
 	club: { id: 'club-1', name: 'Test Club' },

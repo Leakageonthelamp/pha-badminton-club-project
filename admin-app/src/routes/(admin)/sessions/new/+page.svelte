@@ -35,6 +35,8 @@
 	let shuttlePricePerEachValue = $state('');
 	let matchScoreType = $state('21');
 	let matchType = $state('one_round');
+	let cancellationFee = $state('0');
+	let maxBuffer = $state('0');
 	let syncedClubId = $state('');
 	let venueEditing = $state(false);
 
@@ -393,6 +395,45 @@
 							{/if}
 						</div>
 					{/if}
+				</div>
+			</div>
+
+			<div class={formSectionClass}>
+				<SectionHeading title="Join settings" />
+				<div class="grid gap-4 sm:grid-cols-2">
+					<div>
+						<label for="max_buffer" class={labelClass}>Max buffer queue</label>
+						<input
+							id="max_buffer"
+							name="max_buffer"
+							type="number"
+							min="0"
+							required
+							bind:value={maxBuffer}
+							placeholder="0"
+							class={inputClass}
+						/>
+						<p class="mt-1 text-xs text-slate-500">
+							Overflow slots when the waiting list is full. Queue players can cancel anytime without fee.
+						</p>
+					</div>
+					<div>
+						<label for="cancellation_fee" class={labelClass}>Late cancel fee (THB)</label>
+						<input
+							id="cancellation_fee"
+							name="cancellation_fee"
+							type="number"
+							min="0"
+							step="0.01"
+							required
+							bind:value={cancellationFee}
+							placeholder="0"
+							class={inputClass}
+						/>
+						<p class="mt-1 text-xs text-slate-500">
+							Charged when a waiting player cancels within 1 hour of start (recorded, not collected yet).
+						</p>
+					</div>
 				</div>
 			</div>
 

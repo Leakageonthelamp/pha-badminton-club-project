@@ -43,6 +43,8 @@ const sessionListSelect = `
 	shuttle_price_per_each,
 	match_score_type,
 	match_type,
+	cancellation_fee,
+	max_buffer,
 	created_at,
 	updated_at,
 	club:clubs ( id, name ),

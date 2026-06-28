@@ -17,7 +17,7 @@ ph-badminton-club-project/
 ```
 
 - **Player app:** `player-app/` — auth, profile, sessions, matches, payments
-- **Admin app:** `admin-app/` — super-admin club management (Phase 2a); session/match management (future phases)
+- **Admin app:** `admin-app/` — super-admin club management (Phase 2a); club-admin dashboard/settings (Phase 2b); session create/list/detail + player join management (Phase 3, in progress)
 - **Shared backend:** Supabase migrations in `supabase/` (repo root); both apps use the same Supabase project
 
 **Root scripts:** `yarn dev:player`, `yarn dev:admin`, `yarn build:player`, `yarn build:admin`, `yarn check:player`, `yarn check:admin`, `yarn test:player`, `yarn test:admin`
@@ -101,8 +101,8 @@ Single source of truth; ELO is global per player for v1 (simplest correct model)
 - `clubs`: name, owner_id (super admin), max_active_sessions
 - `club_admins`: club_id, user_id (membership = who can admin a club)
 - `player_ratings`: user_id, elo (default 1500), matches_played, wins, losses, status (active|suspended)
-- `sessions`: club_id, created_by, name, start_time, end_time, location `geography(Point)`, location_name, court_count, court_fee_per_hour, shuttle_price, max_players, elo_min, elo_max, promptpay_target, promptpay_type (phone|idcard), status (open|active|closed)
-- `session_players`: session_id, user_id, status (pending|approved|rejected|active|left|suspended), joined_at, left_at
+- `sessions`: club_id, host_id, name, description, start_at, end_at, venue_name, latitude, longitude, court_count, court_fee_per_hour, shuttle_id, shuttle_price_per_each, max_players, min_players, match_score_type, match_type, **cancellation_fee**, **max_buffer**, status (open|in_progress|closed|cancelled). Target (not yet): `geography(Point)`, elo_min, elo_max, session-level PromptPay.
+- `session_players`: session_id, user_id, status (**waiting|queued|confirmed|rejected|cancelled|left**), fee_owed, joined_at, decided_at, left_at. Writes via RPC only (`join_session`, `cancel_session_membership`, `confirm_session_player`, `reject_session_player`, `leave_session`).
 - `session_courts`: session_id, court_number, status (idle|occupied)
 - `matches`: session_id, court_number, mode (auto|manual), status (offered|accepted|in_progress|awaiting_score|disputed|completed|cancelled), started_at, ended_at
 - `match_players`: match_id, user_id, team (a|b), accepted (bool)
@@ -114,21 +114,22 @@ Single source of truth; ELO is global per player for v1 (simplest correct model)
 
 ## Key flows
 
-### 1. Session discovery + join (geo)
+### 1. Session discovery + join
 
-Browser GPS read while app is open (HTTPS) -> PostGIS `ST_DWithin` finds nearby open sessions -> player requests join -> admin approves/rejects (also enforces ELO min/max + max_players).
+**Implemented (Phase 3):** Player browses upcoming open sessions at `/sessions`, sorted client-side by haversine distance (stored user location in localStorage) then soonest `start_at`. Player opens detail bottom sheet, joins via `join_session` RPC → **waiting** (counts toward `max_players`) or **queued** (overflow up to `max_buffer`). Club admin confirms/rejects waiting players on session detail from **15 min before start until end** (page refresh, no realtime yet). Player can cancel waiting (free if >1 hr before start; else `fee_owed = cancellation_fee`, recorded only — collection is Phase 7) or cancel queued anytime (free). One non-overlapping session membership at a time; blocked while any `fee_owed > 0`.
+
+**Target (later):** PostGIS `ST_DWithin` for server-side geo filter; Supabase Realtime for join notifications; ELO min/max gates.
 
 ```mermaid
 sequenceDiagram
   participant P as Player (PWA)
   participant DB as Supabase
   participant A as Club Admin
-  P->>DB: get nearby sessions (lat,lng, radius)
-  DB-->>P: open sessions within range
-  P->>DB: request join (session_players: pending)
-  DB-->>A: realtime: new join request
-  A->>DB: approve/reject (checks ELO + capacity)
-  DB-->>P: realtime: status approved -> active
+  P->>DB: list upcoming sessions + join_session RPC
+  DB-->>P: status waiting or queued
+  A->>DB: confirm_session_player / reject_session_player (15m pre-start..end)
+  DB-->>P: status confirmed or rejected
+  Note over P,DB: cancel frees slot; oldest queued auto-promoted to waiting
 ```
 
 ### 2. Matchmaking + accept
@@ -198,7 +199,7 @@ Player routes under `player-app/src/routes/`; admin routes under `admin-app/src/
 | ----- | --------------------------------------------------------------------------------------------- | ----------- |
 | 1     | Player Auth & Profile (email/phone + password, Google, Facebook, 7-day session, profile edit) | Completed   |
 | 2     | DB schema + RLS + roles + clubs / admin hierarchy                                             | In progress (super admin subset done) |
-| 3     | Sessions (CRUD, geo discovery, join/approve)                                                  | In progress (admin create v1 done) |
+| 3     | Sessions (CRUD, geo discovery, join/waitlist/queue, admin confirm)                             | In progress (admin create + player join done) |
 | 4     | Matchmaking (manual then auto) + match accept + realtime offers                               | Not started |
 | 5     | Scoring + peer confirmation + dispute/suspend + admin resolve                                 | Not started |
 | 6     | ELO engine + history + leaderboard                                                            | Not started |
@@ -377,33 +378,43 @@ Uses shared dashboard design system (see **UI design system** above): `Dashboard
 
 ---
 
-## Phase 3 — Sessions (admin create v1)
+## Phase 3 — Sessions (admin create + player join)
 
-Admin-app session module: **create + list + detail (observe) + super-admin force-end**. Player join, geo discovery, matchmaking, and payment execution are later phases.
+Admin-app session module: **create + list + detail + participant management + super-admin force-end**. Player-app: **browse upcoming sessions + join waiting list / buffer queue**.
 
-### Role capabilities (sessions v1)
+### Role capabilities (sessions)
 
 | Role | Sessions access | Capabilities |
 | ---- | --------------- | ------------ |
 | **Super Admin** | `/sessions`, `/sessions/[id]` | View all sessions; **force end** only (danger zone) |
-| **Club Admin** | `/sessions`, `/sessions/new`, `/sessions/[id]` | Create sessions for assigned clubs; list own club sessions; observe others' sessions (read-only detail) |
-| **Player** | — (later phase) | — |
+| **Club Admin** | `/sessions`, `/sessions/new`, `/sessions/[id]` | Create sessions for assigned clubs; list own club sessions; **confirm/reject waiting players** (15 min before start → session end); observe others' sessions (read-only detail) |
+| **Player** | `/sessions`, `/api/sessions/[id]` | Browse upcoming sessions (distance-sorted when location granted); view detail; join / cancel / leave via RPC form actions |
 
-### Admin routes (Phase 3 v1)
+### Admin routes (Phase 3)
 
 - `(admin)/sessions/` — upcoming + past session lists
 - `(admin)/sessions/new/` — create form (club admin / super-admin in club workspace only)
-- `(admin)/sessions/[id]/` — session detail (observe); super-admin force-end action
+- `(admin)/sessions/[id]/` — session detail + waiting list, buffer queue, confirmed players; super-admin force-end action
 
-### Data (`0012`–`0014` migrations)
+### Player routes (Phase 3)
+
+- `(player)/sessions/` — upcoming session list (`depends('app:sessions')`)
+- `(player)/` — home tile linking to `/sessions`
+- `api/sessions/[id]/` — JSON session detail for `SessionDetailSheet`
+- Form actions on `/sessions`: `join`, `cancel`, `leave` → Supabase RPCs
+
+### Data (`0012`–`0016` migrations)
 
 - `clubs.venue_name` — default venue label prefilled on session create
 - `club_shuttles` — dropped `speed`; unique `(club_id, name)`; fields: brand (`name`), `original_price`, tube price (`price`), amount per tube (`number_per_box`); per-each computed in UI
-- `sessions`: `club_id`, `host_id`, `name`, `description` (sanitized HTML), `status` (`open` \| `in_progress` \| `closed` \| `cancelled`), `start_at`, `end_at`, `venue_name`, `latitude`, `longitude`, `max_players`, `min_players`, `court_count`, `court_fee_per_hour`, `shuttle_id`, `shuttle_price_per_each`, `match_score_type` (15 \| 21), `match_type` (`one_round` \| `two_round`)
+- `sessions`: `club_id`, `host_id`, `name`, `description` (sanitized HTML), `status` (`open` \| `in_progress` \| `closed` \| `cancelled`), `start_at`, `end_at`, `venue_name`, `latitude`, `longitude`, `max_players`, `min_players`, `court_count`, `court_fee_per_hour`, `shuttle_id`, `shuttle_price_per_each`, `match_score_type` (15 \| 21), `match_type` (`one_round` \| `two_round`), **`cancellation_fee`**, **`max_buffer`**
+- `session_players` (`0016_session_players.sql`): membership rows; status `waiting` \| `queued` \| `confirmed` \| `rejected` \| `cancelled` \| `left`; `fee_owed` for late-cancel recording; partial unique index (one active row per user per session). All writes through security-definer RPCs.
 
 All session datetimes stored as `timestamptz` (UTC); UI inputs/display use the **viewer's device timezone** (see `shared/ui/datetime.ts`).
 
 Create enforces club `max_active_sessions` (counts sessions with status `open` or `in_progress`).
+
+Join rules (RPC-enforced): capacity = `waiting` + `confirmed` vs `max_players`; overflow → `queued` up to `max_buffer`; no overlapping memberships; block join if any `fee_owed > 0`; auto-promote oldest queued when a waiting slot frees.
 
 ### Payment formulas (locked — used in Phase 7)
 
@@ -417,17 +428,27 @@ When a player leaves or a session ends, per-player charges:
 
 `shuttle_price_per_each` is set per session (may differ from club default for markup).
 
-### Deferred (not v1)
+### Deferred (not Phase 3)
 
 - Session edit/cancel by host
 - Min-players auto-cancel 15 min before start
-- Player join window (30 min before end)
+- PostGIS server-side nearby filter (client haversine only today)
+- Realtime join notifications to admin
+- ELO min/max on join
 - Court assignment infographic / match flow
-- Actual payment QR generation and collection
+- Actual payment QR generation and collection of `fee_owed`
 
 ### UI notes
 
 - Description: TipTap rich text (admin) → sanitized HTML stored → `RichTextDisplay` (shared) on detail
 - Venue: prefilled from club `venue_name` + lat/lng; editable per session via `MapPinPicker`
 - Datetime helpers: `shared/ui/datetime.ts` (UTC storage, device-timezone display)
+- Player session list: `DashboardTile` grid; detail via `SessionDetailSheet` (bottom sheet, mirrors `ClubDetailSheet`)
+- Player geo sort: `player-app/src/lib/sessions/nearby.ts` + `shared/ui/geolocation.ts` (localStorage location)
+- Admin participants: waiting list with confirm/reject (gated to action window), buffer queue, confirmed list
+
+### Check (runnable tests)
+
+- `player-app/src/lib/sessions/nearby.test.ts` — distance + soonest tie-break
+- `supabase/tests/session_players_self_check.sql` — documents RPC smoke checks after `db:reset`
 

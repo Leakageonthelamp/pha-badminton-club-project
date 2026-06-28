@@ -82,7 +82,9 @@ export const actions: Actions = {
 			shuttle_id: formData.get('shuttle_id'),
 			shuttle_price_per_each: formData.get('shuttle_price_per_each'),
 			match_score_type: formData.get('match_score_type'),
-			match_type: formData.get('match_type')
+			match_type: formData.get('match_type'),
+			cancellation_fee: formData.get('cancellation_fee'),
+			max_buffer: formData.get('max_buffer')
 		});
 
 		if (!parsed.success) {
@@ -141,7 +143,9 @@ export const actions: Actions = {
 				shuttle_id: parsed.data.shuttle_id,
 				shuttle_price_per_each: parsed.data.shuttle_price_per_each,
 				match_score_type: parsed.data.match_score_type,
-				match_type: parsed.data.match_type
+				match_type: parsed.data.match_type,
+				cancellation_fee: parsed.data.cancellation_fee,
+				max_buffer: parsed.data.max_buffer
 			})
 			.select('id')
 			.single();

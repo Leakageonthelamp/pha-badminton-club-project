@@ -72,7 +72,9 @@ const authGuard: Handle = async ({ event, resolve }) => {
 	const isProtectedRoute =
 		path === '/' ||
 		path.startsWith('/profile') ||
-		path.startsWith('/api/clubs');
+		path.startsWith('/sessions') ||
+		path.startsWith('/api/clubs') ||
+		path.startsWith('/api/sessions');
 	const isAuthRoute = path === '/login' || path === '/register';
 
 	if (isProtectedRoute && !session) {

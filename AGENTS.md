@@ -53,7 +53,7 @@ keep it per-app. App-specific branding stays per-app too.
 - `PageTransition` — direction logic depends on app-specific `navigation/back`.
 - `IdentifierField` — depends on `$lib/validation/identifier`.
 - `AvatarCropModal` — depends on `$lib/images/cropAvatar`.
-- Single-app components: `MapPinPicker` (admin); `ClubDetailSheet`,
+- Single-app components: `MapPinPicker` (admin); `ClubDetailSheet`, `SessionDetailSheet`,
   `DisplayNameField`, `PwaHead`, `PwaPrompts` (player).
 
 ## Styles
@@ -93,3 +93,18 @@ Applies to **both apps**. Use the shared helpers in `shared/ui/datetime.ts`
   `yarn build:admin` / `yarn build:player` (catches Tailwind/CSS errors),
   `yarn test:admin` / `yarn test:player`.
 - Keep diffs small. Reuse before adding. Prefer deletion over duplication.
+
+## Session join (Phase 3 — both apps, shared Supabase)
+
+- **DB:** `supabase/migrations/0016_session_players.sql` — `session_players` table + RPCs
+  (`join_session`, `cancel_session_membership`, `confirm_session_player`, `reject_session_player`,
+  `leave_session`). Never insert/update `session_players` from app code directly.
+- **Player:** `(player)/sessions/` list + `SessionDetailSheet`; server helpers in
+  `player-app/src/lib/server/sessions.ts`; distance sort in `player-app/src/lib/sessions/nearby.ts`
+  (same pattern as `player-app/src/lib/clubs/nearby.ts`).
+- **Admin:** participant lists on `(admin)/sessions/[id]/`; helpers in
+  `admin-app/src/lib/server/sessionPlayers.ts`.
+- **Types:** `player-app/src/lib/types/session.ts` (player-facing); `admin-app/src/lib/types/session.ts`
+  (includes `SessionPlayer` types). Not in `shared/` — app-local domain types.
+- **Fees:** `cancellation_fee` on session is recorded as `fee_owed` on late cancel; collection is
+  Phase 7 (PromptPay), not implemented yet.

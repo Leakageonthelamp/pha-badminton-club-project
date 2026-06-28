@@ -8,6 +8,7 @@
 	import DashboardTile from '@repo/ui/components/DashboardTile.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
 	import BuildingIcon from '@repo/ui/icons/BuildingIcon.svelte';
+	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
 	import {
 		formatDistanceKm,
 		loadStoredUserLocation,
@@ -92,6 +93,16 @@
 			{/if}
 		{/if}
 	</DashboardHero>
+
+	<div class="grid grid-cols-2 gap-3">
+		<DashboardTile
+			href="/sessions"
+			title="Sessions"
+			description="Find and join upcoming games"
+			icon={LayersIcon}
+			accent="violet"
+		/>
+	</div>
 
 	<div class="space-y-4">
 		<header class="app-section-header">

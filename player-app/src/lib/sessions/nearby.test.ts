@@ -1,0 +1,104 @@
+import { describe, expect, it } from 'vitest';
+import { sessionsWithDistance } from './nearby';
+import type { SessionListItem } from '$lib/types/session';
+
+const sessions: SessionListItem[] = [
+	{
+		id: 'a',
+		club_id: 'c1',
+		name: 'Alpha Session',
+		description: '',
+		status: 'open',
+		start_at: '2026-07-01T14:00:00.000Z',
+		end_at: '2026-07-01T16:00:00.000Z',
+		venue_name: 'Venue A',
+		latitude: 13.7563,
+		longitude: 100.5018,
+		max_players: 12,
+		min_players: 4,
+		court_count: 2,
+		court_fee_per_hour: 200,
+		shuttle_price_per_each: 5,
+		match_score_type: 21,
+		match_type: 'one_round',
+		cancellation_fee: 0,
+		max_buffer: 2,
+		club: { id: 'c1', name: 'Club A' },
+		waiting_count: 0,
+		queued_count: 0,
+		my_membership: null
+	},
+	{
+		id: 'b',
+		club_id: 'c2',
+		name: 'Bravo Session',
+		description: '',
+		status: 'open',
+		start_at: '2026-07-01T10:00:00.000Z',
+		end_at: '2026-07-01T12:00:00.000Z',
+		venue_name: 'Venue B',
+		latitude: 13.73,
+		longitude: 100.52,
+		max_players: 12,
+		min_players: 4,
+		court_count: 2,
+		court_fee_per_hour: 200,
+		shuttle_price_per_each: 5,
+		match_score_type: 21,
+		match_type: 'one_round',
+		cancellation_fee: 0,
+		max_buffer: 2,
+		club: { id: 'c2', name: 'Club B' },
+		waiting_count: 0,
+		queued_count: 0,
+		my_membership: null
+	},
+	{
+		id: 'c',
+		club_id: 'c3',
+		name: 'Charlie Session',
+		description: '',
+		status: 'open',
+		start_at: '2026-07-01T08:00:00.000Z',
+		end_at: '2026-07-01T10:00:00.000Z',
+		venue_name: null,
+		latitude: null,
+		longitude: null,
+		max_players: 12,
+		min_players: 4,
+		court_count: 2,
+		court_fee_per_hour: 200,
+		shuttle_price_per_each: 5,
+		match_score_type: 21,
+		match_type: 'one_round',
+		cancellation_fee: 0,
+		max_buffer: 0,
+		club: { id: 'c3', name: 'Club C' },
+		waiting_count: 0,
+		queued_count: 0,
+		my_membership: null
+	}
+];
+
+describe('sessionsWithDistance', () => {
+	it('sorts by start time when user location is unavailable', () => {
+		const sorted = sessionsWithDistance(sessions, null);
+		expect(sorted.map((session) => session.id)).toEqual(['c', 'b', 'a']);
+		expect(sorted.every((session) => session.distanceKm === null)).toBe(true);
+	});
+
+	it('sorts nearest first then soonest start when distances tie-break', () => {
+		const sorted = sessionsWithDistance(sessions, {
+			latitude: 13.7563,
+			longitude: 100.5018,
+			at: Date.now()
+		});
+
+		expect(sorted[0]?.id).toBe('a');
+		expect(sorted[0]?.distanceKm).toBe(0);
+		expect(sorted[1]?.id).toBe('b');
+		expect(sorted[1]?.distanceKm).toBeGreaterThan(0);
+		expect(sorted[2]?.id).toBe('c');
+		expect(sorted[2]?.distanceKm).toBeNull();
+	});
+});

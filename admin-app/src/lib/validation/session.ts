@@ -72,7 +72,14 @@ export const sessionInputSchema = z
 			.refine((value) => value === 15 || value === 21, 'Score type must be 15 or 21'),
 		match_type: z.enum(['one_round', 'two_round'], {
 			errorMap: () => ({ message: 'Select a match type' })
-		})
+		}),
+		cancellation_fee: z.coerce
+			.number({ invalid_type_error: 'Cancellation fee must be a number' })
+			.min(0, 'Cancellation fee cannot be negative'),
+		max_buffer: z.coerce
+			.number({ invalid_type_error: 'Buffer queue must be a number' })
+			.int('Buffer queue must be a whole number')
+			.min(0, 'Buffer queue cannot be negative')
 	})
 	.superRefine((data, ctx) => {
 		if (data.min_players > data.max_players) {
