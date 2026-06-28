@@ -31,7 +31,10 @@ export type ClubDetail = {
 
 export const shuttlePricePerEach = (
 	shuttle: Pick<ClubShuttlePublic, 'price' | 'number_per_box'>
-): number => (shuttle.number_per_box > 0 ? shuttle.price / shuttle.number_per_box : 0);
+): number => {
+	if (shuttle.number_per_box <= 0) return 0;
+	return Math.round((shuttle.price / shuttle.number_per_box) * 100) / 100;
+};
 
 export const formatThb = (amount: number): string =>
 	new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(amount);

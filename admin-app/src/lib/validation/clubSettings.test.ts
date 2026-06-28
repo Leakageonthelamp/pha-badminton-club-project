@@ -100,4 +100,8 @@ describe('shuttlePricePerEach', () => {
 	it('computes per-shuttle price from tube price', () => {
 		expect(shuttlePricePerEach({ price: 840, number_per_box: 12 })).toBe(70);
 	});
+
+	it('rounds to two decimal places', () => {
+		expect(shuttlePricePerEach({ price: 1090, number_per_box: 12 })).toBe(90.83);
+	});
 });

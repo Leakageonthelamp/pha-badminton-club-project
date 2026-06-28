@@ -1,5 +1,5 @@
 <script lang="ts">
-	import DashboardIcon from './DashboardIcon.svelte';
+	import DashboardIcon, { type DashboardIconAccent } from './DashboardIcon.svelte';
 	import type { Component } from 'svelte';
 
 	let {
@@ -9,6 +9,7 @@
 		description,
 		icon: Icon,
 		badge,
+		accent = 'brand',
 		large = false
 	}: {
 		href?: string;
@@ -17,6 +18,7 @@
 		description?: string;
 		icon: Component<{ class?: string }>;
 		badge?: string;
+		accent?: DashboardIconAccent;
 		large?: boolean;
 	} = $props();
 
@@ -34,7 +36,7 @@
 
 {#if href}
 	<a {href} class={tileClass}>
-		<DashboardIcon icon={Icon} size={iconSize} class="mb-2.5" />
+		<DashboardIcon icon={Icon} {accent} size={iconSize} class="mb-2.5" />
 		<p class={titleClass}>{title}</p>
 		{#if description}
 			<p class={descriptionClass}>{description}</p>
@@ -47,7 +49,7 @@
 	</a>
 {:else}
 	<button type="button" class={tileClass} {onclick}>
-		<DashboardIcon icon={Icon} size={iconSize} class="mb-2.5" />
+		<DashboardIcon icon={Icon} {accent} size={iconSize} class="mb-2.5" />
 		<p class={titleClass}>{title}</p>
 		{#if description}
 			<p class={descriptionClass}>{description}</p>

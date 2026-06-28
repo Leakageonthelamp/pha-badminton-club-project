@@ -1,6 +1,7 @@
 <script lang="ts">
 	import ActionRowLink from '@repo/ui/components/ActionRowLink.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
+	import DashboardTile from '@repo/ui/components/DashboardTile.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
 	import SectionHeading from '@repo/ui/components/SectionHeading.svelte';
 	import UpcomingSessionsPanel from '$lib/components/UpcomingSessionsPanel.svelte';
@@ -50,13 +51,15 @@
 		{#if data.canCreate}
 			<div class="space-y-3">
 				<SectionHeading title="Quick actions" />
-				<ActionRowLink
-					href="/sessions/new"
-					title="Create session"
-					description="Schedule a new badminton session"
-					icon={PlusIcon}
-					accent="violet"
-				/>
+				<div class="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+					<DashboardTile
+						href="/sessions/new"
+						title="Create session"
+						description="Schedule a new badminton session"
+						icon={PlusIcon}
+						accent="violet"
+					/>
+				</div>
 			</div>
 		{/if}
 

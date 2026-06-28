@@ -1,5 +1,4 @@
 <script lang="ts">
-	import ActionRowLink from '@repo/ui/components/ActionRowLink.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import DashboardTile from '@repo/ui/components/DashboardTile.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
@@ -54,22 +53,22 @@
 
 	<div class="space-y-3">
 		<SectionHeading title="Quick actions" />
-		<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-			<ActionRowLink
+		<div class="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+			<DashboardTile
 				href="/clubs/new"
 				title="Create club"
 				description="Add a new club to the system"
 				icon={PlusIcon}
 				accent="violet"
 			/>
-			<ActionRowLink
+			<DashboardTile
 				href="/users"
 				title="Users"
 				description="View and manage all accounts"
 				icon={UserIcon}
 				accent="indigo"
 			/>
-			<ActionRowLink
+			<DashboardTile
 				href="/sessions"
 				title="Sessions"
 				description="View all club sessions"

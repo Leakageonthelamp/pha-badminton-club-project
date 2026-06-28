@@ -1,4 +1,4 @@
-import { formatBangkokWithZone } from '$lib/datetime/bangkok';
+import { formatDateTime } from '@repo/ui/datetime';
 import type { SessionListItem } from '$lib/types/session';
 
 export const isHistorySession = (session: SessionListItem): boolean =>
@@ -28,7 +28,7 @@ export const filterHistorySessions = (sessions: SessionListItem[]): SessionListI
 
 export const formatSessionMeta = (session: SessionListItem, options?: { showClub?: boolean }): string => {
 	const parts = [
-		formatBangkokWithZone(session.start_at),
+		formatDateTime(session.start_at),
 		options?.showClub ? session.club?.name : null,
 		session.host?.display_name ? `Host: ${session.host.display_name}` : null
 	].filter(Boolean);

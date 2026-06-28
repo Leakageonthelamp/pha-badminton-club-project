@@ -66,6 +66,25 @@ keep it per-app. App-specific branding stays per-app too.
 - Use the `brand-*` color scale and `app-*` utility classes from the design
   system rather than re-defining colors.
 
+## Dates & times (timestamptz + device timezone)
+
+Applies to **both apps**. Use the shared helpers in `shared/ui/datetime.ts`
+(`import { ... } from '@repo/ui/datetime'`). Never hardcode a timezone like
+`Asia/Bangkok` anywhere.
+
+- **Store/transfer in UTC.** All timestamps are Postgres `timestamptz` and are
+  passed around as UTC ISO strings (e.g. `2026-06-27T12:00:00.000Z`). The DB is
+  the single source of truth, in UTC.
+- **Display in the device timezone.** Format with `formatDateTime` /
+  `formatDate` / `formatTime`, which use the runtime default timezone (the
+  user's device). Don't add a `(Bangkok)`-style zone suffix.
+- **Input conversion happens on the CLIENT.** `<input type="datetime-local">`
+  has no timezone, so the browser reads it in the device timezone. Convert
+  local → UTC on the client with `localInputToUtc` / `localInputToUtcSafe` and
+  submit the UTC value via a hidden field. Never convert local → UTC on the
+  server (its timezone differs from the device). Use `utcToLocalInput` to
+  pre-fill a `datetime-local` from a stored UTC value.
+
 ## Conventions
 
 - Svelte 5 runes (`$props`, `$state`, `$derived`, `$effect`).

@@ -401,7 +401,7 @@ Admin-app session module: **create + list + detail (observe) + super-admin force
 - `club_shuttles` — dropped `speed`; unique `(club_id, name)`; fields: brand (`name`), `original_price`, tube price (`price`), amount per tube (`number_per_box`); per-each computed in UI
 - `sessions`: `club_id`, `host_id`, `name`, `description` (sanitized HTML), `status` (`open` \| `in_progress` \| `closed` \| `cancelled`), `start_at`, `end_at`, `venue_name`, `latitude`, `longitude`, `max_players`, `min_players`, `court_count`, `court_fee_per_hour`, `shuttle_id`, `shuttle_price_per_each`, `match_score_type` (15 \| 21), `match_type` (`one_round` \| `two_round`)
 
-All session datetimes stored as `timestamptz`; UI inputs/display use **Asia/Bangkok**.
+All session datetimes stored as `timestamptz` (UTC); UI inputs/display use the **viewer's device timezone** (see `shared/ui/datetime.ts`).
 
 Create enforces club `max_active_sessions` (counts sessions with status `open` or `in_progress`).
 
@@ -429,5 +429,5 @@ When a player leaves or a session ends, per-player charges:
 
 - Description: TipTap rich text (admin) → sanitized HTML stored → `RichTextDisplay` (shared) on detail
 - Venue: prefilled from club `venue_name` + lat/lng; editable per session via `MapPinPicker`
-- Datetime helpers: `admin-app/src/lib/datetime/bangkok.ts`
+- Datetime helpers: `shared/ui/datetime.ts` (UTC storage, device-timezone display)
 

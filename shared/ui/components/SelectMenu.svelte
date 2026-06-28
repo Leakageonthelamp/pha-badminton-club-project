@@ -15,6 +15,7 @@
 		options,
 		value = $bindable(''),
 		disabled = false,
+		truncate = true,
 		onchange
 	}: {
 		id: string;
@@ -22,6 +23,7 @@
 		options: SelectOption[];
 		value?: string;
 		disabled?: boolean;
+		truncate?: boolean;
 		onchange?: (value: string) => void;
 	} = $props();
 
@@ -133,7 +135,7 @@
 		onclick={toggleMenu}
 		onkeydown={onTriggerKeydown}
 	>
-		<span class="min-w-0 truncate text-left">{selectedLabel}</span>
+		<span class="min-w-0 text-left {truncate ? 'truncate' : 'whitespace-normal'}">{selectedLabel}</span>
 		<ChevronDownIcon class="h-5 w-5 shrink-0 text-brand-500 transition {open ? 'rotate-180' : ''}" />
 	</button>
 
@@ -168,7 +170,7 @@
 							class:app-select-option--selected={value === option.value}
 							onclick={() => selectOption(option)}
 						>
-							<span class="min-w-0 truncate">{option.label}</span>
+							<span class="min-w-0 {truncate ? 'truncate' : 'whitespace-normal'}">{option.label}</span>
 							{#if option.hint}
 								<span class="shrink-0 text-xs font-medium text-slate-400">{option.hint}</span>
 							{/if}

@@ -6,8 +6,12 @@
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import RichTextDisplay from '@repo/ui/components/RichTextDisplay.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
+	import BuildingIcon from '@repo/ui/icons/BuildingIcon.svelte';
+	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
+	import SettingsIcon from '@repo/ui/icons/SettingsIcon.svelte';
+	import UserIcon from '@repo/ui/icons/UserIcon.svelte';
 	import type { SubmitFunction } from '@sveltejs/kit';
-	import { formatBangkokWithZone } from '$lib/datetime/bangkok';
+	import { formatDateTime } from '@repo/ui/datetime';
 	import { formatThb } from '$lib/types/club';
 	import {
 		matchTypeLabel,
@@ -25,6 +29,39 @@
 	const toastMessage = $derived(form?.message ?? (data.created ? 'Session created.' : null));
 	const toastVariant = $derived(form?.success || data.created ? 'success' : 'error');
 
+	const sessionDurationLabel = $derived.by(() => {
+		const start = new Date(session.start_at);
+		const end = new Date(session.end_at);
+		const ms = end.getTime() - start.getTime();
+		if (ms <= 0) return '—';
+
+		const totalMinutes = Math.round(ms / 60_000);
+		const hours = Math.floor(totalMinutes / 60);
+		const minutes = totalMinutes % 60;
+
+		if (minutes === 0) return `${hours} hr`;
+		if (hours === 0) return `${minutes} min`;
+		return `${hours} hr ${minutes} min`;
+	});
+
+	const locationLabel = $derived(
+		session.latitude !== null && session.longitude !== null
+			? `${session.latitude.toFixed(5)}, ${session.longitude.toFixed(5)}`
+			: null
+	);
+
+	const mapsUrl = $derived(
+		session.latitude !== null && session.longitude !== null
+			? `https://www.google.com/maps?q=${session.latitude},${session.longitude}`
+			: null
+	);
+
+	const shuttleLabel = $derived(
+		session.shuttle
+			? `${session.shuttle.name} · ${formatThb(session.shuttle_price_per_each)} each`
+			: '—'
+	);
+
 	const handleForceEnd: SubmitFunction = () => {
 		forceEndLoading = true;
 		return async ({ result, update }) => {
@@ -35,33 +72,6 @@
 			}
 		};
 	};
-
-	const detailRows = $derived([
-		{ label: 'Club', value: session.club?.name ?? '—' },
-		{ label: 'Host', value: session.host?.display_name ?? '—' },
-		{ label: 'Status', value: sessionStatusLabel(session.status) },
-		{ label: 'Start', value: formatBangkokWithZone(session.start_at) },
-		{ label: 'End', value: formatBangkokWithZone(session.end_at) },
-		{ label: 'Venue', value: session.venue_name ?? '—' },
-		{
-			label: 'Location',
-			value:
-				session.latitude !== null && session.longitude !== null
-					? `${session.latitude.toFixed(5)}, ${session.longitude.toFixed(5)}`
-					: '—'
-		},
-		{ label: 'Players', value: `${session.min_players} – ${session.max_players}` },
-		{ label: 'Courts', value: String(session.court_count) },
-		{ label: 'Court fee / hour', value: formatThb(session.court_fee_per_hour) },
-		{
-			label: 'Shuttle',
-			value: session.shuttle
-				? `${session.shuttle.name} (${formatThb(session.shuttle_price_per_each)} each in session)`
-				: '—'
-		},
-		{ label: 'Match score', value: `${session.match_score_type} points` },
-		{ label: 'Match type', value: matchTypeLabel(session.match_type) }
-	]);
 </script>
 
 <FormToast message={toastMessage} variant={toastVariant} token={toastMessage ?? ''} />
@@ -91,17 +101,161 @@
 		<RichTextDisplay html={session.description} />
 	</AppCard>
 
-	<AppCard class="space-y-4">
-		<h2 class="text-lg font-semibold text-slate-900">Session details</h2>
-		<dl class="grid gap-3 sm:grid-cols-2">
-			{#each detailRows as row (row.label)}
-				<div class="rounded-xl border border-slate-100 bg-slate-50/70 px-4 py-3">
-					<dt class="text-xs font-medium uppercase tracking-wide text-slate-500">{row.label}</dt>
-					<dd class="mt-1 text-sm font-medium text-slate-900">{row.value}</dd>
+	<section class="app-detail-section">
+		<div
+			class="grid gap-4 border-b border-brand-100 bg-gradient-to-br from-brand-50 via-white to-brand-50/50 px-4 py-5 sm:grid-cols-[1fr_auto_1fr_auto_1fr]"
+		>
+			<div>
+				<p class="text-xs font-semibold uppercase tracking-wide text-brand-600">Start</p>
+				<p class="mt-1 text-base font-semibold text-slate-900">{formatDateTime(session.start_at)}</p>
+			</div>
+			<div class="hidden self-center sm:block" aria-hidden="true">
+				<div class="h-10 w-px bg-brand-200"></div>
+			</div>
+			<div class="rounded-2xl border border-brand-100 bg-white/80 px-4 py-3 shadow-sm ring-1 ring-brand-100/80">
+				<p class="text-xs font-semibold uppercase tracking-wide text-brand-600">Duration</p>
+				<p class="mt-1 text-lg font-semibold text-brand-800">{sessionDurationLabel}</p>
+			</div>
+			<div class="hidden self-center sm:block" aria-hidden="true">
+				<div class="h-10 w-px bg-brand-200"></div>
+			</div>
+			<div class="sm:text-right">
+				<p class="text-xs font-semibold uppercase tracking-wide text-brand-600">End</p>
+				<p class="mt-1 text-base font-semibold text-slate-900">{formatDateTime(session.end_at)}</p>
+			</div>
+		</div>
+
+		<div class="app-detail-section-body space-y-6">
+			<div class="app-detail-section-header">
+				<span class="app-detail-section-icon" aria-hidden="true">
+					<LayersIcon class="h-5 w-5" />
+				</span>
+				<div>
+					<h2 class="text-lg font-semibold text-slate-900">Session details</h2>
+					<p class="text-sm text-slate-500">Overview, venue, capacity, and match settings</p>
 				</div>
-			{/each}
-		</dl>
-	</AppCard>
+			</div>
+
+			<div class="space-y-3">
+				<h3 class="app-section-heading">Overview</h3>
+				<dl class="app-detail-contact-grid">
+					<div class="app-detail-contact-item">
+						<dt class="app-detail-contact-label">
+							<span class="inline-flex items-center gap-1.5">
+								<BuildingIcon class="h-4 w-4 text-brand-500" />
+								Club
+							</span>
+						</dt>
+						<dd class="app-detail-contact-value">{session.club?.name ?? '—'}</dd>
+					</div>
+					<div class="app-detail-contact-item">
+						<dt class="app-detail-contact-label">
+							<span class="inline-flex items-center gap-1.5">
+								<UserIcon class="h-4 w-4 text-brand-500" />
+								Host
+							</span>
+						</dt>
+						<dd class="app-detail-contact-value">{session.host?.display_name ?? '—'}</dd>
+					</div>
+					<div class="app-detail-contact-item sm:col-span-2">
+						<dt class="app-detail-contact-label">Status</dt>
+						<dd class="app-detail-contact-value">
+							<span
+								class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold {sessionStatusBadgeClass(
+									session.status
+								)}"
+							>
+								{sessionStatusLabel(session.status)}
+							</span>
+						</dd>
+					</div>
+				</dl>
+			</div>
+
+			<div class="space-y-3">
+				<h3 class="app-section-heading">Venue</h3>
+				<dl class="app-detail-contact-grid">
+					<div class="app-detail-contact-item app-detail-contact-item--wide">
+						<dt class="app-detail-contact-label">Venue name</dt>
+						<dd class="app-detail-contact-value text-base">{session.venue_name ?? '—'}</dd>
+					</div>
+					<div class="app-detail-contact-item app-detail-contact-item--wide">
+						<dt class="app-detail-contact-label">Map coordinates</dt>
+						<dd class="app-detail-contact-value">
+							{#if locationLabel && mapsUrl}
+								<a
+									href={mapsUrl}
+									target="_blank"
+									rel="noopener noreferrer"
+									class="font-mono text-sm text-brand-700 underline decoration-brand-200 underline-offset-2 hover:text-brand-800"
+								>
+									{locationLabel}
+								</a>
+								<span class="text-xs text-slate-500">Open in Maps</span>
+							{:else}
+								<span class="text-slate-500">—</span>
+							{/if}
+						</dd>
+					</div>
+				</dl>
+			</div>
+
+			<div class="space-y-3">
+				<h3 class="app-section-heading">Capacity & pricing</h3>
+				<dl class="app-detail-meta-grid">
+					<div class="app-detail-meta-item">
+						<dt class="app-detail-meta-label">Players</dt>
+						<dd class="app-detail-meta-value">
+							<span class="text-lg font-semibold text-brand-700">{session.min_players}</span>
+							<span class="text-slate-400"> – </span>
+							<span class="text-lg font-semibold text-brand-700">{session.max_players}</span>
+							<span class="ml-1 text-xs font-normal text-slate-500">min – max</span>
+						</dd>
+					</div>
+					<div class="app-detail-meta-item">
+						<dt class="app-detail-meta-label">Courts</dt>
+						<dd class="app-detail-meta-value">
+							<span class="text-lg font-semibold text-brand-700">{session.court_count}</span>
+						</dd>
+					</div>
+					<div class="app-detail-meta-item">
+						<dt class="app-detail-meta-label">Court fee / hour</dt>
+						<dd class="app-detail-meta-value text-base text-brand-800">
+							{formatThb(session.court_fee_per_hour)}
+						</dd>
+					</div>
+					<div class="app-detail-meta-item sm:col-span-2">
+						<dt class="app-detail-meta-label">Shuttle</dt>
+						<dd class="app-detail-meta-value">{shuttleLabel}</dd>
+					</div>
+				</dl>
+			</div>
+
+			<div class="space-y-3">
+				<h3 class="app-section-heading">Match settings</h3>
+				<dl class="app-detail-contact-grid">
+					<div class="app-detail-contact-item">
+						<dt class="app-detail-contact-label">
+							<span class="inline-flex items-center gap-1.5">
+								<SettingsIcon class="h-4 w-4 text-brand-500" />
+								Match score
+							</span>
+						</dt>
+						<dd class="app-detail-contact-value">{session.match_score_type} points</dd>
+					</div>
+					<div class="app-detail-contact-item">
+						<dt class="app-detail-contact-label">
+							<span class="inline-flex items-center gap-1.5">
+								<SettingsIcon class="h-4 w-4 text-brand-500" />
+								Match type
+							</span>
+						</dt>
+						<dd class="app-detail-contact-value">{matchTypeLabel(session.match_type)}</dd>
+					</div>
+				</dl>
+			</div>
+		</div>
+	</section>
 
 	{#if data.isSuperAdmin && session.status !== 'closed' && session.status !== 'cancelled'}
 		<AppCard class="space-y-4 border-red-200 bg-red-50/40">

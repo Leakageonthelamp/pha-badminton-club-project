@@ -2,7 +2,6 @@ import { resolveEffectiveAppRole } from '$lib/server/adminDashboardMode';
 import { assertCanManageClub, loadManagedClubs } from '$lib/server/clubAccess';
 import { countActiveClubSessions } from '$lib/server/sessions';
 import { sanitizeRichText } from '$lib/server/sanitizeHtml';
-import { bangkokLocalToUtc } from '$lib/datetime/bangkok';
 import { sessionInputSchema } from '$lib/validation/session';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
@@ -71,8 +70,8 @@ export const actions: Actions = {
 			club_id: formData.get('club_id'),
 			name: formData.get('name'),
 			description: formData.get('description'),
-			start_at_local: formData.get('start_at_local'),
-			end_at_local: formData.get('end_at_local'),
+			start_at: formData.get('start_at'),
+			end_at: formData.get('end_at'),
 			venue_name: formData.get('venue_name'),
 			latitude: formData.get('latitude'),
 			longitude: formData.get('longitude'),
@@ -121,8 +120,6 @@ export const actions: Actions = {
 		}
 
 		const description = sanitizeRichText(parsed.data.description);
-		const startAt = bangkokLocalToUtc(parsed.data.start_at_local);
-		const endAt = bangkokLocalToUtc(parsed.data.end_at_local);
 
 		const { data, error: insertError } = await supabase
 			.from('sessions')
@@ -132,8 +129,8 @@ export const actions: Actions = {
 				name: parsed.data.name,
 				description,
 				status: 'open',
-				start_at: startAt,
-				end_at: endAt,
+				start_at: parsed.data.start_at,
+				end_at: parsed.data.end_at,
 				venue_name: parsed.data.venue_name,
 				latitude: parsed.data.latitude,
 				longitude: parsed.data.longitude,

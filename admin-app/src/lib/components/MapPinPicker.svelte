@@ -23,12 +23,14 @@
 		latitude = $bindable<number | null>(null),
 		longitude = $bindable<number | null>(null),
 		locked = false,
-		disabled = false
+		disabled = false,
+		hideLockedHint = false
 	}: {
 		latitude?: number | null;
 		longitude?: number | null;
 		locked?: boolean;
 		disabled?: boolean;
+		hideLockedHint?: boolean;
 	} = $props();
 
 	let mapContainer: HTMLDivElement | undefined = $state();
@@ -41,11 +43,6 @@
 	/** Mirrors for use inside Leaflet handlers (destructured props are stale there). */
 	let isLocked = $state(false);
 	let isDisabled = $state(false);
-
-	$effect(() => {
-		isLocked = locked;
-		isDisabled = disabled;
-	});
 
 	/** Live pin coords — updated from map events ($state so UI always reacts). */
 	let pinLat = $state<number | null>(null);
@@ -66,6 +63,25 @@
 		const center = map.getCenter();
 		pushCoords(center.lat, center.lng);
 	};
+
+	const applyParentCoords = () => {
+		if (!map || latitude === null || longitude === null) return;
+
+		pinLat = latitude;
+		pinLng = longitude;
+		map.stop();
+		map.setView([latitude, longitude], map.getZoom(), { animate: false });
+	};
+
+	$effect(() => {
+		isLocked = locked;
+		isDisabled = disabled;
+
+		if (!map || !ready || !locked) return;
+		if (latitude === null || longitude === null) return;
+
+		applyParentCoords();
+	});
 
 	const flyTo = (lat: number, lng: number, zoom = DEFAULT_ZOOM) => {
 		if (!map) return;
@@ -162,16 +178,6 @@
 		})();
 	});
 
-	/** Parent owns coords while locked; pull into local display + map view. */
-	$effect(() => {
-		if (!map || !ready || !locked) return;
-		if (latitude === null || longitude === null) return;
-
-		pinLat = latitude;
-		pinLng = longitude;
-		map.setView([latitude, longitude], map.getZoom(), { animate: false });
-	});
-
 	$effect(() => {
 		if (!map || !ready || locked) return;
 		void refreshMapSize();
@@ -226,7 +232,9 @@
 	{#if !ready}
 		<p class="text-xs text-slate-500">Loading map…</p>
 	{:else if locked}
-		<p class="text-sm text-slate-600">Location is saved. Tap Change location to move the pin.</p>
+		{#if !hideLockedHint}
+			<p class="text-sm text-slate-600">Location is saved. Tap Change location to move the pin.</p>
+		{/if}
 	{:else if !disabled}
 		<p class="text-sm text-slate-600">
 			Drag the map so the dot sits on your club venue. That spot is what gets saved.

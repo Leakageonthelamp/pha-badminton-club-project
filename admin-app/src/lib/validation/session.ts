@@ -1,5 +1,4 @@
 import { SESSION_DESCRIPTION_MAX_LENGTH, SESSION_NAME_MAX_LENGTH } from '$lib/config/session';
-import { bangkokLocalToUtc } from '$lib/datetime/bangkok';
 import { z } from 'zod';
 
 const coordinateField = z.preprocess(
@@ -25,13 +24,22 @@ export const sessionInputSchema = z
 				`Description must be ${SESSION_DESCRIPTION_MAX_LENGTH} characters or fewer`
 			)
 			.default(''),
-		start_at_local: z.string().min(1, 'Start date and time are required'),
-		end_at_local: z.string().min(1, 'End date and time are required'),
-		venue_name: z
+		start_at: z
 			.string()
-			.trim()
-			.min(1, 'Venue name is required')
-			.max(120, 'Venue name must be 120 characters or fewer'),
+			.min(1, 'Start date and time are required')
+			.datetime({ message: 'Invalid start date and time' }),
+		end_at: z
+			.string()
+			.min(1, 'End date and time are required')
+			.datetime({ message: 'Invalid end date and time' }),
+		venue_name: z.preprocess(
+			(val) => (val === null || val === undefined ? '' : val),
+			z
+				.string()
+				.trim()
+				.min(1, 'Venue name is required')
+				.max(120, 'Venue name must be 120 characters or fewer')
+		),
 		latitude: coordinateField.refine(
 			(value) => value === null || (value >= -90 && value <= 90),
 			'Invalid latitude'
@@ -85,25 +93,14 @@ export const sessionInputSchema = z
 			});
 		}
 
-		let startAt: Date;
-		let endAt: Date;
-		try {
-			startAt = new Date(bangkokLocalToUtc(data.start_at_local));
-			endAt = new Date(bangkokLocalToUtc(data.end_at_local));
-		} catch {
-			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
-				message: 'Invalid date and time',
-				path: ['start_at_local']
-			});
-			return;
-		}
+		const startAt = new Date(data.start_at);
+		const endAt = new Date(data.end_at);
 
 		if (Number.isNaN(startAt.getTime()) || Number.isNaN(endAt.getTime())) {
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
 				message: 'Invalid date and time',
-				path: ['start_at_local']
+				path: ['start_at']
 			});
 			return;
 		}
@@ -112,7 +109,25 @@ export const sessionInputSchema = z
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
 				message: 'End time must be after start time',
-				path: ['end_at_local']
+				path: ['end_at']
+			});
+			return;
+		}
+
+		const oneHourMs = 60 * 60 * 1000;
+		if (endAt.getTime() - startAt.getTime() < oneHourMs) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message: 'Session must be at least 1 hour long',
+				path: ['end_at']
+			});
+		}
+
+		if (startAt.getTime() < Date.now()) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message: 'Start time cannot be in the past',
+				path: ['start_at']
 			});
 		}
 	});

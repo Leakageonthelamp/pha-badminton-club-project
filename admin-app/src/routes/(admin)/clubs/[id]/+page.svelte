@@ -19,7 +19,7 @@
 		CLUB_NAME_MAX_LENGTH
 	} from '$lib/config/club';
 	import { whileSubmitting } from '$lib/forms/submitting';
-	import { isRichTextEmpty } from '@repo/ui/richText';
+	import { isRichTextEmpty, richTextEquivalent } from '@repo/ui/richText';
 	import { formatThb, shuttlePricePerEach, type ClubShuttle, type PromptPayType } from '$lib/types/club';
 	import {
 		SHUTTLE_NAME_MAX_LENGTH,
@@ -142,8 +142,8 @@
 	});
 
 	const hasChanges = $derived.by(() => {
-		if (name.trim() !== data.club.name) return true;
-		if (description.trim() !== data.club.description) return true;
+		if (name.trim() !== data.club.name.trim()) return true;
+		if (!richTextEquivalent(description, data.club.description)) return true;
 		if (!isSuperAdmin) return false;
 		if (Number(maxActiveSessions) !== data.club.max_active_sessions) return true;
 		if (Number(maxAdmins) !== data.club.max_admins) return true;

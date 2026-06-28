@@ -262,7 +262,7 @@ body {
 	}
 
 	.app-section-heading {
-		@apply px-1 text-sm font-semibold uppercase tracking-wide text-slate-500;
+		@apply text-sm font-semibold uppercase tracking-wide text-slate-500;
 	}
 
 	.app-section-header {
