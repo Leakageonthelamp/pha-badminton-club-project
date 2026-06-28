@@ -71,6 +71,11 @@ keep it per-app. App-specific branding stays per-app too.
   Only truly app-specific CSS goes in `app.css` (e.g. player's bottom-sheet).
 - Use the `brand-*` color scale and `app-*` utility classes from the design
   system rather than re-defining colors.
+- **Quick actions** sections (labelled “Quick actions” via `SectionHeading`) use
+  `DashboardTile` links in a **3-column grid only**: wrap tiles in
+  `<div class="app-quick-actions-grid">`. Do not use 1-, 2-, or 4-column grids
+  for quick actions — extra tiles wrap to the next row within the same 3-column
+  layout.
 
 ## Dates & times (timestamptz + device timezone)
 
@@ -145,7 +150,8 @@ Applies to **both apps**. Use the shared helpers in `shared/ui/datetime.ts`
 ## Super admin home (`admin-app` `/`)
 
 - Club list: searchable/filterable rows (not tile grid); uses `app-filter-row` like Users page.
-- Quick actions: Create club, Users, Sessions.
+- Quick actions: Create club, Users, Sessions, Payment transactions — always
+  `app-quick-actions-grid` (3 columns).
 - Dual-role super admin (also in `club_admins`): workspace switch **Super** ↔ **Club** via
   `AdminWorkspaceSwitch` + cookie `admin_dashboard_mode`; effective role becomes `club_admin` in
   club mode (`admin-app/src/lib/adminWorkspace.ts`, `adminDashboardMode.ts`).

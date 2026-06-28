@@ -7,13 +7,15 @@
 	import { clubsWithDistance, formatOpenSessionBadge, openSessionCountByClub } from '$lib/clubs/nearby';
 	import { featuredSessions, myJoinedSessions } from '$lib/sessions/nearby';
 	import { liveSessionHref, shouldOpenLiveSession } from '$lib/sessions/navigation';
-	import ActionRowLink from '@repo/ui/components/ActionRowLink.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import DashboardTile from '@repo/ui/components/DashboardTile.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
+	import SectionHeading from '@repo/ui/components/SectionHeading.svelte';
+	import ActionRowLink from '@repo/ui/components/ActionRowLink.svelte';
 	import BuildingIcon from '@repo/ui/icons/BuildingIcon.svelte';
 	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
 	import RefreshIcon from '@repo/ui/icons/RefreshIcon.svelte';
+	import UserIcon from '@repo/ui/icons/UserIcon.svelte';
 	import { formatDateTime } from '@repo/ui/datetime';
 	import {
 		formatDistanceKm,
@@ -172,6 +174,33 @@
 		{/if}
 	</DashboardHero>
 
+	<div class="space-y-3">
+		<SectionHeading title="Quick actions" />
+		<div class="app-quick-actions-grid">
+			<DashboardTile
+				href="/sessions"
+				title="Sessions"
+				description="Browse and join games"
+				icon={LayersIcon}
+				accent="violet"
+			/>
+			<DashboardTile
+				href="/profile"
+				title="Profile"
+				description="Account and payments"
+				icon={UserIcon}
+				accent="indigo"
+			/>
+			<DashboardTile
+				href="#clubs"
+				title="Clubs"
+				description="Explore nearby clubs"
+				icon={BuildingIcon}
+				accent="brand"
+			/>
+		</div>
+	</div>
+
 	<div class="space-y-4">
 		<header class="app-section-header">
 			<div class="min-w-0">
@@ -258,7 +287,7 @@
 		/>
 	</div>
 
-	<div class="space-y-4">
+	<div id="clubs" class="space-y-4">
 		<header class="app-section-header">
 			<div class="min-w-0">
 				<h2 class="app-section-title">{sectionTitle}</h2>

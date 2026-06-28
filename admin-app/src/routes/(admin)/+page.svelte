@@ -97,7 +97,7 @@
 
 	<div class="space-y-3">
 		<SectionHeading title="Quick actions" />
-		<div class="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+		<div class="app-quick-actions-grid">
 			<DashboardTile
 				href="/clubs/new"
 				title="Create club"
@@ -118,6 +118,13 @@
 				description="View all club sessions"
 				icon={LayersIcon}
 				accent="violet"
+			/>
+			<DashboardTile
+				href="/transactions"
+				title="Payment transactions"
+				description="Session fees and cancellation fees"
+				icon={SearchIcon}
+				accent="indigo"
 			/>
 		</div>
 	</div>

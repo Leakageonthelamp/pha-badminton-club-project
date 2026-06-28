@@ -362,6 +362,14 @@ body {
 		@apply grid gap-3 sm:grid-cols-[minmax(0,1fr)_11rem_2.75rem] sm:items-end;
 	}
 
+	.app-filter-toolbar .app-select-trigger {
+		@apply h-11 min-h-[2.75rem] border-slate-300 py-0 px-3 shadow-sm ring-0;
+	}
+
+	.app-quick-actions-grid {
+		@apply grid grid-cols-3 gap-3 sm:gap-4;
+	}
+
 	.app-filter-label {
 		@apply mb-2 block text-sm font-medium leading-5 text-slate-700;
 	}

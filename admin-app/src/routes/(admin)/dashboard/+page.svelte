@@ -7,6 +7,7 @@
 	import UpcomingSessionsPanel from '$lib/components/UpcomingSessionsPanel.svelte';
 	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
 	import PlusIcon from '@repo/ui/icons/PlusIcon.svelte';
+	import SearchIcon from '@repo/ui/icons/SearchIcon.svelte';
 	import SettingsIcon from '@repo/ui/icons/SettingsIcon.svelte';
 	import { adminRoleHeroBadgeClass } from '$lib/adminRoleHero';
 	import { clubWorkspaceState } from '$lib/clubWorkspace.svelte';
@@ -60,7 +61,7 @@
 	{:else if activeClub}
 		<div class="space-y-3">
 			<SectionHeading title="Quick actions" />
-			<div class="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+			<div class="app-quick-actions-grid">
 				{#if data.canCreate}
 					<DashboardTile
 						href="/sessions/new"
@@ -75,6 +76,13 @@
 					title="Session history"
 					description="Closed and cancelled sessions"
 					icon={LayersIcon}
+					accent="indigo"
+				/>
+				<DashboardTile
+					href="/transactions"
+					title="Payments"
+					description="Session and cancellation fees"
+					icon={SearchIcon}
 					accent="indigo"
 				/>
 			</div>
@@ -129,6 +137,13 @@
 					description="Manage upcoming sessions and history"
 					icon={LayersIcon}
 					accent="violet"
+				/>
+				<ActionRowLink
+					href="/transactions"
+					title="Payment transactions"
+					description="Session fees and late-cancellation fees"
+					icon={SearchIcon}
+					accent="indigo"
 				/>
 			</div>
 		</div>

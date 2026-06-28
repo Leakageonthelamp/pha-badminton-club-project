@@ -1,13 +1,9 @@
 import type { CancellationFeeStatus, PaymentStatus } from '@repo/ui/payments';
+import type { TransactionFilterStatus, TransactionKind } from '@repo/ui/transactions';
 
-export type PlayerTransactionKind = 'session_fee' | 'cancellation_fee';
+export type PlayerTransactionKind = TransactionKind;
 
-export type PlayerTransactionFilterStatus =
-	| ''
-	| 'pending'
-	| 'submitted'
-	| 'completed'
-	| 'waived';
+export type PlayerTransactionFilterStatus = TransactionFilterStatus;
 
 export type PlayerTransaction = {
 	id: string;
