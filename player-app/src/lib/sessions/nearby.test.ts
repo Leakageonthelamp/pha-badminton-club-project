@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { featuredSessions, myJoinedSessions, sessionsWithDistance } from './nearby';
+import { featuredSessions, myJoinedSessions, sessionsWithDistance, FEATURED_SESSIONS_LIMIT } from './nearby';
 import type { SessionListItem } from '$lib/types/session';
 
 const sessions: SessionListItem[] = [
@@ -110,9 +110,48 @@ describe('sessionsWithDistance', () => {
 });
 
 describe('featuredSessions', () => {
-	it('returns the top N sessions after distance sort', () => {
+	it('returns top open joinable sessions sorted by soonest start', () => {
 		const featured = featuredSessions(sessions, null, 2);
 		expect(featured.map((s) => s.id)).toEqual(['c', 'b']);
+	});
+
+	it('caps at FEATURED_SESSIONS_LIMIT by default', () => {
+		const many = Array.from({ length: 8 }, (_, index) => ({
+			...sessions[0]!,
+			id: `s${index}`,
+			start_at: `2026-07-0${index + 1}T10:00:00.000Z`
+		}));
+		expect(featuredSessions(many, null)).toHaveLength(FEATURED_SESSIONS_LIMIT);
+	});
+
+	it('excludes in-progress and already-joined sessions', () => {
+		const pool = [
+			{ ...sessions[0]!, id: 'live', status: 'in_progress' as const },
+			{
+				...sessions[1]!,
+				id: 'joined',
+				my_membership: {
+					id: 'm1',
+					status: 'confirmed' as const,
+					fee_owed: 0,
+					fee_status: 'none' as const,
+					joined_at: '2026-06-01T00:00:00.000Z'
+				}
+			},
+			sessions[2]!
+		];
+
+		expect(featuredSessions(pool, null).map((session) => session.id)).toEqual(['c']);
+	});
+
+	it('prefers nearest open sessions when location is available', () => {
+		const featured = featuredSessions(sessions, {
+			latitude: 13.7563,
+			longitude: 100.5018,
+			at: Date.now()
+		});
+
+		expect(featured.map((session) => session.id)).toEqual(['a', 'b', 'c']);
 	});
 });
 

@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { navigating } from '$app/state';
 	import AppCard from '@repo/ui/components/AppCard.svelte';
+	import DashboardIcon from '@repo/ui/components/DashboardIcon.svelte';
 	import DatePicker from '@repo/ui/components/DatePicker.svelte';
 	import SelectMenu from '@repo/ui/components/SelectMenu.svelte';
+	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
 	import SearchIcon from '@repo/ui/icons/SearchIcon.svelte';
 	import { formatDate } from '@repo/ui/datetime';
 	import { formatThb } from '@repo/ui/payments';
@@ -31,6 +33,8 @@
 	const hasActiveFilters = $derived(
 		Boolean(transactions.statusFilter || transactions.date)
 	);
+
+	const isFilteredEmpty = $derived(hasActiveFilters && transactions.items.length === 0);
 
 	$effect(() => {
 		statusFilter = transactions.statusFilter;
@@ -140,7 +144,31 @@
 			{/each}
 		</ul>
 	{:else if transactions.items.length === 0}
-		<p class="text-sm text-slate-500">No transactions found.</p>
+		<div
+			class="rounded-xl border border-dashed border-slate-200 bg-gradient-to-b from-slate-50/90 to-white px-4 py-8 text-center"
+		>
+			<DashboardIcon icon={isFilteredEmpty ? SearchIcon : LayersIcon} accent="indigo" class="mx-auto" />
+			{#if isFilteredEmpty}
+				<p class="mt-3 text-sm font-medium text-slate-900">No transactions match your filters</p>
+				<p class="mx-auto mt-1 max-w-xs text-sm text-slate-500">
+					Try another date or status, or reset to see your full payment history.
+				</p>
+				<a href="/profile" class="mt-4 inline-flex text-sm font-medium text-brand-700 hover:text-brand-800">
+					Clear filters
+				</a>
+			{:else}
+				<p class="mt-3 text-sm font-medium text-slate-900">No payments yet</p>
+				<p class="mx-auto mt-1 max-w-xs text-sm text-slate-500">
+					Session fees and late-cancellation charges show up here after you join a game.
+				</p>
+				<a
+					href="/sessions"
+					class="mt-4 inline-flex text-sm font-medium text-brand-700 hover:text-brand-800"
+				>
+					Browse sessions →
+				</a>
+			{/if}
+		</div>
 	{:else}
 		<ul class="divide-y divide-slate-100 rounded-lg border border-slate-200">
 			{#each transactions.items as transaction (transaction.id)}

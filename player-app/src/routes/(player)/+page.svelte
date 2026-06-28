@@ -5,7 +5,7 @@
 	import ClubDetailSheet from '$lib/components/ClubDetailSheet.svelte';
 	import SessionDetailSheet from '$lib/components/SessionDetailSheet.svelte';
 	import { clubsWithDistance, formatOpenSessionBadge, openSessionCountByClub } from '$lib/clubs/nearby';
-	import { featuredSessions, myJoinedSessions } from '$lib/sessions/nearby';
+	import { featuredSessions, isJoinableFeaturedSession, myJoinedSessions } from '$lib/sessions/nearby';
 	import { liveSessionHref, shouldOpenLiveSession } from '$lib/sessions/navigation';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import DashboardTile from '@repo/ui/components/DashboardTile.svelte';
@@ -40,7 +40,10 @@
 	const profileName = $derived(data.profile?.display_name ?? 'Player');
 	const clubCountLabel = $derived(`${clubs.length} club${clubs.length === 1 ? '' : 's'}`);
 	const totalSessions = $derived(data.sessions?.length ?? 0);
-	const hasMoreSessions = $derived(totalSessions > featured.length);
+	const joinableSessionCount = $derived(
+		(data.sessions ?? []).filter(isJoinableFeaturedSession).length
+	);
+	const hasMoreSessions = $derived(joinableSessionCount > featured.length);
 	const sectionTitle = $derived(sortedByDistance ? 'Nearby clubs' : 'Clubs');
 	const sectionMeta = $derived(
 		clubs.length === 0
@@ -53,10 +56,10 @@
 	);
 	const featuredMeta = $derived(
 		featured.length === 0
-			? 'Upcoming games appear here once clubs schedule them'
+			? 'Open sessions you can join will appear here'
 			: sortedByDistance
-				? 'Nearest first · tap to view and join'
-				: 'Soonest first · tap to view and join'
+				? `Top ${featured.length} nearest open sessions · tap to view and join`
+				: `Top ${featured.length} upcoming open sessions · tap to view and join`
 	);
 	const mySessionsMeta = $derived(
 		mySessions.length === 0
@@ -280,7 +283,7 @@
 			href="/sessions"
 			title="Browse all sessions"
 			description={hasMoreSessions
-				? `View all ${totalSessions} upcoming sessions`
+				? `View all ${joinableSessionCount} open sessions`
 				: 'See the full sessions list'}
 			icon={LayersIcon}
 			accent="indigo"

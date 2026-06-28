@@ -3,7 +3,13 @@ import { haversineDistanceKm, type StoredUserLocation } from '@repo/ui/geolocati
 
 export type SessionWithDistance = SessionListItem & { distanceKm: number | null };
 
-export const FEATURED_SESSIONS_LIMIT = 3;
+export const FEATURED_SESSIONS_LIMIT = 5;
+
+const activeMembershipStatuses = new Set(['waiting', 'queued', 'confirmed']);
+
+export const isJoinableFeaturedSession = (session: SessionListItem): boolean =>
+	session.status === 'open' &&
+	(!session.my_membership || !activeMembershipStatuses.has(session.my_membership.status));
 
 export const sessionsWithDistance = (
 	sessions: SessionListItem[],
@@ -43,9 +49,8 @@ export const featuredSessions = (
 	sessions: SessionListItem[],
 	userLocation: StoredUserLocation | null,
 	limit = FEATURED_SESSIONS_LIMIT
-): SessionWithDistance[] => sessionsWithDistance(sessions, userLocation).slice(0, limit);
-
-const activeMembershipStatuses = new Set(['waiting', 'queued', 'confirmed']);
+): SessionWithDistance[] =>
+	sessionsWithDistance(sessions.filter(isJoinableFeaturedSession), userLocation).slice(0, limit);
 
 export const myJoinedSessions = (
 	sessions: SessionListItem[],
