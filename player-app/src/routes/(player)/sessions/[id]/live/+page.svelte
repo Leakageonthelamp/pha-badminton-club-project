@@ -10,6 +10,7 @@
 	import FormToast from '@repo/ui/components/FormToast.svelte';
 	import PlayerStatusBadge from '@repo/ui/components/PlayerStatusBadge.svelte';
 	import SectionHeading from '@repo/ui/components/SectionHeading.svelte';
+	import SessionLiveTimers from '@repo/ui/components/SessionLiveTimers.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
@@ -57,7 +58,6 @@
 	const promptPayTarget = $derived(data.clubPromptPay.promptpay_target ?? '');
 	const toastMessage = $derived(form?.message ?? null);
 	const toastVariant = $derived(form?.success ? 'success' : 'error');
-	const uptimeLabel = $derived(formatUptime(session.start_at, nowMs));
 	const myLiveStatus = $derived(
 		derivePlayerLiveStatus({
 			membershipStatus: session.my_membership?.status ?? 'confirmed',
@@ -272,17 +272,10 @@
 	</DashboardHero>
 
 	{#if session.status === 'in_progress'}
-		<div class="grid gap-3 sm:grid-cols-2">
-			<div class="app-session-countdown border-emerald-200 bg-emerald-50/80">
-				<span class="app-session-countdown-label text-emerald-800">
-					<span class="h-2 w-2 animate-pulse rounded-full bg-emerald-500" aria-hidden="true"></span>
-					Uptime
-				</span>
-				<span class="app-session-countdown-value text-emerald-900" aria-live="polite">{uptimeLabel}</span>
-			</div>
+		<SessionLiveTimers startAt={session.start_at} endAt={session.end_at} variant="banner" />
 
-			{#if myLiveStatus === 'idle' || myLiveStatus === 'break'}
-				<div class="app-session-countdown flex flex-col gap-3 border-slate-200 bg-slate-50/80">
+		{#if myLiveStatus === 'idle' || myLiveStatus === 'break'}
+			<div class="app-session-countdown flex flex-col gap-3 border-slate-200 bg-slate-50/80">
 					<div class="flex items-center justify-between gap-3">
 						<span class="app-session-countdown-label text-slate-700">Your status</span>
 						<PlayerStatusBadge status={myLiveStatus} />
@@ -320,8 +313,8 @@
 						</form>
 					{/if}
 				</div>
-			{:else if myLiveStatus === 'playing' || matchLocked}
-				<div class="app-session-countdown flex flex-col gap-3 border-brand-200 bg-brand-50/80">
+		{:else if myLiveStatus === 'playing' || matchLocked}
+			<div class="app-session-countdown flex flex-col gap-3 border-brand-200 bg-brand-50/80">
 					<div class="flex items-center justify-between gap-3">
 						<span class="app-session-countdown-label text-brand-800">Your status</span>
 						<PlayerStatusBadge status="playing" />
@@ -339,8 +332,7 @@
 						</SubmitButton>
 					{/if}
 				</div>
-			{/if}
-		</div>
+		{/if}
 	{/if}
 
 	<FormToast message={toastMessage} variant={toastVariant} />

@@ -9,6 +9,7 @@
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
 	import FormToast from '@repo/ui/components/FormToast.svelte';
 	import PlayerStatusBadge from '@repo/ui/components/PlayerStatusBadge.svelte';
+	import SessionLiveTimers from '@repo/ui/components/SessionLiveTimers.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
@@ -73,7 +74,6 @@
 	);
 	const toastMessage = $derived(form?.message ?? null);
 	const toastVariant = $derived(form?.success ? 'success' : 'error');
-	const uptimeLabel = $derived(formatUptime(session.start_at, nowMs));
 
 	const paymentForPlayer = (userId: string) =>
 		data.payments.find((payment) => payment.user_id === userId) ?? null;
@@ -322,23 +322,20 @@
 				<span class="h-1.5 w-1.5 animate-pulse rounded-full bg-current opacity-80"></span>
 				{sessionStatusLabel(session.status)}
 			</span>
-			<span class="app-hero-stat {endedOrReached ? 'app-hero-stat--warn' : 'app-hero-stat--success'}">
-				{timeUntilEndLabel}
-			</span>
+			{#if endedOrReached}
+				<span class="app-hero-stat app-hero-stat--warn">{timeUntilEndLabel}</span>
+			{/if}
 		</div>
 	</DashboardHero>
 
-	<div
-		class="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-2.5"
-	>
-		<span class="flex items-center gap-2 text-sm text-slate-500">
-			<span class="h-2 w-2 animate-pulse rounded-full bg-emerald-500" aria-hidden="true"></span>
-			Uptime
-		</span>
-		<span class="font-mono text-2xl font-semibold tabular-nums text-slate-900" aria-live="polite">
-			{uptimeLabel}
-		</span>
-	</div>
+	{#if session.status === 'in_progress'}
+		<SessionLiveTimers
+			startAt={session.start_at}
+			endAt={session.end_at}
+			showRemaining={!endedOrReached}
+			variant="banner"
+		/>
+	{/if}
 
 	<FormToast message={toastMessage} variant={toastVariant} />
 

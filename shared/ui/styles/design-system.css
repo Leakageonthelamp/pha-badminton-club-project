@@ -577,6 +577,30 @@ body {
 		@apply mt-0 min-w-[4.75rem];
 	}
 
+	.app-session-timer-banner {
+		@apply flex w-full gap-3;
+	}
+
+	.app-session-timer-banner-cell {
+		@apply flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl border px-4 py-3 text-center;
+	}
+
+	.app-session-timer-banner-cell--uptime {
+		@apply border-emerald-200 bg-emerald-50/80;
+	}
+
+	.app-session-timer-banner-cell--remaining {
+		@apply border-amber-200 bg-amber-50/80;
+	}
+
+	.app-session-timer-banner-label {
+		@apply flex items-center gap-2 text-sm font-medium;
+	}
+
+	.app-session-timer-banner-value {
+		@apply font-mono text-2xl font-semibold tabular-nums tracking-tight;
+	}
+
 	.app-detail-meta-item {
 		@apply rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5;
 	}
