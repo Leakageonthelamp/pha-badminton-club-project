@@ -2,16 +2,17 @@
 	import AppCard from '@repo/ui/components/AppCard.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
+	import MatchHistoryCard from '@repo/ui/components/MatchHistoryCard.svelte';
+	import MatchSummaryModal from '@repo/ui/components/MatchSummaryModal.svelte';
 	import RichTextDisplay from '@repo/ui/components/RichTextDisplay.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
-	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
 	import { formatDateTime } from '@repo/ui/datetime';
 	import { formatThb, paymentStatusLabel, cancellationFeeStatusLabel } from '@repo/ui/payments';
 	import type { PaymentStatus } from '@repo/ui/payments';
-import type { CancellationFeeStatus } from '@repo/ui/payments';
-import { buildSessionHistorySummary, isAttendedPlayer, isOutstandingCancellationFee } from '$lib/sessions/sessionHistory';
+	import { buildSessionHistorySummary, isAttendedPlayer, isOutstandingCancellationFee } from '$lib/sessions/sessionHistory';
 	import { formatThb as formatClubThb } from '$lib/types/club';
+	import type { MatchWithDetails } from '$lib/types/match';
 	import type { SessionPaymentWithProfile } from '$lib/types/payment';
 	import {
 		matchTypeLabel,
@@ -29,6 +30,7 @@ import { buildSessionHistorySummary, isAttendedPlayer, isOutstandingCancellation
 		session,
 		players,
 		payments,
+		matches = [],
 		canManageFees = false,
 		cancellationFees = [],
 		sessionId = '',
@@ -37,13 +39,25 @@ import { buildSessionHistorySummary, isAttendedPlayer, isOutstandingCancellation
 		session: SessionDetail;
 		players: SessionPlayerWithProfile[];
 		payments: SessionPaymentWithProfile[];
+		matches?: MatchWithDetails[];
 		canManageFees?: boolean;
 		cancellationFees?: SessionPlayerWithProfile[];
 		sessionId?: string;
 		feeActionLoading?: string | null;
 	} = $props();
 
-	const summary = $derived(buildSessionHistorySummary(session, players, payments));
+	let selectedHistoryMatch = $state<MatchWithDetails | null>(null);
+
+	const summary = $derived(buildSessionHistorySummary(session, players, payments, matches));
+	const completedMatches = $derived(
+		[...matches]
+			.filter((match) => match.status === 'completed')
+			.sort((a, b) => {
+				const aMs = new Date(a.ended_at ?? a.created_at).getTime();
+				const bMs = new Date(b.ended_at ?? b.created_at).getTime();
+				return bMs - aMs;
+			})
+	);
 	const attendedPlayers = $derived(players.filter((player) => isAttendedPlayer(player.status)));
 	const otherPlayers = $derived(players.filter((player) => !isAttendedPlayer(player.status)));
 	const cancellationFeePlayers = $derived(players.filter((player) => player.fee_owed > 0));
@@ -121,6 +135,13 @@ import { buildSessionHistorySummary, isAttendedPlayer, isOutstandingCancellation
 				<p class="app-history-stat-value">{summary.uptimeLabel}</p>
 				<p class="app-history-stat-hint">Start to close</p>
 			</div>
+			{#if summary.overdueLabel}
+				<div class="app-history-stat border-rose-200/80 bg-rose-50/50">
+					<p class="app-history-stat-label">Overdue</p>
+					<p class="app-history-stat-value">{summary.overdueLabel}</p>
+					<p class="app-history-stat-hint">Past scheduled end</p>
+				</div>
+			{/if}
 			<div class="app-history-stat">
 				<p class="app-history-stat-label">Matches</p>
 				<p class="app-history-stat-value">{summary.matchCount}</p>
@@ -346,20 +367,25 @@ import { buildSessionHistorySummary, isAttendedPlayer, isOutstandingCancellation
 		{/if}
 	</AppCard>
 
-	<AppCard class="space-y-4 border-dashed border-slate-300 bg-slate-50/50">
-		<div class="flex items-start gap-3">
-			<span
-				class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-200/80 text-slate-600"
-				aria-hidden="true"
-			>
-				<LayersIcon class="h-5 w-5" />
-			</span>
-			<div>
-				<h2 class="text-lg font-semibold text-slate-900">Match history</h2>
-				<p class="mt-1 text-sm text-slate-600">Games played, scores, and court assignments.</p>
-			</div>
+	<AppCard class="space-y-4">
+		<div>
+			<h2 class="text-lg font-semibold text-slate-900">Match history</h2>
+			<p class="mt-1 text-sm text-slate-600">Games played, scores, and court assignments.</p>
 		</div>
-		<EmptyState message="No matches were recorded for this session." />
+		{#if completedMatches.length === 0}
+			<EmptyState message="No matches were recorded for this session." />
+		{:else}
+			<p class="text-xs font-medium text-slate-500">
+				{completedMatches.length} completed match{completedMatches.length === 1 ? '' : 'es'}
+			</p>
+			<ul class="space-y-2">
+				{#each completedMatches as match (match.id)}
+					<li>
+						<MatchHistoryCard {match} onClick={() => (selectedHistoryMatch = match)} />
+					</li>
+				{/each}
+			</ul>
+		{/if}
 	</AppCard>
 
 	<section class="app-detail-section">
@@ -443,3 +469,9 @@ import { buildSessionHistorySummary, isAttendedPlayer, isOutstandingCancellation
 		</div>
 	</section>
 </section>
+
+<MatchSummaryModal
+	open={selectedHistoryMatch !== null}
+	match={selectedHistoryMatch}
+	onClose={() => (selectedHistoryMatch = null)}
+/>

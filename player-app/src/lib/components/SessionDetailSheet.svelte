@@ -5,9 +5,8 @@
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import RichTextDisplay from '@repo/ui/components/RichTextDisplay.svelte';
 	import SessionDurationPill from '@repo/ui/components/SessionDurationPill.svelte';
+	import SessionLiveTimers from '@repo/ui/components/SessionLiveTimers.svelte';
 	import SessionStartCountdown from '@repo/ui/components/SessionStartCountdown.svelte';
-	import SessionTimeRemaining from '@repo/ui/components/SessionTimeRemaining.svelte';
-	import SessionUptime from '@repo/ui/components/SessionUptime.svelte';
 	import AppModal from '@repo/ui/components/AppModal.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import CancellationFeeModal from '$lib/components/CancellationFeeModal.svelte';
@@ -25,6 +24,7 @@
 	import { formatDateTime } from '@repo/ui/datetime';
 	import type { SessionDetail, SessionListItem, SessionPlayerStatus, SessionStatus } from '$lib/types/session';
 	import { liveSessionHref, shouldOpenLiveSession } from '$lib/sessions/navigation';
+	import { isLiveSessionEnded } from '$lib/sessions/liveState';
 	import { joinConflictMembershipPhrase } from '$lib/sessions/joinConflict';
 	import { SESSION_CANCEL_LOCK_LEAD_MINUTES, SESSION_JOIN_CLOSE_LEAD_MINUTES, LIVE_SESSION_JOIN_BUFFER_HOURS } from '$lib/config/session';
 	import {
@@ -67,6 +67,7 @@
 	let feeModalStatus = $state<'owed' | 'submitted'>('owed');
 	let lastPolledSessionStatus = $state<SessionStatus | null>(null);
 	let lastPolledMembershipStatus = $state<SessionPlayerStatus | null>(null);
+	let nowMs = $state(Date.now());
 
 	const DISMISS_DRAG_PX = 120;
 
@@ -150,6 +151,15 @@
 	};
 
 	const activeSession = $derived(session ?? preview);
+	const sessionEnded = $derived(
+		activeSession
+			? isLiveSessionEnded({
+					status: activeSession.status,
+					endAtMs: Date.parse(activeSession.end_at),
+					nowMs
+				})
+			: false
+	);
 	const title = $derived(activeSession?.name ?? 'Session');
 	const hasLocation = $derived(
 		activeSession?.latitude !== null &&
@@ -387,6 +397,16 @@
 	};
 
 	$effect(() => {
+		if (!browser || !show || activeSession?.status !== 'in_progress') return;
+
+		const timer = window.setInterval(() => {
+			nowMs = Date.now();
+		}, 1_000);
+
+		return () => window.clearInterval(timer);
+	});
+
+	$effect(() => {
 		if (!browser) return;
 
 		if (!open || !sessionId) {
@@ -574,12 +594,19 @@
 						<p class="mt-1 text-sm text-slate-600">{activeSession.club.name}</p>
 					{/if}
 					{#if activeSession?.status}
-						<p class="mt-2">
+						<p class="mt-2 flex flex-wrap items-center gap-2">
 							<span
 								class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium {sessionStatusBadgeClass(activeSession.status)}"
 							>
 								{sessionStatusLabel(activeSession.status)}
 							</span>
+							{#if sessionEnded}
+								<span
+									class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold bg-rose-100 text-rose-800 ring-1 ring-rose-200"
+								>
+									Ended
+								</span>
+							{/if}
 						</p>
 					{/if}
 					{#if distanceLabel}
@@ -603,9 +630,17 @@
 
 			{#if activeSession?.start_at && activeSession.status === 'in_progress'}
 				<div class="space-y-3 px-4 pb-3">
-					<SessionUptime startAt={activeSession.start_at} live />
-					{#if activeSession.end_at}
-						<SessionTimeRemaining endAt={activeSession.end_at} variant="banner" />
+					<SessionLiveTimers
+						startAt={activeSession.start_at}
+						endAt={activeSession.end_at}
+						showRemaining={!sessionEnded}
+						showOverdue={sessionEnded}
+						variant="banner"
+					/>
+					{#if sessionEnded}
+						<p class="rounded-xl border border-rose-200 bg-rose-50/70 px-3 py-2.5 text-sm text-rose-900">
+							<strong>Session ended.</strong> Waiting for the host to start settlement.
+						</p>
 					{/if}
 				</div>
 			{/if}

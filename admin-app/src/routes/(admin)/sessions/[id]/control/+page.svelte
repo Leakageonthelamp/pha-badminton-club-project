@@ -130,6 +130,7 @@
 		data.matches.reduce((sum, match) => sum + match.shuttles_used, 0)
 	);
 	const totalShuttleFee = $derived(shuttlesUsed * session.shuttle_price_per_each);
+	const totalSessionCost = $derived(totalCourtFee + totalShuttleFee);
 	const activePlayers = $derived(data.players.filter((player) => player.status === 'confirmed'));
 	const checklistPlayers = $derived.by(() => {
 		const confirmed = data.players.filter((player) => player.status === 'confirmed');
@@ -175,8 +176,11 @@
 	);
 
 	const paymentsApprovedCount = $derived(
-		activePlayers.filter((player) => paymentForPlayer(player.user_id)?.status === 'approved').length
+		checklistPlayers.filter((player) => paymentForPlayer(player.user_id)?.status === 'approved')
+			.length
 	);
+
+	const billedPlayerCount = $derived(checklistPlayers.length);
 
 	const paymentsAwaitingConfirm = $derived(
 		data.payments.filter((payment) => payment.status === 'submitted').length
@@ -187,7 +191,9 @@
 	);
 
 	const paymentProgress = $derived(
-		activePlayers.length === 0 ? 100 : Math.round((paymentsApprovedCount / activePlayers.length) * 100)
+		billedPlayerCount === 0
+			? 100
+			: Math.round((paymentsApprovedCount / billedPlayerCount) * 100)
 	);
 
 	const timeUntilEndLabel = $derived.by(() => {
@@ -242,7 +248,7 @@
 
 	const rosterSectionMeta = $derived.by(() => {
 		if (data.settlementStarted) {
-			return `${paymentsApprovedCount} of ${activePlayers.length} players confirmed paid · sorted by longest idle first`;
+			return `${paymentsApprovedCount} of ${billedPlayerCount} players confirmed paid · sorted by longest idle first`;
 		}
 
 		if (data.endReached) {
@@ -312,6 +318,8 @@
 			courtDetailOpen = true;
 			return;
 		}
+
+		if (endedOrReached) return;
 
 		matchmakingCourt = courtNumber;
 		matchmakingOpen = true;
@@ -506,6 +514,7 @@
 			startAt={session.start_at}
 			endAt={session.end_at}
 			showRemaining={!endedOrReached}
+			showOverdue={endedOrReached}
 			variant="banner"
 		/>
 	{/if}
@@ -603,6 +612,14 @@
 				{paymentsApprovedCount}/{data.activePlayerCount || '—'}
 			</p>
 			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">Paid</p>
+		</div>
+		<div class="app-card-padded flex min-h-24 flex-col items-center justify-center gap-1 text-center">
+			<p class="text-xl font-bold tabular-nums leading-tight text-brand-700">
+				{formatThb(totalSessionCost)}
+			</p>
+			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
+				Total session cost
+			</p>
 		</div>
 	</div>
 
@@ -726,7 +743,7 @@
 			</div>
 		</div>
 
-		{#if data.settlementStarted && activePlayers.length > 0}
+		{#if data.settlementStarted && billedPlayerCount > 0}
 			<div>
 				<div class="mb-1 flex justify-between text-xs font-medium text-slate-600">
 					<span>Progress</span>
@@ -862,6 +879,12 @@
 					</p>
 				</div>
 			</div>
+			{#if endedOrReached}
+				<div class="rounded-xl border border-rose-200 bg-rose-50/70 px-3 py-2.5 text-sm text-rose-900">
+					<strong>Session ended.</strong> Matches already in progress can finish, but no new matches
+					can be assigned. Start settlement when ready.
+				</div>
+			{/if}
 			<CourtGrid
 				courtCount={session.court_count}
 				matches={data.courtGridMatches}
@@ -976,7 +999,7 @@
 					{:else if !data.settlementStarted}
 						— unlocks after settlement starts
 					{:else if !data.allPaymentsApproved}
-						— waiting for {activePlayers.length - paymentsApprovedCount} more payment{activePlayers.length -
+						— waiting for {billedPlayerCount - paymentsApprovedCount} more payment{billedPlayerCount -
 							paymentsApprovedCount ===
 						1
 							? ''

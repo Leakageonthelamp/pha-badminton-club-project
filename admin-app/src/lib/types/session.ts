@@ -18,6 +18,7 @@ export type Session = {
 	end_at: string;
 	finished_at: string | null;
 	ended_early: boolean;
+	settlement_started_at: string | null;
 	venue_name: string | null;
 	latitude: number | null;
 	longitude: number | null;

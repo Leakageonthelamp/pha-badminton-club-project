@@ -55,10 +55,31 @@ export const shouldShowPaymentModal = (
 	paymentStatus !== 'approved' &&
 	(uiState === 'payment_due' || uiState === 'payment_submitted');
 
+/** True when scheduled end passed, settlement started, or session ended early — play actions lock. */
+export const isLiveSessionEnded = ({
+	status,
+	endAtMs,
+	nowMs = Date.now(),
+	settlementStarted = false,
+	endedEarly = false
+}: {
+	status: string;
+	endAtMs: number;
+	nowMs?: number;
+	settlementStarted?: boolean;
+	endedEarly?: boolean;
+}): boolean =>
+	status === 'in_progress' &&
+	(endedEarly ||
+		settlementStarted ||
+		(!Number.isNaN(endAtMs) && nowMs >= endAtMs));
+
 export const canRequestEarlyLeave = (
 	membership: SessionPlayerMembership | null,
-	leaveRequestStatus: LeaveRequestStatus | null
+	leaveRequestStatus: LeaveRequestStatus | null,
+	sessionEnded = false
 ): boolean =>
+	!sessionEnded &&
 	membership?.status === 'confirmed' &&
 	leaveRequestStatus !== 'pending' &&
 	leaveRequestStatus !== 'approved';

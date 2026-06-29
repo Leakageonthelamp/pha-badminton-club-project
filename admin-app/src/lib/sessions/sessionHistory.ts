@@ -34,9 +34,35 @@ export const formatSessionUptime = (
 	return formatSessionDuration(startAt, finishedAt);
 };
 
+/** Time past scheduled end until session close; null when closed on time or early. */
+export const formatSessionOverdue = (
+	endAt: string,
+	session: Pick<SessionDetail, 'status' | 'finished_at' | 'updated_at'>
+): string | null => {
+	const finishedAt = resolveSessionFinishedAt(session);
+	if (!finishedAt) return null;
+
+	const endMs = new Date(endAt).getTime();
+	const finishedMs = new Date(finishedAt).getTime();
+	if (Number.isNaN(endMs) || Number.isNaN(finishedMs) || finishedMs <= endMs) return null;
+
+	return formatSessionDuration(endAt, finishedAt);
+};
+
+type MatchSummaryInput = { status: string; shuttles_used: number };
+
+export const countCompletedMatches = (matches: MatchSummaryInput[]): number =>
+	matches.filter((match) => match.status === 'completed').length;
+
+export const computeMatchShuttleUsage = (matches: MatchSummaryInput[]): number =>
+	matches
+		.filter((match) => match.status === 'completed')
+		.reduce((sum, match) => sum + match.shuttles_used, 0);
+
 export type SessionHistorySummary = {
 	durationLabel: string;
 	uptimeLabel: string;
+	overdueLabel: string | null;
 	attendedCount: number;
 	rosterCount: number;
 	matchCount: number;
@@ -79,9 +105,11 @@ export const buildSessionHistorySummary = (
 	>,
 	players: SessionPlayerWithProfile[],
 	payments: SessionPaymentWithProfile[],
-	matchCount = 0
+	matches: MatchSummaryInput[] = []
 ): SessionHistorySummary => {
 	const attendedCount = players.filter((player) => isAttendedPlayer(player.status)).length;
+	const matchCount = countCompletedMatches(matches);
+	const shuttleUsageFromMatches = computeMatchShuttleUsage(matches);
 	const perPlayerCourtShare = computeCourtShare({
 		courtFeePerHour: session.court_fee_per_hour,
 		startAt: session.start_at,
@@ -115,10 +143,14 @@ export const buildSessionHistorySummary = (
 	return {
 		durationLabel: formatSessionDuration(session.start_at, session.end_at),
 		uptimeLabel: formatSessionUptime(session.start_at, session),
+		overdueLabel: formatSessionOverdue(session.end_at, session),
 		attendedCount,
 		rosterCount: players.length,
 		matchCount,
-		totalShuttleUsage: computeTotalShuttleUsage(payments, session.shuttle_price_per_each),
+		totalShuttleUsage:
+			shuttleUsageFromMatches > 0
+				? shuttleUsageFromMatches
+				: computeTotalShuttleUsage(payments, session.shuttle_price_per_each),
 		perPlayerCourtShare,
 		paymentsApprovedCount,
 		paymentsSubmittedCount,

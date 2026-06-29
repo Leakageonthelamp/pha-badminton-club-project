@@ -36,6 +36,7 @@ const sessionListSelect = `
 	end_at,
 	finished_at,
 	ended_early,
+	settlement_started_at,
 	venue_name,
 	latitude,
 	longitude,

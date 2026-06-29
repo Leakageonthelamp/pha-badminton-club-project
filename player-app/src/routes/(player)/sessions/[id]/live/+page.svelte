@@ -21,7 +21,8 @@
 	import { formatDateTime, formatUptime } from '@repo/ui/datetime';
 	import MatchSummaryModal from '@repo/ui/components/MatchSummaryModal.svelte';
 	import PlayerMatchHistoryCard from '@repo/ui/components/PlayerMatchHistoryCard.svelte';
-	import { formatThb, paymentStatusLabel } from '@repo/ui/payments';
+	import { playerMatchResult } from '@repo/ui/matches';
+	import { formatThb, paymentStatusLabel, computePlayerShuttleShare, deriveShuttlesFromShare } from '@repo/ui/payments';
 	import { subscribePostgresChangesWithPollFallback } from '@repo/ui/realtimeSubscribe';
 	import { clampIdleSince, derivePlayerLiveStatus } from '@repo/ui/sessionStatus';
 	import PaymentQr from '$lib/components/PaymentQr.svelte';
@@ -31,6 +32,7 @@
 	import {
 		canRequestEarlyLeave,
 		deriveLiveSessionUiState,
+		isLiveSessionEnded,
 		shouldShowPaymentModal
 	} from '$lib/sessions/liveState';
 	import {
@@ -56,8 +58,18 @@
 	let selectedHistoryMatch = $state<MatchWithDetails | null>(null);
 	let courtDetailOpen = $state(false);
 	let selectedCourtMatch = $state<CourtGridMatch | null>(null);
+	let leaveConfirmOpen = $state(false);
+	let homeNavLoading = $state(false);
 
 	const session = $derived(data.session);
+	const sessionEnded = $derived(
+		isLiveSessionEnded({
+			status: session.status,
+			endAtMs: Date.parse(session.end_at),
+			nowMs,
+			settlementStarted: data.settlementStarted
+		})
+	);
 	const uiState = $derived(
 		deriveLiveSessionUiState({
 			membershipStatus: session.my_membership?.status ?? null,
@@ -66,7 +78,32 @@
 			sessionClosed: session.status === 'closed'
 		})
 	);
-	const paymentAmount = $derived(data.myPayment?.total_amount ?? data.perPlayerCost);
+	const myShuttlesUsed = $derived(
+		data.myMatchHistory.reduce((sum, match) => sum + match.shuttles_used, 0)
+	);
+	const isBilled = $derived(Boolean(data.myPayment));
+	const myShuttlesUsedDisplay = $derived.by(() => {
+		if (myShuttlesUsed > 0) return myShuttlesUsed;
+
+		const billedShare = data.myPayment?.shuttle_share ?? 0;
+		if (isBilled && billedShare > 0) {
+			return deriveShuttlesFromShare(billedShare, session.shuttle_price_per_each);
+		}
+
+		return 0;
+	});
+	const sessionShuttlesUsed = $derived(
+		data.sessionMatches.reduce((sum, match) => sum + match.shuttles_used, 0)
+	);
+	const completedSessionMatchCount = $derived(
+		data.sessionMatches.filter((match) => match.status === 'completed').length
+	);
+	const myCourtShare = $derived(data.myPayment?.court_share ?? data.perPlayerCost);
+	const myShuttleShare = $derived(
+		data.myPayment?.shuttle_share ??
+			computePlayerShuttleShare(myShuttlesUsed, session.shuttle_price_per_each)
+	);
+	const myTotalCost = $derived(data.myPayment?.total_amount ?? myCourtShare + myShuttleShare);
 	const promptPayTarget = $derived(data.clubPromptPay.promptpay_target ?? '');
 	const toastMessage = $derived(form?.message ?? null);
 	const toastVariant = $derived(form?.success ? 'success' : 'error');
@@ -117,7 +154,6 @@
 		return parts.join(' · ');
 	});
 
-	const summaryCourtFee = $derived(data.myPayment?.total_amount ?? data.perPlayerCost);
 	const summaryPaymentStatus = $derived(data.myPayment?.status ?? null);
 	const summaryPaymentBadgeClass = $derived.by(() => {
 		switch (summaryPaymentStatus) {
@@ -150,6 +186,7 @@
 		myLiveStatus === 'playing' || isInUnresolvedMatch(data.myOpenMatch)
 	);
 	const sessionActionsBusy = $derived(actionLoading !== null || matchNavLoading);
+	const summaryActionsBusy = $derived(homeNavLoading);
 	const myScorePendingMatch = $derived(
 		data.myOpenMatch?.status === 'score_pending' ? data.myOpenMatch : null
 	);
@@ -160,6 +197,18 @@
 			return bMs - aMs;
 		})
 	);
+	const myMatchRecord = $derived.by(() => {
+		let wins = 0;
+		let losses = 0;
+
+		for (const match of data.myMatchHistory) {
+			const result = playerMatchResult(data.userId, match.players, match.games);
+			if (result === 'win') wins += 1;
+			else if (result === 'lose') losses += 1;
+		}
+
+		return { wins, losses, played: data.myMatchHistory.length };
+	});
 	const showScoreConfirmModal = $derived.by(() => {
 		if (!myScorePendingMatch) return false;
 		const me = myScorePendingMatch.players.find((player) => player.user_id === data.userId);
@@ -241,6 +290,35 @@
 			};
 		};
 
+	const handleLeaveRequest: SubmitFunction = () => {
+		actionLoading = 'requestLeave';
+		return async ({ result, update }) => {
+			await update({ reset: false });
+			if (result.type === 'success') {
+				leaveConfirmOpen = false;
+			}
+			actionLoading = null;
+		};
+	};
+
+	const closeLeaveConfirm = () => {
+		if (actionLoading === 'requestLeave') return;
+		leaveConfirmOpen = false;
+	};
+
+	const openSummaryMatch = (match: MatchWithDetails) => {
+		if (summaryActionsBusy) return;
+		selectedHistoryMatch = match;
+	};
+
+	const goHomeFromSummary = () => {
+		if (summaryActionsBusy) return;
+		homeNavLoading = true;
+		void goto('/').finally(() => {
+			homeNavLoading = false;
+		});
+	};
+
 	const openMatchLive = () => {
 		if (!data.myOpenMatch || sessionActionsBusy) return;
 		matchNavLoading = true;
@@ -276,6 +354,61 @@
 	);
 </script>
 
+{#snippet playerCostPanel(hero: boolean, footnote: boolean, paymentStatus: typeof summaryPaymentStatus)}
+	<div class="app-cost-panel">
+		{#if hero}
+			<div class="app-cost-hero">
+				<p class="app-cost-hero-label">Your cost</p>
+				<div class="app-cost-hero-row">
+					<p class="app-cost-hero-amount">{formatThb(myTotalCost)}</p>
+					<div class="app-cost-hero-meta">
+						{#if paymentStatus}
+							<span
+								class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 {summaryPaymentBadgeClass}"
+							>
+								{paymentStatusLabel(paymentStatus)}
+							</span>
+						{:else if !isBilled}
+							<span class="app-cost-hero-estimate">Estimate</span>
+						{/if}
+					</div>
+				</div>
+			</div>
+		{/if}
+
+		<div class="app-cost-lines">
+			<div class="app-cost-line">
+				<div class="min-w-0">
+					<p class="app-cost-line-label">Court fee</p>
+					<p class="app-cost-line-hint">
+						Split across {data.activePlayerCount} active player{data.activePlayerCount === 1 ? '' : 's'}
+					</p>
+				</div>
+				<p class="app-cost-line-amount">{formatThb(myCourtShare)}</p>
+			</div>
+			<div class="app-cost-line">
+				<div class="min-w-0">
+					<p class="app-cost-line-label">Shuttle fee</p>
+					<p class="app-cost-line-hint">
+						{#if myShuttlesUsedDisplay === 0}
+							No shuttles from your matches yet
+						{:else if myShuttlesUsedDisplay === sessionShuttlesUsed}
+							{myShuttlesUsedDisplay} shuttle{myShuttlesUsedDisplay === 1 ? '' : 's'} from your matches
+						{:else}
+							{myShuttlesUsedDisplay} in your matches · {sessionShuttlesUsed} session-wide
+						{/if}
+					</p>
+				</div>
+				<p class="app-cost-line-amount">{formatThb(myShuttleShare)}</p>
+			</div>
+		</div>
+
+		{#if footnote && !isBilled}
+			<p class="app-cost-footnote">Shuttle fee may increase if you play more matches.</p>
+		{/if}
+	</div>
+{/snippet}
+
 <section class="space-y-6">
 	<DashboardHero
 		eyebrow={uiState === 'summary' ? 'Wrap-up' : 'Live session'}
@@ -286,6 +419,9 @@
 			<span class="rounded-full px-2 py-0.5 text-xs font-medium {sessionStatusBadgeClass(session.status)}">
 				{sessionStatusLabel(session.status)}
 			</span>
+			{#if sessionEnded}
+				<span class="app-hero-stat app-hero-stat--warn">Session ended</span>
+			{/if}
 			{#if uiState === 'summary'}
 				<span class="app-hero-stat app-hero-stat--success">Done</span>
 			{/if}
@@ -293,7 +429,20 @@
 	</DashboardHero>
 
 	{#if session.status === 'in_progress'}
-		<SessionLiveTimers startAt={session.start_at} endAt={session.end_at} variant="banner" />
+		<SessionLiveTimers
+			startAt={session.start_at}
+			endAt={session.end_at}
+			showRemaining={!sessionEnded}
+			showOverdue={sessionEnded}
+			variant="banner"
+		/>
+
+		{#if sessionEnded}
+			<div class="rounded-xl border border-rose-200 bg-rose-50/70 px-4 py-3 text-sm text-rose-900">
+				<strong>Session ended.</strong> Wait for the host to start settlement. You cannot take a break
+				or request to leave until then.
+			</div>
+		{/if}
 
 		{#if breakBlocked}
 			<div class="app-session-countdown flex flex-col gap-3 border-brand-200 bg-brand-50/80">
@@ -354,7 +503,7 @@
 							<SubmitButton
 								variant="secondary"
 								loading={actionLoading === 'breakOn'}
-								disabled={sessionActionsBusy && actionLoading !== 'breakOn'}
+								disabled={sessionEnded || (sessionActionsBusy && actionLoading !== 'breakOn')}
 							>
 								Take a break
 							</SubmitButton>
@@ -367,7 +516,7 @@
 							<input type="hidden" name="on_break" value="false" />
 							<SubmitButton
 								loading={actionLoading === 'breakOff'}
-								disabled={sessionActionsBusy && actionLoading !== 'breakOff'}
+								disabled={sessionEnded || (sessionActionsBusy && actionLoading !== 'breakOff')}
 							>
 								Continue playing
 							</SubmitButton>
@@ -435,21 +584,9 @@
 			</div>
 
 			<div class="grid grid-cols-2 gap-3 p-4 sm:p-6">
-				<div class="app-history-stat col-span-2 border-emerald-100/80 bg-white/90">
-					<p class="app-history-stat-label">Court fee</p>
-					<div class="mt-1.5 flex flex-wrap items-center gap-2">
-						<p class="text-2xl font-bold tabular-nums text-slate-900">
-							{formatThb(summaryCourtFee)}
-						</p>
-						{#if summaryPaymentStatus}
-							<span
-								class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 {summaryPaymentBadgeClass}"
-							>
-								{paymentStatusLabel(summaryPaymentStatus)}
-							</span>
-						{/if}
-					</div>
-					<p class="app-history-stat-hint">
+				<div class="col-span-2 space-y-3">
+					{@render playerCostPanel(true, true, summaryPaymentStatus)}
+					<p class="app-history-stat-hint px-1">
 						{#if summaryPaymentStatus === 'approved'}
 							Payment confirmed — you are all set.
 						{:else if summaryPaymentStatus === 'submitted'}
@@ -474,31 +611,75 @@
 						{formatThb(session.court_fee_per_hour)}/hr
 					</p>
 				</div>
+
+				<div class="app-history-stat">
+					<p class="app-history-stat-label">Matches played</p>
+					<p class="app-history-stat-value">{myMatchRecord.played}</p>
+					<p class="app-history-stat-hint">
+						{#if myMatchRecord.played === 0}
+							No matches
+						{:else}
+							{myMatchRecord.wins}W · {myMatchRecord.losses}L
+						{/if}
+					</p>
+				</div>
+
+				<div class="app-history-stat">
+					<p class="app-history-stat-label">Your shuttles</p>
+					<p class="app-history-stat-value">{myShuttlesUsedDisplay}</p>
+					<p class="app-history-stat-hint">From your matches</p>
+				</div>
+			</div>
+
+			<div class="border-t border-emerald-100/80 bg-white/70 px-4 py-5 sm:px-6">
+				<div class="flex items-center justify-between gap-2">
+					<h3 class="text-sm font-semibold uppercase tracking-wide text-brand-600">Your matches</h3>
+					{#if myMatchRecord.played > 0}
+						<span
+							class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800"
+						>
+							{myMatchRecord.wins}W · {myMatchRecord.losses}L
+						</span>
+					{/if}
+				</div>
+				{#if sortedMyMatchHistory.length === 0}
+					<p class="mt-3 text-sm text-slate-600">
+						You did not play a recorded match this session.
+					</p>
+				{:else}
+					<ul class="mt-3 space-y-2">
+						{#each sortedMyMatchHistory as match, index (match.id)}
+							<li>
+								<PlayerMatchHistoryCard
+									{match}
+									userId={data.userId}
+									matchNumber={sortedMyMatchHistory.length - index}
+									disabled={summaryActionsBusy}
+									onClick={() => openSummaryMatch(match)}
+								/>
+							</li>
+						{/each}
+					</ul>
+				{/if}
 			</div>
 
 			<div class="border-t border-emerald-100/80 bg-white/50 px-4 py-4 sm:px-6">
-				<button type="button" class="app-btn-primary w-full" onclick={() => goto('/')}>
+				<SubmitButton
+					type="button"
+					loading={homeNavLoading}
+					loadingLabel="Going home…"
+					disabled={summaryActionsBusy && !homeNavLoading}
+					onclick={goHomeFromSummary}
+				>
 					<span class="inline-flex items-center justify-center gap-2">
 						<HomeIcon class="h-5 w-5" />
 						Back to home
 					</span>
-				</button>
+				</SubmitButton>
 			</div>
 		</section>
 	{:else}
-		<AppCard class="space-y-4">
-			<SectionHeading title="Your cost" />
-			<p class="text-2xl font-semibold text-slate-900">{formatThb(paymentAmount)}</p>
-			<p class="text-sm text-slate-600">
-				Estimated court share for this session ({data.activePlayerCount} active player{data.activePlayerCount === 1 ? '' : 's'}).
-				Shuttle costs will appear here when matches are recorded.
-			</p>
-			{#if data.myPayment}
-				<p class="text-sm text-slate-600">
-					Payment status: {paymentStatusLabel(data.myPayment.status)}
-				</p>
-			{/if}
-		</AppCard>
+		{@render playerCostPanel(true, true, data.myPayment?.status ?? null)}
 
 		<section class="app-detail-section">
 			<div
@@ -566,6 +747,20 @@
 							{formatThb(session.court_fee_per_hour)}
 						</dd>
 					</div>
+					<div class="app-detail-meta-item">
+						<dt class="app-detail-meta-label">Shuttle usage</dt>
+						<dd class="app-detail-meta-value">
+							<span class="text-lg font-semibold text-brand-700">{sessionShuttlesUsed}</span>
+							<p class="mt-1 text-sm text-slate-600">
+								{#if completedSessionMatchCount === 0}
+									No completed matches yet
+								{:else}
+									{sessionShuttlesUsed === 1 ? 'Shuttle' : 'Shuttles'} from {completedSessionMatchCount}
+									completed match{completedSessionMatchCount === 1 ? '' : 'es'}
+								{/if}
+							</p>
+						</dd>
+					</div>
 					<div class="app-detail-meta-item sm:col-span-2">
 						<dt class="app-detail-meta-label">Shuttle</dt>
 						<dd class="app-detail-meta-value">
@@ -578,7 +773,11 @@
 									{/if}
 								</p>
 								<p class="mt-2 text-xs text-slate-500">
-									Your shuttle share appears in your cost when matches are recorded.
+									{#if myShuttlesUsed > 0}
+										Your shuttle share is in your cost above ({myShuttlesUsed} shuttle{myShuttlesUsed === 1 ? '' : 's'} from your matches).
+									{:else}
+										Your shuttle share appears in your cost when you complete matches.
+									{/if}
 								</p>
 							{:else}
 								<p class="text-sm text-slate-600">{shuttleDetailLabel}</p>
@@ -670,18 +869,17 @@
 						Cancel leave request
 					</SubmitButton>
 				</form>
-			{:else if canRequestEarlyLeave(session.my_membership, data.myLeaveRequest?.status ?? null)}
+			{:else if canRequestEarlyLeave(session.my_membership, data.myLeaveRequest?.status ?? null, sessionEnded)}
 				<p class="text-sm text-slate-600">
-					You can leave early without playing a match. You will still owe your court-fee share.
+					You can leave before the session ends. You will still owe your court and shuttle share.
 				</p>
-				<form method="POST" action="?/requestLeave" use:enhance={handleAction('requestLeave')}>
-					<SubmitButton
-						loading={actionLoading === 'requestLeave'}
-						disabled={sessionActionsBusy && actionLoading !== 'requestLeave'}
-					>
-						Request to leave
-					</SubmitButton>
-				</form>
+				<SubmitButton type="button" onclick={() => (leaveConfirmOpen = true)}>
+					Request to leave
+				</SubmitButton>
+			{:else if sessionEnded}
+				<p class="text-sm text-slate-600">
+					Session ended — wait for the host to start settlement and bill everyone.
+				</p>
 			{:else if uiState === 'awaiting_leave'}
 				<p class="text-sm text-slate-600">
 					Payment confirmed. Waiting for admin to approve your leave request.
@@ -705,11 +903,13 @@
 	<div class="app-card-padded space-y-4">
 		<h2 id="payment-modal-title" class="text-lg font-semibold text-slate-900">Pay session fee</h2>
 		<p class="text-sm text-slate-600">
-			Transfer exactly {formatThb(paymentAmount)} using PromptPay, then tap “I've paid”.
+			Transfer exactly {formatThb(myTotalCost)} using PromptPay, then tap “I've paid”.
 		</p>
 
+		{@render playerCostPanel(false, !isBilled, data.myPayment?.status ?? null)}
+
 		{#if promptPayTarget}
-			<PaymentQr target={promptPayTarget} amount={paymentAmount} />
+			<PaymentQr target={promptPayTarget} amount={myTotalCost} />
 		{:else}
 			<EmptyState message="Club PromptPay is not configured. Contact the admin." />
 		{/if}
@@ -723,6 +923,47 @@
 				{paymentStatusLabel(data.myPayment?.status ?? 'submitted')}
 			</p>
 		{/if}
+	</div>
+</AppModal>
+
+<AppModal open={leaveConfirmOpen} labelledBy="leave-confirm-title" onClose={closeLeaveConfirm}>
+	<div class="app-card-padded space-y-4">
+		<div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+			<h2 id="leave-confirm-title" class="text-lg font-semibold text-amber-950">
+				Leave session early?
+			</h2>
+			<ul class="mt-3 space-y-2 text-sm leading-relaxed text-amber-950/90">
+				<li>
+					You will be billed <strong>{formatThb(myTotalCost)}</strong> — your court and shuttle share
+					for this session so far.
+				</li>
+				<li>Pay via PromptPay right after. Admin approves your leave once payment is confirmed.</li>
+				<li>The session continues for other players until it ends.</li>
+				<li>You can cancel the leave request while it is still pending review.</li>
+			</ul>
+		</div>
+
+		{@render playerCostPanel(true, !isBilled, null)}
+
+		<form method="POST" action="?/requestLeave" class="flex flex-wrap gap-2" use:enhance={handleLeaveRequest}>
+			<SubmitButton
+				loading={actionLoading === 'requestLeave'}
+				loadingLabel="Requesting…"
+				disabled={sessionActionsBusy && actionLoading !== 'requestLeave'}
+				class="!w-auto flex-1"
+			>
+				Confirm leave request
+			</SubmitButton>
+			<SubmitButton
+				type="button"
+				variant="secondary"
+				class="!w-auto flex-1"
+				disabled={actionLoading === 'requestLeave'}
+				onclick={closeLeaveConfirm}
+			>
+				Stay in session
+			</SubmitButton>
+		</form>
 	</div>
 </AppModal>
 

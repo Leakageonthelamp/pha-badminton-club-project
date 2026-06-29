@@ -3,6 +3,7 @@ import {
 	buildSessionHistorySummary,
 	computeTotalShuttleUsage,
 	formatSessionDuration,
+	formatSessionOverdue,
 	formatSessionUptime,
 	isAttendedPlayer
 } from './sessionHistory';
@@ -86,6 +87,7 @@ describe('sessionHistory helpers', () => {
 
 		expect(summary.durationLabel).toBe('4 hr');
 		expect(summary.uptimeLabel).toBe('12 hr 5 min');
+		expect(summary.overdueLabel).toBe('8 hr 5 min');
 		expect(summary.attendedCount).toBe(2);
 		expect(summary.rosterCount).toBe(3);
 		expect(summary.perPlayerCourtShare).toBe(800);
@@ -114,11 +116,25 @@ describe('sessionHistory helpers', () => {
 			baseSession,
 			[basePlayer({ id: 'p1', user_id: 'u1' })],
 			[basePayment({ shuttle_share: 50, total_amount: 850 })],
-			3
+			[
+				{ status: 'completed', shuttles_used: 2 },
+				{ status: 'completed', shuttles_used: 1 },
+				{ status: 'cancelled', shuttles_used: 0 }
+			]
 		);
 
-		expect(summary.matchCount).toBe(3);
-		expect(summary.totalShuttleUsage).toBe(2);
+		expect(summary.matchCount).toBe(2);
+		expect(summary.totalShuttleUsage).toBe(3);
+	});
+
+	it('returns null overdue when session closed on schedule', () => {
+		expect(
+			formatSessionOverdue('2026-06-28T14:00:00.000Z', {
+				status: 'closed',
+				finished_at: '2026-06-28T14:00:00.000Z',
+				updated_at: '2026-06-28T14:00:00.000Z'
+			})
+		).toBeNull();
 	});
 
 	it('falls back to updated_at for legacy closed sessions without finished_at', () => {

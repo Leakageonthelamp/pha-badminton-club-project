@@ -23,6 +23,7 @@ const baseSession = (overrides: Partial<SessionListItem>): SessionListItem => ({
 	end_at: '2026-07-01T14:00:00.000Z',
 	finished_at: null,
 	ended_early: false,
+	settlement_started_at: null,
 	venue_name: 'Court A',
 	latitude: null,
 	longitude: null,

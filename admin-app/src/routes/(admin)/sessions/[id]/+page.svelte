@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
@@ -7,6 +8,7 @@
 	import AppModal from '@repo/ui/components/AppModal.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import RichTextDisplay from '@repo/ui/components/RichTextDisplay.svelte';
+	import SessionLiveTimers from '@repo/ui/components/SessionLiveTimers.svelte';
 	import SessionStartCountdown from '@repo/ui/components/SessionStartCountdown.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import BuildingIcon from '@repo/ui/icons/BuildingIcon.svelte';
@@ -42,8 +44,17 @@
 	let playerActionLoading = $state<string | null>(null);
 	let feeActionLoading = $state<string | null>(null);
 	let controlNavLoading = $state(false);
+	let nowMs = $state(Date.now());
 
 	const session = $derived(data.session);
+	const endReached = $derived(nowMs >= new Date(session.end_at).getTime());
+	const endedOrReached = $derived(endReached || session.ended_early);
+	const settlementStarted = $derived(
+		session.settlement_started_at != null || session.ended_early
+	);
+	const sessionEndedLabel = $derived(
+		session.ended_early ? 'Ended early' : 'Session ended'
+	);
 
 	const goToSessionControl = () => {
 		if (controlNavLoading) return;
@@ -59,6 +70,16 @@
 	const toastVariant = $derived(form?.success ? 'success' : 'error');
 
 	let flashToastShown = $state(false);
+
+	$effect(() => {
+		if (!browser || session.status !== 'in_progress') return;
+
+		const timer = window.setInterval(() => {
+			nowMs = Date.now();
+		}, 1_000);
+
+		return () => window.clearInterval(timer);
+	});
 
 	$effect(() => {
 		if (flashToastShown) return;
@@ -312,6 +333,7 @@
 		session={data.session}
 		players={data.historyPlayers}
 		payments={data.historyPayments}
+		matches={data.historyMatches}
 		canManageFees={data.canManage}
 		cancellationFees={data.cancellationFees}
 		sessionId={session.id}
@@ -342,15 +364,36 @@
 						<span class="app-hero-badge shrink-0">Observation only</span>
 					{/if}
 				</div>
+				{#if endedOrReached && session.status === 'in_progress'}
+					<p class="app-hero-stat app-hero-stat--warn">{sessionEndedLabel}</p>
+				{/if}
 			</DashboardHero>
 
 			{#if data.canControl}
-				<AppCard class="flex h-full flex-col justify-between gap-4 border-sky-200 bg-sky-50/60">
+				<AppCard
+					class="flex h-full flex-col justify-between gap-4 {endedOrReached
+						? 'border-rose-200 bg-rose-50/60'
+						: 'border-sky-200 bg-sky-50/60'}"
+				>
 					<div>
-						<h2 class="text-lg font-semibold text-sky-900">Session in progress</h2>
-						<p class="mt-1 text-sm text-sky-800">
-							Open session control to manage live play, courts, and participants.
-						</p>
+						{#if endedOrReached}
+							<h2 class="text-lg font-semibold text-rose-900">
+								{settlementStarted ? 'Settlement in progress' : sessionEndedLabel}
+							</h2>
+							<p class="mt-1 text-sm text-rose-800">
+								{#if settlementStarted}
+									Open session control to confirm payments and close the session.
+								{:else}
+									Scheduled end has passed. Open session control to start settlement, confirm
+									payments, and close the session.
+								{/if}
+							</p>
+						{:else}
+							<h2 class="text-lg font-semibold text-sky-900">Session in progress</h2>
+							<p class="mt-1 text-sm text-sky-800">
+								Open session control to manage live play, courts, and participants.
+							</p>
+						{/if}
 					</div>
 					<SubmitButton
 						type="button"
@@ -364,6 +407,16 @@
 				</AppCard>
 			{/if}
 		</div>
+
+		{#if session.status === 'in_progress'}
+			<SessionLiveTimers
+				startAt={session.start_at}
+				endAt={session.end_at}
+				showRemaining={!endedOrReached}
+				showOverdue={endedOrReached}
+				variant="banner"
+			/>
+		{/if}
 
 		<SessionStartCountdown
 			startAt={session.start_at}

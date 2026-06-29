@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { canRequestEarlyLeave, deriveLiveSessionUiState, shouldShowPaymentModal } from './liveState';
+import {
+	canRequestEarlyLeave,
+	deriveLiveSessionUiState,
+	isLiveSessionEnded,
+	shouldShowPaymentModal
+} from './liveState';
 
 describe('deriveLiveSessionUiState', () => {
 	it('shows payment due when a pending payment exists', () => {
@@ -55,6 +60,49 @@ describe('shouldShowPaymentModal', () => {
 	});
 });
 
+describe('isLiveSessionEnded', () => {
+	const endAtMs = Date.parse('2026-06-01T02:00:00.000Z');
+
+	it('is false before scheduled end', () => {
+		expect(
+			isLiveSessionEnded({
+				status: 'in_progress',
+				endAtMs,
+				nowMs: endAtMs - 1
+			})
+		).toBe(false);
+	});
+
+	it('is true at or after scheduled end', () => {
+		expect(
+			isLiveSessionEnded({
+				status: 'in_progress',
+				endAtMs,
+				nowMs: endAtMs
+			})
+		).toBe(true);
+	});
+
+	it('is true when settlement started or ended early', () => {
+		expect(
+			isLiveSessionEnded({
+				status: 'in_progress',
+				endAtMs,
+				nowMs: endAtMs - 60_000,
+				settlementStarted: true
+			})
+		).toBe(true);
+		expect(
+			isLiveSessionEnded({
+				status: 'in_progress',
+				endAtMs,
+				nowMs: endAtMs - 60_000,
+				endedEarly: true
+			})
+		).toBe(true);
+	});
+});
+
 describe('canRequestEarlyLeave', () => {
 	it('allows confirmed players without a pending leave request', () => {
 		expect(
@@ -86,6 +134,24 @@ describe('canRequestEarlyLeave', () => {
 					idle_since: '2026-06-01T00:00:00.000Z'
 				},
 				'pending'
+			)
+		).toBe(false);
+	});
+
+	it('blocks when the session has ended', () => {
+		expect(
+			canRequestEarlyLeave(
+				{
+					id: 'm1',
+					status: 'confirmed',
+					fee_owed: 0,
+					fee_status: 'none',
+					joined_at: '2026-06-01T00:00:00.000Z',
+					activity: 'idle',
+					idle_since: '2026-06-01T00:00:00.000Z'
+				},
+				null,
+				true
 			)
 		).toBe(false);
 	});

@@ -11,6 +11,7 @@ import {
 	waiveCancellationFee
 } from '$lib/server/sessionPlayers';
 import { loadSessionPayments } from '$lib/server/sessionControl';
+import { loadSessionMatches } from '$lib/server/matches';
 import { loadSessionDetail, releaseActiveSessionPlayers, sweepOverdueDraftSessions, sweepStartedSessions } from '$lib/server/sessions';
 import { draftOpenDeadlineMs, isDraftOpenWindowOpen, isHistorySession, isSessionMutable } from '$lib/sessions/list';
 import { error, fail } from '@sveltejs/kit';
@@ -55,6 +56,7 @@ export const load: PageServerLoad = async ({
 			: [];
 	const historyPlayers = isHistoryView ? await loadSessionPlayerHistory(supabase, session.id) : [];
 	const historyPayments = isHistoryView ? await loadSessionPayments(supabase, session.id) : [];
+	const historyMatches = isHistoryView ? await loadSessionMatches(supabase, session.id) : [];
 	const cancellationFees = canManage
 		? await loadSessionCancellationFees(supabase, session.id)
 		: [];
@@ -75,6 +77,7 @@ export const load: PageServerLoad = async ({
 		players,
 		historyPlayers,
 		historyPayments,
+		historyMatches,
 		cancellationFees,
 		isHistoryView,
 		canManage,

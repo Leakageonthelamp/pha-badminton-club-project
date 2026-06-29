@@ -37,6 +37,25 @@ export const computeCourtShare = ({
 	return Math.round((courtTotal / activePlayers) * 100) / 100;
 };
 
+/** Player shuttle share: even 4-way split per match, summed. Mirrors DB compute_session_player_shuttle_share. */
+export const computePlayerShuttleShare = (
+	shuttlesUsedTotal: number,
+	pricePerShuttle: number
+): number => {
+	if (shuttlesUsedTotal <= 0 || pricePerShuttle <= 0) return 0;
+	// ponytail: ÷4 matches doubles-only DB rule; singles would need per-match player count
+	return Math.round(((shuttlesUsedTotal * pricePerShuttle) / 4) * 100) / 100;
+};
+
+/** Inverse of computePlayerShuttleShare — shuttles implied by a billed shuttle share. */
+export const deriveShuttlesFromShare = (
+	shuttleShare: number,
+	pricePerShuttle: number
+): number => {
+	if (shuttleShare <= 0 || pricePerShuttle <= 0) return 0;
+	return Math.round((shuttleShare * 4) / pricePerShuttle);
+};
+
 export const formatThb = (amount: number): string =>
 	new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(amount);
 

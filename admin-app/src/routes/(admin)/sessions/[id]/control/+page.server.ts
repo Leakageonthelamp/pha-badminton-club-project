@@ -72,6 +72,9 @@ export const load: PageServerLoad = async ({
 	]);
 
 	const activePlayers = players.filter((player) => player.status === 'confirmed');
+	const billedPlayers = players.filter(
+		(player) => player.status === 'confirmed' || player.status === 'left'
+	);
 	const activePlayerCount = countActiveSessionPlayers(players);
 	const perPlayerCost = computeCourtShare({
 		courtFeePerHour: session.court_fee_per_hour,
@@ -82,10 +85,10 @@ export const load: PageServerLoad = async ({
 	});
 
 	const endReached = Date.now() >= new Date(session.end_at).getTime();
-	const settlementStarted = payments.length > 0;
+	const settlementStarted = session.settlement_started_at != null || session.ended_early;
 	const allPaymentsApproved =
-		activePlayers.length === 0 ||
-		activePlayers.every((player) =>
+		billedPlayers.length === 0 ||
+		billedPlayers.every((player) =>
 			payments.some(
 				(payment) => payment.user_id === player.user_id && payment.status === 'approved'
 			)

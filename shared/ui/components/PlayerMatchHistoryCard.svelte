@@ -14,6 +14,7 @@
 		userId,
 		matchNumber,
 		onClick,
+		disabled = false,
 		compact = false
 	}: {
 		match: {
@@ -26,6 +27,7 @@
 		userId: string;
 		matchNumber: number;
 		onClick: () => void;
+		disabled?: boolean;
 		/** Smaller padding — for nested lists inside roster accordions */
 		compact?: boolean;
 	} = $props();
@@ -44,9 +46,10 @@
 
 <button
 	type="button"
-	class="flex w-full items-center gap-2 rounded-lg border border-slate-200 bg-white text-left transition-colors hover:border-brand-200 hover:bg-brand-50/40 {compact
+	class="flex w-full items-center gap-2 rounded-lg border border-slate-200 bg-white text-left transition-colors hover:border-brand-200 hover:bg-brand-50/40 disabled:pointer-events-none disabled:opacity-60 {compact
 		? 'px-2.5 py-2'
 		: 'rounded-xl px-3 py-3'}"
+	{disabled}
 	onclick={onClick}
 >
 	<div class="min-w-0 flex-1 space-y-1.5">
