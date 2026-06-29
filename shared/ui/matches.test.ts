@@ -3,7 +3,10 @@ import {
 	deriveGameWinner,
 	deriveMatchWinner,
 	formatMatchScore,
-	splitTeams
+	isValidRallyGameScore,
+	splitTeams,
+	validateMatchGames,
+	validateRallyGameScore
 } from './matches.js';
 
 describe('matches helpers', () => {
@@ -49,5 +52,43 @@ describe('matches helpers', () => {
 				{ game_no: 1, team_a_score: 21, team_b_score: 18 }
 			])
 		).toBe('21-18, 19-21');
+	});
+
+	it('validateRallyGameScore accepts normal and deuce wins', () => {
+		expect(validateRallyGameScore(21, 18, 21)).toBeNull();
+		expect(validateRallyGameScore(10, 21, 21)).toBeNull();
+		expect(validateRallyGameScore(22, 20, 21)).toBeNull();
+		expect(validateRallyGameScore(23, 25, 21)).toBeNull();
+		expect(validateRallyGameScore(15, 12, 15)).toBeNull();
+		expect(validateRallyGameScore(16, 14, 15)).toBeNull();
+	});
+
+	it('validateRallyGameScore rejects invalid scores', () => {
+		expect(validateRallyGameScore(21, 20, 21)).not.toBeNull();
+		expect(validateRallyGameScore(22, 21, 21)).not.toBeNull();
+		expect(validateRallyGameScore(19, 17, 21)).not.toBeNull();
+		expect(validateRallyGameScore(21, 21, 21)).not.toBeNull();
+	});
+
+	it('validateMatchGames checks each game in a series', () => {
+		expect(
+			validateMatchGames(
+				[
+					{ game_no: 1, team_a_score: 21, team_b_score: 18 },
+					{ game_no: 2, team_a_score: 19, team_b_score: 21 }
+				],
+				'two_round',
+				21
+			)
+		).toBeNull();
+
+		expect(
+			validateMatchGames([{ game_no: 1, team_a_score: 21, team_b_score: 20 }], 'one_round', 21)
+		).toContain('Game 1');
+	});
+
+	it('isValidRallyGameScore mirrors validateRallyGameScore', () => {
+		expect(isValidRallyGameScore(21, 18, 21)).toBe(true);
+		expect(isValidRallyGameScore(21, 20, 21)).toBe(false);
 	});
 });

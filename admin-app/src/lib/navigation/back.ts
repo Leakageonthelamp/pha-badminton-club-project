@@ -5,6 +5,7 @@ import type { AppRole } from '$lib/types/auth';
 const AUTH_PATHS = new Set(['/login']);
 
 const SESSION_DETAIL_PATH = /^\/sessions\/(?!new$|history$)[^/]+$/;
+const SESSION_MATCH_CONTROL_PATH = /^\/sessions\/([^/]+)\/control\/match\/[^/]+$/;
 
 export type BackContext = {
 	isHistorySessionDetail?: boolean;
@@ -52,6 +53,11 @@ export const getBackHref = (
 
 	if (context.isHistorySessionDetail && isSessionDetailPath(pathname)) {
 		return '/sessions/history';
+	}
+
+	const matchControl = pathname.match(SESSION_MATCH_CONTROL_PATH);
+	if (matchControl) {
+		return `/sessions/${matchControl[1]}/control`;
 	}
 
 	if (pathname === '/clubs/new' || pathname === '/profile' || pathname === '/users') {

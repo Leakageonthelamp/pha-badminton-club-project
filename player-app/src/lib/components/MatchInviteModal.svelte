@@ -8,7 +8,7 @@
 	import type { MatchWithDetails } from '$lib/types/match';
 	import type { SubmitFunction } from '@sveltejs/kit';
 
-	const INVITE_WINDOW_MS = 30_000;
+	const INVITE_WINDOW_MS = 90_000;
 
 	let {
 		open = false,

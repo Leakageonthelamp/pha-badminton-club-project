@@ -35,6 +35,14 @@ describe('back navigation', () => {
 		).toBe('/sessions/history');
 	});
 
+	it('resolves live match back to live session', () => {
+		expect(
+			getBackHref(
+				'/sessions/f9b2b4d6-5fa9-4183-90d2-6beb26af4429/live/match/4ff394a6-2873-4eca-936e-f7db189f3e63'
+			)
+		).toBe('/sessions/f9b2b4d6-5fa9-4183-90d2-6beb26af4429/live');
+	});
+
 	it('resolves session history back to sessions list', () => {
 		expect(getBackHref('/sessions/history')).toBe('/sessions');
 	});

@@ -412,6 +412,14 @@ body {
 		@apply h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-base text-slate-900 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20;
 	}
 
+	.app-input {
+		@apply h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-base text-slate-900 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500;
+	}
+
+	.app-score-input {
+		@apply h-14 w-full rounded-xl border border-slate-300 bg-white px-3 text-center text-2xl font-semibold tabular-nums text-slate-900 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500;
+	}
+
 	.app-filter-row .app-select-trigger {
 		@apply h-11 min-h-[2.75rem] border-slate-300 py-0 shadow-sm ring-0;
 	}

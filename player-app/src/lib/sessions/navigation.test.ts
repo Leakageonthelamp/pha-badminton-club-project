@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	findLiveSession,
+	hasCourtMatch,
 	isInUnresolvedMatch,
 	liveSessionHref,
 	matchLiveHref,
@@ -172,6 +173,20 @@ describe('shouldOpenMatchLive', () => {
 		expect(shouldOpenMatchLive({ status: 'active' })).toBe(true);
 		expect(shouldOpenMatchLive({ status: 'score_pending' })).toBe(false);
 		expect(shouldOpenMatchLive(null)).toBe(false);
+	});
+});
+
+describe('hasCourtMatch', () => {
+	it('is true for on-court or unresolved score states', () => {
+		expect(hasCourtMatch({ status: 'active' })).toBe(true);
+		expect(hasCourtMatch({ status: 'score_pending' })).toBe(true);
+		expect(hasCourtMatch({ status: 'suspended' })).toBe(true);
+	});
+
+	it('is false for invite-only or finished states', () => {
+		expect(hasCourtMatch({ status: 'pending' })).toBe(false);
+		expect(hasCourtMatch({ status: 'completed' })).toBe(false);
+		expect(hasCourtMatch(null)).toBe(false);
 	});
 });
 

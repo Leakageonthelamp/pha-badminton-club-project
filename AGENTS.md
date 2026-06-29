@@ -67,7 +67,10 @@ keep it per-app. App-specific branding stays per-app too.
 - `@repo/ui/geolocation` — stored user location helpers (player distance sort)
 - `@repo/ui/payments` — `computeCourtShare`, `formatThb` (THB money formatting), payment/leave/fee status labels
 - `@repo/ui/transactions` — unified transaction filter/status helpers (both apps' transaction lists)
+- `@repo/ui/matches` — match status labels, team split, score formatting; **rally game score validation**
+  (`validateRallyGameScore`, `validateMatchGames`, `rallyScoreHint`) — see **Match rally scoring** below
 - `CourtGrid` (`@repo/ui/components/CourtGrid.svelte`) — shared court display (live + control; idle until Phase 4 matches)
+- `MatchGameScoreFields` (`@repo/ui/components/MatchGameScoreFields.svelte`) — Team A vs B score entry with inline validation
 
 ## Styles
 
@@ -229,3 +232,18 @@ inside them is still Phase 4 (`CourtGrid` shows idle courts; "match control arri
 - Dual-role super admin (also in `club_admins`): workspace switch **Super** ↔ **Club** via
   `AdminWorkspaceSwitch` + cookie `admin_dashboard_mode`; effective role becomes `club_admin` in
   club mode (`admin-app/src/lib/adminWorkspace.ts`, `adminDashboardMode.ts`).
+
+## Match rally scoring (Phase 4 — enforced in DB + `@repo/ui/matches`)
+
+Sessions snapshot `match_score_type` (`15` or `21`) onto each `matches.score_type`. Every game
+score submitted via RPC (`end_match_with_score`, `submit_match_score`, `resolve_match_score`) is
+validated by `validate_rally_game_score` / `validate_match_games` in Postgres and mirrored in
+`@repo/ui/matches` for client-side UX before submit.
+
+**Normal win:** one team reaches the target (`21` or `15`) and the other is **below** the deuce line
+(`score_type − 1`). Examples for 21-point games: `21-18`, `10-21`. Invalid: `21-20` (deuce continues).
+
+**Deuce (overtime):** at `20-20` (21-point) or `14-14` (15-point), play until one team leads by **2**.
+Valid examples: `22-20`, `24-22`, `23-25`, `16-14` (15-point). Invalid: `22-21` (only 1-point lead).
+
+Use `MatchGameScoreFields` + `validateMatchGames` in UI; never invent ad-hoc score rules in app code.

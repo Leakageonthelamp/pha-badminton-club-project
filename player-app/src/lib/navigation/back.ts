@@ -9,6 +9,7 @@ const BACK_HREF: Record<string, string> = {
 };
 
 const LIVE_SESSION_PATH = /^\/sessions\/[^/]+\/live$/;
+const LIVE_MATCH_PATH = /^\/sessions\/([^/]+)\/live\/match\/[^/]+$/;
 
 type BackContext = {
 	liveSessionStatus?: 'draft' | 'open' | 'in_progress' | 'closed' | 'cancelled';
@@ -27,6 +28,11 @@ export const getBackHref = (pathname: string, context?: BackContext): string => 
 			return '/sessions/history';
 		}
 		return '/';
+	}
+
+	const liveMatch = pathname.match(LIVE_MATCH_PATH);
+	if (liveMatch) {
+		return `/sessions/${liveMatch[1]}/live`;
 	}
 
 	const segments = pathname.split('/').filter(Boolean);

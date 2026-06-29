@@ -38,3 +38,25 @@ export const shouldOpenMatchLive = (match: { status: string } | null | undefined
 
 export const isInUnresolvedMatch = (match: { status: string } | null | undefined): boolean =>
 	Boolean(match && ['active', 'score_pending', 'suspended', 'pending'].includes(match.status));
+
+export const hasCourtMatch = (match: { status: string } | null | undefined): boolean =>
+	Boolean(match && ['active', 'score_pending', 'suspended'].includes(match.status));
+
+const matchLiveDismissKey = (sessionId: string, matchId: string): string =>
+	`ph:match-live-dismissed:${sessionId}:${matchId}`;
+
+/** Player chose session live over match live — skip auto-open until match ends. */
+export const isMatchLiveDismissed = (sessionId: string, matchId: string): boolean => {
+	if (typeof sessionStorage === 'undefined') return false;
+	return sessionStorage.getItem(matchLiveDismissKey(sessionId, matchId)) === '1';
+};
+
+export const dismissMatchLive = (sessionId: string, matchId: string): void => {
+	if (typeof sessionStorage === 'undefined') return;
+	sessionStorage.setItem(matchLiveDismissKey(sessionId, matchId), '1');
+};
+
+export const clearMatchLiveDismissed = (sessionId: string, matchId: string): void => {
+	if (typeof sessionStorage === 'undefined') return;
+	sessionStorage.removeItem(matchLiveDismissKey(sessionId, matchId));
+};

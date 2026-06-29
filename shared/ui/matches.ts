@@ -14,6 +14,10 @@ export type MatchGameInput = {
 	team_b_score: number;
 };
 
+export type MatchScoreType = 15 | 21;
+
+export type MatchRoundType = 'one_round' | 'two_round';
+
 export type MatchPlayerLike = {
 	team: MatchTeam;
 	displayName?: string | null;
@@ -100,3 +104,68 @@ export const courtGridStatusLabel = (status?: MatchStatus | null): string =>
 	status ? matchStatusLabel(status) : 'Idle';
 
 export const isCourtClickable = (status?: MatchStatus | null): boolean => !status;
+
+/** Rally-point game: win at target if opponent below deuce line, or win by 2 after deuce. */
+export const rallyScoreHint = (scoreType: MatchScoreType): string => {
+	const deuceLine = scoreType - 1;
+	return `First to ${scoreType} wins if the other team is below ${deuceLine}. At ${deuceLine}-${deuceLine}, play continues until one team leads by 2 (e.g. ${scoreType + 1}-${deuceLine}).`;
+};
+
+export const validateRallyGameScore = (
+	teamA: number,
+	teamB: number,
+	scoreType: MatchScoreType
+): string | null => {
+	if (!Number.isFinite(teamA) || !Number.isFinite(teamB)) {
+		return 'Enter both scores';
+	}
+
+	if (teamA < 0 || teamB < 0) {
+		return 'Scores cannot be negative';
+	}
+
+	if (teamA === teamB) {
+		return 'Game cannot be tied';
+	}
+
+	const deuceLine = scoreType - 1;
+	const winner = Math.max(teamA, teamB);
+	const loser = Math.min(teamA, teamB);
+
+	if (winner === scoreType && loser < deuceLine) {
+		return null;
+	}
+
+	if (loser >= deuceLine && winner - loser === 2) {
+		return null;
+	}
+
+	return `Invalid ${scoreType}-point game score`;
+};
+
+export const isValidRallyGameScore = (
+	teamA: number,
+	teamB: number,
+	scoreType: MatchScoreType
+): boolean => validateRallyGameScore(teamA, teamB, scoreType) === null;
+
+export const validateMatchGames = (
+	games: MatchGameLike[],
+	roundType: MatchRoundType,
+	scoreType: MatchScoreType
+): string | null => {
+	const expected = roundType === 'two_round' ? 2 : 1;
+
+	if (games.length !== expected) {
+		return `Enter ${expected} game score${expected === 1 ? '' : 's'}`;
+	}
+
+	for (const game of games) {
+		const error = validateRallyGameScore(game.team_a_score, game.team_b_score, scoreType);
+		if (error) {
+			return `Game ${game.game_no}: ${error}`;
+		}
+	}
+
+	return null;
+};
