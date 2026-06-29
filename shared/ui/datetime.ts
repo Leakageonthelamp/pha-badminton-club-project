@@ -140,16 +140,25 @@ export const isWithinPreStartWindow = (
 	return nowMs >= windowOpens && nowMs < startMs;
 };
 
-/** Remaining time until a UTC target. Returns mm:ss under 1 hour, else HH:mm:ss. */
+/** Remaining time until a UTC target. Returns mm:ss under 1 hour, HH:mm:ss under 24 hours, else Nd HH:mm:ss. */
 export const formatCountdown = (targetAtUtc: string, nowMs: number = Date.now()): string => {
 	const targetMs = new Date(targetAtUtc).getTime();
 	if (Number.isNaN(targetMs) || nowMs >= targetMs) return '00:00';
 
 	const totalSeconds = Math.floor((targetMs - nowMs) / 1000);
+	const pad = (value: number) => String(value).padStart(2, '0');
+
+	if (totalSeconds > 86_400) {
+		const days = Math.floor(totalSeconds / 86_400);
+		const hours = Math.floor((totalSeconds % 86_400) / 3600);
+		const minutes = Math.floor((totalSeconds % 3600) / 60);
+		const seconds = totalSeconds % 60;
+		return `${days}d ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+	}
+
 	const hours = Math.floor(totalSeconds / 3600);
 	const minutes = Math.floor((totalSeconds % 3600) / 60);
 	const seconds = totalSeconds % 60;
-	const pad = (value: number) => String(value).padStart(2, '0');
 
 	if (hours > 0) return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 	return `${pad(minutes)}:${pad(seconds)}`;

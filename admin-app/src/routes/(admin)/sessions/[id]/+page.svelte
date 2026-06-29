@@ -331,7 +331,12 @@
 		</div>
 	</DashboardHero>
 
-	<SessionStartCountdown startAt={session.start_at} active={session.status === 'open'} class="mt-4" />
+	<SessionStartCountdown
+		startAt={session.start_at}
+		active={session.status === 'open'}
+		showUntilStart
+		class="mt-4"
+	/>
 
 	{@render participantsSection()}
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SessionStartCountdown from '@repo/ui/components/SessionStartCountdown.svelte';
 	import { formatDraftOpenDeadline, formatSessionMeta } from '$lib/sessions/list';
 	import {
 		sessionStatusBadgeClass,
@@ -45,6 +46,13 @@
 				{/if}
 			</div>
 			<p class="mt-1 text-sm text-slate-600">{formatSessionMeta(session, { showClub })}</p>
+			<SessionStartCountdown
+				startAt={session.start_at}
+				active={session.status === 'open'}
+				showUntilStart
+				variant="inline"
+				class="mt-1"
+			/>
 			{#if session.status === 'draft'}
 				<p class="mt-1 text-xs font-medium text-amber-800">
 					Open by {formatDraftOpenDeadline(session.start_at)} — tap to review or publish

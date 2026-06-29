@@ -78,4 +78,16 @@ describe('pre-start countdown helpers', () => {
 		const now = Date.parse('2026-06-27T11:58:30.000Z');
 		expect(formatCountdown(target, now)).toBe('01:30');
 	});
+
+	it('formats countdown as HH:mm:ss under 24 hours', () => {
+		const target = '2026-06-27T12:00:00.000Z';
+		const now = Date.parse('2026-06-27T02:30:45.000Z');
+		expect(formatCountdown(target, now)).toBe('09:29:15');
+	});
+
+	it('formats countdown with day count when more than 24 hours remain', () => {
+		const target = '2026-06-29T12:00:00.000Z';
+		const now = Date.parse('2026-06-27T06:30:45.000Z');
+		expect(formatCountdown(target, now)).toBe('2d 05:29:15');
+	});
 });

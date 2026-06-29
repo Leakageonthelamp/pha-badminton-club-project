@@ -10,6 +10,7 @@
 	import CancellationFeeModal from '$lib/components/CancellationFeeModal.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
+	import { portal } from '@repo/ui/actions/portal';
 	import { toast } from '@repo/ui/toast/toast.svelte';
 	import {
 		formatDistanceKm,
@@ -72,7 +73,7 @@
 
 	const backdropOpacity = $derived.by(() => {
 		if (!visible) return 0;
-		const height = panelEl?.getBoundingClientRect().height ?? window.innerHeight * 0.8;
+		const height = panelEl?.getBoundingClientRect().height ?? window.innerHeight * 0.9;
 		if (dragOffset <= 0 || height <= 0) return 1;
 		return Math.max(0, 1 - dragOffset / height);
 	});
@@ -89,7 +90,7 @@
 	};
 
 	const dismissFromDrag = () => {
-		const height = panelEl?.getBoundingClientRect().height ?? window.innerHeight * 0.8;
+		const height = panelEl?.getBoundingClientRect().height ?? window.innerHeight * 0.9;
 		dragging = false;
 		dragOffset = height;
 		window.setTimeout(() => {
@@ -466,13 +467,29 @@
 
 	$effect(() => {
 		if (!browser || !show) return;
+
+		const scrollEl = document.querySelector('.app-scroll');
+		const previousOverflow =
+			scrollEl instanceof HTMLElement ? scrollEl.style.overflow : undefined;
+
+		if (scrollEl instanceof HTMLElement) {
+			scrollEl.style.overflow = 'hidden';
+		}
+
 		window.addEventListener('keydown', onKeydown);
-		return () => window.removeEventListener('keydown', onKeydown);
+
+		return () => {
+			window.removeEventListener('keydown', onKeydown);
+
+			if (scrollEl instanceof HTMLElement) {
+				scrollEl.style.overflow = previousOverflow ?? '';
+			}
+		};
 	});
 </script>
 
 {#if browser && show}
-	<div class="bottom-sheet-root" class:bottom-sheet-root--open={visible}>
+	<div use:portal class="bottom-sheet-root" class:bottom-sheet-root--open={visible}>
 		<button
 			type="button"
 			class="bottom-sheet-backdrop"
@@ -534,7 +551,7 @@
 
 			{#if activeSession?.start_at && activeSession.status === 'open'}
 				<div class="px-4 pb-3">
-					<SessionStartCountdown startAt={activeSession.start_at} />
+					<SessionStartCountdown startAt={activeSession.start_at} showUntilStart />
 				</div>
 			{/if}
 

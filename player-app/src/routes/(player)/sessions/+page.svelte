@@ -5,6 +5,7 @@
 	import SessionDetailSheet from '$lib/components/SessionDetailSheet.svelte';
 	import { sessionsWithDistance } from '$lib/sessions/nearby';
 	import { liveSessionHref, shouldOpenLiveSession } from '$lib/sessions/navigation';
+	import SessionStartCountdown from '@repo/ui/components/SessionStartCountdown.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import DashboardTile from '@repo/ui/components/DashboardTile.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
@@ -146,7 +147,16 @@
 						secondaryBadge={sessionStatusLabel(session.status)}
 						secondaryBadgeBrand={session.status === 'open' || session.status === 'in_progress'}
 						onclick={() => openSession(session)}
-					/>
+					>
+						{#snippet extra()}
+							<SessionStartCountdown
+								startAt={session.start_at}
+								active={session.status === 'open'}
+								showUntilStart
+								variant="compact"
+							/>
+						{/snippet}
+					</DashboardTile>
 				{/each}
 			</div>
 		{/if}

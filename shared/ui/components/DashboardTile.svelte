@@ -1,6 +1,6 @@
 <script lang="ts">
 	import DashboardIcon, { type DashboardIconAccent } from './DashboardIcon.svelte';
-	import type { Component } from 'svelte';
+	import type { Component, Snippet } from 'svelte';
 
 	let {
 		href,
@@ -14,7 +14,8 @@
 		tertiaryBadge,
 		tertiaryBadgeBrand = false,
 		accent = 'brand',
-		large = false
+		large = false,
+		extra
 	}: {
 		href?: string;
 		onclick?: (event: MouseEvent) => void;
@@ -28,6 +29,7 @@
 		tertiaryBadgeBrand?: boolean;
 		accent?: DashboardIconAccent;
 		large?: boolean;
+		extra?: Snippet;
 	} = $props();
 
 	const tileClass = $derived(
@@ -48,6 +50,9 @@
 	<p class={titleClass}>{title}</p>
 	{#if description}
 		<p class={descriptionClass}>{description}</p>
+	{/if}
+	{#if extra}
+		{@render extra()}
 	{/if}
 	{#if hasBadges}
 		<div class="app-tile-badges">
