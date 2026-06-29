@@ -48,10 +48,14 @@
 
 {#if visible}
 	{#if variant === 'compact'}
-		<p class="app-session-countdown-compact {className}" aria-live="polite">
-			<span class="app-session-countdown-compact-label">{label}</span>
-			<span class="app-session-countdown-compact-value">{countdownLabel}</span>
-		</p>
+		<div class="flex w-full justify-center {className}">
+			<div class="app-session-timer-group" aria-live="polite">
+				<p class="app-session-countdown-compact">
+					<span class="app-session-countdown-compact-label">{label}</span>
+					<span class="app-session-countdown-compact-value">{countdownLabel}</span>
+				</p>
+			</div>
+		</div>
 	{:else if variant === 'inline'}
 		<p class="app-session-countdown-inline {className}" aria-live="polite">
 			<span class="app-session-countdown-inline-label">{label}</span>

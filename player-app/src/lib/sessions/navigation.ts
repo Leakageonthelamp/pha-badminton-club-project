@@ -33,3 +33,12 @@ export const shouldViewSessionLivePage = (session: SessionWithMembership): boole
 
 export const findLiveSession = (sessions: SessionListItem[]): SessionListItem | null =>
 	sessions.find(shouldOpenLiveSession) ?? null;
+
+export const matchLiveHref = (sessionId: string, matchId: string): string =>
+	`/sessions/${sessionId}/live/match/${matchId}`;
+
+export const shouldOpenMatchLive = (match: { status: string } | null | undefined): boolean =>
+	match?.status === 'active';
+
+export const isInUnresolvedMatch = (match: { status: string } | null | undefined): boolean =>
+	Boolean(match && ['active', 'score_pending', 'suspended', 'pending'].includes(match.status));

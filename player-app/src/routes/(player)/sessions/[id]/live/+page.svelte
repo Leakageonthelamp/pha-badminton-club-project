@@ -17,6 +17,7 @@
 	import HomeIcon from '@repo/ui/icons/HomeIcon.svelte';
 	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
 	import { formatDateTime, formatUptime } from '@repo/ui/datetime';
+	import { formatMatchScore } from '@repo/ui/matches';
 	import { formatThb, paymentStatusLabel } from '@repo/ui/payments';
 	import { clampIdleSince, derivePlayerLiveStatus } from '@repo/ui/sessionStatus';
 	import PaymentQr from '$lib/components/PaymentQr.svelte';
@@ -25,6 +26,11 @@
 		deriveLiveSessionUiState,
 		shouldShowPaymentModal
 	} from '$lib/sessions/liveState';
+	import {
+		isInUnresolvedMatch,
+		matchLiveHref,
+		shouldOpenMatchLive
+	} from '$lib/sessions/navigation';
 	import { createSupabaseBrowserClient } from '$lib/supabase/client';
 	import { sessionStatusBadgeClass, sessionStatusLabel } from '$lib/types/session';
 	import type { SubmitFunction } from '@sveltejs/kit';
@@ -35,6 +41,8 @@
 
 	let nowMs = $state(Date.now());
 	let actionLoading = $state<string | null>(null);
+	let inviteModalDismissed = $state(false);
+	let autoNavigatedMatchId = $state<string | null>(null);
 
 	const session = $derived(data.session);
 	const uiState = $derived(
@@ -116,6 +124,28 @@
 			? 'You left early — all settled'
 			: 'Session complete'
 	);
+	const inviteCountdownMs = $derived.by(() => {
+		const expiresAt = data.myPendingInvite?.invite_expires_at;
+		if (!expiresAt) return 0;
+		return Math.max(0, new Date(expiresAt).getTime() - nowMs);
+	});
+	const inviteCountdownLabel = $derived(`${Math.ceil(inviteCountdownMs / 1000)}s`);
+	const showInviteModal = $derived(Boolean(data.myPendingInvite) && !inviteModalDismissed);
+	const matchLocked = $derived(
+		myLiveStatus === 'playing' || isInUnresolvedMatch(data.myOpenMatch)
+	);
+	const myScorePendingMatch = $derived(
+		data.myOpenMatch?.status === 'score_pending' ? data.myOpenMatch : null
+	);
+	const showScoreConfirmModal = $derived.by(() => {
+		if (!myScorePendingMatch) return false;
+		const me = myScorePendingMatch.players.find((player) => player.user_id === data.userId);
+		return Boolean(
+			me &&
+				me.user_id !== myScorePendingMatch.score_submitted_by &&
+				me.score_response === 'pending'
+		);
+	});
 
 	$effect(() => {
 		if (!browser) return;
@@ -125,6 +155,19 @@
 		}, 1_000);
 
 		return () => window.clearInterval(timer);
+	});
+
+	$effect(() => {
+		if (!browser || !shouldOpenMatchLive(data.myOpenMatch)) return;
+		if (autoNavigatedMatchId === data.myOpenMatch?.id) return;
+		autoNavigatedMatchId = data.myOpenMatch!.id;
+		void goto(matchLiveHref(session.id, data.myOpenMatch!.id));
+	});
+
+	$effect(() => {
+		if (!data.myPendingInvite) {
+			inviteModalDismissed = false;
+		}
 	});
 
 	onMount(() => {
@@ -171,6 +214,26 @@
 					schema: 'public',
 					table: 'sessions',
 					filter: `id=eq.${sessionId}`
+				},
+				invalidateLive
+			)
+			.on(
+				'postgres_changes',
+				{
+					event: '*',
+					schema: 'public',
+					table: 'matches',
+					filter: `session_id=eq.${sessionId}`
+				},
+				invalidateLive
+			)
+			.on(
+				'postgres_changes',
+				{
+					event: '*',
+					schema: 'public',
+					table: 'match_players',
+					filter: `session_id=eq.${sessionId}`
 				},
 				invalidateLive
 			)
@@ -255,6 +318,25 @@
 							<input type="hidden" name="on_break" value="false" />
 							<SubmitButton loading={actionLoading === 'breakOff'}>Continue playing</SubmitButton>
 						</form>
+					{/if}
+				</div>
+			{:else if myLiveStatus === 'playing' || matchLocked}
+				<div class="app-session-countdown flex flex-col gap-3 border-brand-200 bg-brand-50/80">
+					<div class="flex items-center justify-between gap-3">
+						<span class="app-session-countdown-label text-brand-800">Your status</span>
+						<PlayerStatusBadge status="playing" />
+					</div>
+					<p class="text-sm leading-relaxed text-brand-900">
+						You are in a match. Leave, break, and other session actions are unavailable until the
+						match ends.
+					</p>
+					{#if data.myOpenMatch && shouldOpenMatchLive(data.myOpenMatch)}
+						<SubmitButton
+							type="button"
+							onclick={() => goto(matchLiveHref(session.id, data.myOpenMatch!.id))}
+						>
+							Open match live
+						</SubmitButton>
 					{/if}
 				</div>
 			{/if}
@@ -510,17 +592,37 @@
 
 		<AppCard class="space-y-4">
 			<SectionHeading title="Your match history" />
-			<EmptyState message="No matches recorded yet." />
+			{#if data.myMatchHistory.length === 0}
+				<EmptyState message="No matches recorded yet." />
+			{:else}
+				<ul class="divide-y divide-slate-100">
+					{#each data.myMatchHistory as match (match.id)}
+						<li class="py-3">
+							<p class="font-medium text-slate-800">
+								Court {match.court_number}
+								{#if match.games.length}
+									· {formatMatchScore(match.games)}
+								{/if}
+							</p>
+							<p class="text-xs text-slate-500">
+								{match.shuttles_used} shuttle{match.shuttles_used === 1 ? '' : 's'}
+							</p>
+						</li>
+					{/each}
+				</ul>
+			{/if}
 		</AppCard>
 
 		<AppCard class="space-y-4">
 			<SectionHeading title="Courts" />
-			<CourtGrid courtCount={session.court_count} />
+			<CourtGrid courtCount={session.court_count} matches={data.courtGridMatches} />
 		</AppCard>
 
 		<AppCard class="space-y-4">
 			<SectionHeading title="Early leave" />
-			{#if uiState === 'leave_pending'}
+			{#if matchLocked}
+				<p class="text-sm text-slate-600">Finish your current match before requesting to leave.</p>
+			{:else if uiState === 'leave_pending'}
 				<p class="text-sm text-slate-600">
 					Your leave request is waiting for admin review. Complete payment below while you wait.
 				</p>
@@ -577,5 +679,52 @@
 				{paymentStatusLabel(data.myPayment?.status ?? 'submitted')}
 			</p>
 		{/if}
+	</div>
+</AppModal>
+
+<AppModal open={showInviteModal} labelledBy="match-found-title" onClose={() => (inviteModalDismissed = true)}>
+	<div class="app-card-padded space-y-4">
+		<h2 id="match-found-title" class="text-lg font-semibold text-slate-900">Match found</h2>
+		<p class="text-sm text-slate-600">
+			You have {inviteCountdownLabel} to accept or reject this match on Court
+			{data.myPendingInvite?.court_number ?? '—'}.
+		</p>
+		<div class="flex justify-end gap-2">
+			<form method="POST" action="?/respondInvite" use:enhance={handleAction('rejectInvite')}>
+				<input type="hidden" name="match_id" value={data.myPendingInvite?.id ?? ''} />
+				<input type="hidden" name="accept" value="false" />
+				<SubmitButton variant="secondary" loading={actionLoading === 'rejectInvite'}>
+					Reject
+				</SubmitButton>
+			</form>
+			<form method="POST" action="?/respondInvite" use:enhance={handleAction('acceptInvite')}>
+				<input type="hidden" name="match_id" value={data.myPendingInvite?.id ?? ''} />
+				<input type="hidden" name="accept" value="true" />
+				<SubmitButton loading={actionLoading === 'acceptInvite'}>Accept</SubmitButton>
+			</form>
+		</div>
+	</div>
+</AppModal>
+
+<AppModal open={showScoreConfirmModal} labelledBy="score-result-title" onClose={() => {}}>
+	<div class="app-card-padded space-y-4">
+		<h2 id="score-result-title" class="text-lg font-semibold text-slate-900">Confirm score result</h2>
+		{#if myScorePendingMatch?.games.length}
+			<p class="text-sm text-slate-600">{formatMatchScore(myScorePendingMatch.games)}</p>
+		{/if}
+		<div class="flex justify-end gap-2">
+			<form method="POST" action="?/respondScore" use:enhance={handleAction('rejectScore')}>
+				<input type="hidden" name="match_id" value={myScorePendingMatch?.id ?? ''} />
+				<input type="hidden" name="accept" value="false" />
+				<SubmitButton variant="secondary" loading={actionLoading === 'rejectScore'}>
+					Reject
+				</SubmitButton>
+			</form>
+			<form method="POST" action="?/respondScore" use:enhance={handleAction('acceptScore')}>
+				<input type="hidden" name="match_id" value={myScorePendingMatch?.id ?? ''} />
+				<input type="hidden" name="accept" value="true" />
+				<SubmitButton loading={actionLoading === 'acceptScore'}>Accept</SubmitButton>
+			</form>
+		</div>
 	</div>
 </AppModal>

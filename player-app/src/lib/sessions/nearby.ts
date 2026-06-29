@@ -1,3 +1,4 @@
+import { isSessionJoinWindowOpen } from '$lib/config/session';
 import type { SessionListItem } from '$lib/types/session';
 import { haversineDistanceKm, type StoredUserLocation } from '@repo/ui/geolocation';
 
@@ -7,8 +8,16 @@ export const FEATURED_SESSIONS_LIMIT = 5;
 
 const activeMembershipStatuses = new Set(['waiting', 'queued', 'confirmed']);
 
+const isJoinableSessionStatus = (status: SessionListItem['status']): boolean =>
+	status === 'open' || status === 'in_progress';
+
 export const isJoinableFeaturedSession = (session: SessionListItem): boolean =>
-	session.status === 'open' &&
+	isJoinableSessionStatus(session.status) &&
+	isSessionJoinWindowOpen(session.end_at) &&
+	(!session.my_membership || !activeMembershipStatuses.has(session.my_membership.status));
+
+export const shouldShowInProgressJoinRemark = (session: SessionListItem): boolean =>
+	session.status === 'in_progress' &&
 	(!session.my_membership || !activeMembershipStatuses.has(session.my_membership.status));
 
 export const sessionsWithDistance = (

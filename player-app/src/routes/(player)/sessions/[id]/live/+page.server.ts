@@ -1,4 +1,14 @@
 import {
+	expirePendingMatches,
+	loadMyMatchHistory,
+	loadMyOpenMatch,
+	loadMyPendingInvite,
+	loadSessionMatches,
+	respondMatchInvite,
+	respondMatchScore,
+	toCourtGridMatches
+} from '$lib/server/matches';
+import {
 	cancelSessionLeave,
 	loadLiveSessionForPlayer,
 	requestSessionLeave,
@@ -16,6 +26,8 @@ export const load: PageServerLoad = async ({ params, depends, locals: { supabase
 		error(401, 'Sign in required');
 	}
 
+	await expirePendingMatches(supabase, params.id);
+
 	const live = await loadLiveSessionForPlayer(supabase, params.id, user.id);
 
 	if (!live) {
@@ -31,7 +43,22 @@ export const load: PageServerLoad = async ({ params, depends, locals: { supabase
 		redirect(303, '/sessions');
 	}
 
-	return live;
+	const [sessionMatches, myPendingInvite, myOpenMatch, myMatchHistory] = await Promise.all([
+		loadSessionMatches(supabase, params.id),
+		loadMyPendingInvite(supabase, params.id, user.id),
+		loadMyOpenMatch(supabase, params.id, user.id),
+		loadMyMatchHistory(supabase, params.id, user.id)
+	]);
+
+	return {
+		...live,
+		userId: user.id,
+		sessionMatches,
+		courtGridMatches: toCourtGridMatches(sessionMatches),
+		myPendingInvite,
+		myOpenMatch,
+		myMatchHistory
+	};
 };
 
 export const actions = {
@@ -90,6 +117,54 @@ export const actions = {
 		return {
 			success: true,
 			message: onBreak ? 'You are on break.' : 'Welcome back — you are idle again.'
+		};
+	},
+
+	respondInvite: async ({ request, locals: { supabase, user } }) => {
+		if (!user) {
+			return fail(401, { message: 'Sign in required' });
+		}
+
+		const formData = await request.formData();
+		const matchId = formData.get('match_id');
+		const accept = formData.get('accept') === 'true';
+
+		if (typeof matchId !== 'string' || !matchId) {
+			return fail(400, { message: 'Match is required' });
+		}
+
+		const result = await respondMatchInvite(supabase, matchId, accept);
+		if (!result.ok) {
+			return fail(400, { message: result.message });
+		}
+
+		return {
+			success: true,
+			message: accept ? 'Match accepted.' : 'Match declined.'
+		};
+	},
+
+	respondScore: async ({ request, locals: { supabase, user } }) => {
+		if (!user) {
+			return fail(401, { message: 'Sign in required' });
+		}
+
+		const formData = await request.formData();
+		const matchId = formData.get('match_id');
+		const accept = formData.get('accept') === 'true';
+
+		if (typeof matchId !== 'string' || !matchId) {
+			return fail(400, { message: 'Match is required' });
+		}
+
+		const result = await respondMatchScore(supabase, matchId, accept);
+		if (!result.ok) {
+			return fail(400, { message: result.message });
+		}
+
+		return {
+			success: true,
+			message: accept ? 'Score accepted.' : 'Score rejected — admin will review.'
 		};
 	}
 } satisfies Actions;

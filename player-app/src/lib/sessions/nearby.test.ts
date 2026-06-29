@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { featuredSessions, myJoinedSessions, sessionsWithDistance, FEATURED_SESSIONS_LIMIT } from './nearby';
+import { featuredSessions, myJoinedSessions, sessionsWithDistance, shouldShowInProgressJoinRemark, FEATURED_SESSIONS_LIMIT } from './nearby';
 import type { SessionListItem } from '$lib/types/session';
 
 const sessions: SessionListItem[] = [
@@ -124,9 +124,24 @@ describe('featuredSessions', () => {
 		expect(featuredSessions(many, null)).toHaveLength(FEATURED_SESSIONS_LIMIT);
 	});
 
-	it('excludes in-progress and already-joined sessions', () => {
+	it('includes joinable in-progress sessions', () => {
 		const pool = [
 			{ ...sessions[0]!, id: 'live', status: 'in_progress' as const },
+			sessions[2]!
+		];
+
+		expect(featuredSessions(pool, null).map((session) => session.id)).toEqual(['c', 'live']);
+	});
+
+	it('excludes in-progress past join close and already-joined sessions', () => {
+		const joinClosedEnd = new Date(Date.now() + 20 * 60 * 1000).toISOString();
+		const pool = [
+			{
+				...sessions[0]!,
+				id: 'live-closed',
+				status: 'in_progress' as const,
+				end_at: joinClosedEnd
+			},
 			{
 				...sessions[1]!,
 				id: 'joined',
@@ -154,6 +169,30 @@ describe('featuredSessions', () => {
 		});
 
 		expect(featured.map((session) => session.id)).toEqual(['a', 'b', 'c']);
+	});
+});
+
+describe('shouldShowInProgressJoinRemark', () => {
+	it('shows for joinable in-progress sessions only', () => {
+		expect(
+			shouldShowInProgressJoinRemark({ ...sessions[0]!, status: 'in_progress' })
+		).toBe(true);
+		expect(
+			shouldShowInProgressJoinRemark({
+				...sessions[0]!,
+				status: 'in_progress',
+				my_membership: {
+					id: 'm1',
+					status: 'confirmed',
+					fee_owed: 0,
+					fee_status: 'none',
+					joined_at: '2026-06-01T00:00:00.000Z',
+					activity: 'idle',
+					idle_since: '2026-06-01T00:00:00.000Z'
+				}
+			})
+		).toBe(false);
+		expect(shouldShowInProgressJoinRemark(sessions[0]!)).toBe(false);
 	});
 });
 

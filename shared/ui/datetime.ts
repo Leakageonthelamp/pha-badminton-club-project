@@ -110,6 +110,20 @@ export const formatDate = (utcISO: string): string =>
 export const formatTime = (utcISO: string): string =>
 	formatDateTime(utcISO, { timeStyle: 'short', hour12: false });
 
+/** Human-readable span between two UTC timestamps (e.g. session duration). */
+export const formatSessionDuration = (startAtUtc: string, endAtUtc: string): string => {
+	const ms = new Date(endAtUtc).getTime() - new Date(startAtUtc).getTime();
+	if (ms <= 0) return '—';
+
+	const totalMinutes = Math.round(ms / 60_000);
+	const hours = Math.floor(totalMinutes / 60);
+	const minutes = totalMinutes % 60;
+
+	if (minutes === 0) return `${hours} hr`;
+	if (hours === 0) return `${minutes} min`;
+	return `${hours} hr ${minutes} min`;
+};
+
 /** Elapsed time since a UTC start timestamp (e.g. session uptime). Returns HH:mm:ss. */
 export const formatUptime = (startAtUtc: string, nowMs: number = Date.now()): string => {
 	const startMs = new Date(startAtUtc).getTime();

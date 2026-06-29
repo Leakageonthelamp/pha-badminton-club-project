@@ -110,6 +110,10 @@ export type SessionDetail = SessionPublic & {
 	waiting_players: SessionPlayerPublic[];
 	queued_players: SessionPlayerPublic[];
 	confirmed_players: SessionPlayerPublic[];
+	/** Per-player court share if the viewer joins now (in-progress sessions only). */
+	estimated_join_court_share: number | null;
+	/** Confirmed + left players used for billing split before the viewer joins. */
+	billing_active_player_count: number | null;
 };
 
 export type SessionHistoryItem = {

@@ -1,26 +1,14 @@
 import { computeCourtShare, isOutstandingCancellationFee } from '@repo/ui/payments';
+import { formatSessionDuration } from '@repo/ui/datetime';
 import type { SessionPaymentWithProfile } from '$lib/types/payment';
 import type { SessionDetail, SessionPlayerStatus, SessionPlayerWithProfile } from '$lib/types/session';
 
-export { isOutstandingCancellationFee };
+export { isOutstandingCancellationFee, formatSessionDuration };
 
 export const ATTENDED_PLAYER_STATUSES: SessionPlayerStatus[] = ['confirmed', 'left'];
 
 export const isAttendedPlayer = (status: SessionPlayerStatus): boolean =>
 	status === 'confirmed' || status === 'left';
-
-export const formatSessionDuration = (startAt: string, endAt: string): string => {
-	const ms = new Date(endAt).getTime() - new Date(startAt).getTime();
-	if (ms <= 0) return '—';
-
-	const totalMinutes = Math.round(ms / 60_000);
-	const hours = Math.floor(totalMinutes / 60);
-	const minutes = totalMinutes % 60;
-
-	if (minutes === 0) return `${hours} hr`;
-	if (hours === 0) return `${minutes} min`;
-	return `${hours} hr ${minutes} min`;
-};
 
 export const resolveSessionFinishedAt = (
 	session: Pick<SessionDetail, 'status' | 'finished_at' | 'updated_at'>

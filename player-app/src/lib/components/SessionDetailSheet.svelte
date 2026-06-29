@@ -4,7 +4,10 @@
 	import { goto, invalidate } from '$app/navigation';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import RichTextDisplay from '@repo/ui/components/RichTextDisplay.svelte';
+	import SessionDurationPill from '@repo/ui/components/SessionDurationPill.svelte';
 	import SessionStartCountdown from '@repo/ui/components/SessionStartCountdown.svelte';
+	import SessionTimeRemaining from '@repo/ui/components/SessionTimeRemaining.svelte';
+	import SessionUptime from '@repo/ui/components/SessionUptime.svelte';
 	import AppModal from '@repo/ui/components/AppModal.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import CancellationFeeModal from '$lib/components/CancellationFeeModal.svelte';
@@ -20,7 +23,6 @@
 		mapsSearchUrl
 	} from '@repo/ui/geolocation';
 	import { formatDateTime } from '@repo/ui/datetime';
-	import { computeCourtShare } from '@repo/ui/payments';
 	import type { SessionDetail, SessionListItem, SessionStatus } from '$lib/types/session';
 	import { liveSessionHref, shouldOpenLiveSession } from '$lib/sessions/navigation';
 	import { SESSION_CANCEL_LOCK_LEAD_MINUTES, SESSION_JOIN_CLOSE_LEAD_MINUTES } from '$lib/config/session';
@@ -55,6 +57,7 @@
 	let dragStartY = 0;
 	let dragStartOffset = 0;
 	let actionLoading = $state(false);
+	let liveNavLoading = $state(false);
 	let joinModalOpen = $state(false);
 	let cancelConfirmOpen = $state(false);
 	let feeModalOpen = $state(false);
@@ -197,17 +200,13 @@
 				new Date(session.end_at).getTime() - SESSION_JOIN_CLOSE_LEAD_MINUTES * 60 * 1000
 	);
 	const isInProgressJoin = $derived(session?.status === 'in_progress');
-	const estimatedCourtShare = $derived.by(() => {
-		if (!session || !isInProgressJoin) return null;
-
-		const activePlayers = Math.max(session.confirmed_count + 1, 1);
-		return computeCourtShare({
-			courtFeePerHour: session.court_fee_per_hour,
-			startAt: session.start_at,
-			endAt: session.end_at,
-			courtCount: session.court_count,
-			activePlayers
-		});
+	const estimatedCourtShare = $derived(
+		isInProgressJoin ? (session?.estimated_join_court_share ?? null) : null
+	);
+	const estimatedCourtSharePlayerCount = $derived.by(() => {
+		if (!isInProgressJoin || session?.billing_active_player_count === null) return null;
+		if (session?.billing_active_player_count === undefined) return null;
+		return session.billing_active_player_count + 1;
 	});
 	const isWithinCancelLockWindow = $derived(
 		session
@@ -242,10 +241,14 @@
 	);
 
 	const goToLiveSession = () => {
-		if (!session) return;
+		if (!session || liveNavLoading) return;
 		const id = session.id;
-		close();
-		goto(liveSessionHref(id));
+		liveNavLoading = true;
+		void goto(liveSessionHref(id))
+			.then(() => close())
+			.finally(() => {
+				liveNavLoading = false;
+			});
 	};
 
 	const spotsLabel = $derived.by(() => {
@@ -555,6 +558,15 @@
 				</div>
 			{/if}
 
+			{#if activeSession?.start_at && activeSession.status === 'in_progress'}
+				<div class="space-y-3 px-4 pb-3">
+					<SessionUptime startAt={activeSession.start_at} live />
+					{#if activeSession.end_at}
+						<SessionTimeRemaining endAt={activeSession.end_at} variant="banner" />
+					{/if}
+				</div>
+			{/if}
+
 			<div class="min-h-0 flex-1 overflow-y-auto px-4 pb-6">
 				{#if loading && !session?.description}
 					<div class="mt-3 app-skeleton h-16 w-full" aria-hidden="true"></div>
@@ -614,6 +626,13 @@
 					<div class="mt-6 space-y-4">
 						<div class="rounded-2xl border border-slate-200 bg-white p-4">
 							<h3 class="text-base font-semibold text-slate-900">Schedule</h3>
+							{#if session.start_at && session.end_at}
+								<SessionDurationPill
+									startAt={session.start_at}
+									endAt={session.end_at}
+									class="mt-3"
+								/>
+							{/if}
 							<dl class="mt-3 space-y-2 text-sm">
 								<div class="flex justify-between gap-4">
 									<dt class="text-slate-500">Start</dt>
@@ -869,7 +888,13 @@
 						{/if}
 
 						{#if canLeave}
-							<SubmitButton type="button" variant="secondary" onclick={goToLiveSession}>
+							<SubmitButton
+								type="button"
+								variant="secondary"
+								onclick={goToLiveSession}
+								loading={liveNavLoading}
+								loadingLabel="Opening…"
+							>
 								Leave session
 							</SubmitButton>
 							<p class="text-xs text-slate-500">
@@ -877,7 +902,12 @@
 								leave approval — same as on the live session page.
 							</p>
 						{:else if session.status === 'in_progress' && hasActiveMembership}
-							<SubmitButton type="button" onclick={goToLiveSession}>
+							<SubmitButton
+								type="button"
+								onclick={goToLiveSession}
+								loading={liveNavLoading}
+								loadingLabel="Opening…"
+							>
 								Open live session
 							</SubmitButton>
 						{/if}
@@ -899,8 +929,9 @@
 							<p>This session has already started.</p>
 							<p>
 								Once you join, you cannot cancel your membership. To leave, you must pay at least
-								your court fee share{#if estimatedCourtShare}
-									(currently about {formatThb(estimatedCourtShare)} based on active players){/if}.
+								your court fee share{#if estimatedCourtShare !== null}
+									(currently about {formatThb(estimatedCourtShare)}{#if estimatedCourtSharePlayerCount !== null}
+										split across {estimatedCourtSharePlayerCount} active player{estimatedCourtSharePlayerCount === 1 ? '' : 's'} if you join{/if}){/if}.
 							</p>
 							<p>
 								Unpaid session fees will prevent you from joining other sessions until they are

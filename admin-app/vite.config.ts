@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => {
 		},
 		plugins: [tailwindcss(), sveltekit()],
 		test: {
-			include: ['src/**/*.{test,spec}.{js,ts}']
+			include: ['src/**/*.{test,spec}.{js,ts}', '../shared/ui/**/*.{test,spec}.{js,ts}']
 		}
 	};
 });

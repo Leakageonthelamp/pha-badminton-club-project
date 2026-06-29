@@ -104,6 +104,35 @@ const loadMembershipCounts = async (
 	return counts;
 };
 
+type JoinCourtShareEstimate = {
+	share: number;
+	active_players: number;
+};
+
+const loadJoinCourtShareEstimate = async (
+	supabase: SupabaseClient,
+	sessionId: string
+): Promise<JoinCourtShareEstimate | null> => {
+	const { data, error } = await supabase.rpc('estimate_join_court_share', {
+		p_session_id: sessionId
+	});
+
+	if (error) {
+		console.error('Failed to estimate join court share', error);
+		return null;
+	}
+
+	if (!data || typeof data !== 'object') return null;
+
+	const payload = data as { share?: unknown; active_players?: unknown };
+	const share = Number(payload.share);
+	const activePlayers = Number(payload.active_players);
+
+	if (!Number.isFinite(share) || !Number.isFinite(activePlayers)) return null;
+
+	return { share, active_players: activePlayers };
+};
+
 const loadMyMemberships = async (
 	supabase: SupabaseClient,
 	userId: string,
@@ -313,6 +342,10 @@ export const loadSessionDetailForPlayer = async (
 		authReady && myMembership !== null
 			? await loadSessionRoster(supabase, sessionId, userId)
 			: { waiting: [], queued: [], confirmed: [] };
+	const joinEstimate =
+		data.status === 'in_progress'
+			? await loadJoinCourtShareEstimate(supabase, sessionId)
+			: null;
 
 	return {
 		...(data as Omit<
@@ -328,6 +361,8 @@ export const loadSessionDetailForPlayer = async (
 			| 'waiting_players'
 			| 'queued_players'
 			| 'confirmed_players'
+			| 'estimated_join_court_share'
+			| 'billing_active_player_count'
 		>),
 		club: normalizeRelation(data.club as SessionDetail['club'] | SessionDetail['club'][]),
 		host: normalizeRelation(data.host as SessionDetail['host'] | SessionDetail['host'][]),
@@ -339,7 +374,9 @@ export const loadSessionDetailForPlayer = async (
 		has_outstanding_fee: hasOutstandingFee,
 		waiting_players: roster.waiting,
 		queued_players: roster.queued,
-		confirmed_players: roster.confirmed
+		confirmed_players: roster.confirmed,
+		estimated_join_court_share: joinEstimate?.share ?? null,
+		billing_active_player_count: joinEstimate?.active_players ?? null
 	};
 };
 

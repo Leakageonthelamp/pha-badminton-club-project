@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { enhance } from '$app/forms';
-	import { invalidate } from '$app/navigation';
+	import { goto, invalidate } from '$app/navigation';
 	import AppCard from '@repo/ui/components/AppCard.svelte';
 	import AppModal from '@repo/ui/components/AppModal.svelte';
 	import CourtGrid from '@repo/ui/components/CourtGrid.svelte';
@@ -14,6 +14,7 @@
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
 	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
 	import { formatDateTime, formatUptime } from '@repo/ui/datetime';
+	import { formatMatchScore } from '@repo/ui/matches';
 	import { formatThb, paymentStatusLabel } from '@repo/ui/payments';
 	import type { PaymentStatus } from '@repo/ui/payments';
 	import {
@@ -24,6 +25,7 @@
 	import { createSupabaseBrowserClient } from '$lib/supabase/client';
 	import { sessionStatusBadgeClass, sessionStatusLabel } from '$lib/types/session';
 	import SessionCancellationFees from '$lib/components/SessionCancellationFees.svelte';
+	import MatchmakingModal from '$lib/components/MatchmakingModal.svelte';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { ActionData, PageData } from './$types';
 
@@ -35,6 +37,9 @@
 	let endEarlyModalOpen = $state(false);
 	let actionLoading = $state<string | null>(null);
 	let feeActionLoading = $state<string | null>(null);
+	let matchmakingOpen = $state(false);
+	let matchmakingCourt = $state<number | null>(null);
+	let matchmakingLoading = $state(false);
 
 	const session = $derived(data.session);
 	const activePlayers = $derived(data.players.filter((player) => player.status === 'confirmed'));
@@ -50,6 +55,19 @@
 
 		return [...sortedConfirmed, ...left];
 	});
+	const idlePlayersForMatchmaking = $derived(
+		checklistPlayers.filter(
+			(player) =>
+				player.status === 'confirmed' &&
+				player.activity === 'idle' &&
+				!data.matches.some(
+					(match) =>
+						match.status !== 'completed' &&
+						match.status !== 'cancelled' &&
+						match.players.some((entry) => entry.user_id === player.user_id)
+				)
+		)
+	);
 	const pendingLeaveRequests = $derived(
 		data.leaveRequests.filter((request) => request.status === 'pending')
 	);
@@ -210,6 +228,26 @@
 				},
 				invalidateControl
 			)
+			.on(
+				'postgres_changes',
+				{
+					event: '*',
+					schema: 'public',
+					table: 'matches',
+					filter: `session_id=eq.${sessionId}`
+				},
+				invalidateControl
+			)
+			.on(
+				'postgres_changes',
+				{
+					event: '*',
+					schema: 'public',
+					table: 'match_players',
+					filter: `session_id=eq.${sessionId}`
+				},
+				invalidateControl
+			)
 			.subscribe();
 
 		return () => {
@@ -228,9 +266,45 @@
 					settlementModalOpen = false;
 					closeModalOpen = false;
 					endEarlyModalOpen = false;
+					matchmakingOpen = false;
 				}
 			};
 		};
+
+	const handleCourtClick = (courtNumber: number) => {
+		const liveMatch = data.courtGridMatches.find((entry) => entry.courtNumber === courtNumber);
+		if (liveMatch?.matchId) {
+			void goto(`/sessions/${session.id}/control/match/${liveMatch.matchId}`);
+			return;
+		}
+
+		matchmakingCourt = courtNumber;
+		matchmakingOpen = true;
+	};
+
+	const submitMatchmaking = async (userIds: string[]) => {
+		if (!matchmakingCourt) return;
+
+		matchmakingLoading = true;
+		const formData = new FormData();
+		formData.set('court_number', String(matchmakingCourt));
+		for (const userId of userIds) {
+			formData.append('user_ids', userId);
+		}
+
+		const response = await fetch('?/createMatch', {
+			method: 'POST',
+			body: formData
+		});
+
+		matchmakingLoading = false;
+
+		if (response.ok) {
+			matchmakingOpen = false;
+			matchmakingCourt = null;
+			void invalidate('app:session-control');
+		}
+	};
 </script>
 
 <section class="space-y-6">
@@ -648,11 +722,37 @@
 				</span>
 				<div>
 					<h2 class="text-lg font-semibold text-slate-900">Courts & matches</h2>
-					<p class="text-sm text-slate-500">Match control arrives in a future update — courts show idle for now.</p>
+					<p class="text-sm text-slate-500">
+						Tap an idle court to assign a match. Active courts open match control.
+					</p>
 				</div>
 			</div>
-			<CourtGrid courtCount={session.court_count} />
-			<EmptyState message="No matches recorded yet." />
+			<CourtGrid
+				courtCount={session.court_count}
+				matches={data.courtGridMatches}
+				onCourtClick={handleCourtClick}
+			/>
+			{#if data.completedMatches.length === 0}
+				<EmptyState message="No matches recorded yet." />
+			{:else}
+				<ul class="divide-y divide-slate-100 rounded-xl border border-slate-200">
+					{#each data.completedMatches as match (match.id)}
+						<li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+							<div>
+								<p class="font-medium text-slate-800">
+									Court {match.court_number}
+									{#if match.games.length}
+										· {formatMatchScore(match.games)}
+									{/if}
+								</p>
+								<p class="text-xs text-slate-500">
+									{match.shuttles_used} shuttle{match.shuttles_used === 1 ? '' : 's'}
+								</p>
+							</div>
+						</li>
+					{/each}
+				</ul>
+			{/if}
 		</div>
 	</section>
 
@@ -868,3 +968,16 @@
 		</div>
 	</AppModal>
 {/if}
+
+<MatchmakingModal
+	open={matchmakingOpen}
+	courtNumber={matchmakingCourt}
+	sessionStartAt={session.start_at}
+	idlePlayers={idlePlayersForMatchmaking}
+	loading={matchmakingLoading}
+	onClose={() => {
+		matchmakingOpen = false;
+		matchmakingCourt = null;
+	}}
+	onSubmit={submitMatchmaking}
+/>

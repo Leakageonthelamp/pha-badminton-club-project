@@ -17,6 +17,12 @@ import {
 	loadSessionPlayers,
 	waiveCancellationFee
 } from '$lib/server/sessionPlayers';
+import {
+	createMatch,
+	expirePendingMatches,
+	loadSessionMatches,
+	toCourtGridMatches
+} from '$lib/server/matches';
 import { loadSessionDetail, sweepOverdueDraftSessions, sweepStartedSessions } from '$lib/server/sessions';
 import { computeCourtShare, isOutstandingCancellationFee } from '@repo/ui/payments';
 import { error, fail, redirect } from '@sveltejs/kit';
@@ -43,6 +49,7 @@ export const load: PageServerLoad = async ({
 
 	await sweepOverdueDraftSessions(supabase, { clubIds: [initialSession.club_id] });
 	await sweepStartedSessions(supabase);
+	await expirePendingMatches(supabase, params.id);
 
 	const session = (await loadSessionDetail(supabase, params.id)) ?? initialSession;
 
@@ -56,11 +63,12 @@ export const load: PageServerLoad = async ({
 		redirect(303, `/sessions/${session.id}`);
 	}
 
-	const [players, payments, leaveRequests, cancellationFees] = await Promise.all([
+	const [players, payments, leaveRequests, cancellationFees, matches] = await Promise.all([
 		loadSessionPlayers(supabase, session.id),
 		loadSessionPayments(supabase, session.id),
 		loadSessionLeaveRequests(supabase, session.id),
-		loadSessionCancellationFees(supabase, session.id)
+		loadSessionCancellationFees(supabase, session.id),
+		loadSessionMatches(supabase, session.id)
 	]);
 
 	const activePlayers = players.filter((player) => player.status === 'confirmed');
@@ -93,6 +101,9 @@ export const load: PageServerLoad = async ({
 		payments,
 		leaveRequests,
 		cancellationFees,
+		matches,
+		courtGridMatches: toCourtGridMatches(matches),
+		completedMatches: matches.filter((match) => match.status === 'completed'),
 		perPlayerCost,
 		activePlayerCount,
 		endReached,
@@ -298,5 +309,38 @@ export const actions = {
 		}
 
 		return { success: true, message: 'Cancellation fee waived.' };
+	},
+
+	createMatch: async ({ request, params, locals: { supabase, user, appRole }, cookies }) => {
+		if (!user || !appRole) {
+			return fail(401, { message: 'Sign in required' });
+		}
+
+		const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
+		const session = await loadSessionDetail(supabase, params.id);
+		if (!session) {
+			return fail(404, { message: 'Session not found' });
+		}
+
+		try {
+			await assertCanManageClub(supabase, user.id, session.club_id, effectiveAppRole);
+		} catch {
+			return fail(403, { message: 'Club admin access required' });
+		}
+
+		const formData = await request.formData();
+		const courtNumber = Number(formData.get('court_number'));
+		const userIds = formData.getAll('user_ids').filter((value): value is string => typeof value === 'string');
+
+		if (!Number.isInteger(courtNumber) || courtNumber < 1) {
+			return fail(400, { message: 'Court is required' });
+		}
+
+		const result = await createMatch(supabase, session.id, courtNumber, userIds);
+		if (!result.ok) {
+			return fail(400, { message: result.message });
+		}
+
+		return { success: true, message: 'Match invite sent to players.' };
 	}
 } satisfies Actions;

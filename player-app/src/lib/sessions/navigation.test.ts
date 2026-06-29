@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
 	findLiveSession,
+	isInUnresolvedMatch,
 	liveSessionHref,
+	matchLiveHref,
 	shouldOpenHistorySessionSummary,
 	shouldOpenLiveSession,
+	shouldOpenMatchLive,
 	shouldViewSessionLivePage
 } from './navigation';
 import type { SessionListItem } from '$lib/types/session';
@@ -120,6 +123,29 @@ describe('shouldViewSessionLivePage', () => {
 describe('liveSessionHref', () => {
 	it('builds the live session route', () => {
 		expect(liveSessionHref('abc-123')).toBe('/sessions/abc-123/live');
+	});
+});
+
+describe('matchLiveHref', () => {
+	it('builds the match live route', () => {
+		expect(matchLiveHref('abc-123', 'match-1')).toBe('/sessions/abc-123/live/match/match-1');
+	});
+});
+
+describe('shouldOpenMatchLive', () => {
+	it('returns true only for active matches', () => {
+		expect(shouldOpenMatchLive({ status: 'active' })).toBe(true);
+		expect(shouldOpenMatchLive({ status: 'score_pending' })).toBe(false);
+		expect(shouldOpenMatchLive(null)).toBe(false);
+	});
+});
+
+describe('isInUnresolvedMatch', () => {
+	it('returns true for pending through suspended matches', () => {
+		expect(isInUnresolvedMatch({ status: 'pending' })).toBe(true);
+		expect(isInUnresolvedMatch({ status: 'active' })).toBe(true);
+		expect(isInUnresolvedMatch({ status: 'score_pending' })).toBe(true);
+		expect(isInUnresolvedMatch({ status: 'completed' })).toBe(false);
 	});
 });
 

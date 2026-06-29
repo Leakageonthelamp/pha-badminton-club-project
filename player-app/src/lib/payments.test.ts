@@ -25,4 +25,17 @@ describe('computeCourtShare', () => {
 			})
 		).toBe(0);
 	});
+
+	it('matches in-progress join estimate: split across existing billable players plus joiner', () => {
+		const existingBillablePlayers = 4;
+		const share = computeCourtShare({
+			courtFeePerHour: 200,
+			startAt: '2026-06-01T08:00:00.000Z',
+			endAt: '2026-06-01T12:00:00.000Z',
+			courtCount: 2,
+			activePlayers: existingBillablePlayers + 1
+		});
+
+		expect(share).toBe(320);
+	});
 });

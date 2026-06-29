@@ -3,15 +3,17 @@
 	import { invalidate } from '$app/navigation';
 	import { goto } from '$app/navigation';
 	import SessionDetailSheet from '$lib/components/SessionDetailSheet.svelte';
-	import { sessionsWithDistance } from '$lib/sessions/nearby';
+	import { SESSION_IN_PROGRESS_JOIN_REMARK } from '$lib/config/session';
+	import { sessionsWithDistance, shouldShowInProgressJoinRemark } from '$lib/sessions/nearby';
 	import { liveSessionHref, shouldOpenLiveSession } from '$lib/sessions/navigation';
+	import SessionLiveTimers from '@repo/ui/components/SessionLiveTimers.svelte';
 	import SessionStartCountdown from '@repo/ui/components/SessionStartCountdown.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import DashboardTile from '@repo/ui/components/DashboardTile.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
 	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
 	import RefreshIcon from '@repo/ui/icons/RefreshIcon.svelte';
-	import { formatDateTime } from '@repo/ui/datetime';
+	import { formatDateTime, formatSessionDuration } from '@repo/ui/datetime';
 	import {
 		formatDistanceKm,
 		loadStoredUserLocation,
@@ -40,10 +42,15 @@
 	let sheetOpen = $state(false);
 	let selectedSession = $state<SessionListItem | null>(null);
 	let refreshing = $state(false);
+	let navigatingSessionId = $state<string | null>(null);
 
 	const openSession = (session: SessionListItem) => {
 		if (shouldOpenLiveSession(session)) {
-			void goto(liveSessionHref(session.id));
+			if (navigatingSessionId) return;
+			navigatingSessionId = session.id;
+			void goto(liveSessionHref(session.id)).finally(() => {
+				navigatingSessionId = null;
+			});
 			return;
 		}
 
@@ -66,9 +73,16 @@
 		}
 	};
 
+	const sessionDurationBadge = (session: SessionListItem) => {
+		const label = formatSessionDuration(session.start_at, session.end_at);
+		return label === '—' ? undefined : label;
+	};
+
 	const sessionDescription = (session: SessionListItem) => {
 		const parts = [session.club?.name, formatDateTime(session.start_at)].filter(Boolean);
-		if (session.my_membership) {
+		if (shouldShowInProgressJoinRemark(session)) {
+			parts.push(SESSION_IN_PROGRESS_JOIN_REMARK);
+		} else if (session.my_membership) {
 			parts.push(sessionPlayerStatusLabel(session.my_membership.status));
 		}
 		return parts.join(' · ');
@@ -144,17 +158,26 @@
 						description={sessionDescription(session)}
 						icon={LayersIcon}
 						badge={session.distanceKm !== null ? formatDistanceKm(session.distanceKm) : undefined}
+						durationBadge={sessionDurationBadge(session)}
 						secondaryBadge={sessionStatusLabel(session.status)}
 						secondaryBadgeBrand={session.status === 'open' || session.status === 'in_progress'}
+						loading={navigatingSessionId === session.id}
 						onclick={() => openSession(session)}
 					>
 						{#snippet extra()}
-							<SessionStartCountdown
-								startAt={session.start_at}
-								active={session.status === 'open'}
-								showUntilStart
-								variant="compact"
-							/>
+							{#if session.status === 'in_progress'}
+								<SessionLiveTimers startAt={session.start_at} endAt={session.end_at} class="mb-1" />
+								{#if shouldShowInProgressJoinRemark(session)}
+									<p class="text-xs text-sky-700">{SESSION_IN_PROGRESS_JOIN_REMARK}</p>
+								{/if}
+							{:else if session.status === 'open'}
+								<SessionStartCountdown
+									startAt={session.start_at}
+									active
+									showUntilStart
+									variant="compact"
+								/>
+							{/if}
 						{/snippet}
 					</DashboardTile>
 				{/each}

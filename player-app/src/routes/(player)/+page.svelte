@@ -5,8 +5,9 @@
 	import ClubDetailSheet from '$lib/components/ClubDetailSheet.svelte';
 	import SessionDetailSheet from '$lib/components/SessionDetailSheet.svelte';
 	import { clubsWithDistance, formatOpenSessionBadge, openSessionCountByClub } from '$lib/clubs/nearby';
-	import { featuredSessions, isJoinableFeaturedSession, myJoinedSessions } from '$lib/sessions/nearby';
+	import { featuredSessions, isJoinableFeaturedSession, myJoinedSessions, shouldShowInProgressJoinRemark } from '$lib/sessions/nearby';
 	import { findLiveSession, liveSessionHref, shouldOpenLiveSession } from '$lib/sessions/navigation';
+	import SessionLiveTimers from '@repo/ui/components/SessionLiveTimers.svelte';
 	import SessionStartCountdown from '@repo/ui/components/SessionStartCountdown.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import DashboardTile from '@repo/ui/components/DashboardTile.svelte';
@@ -17,13 +18,14 @@
 	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
 	import RefreshIcon from '@repo/ui/icons/RefreshIcon.svelte';
 	import UserIcon from '@repo/ui/icons/UserIcon.svelte';
-	import { formatDateTime } from '@repo/ui/datetime';
+	import { formatDateTime, formatSessionDuration } from '@repo/ui/datetime';
 	import {
 		formatDistanceKm,
 		loadStoredUserLocation,
 		USER_LOCATION_STORED_EVENT
 	} from '@repo/ui/geolocation';
 	import { isRichTextEmpty, richTextExcerpt } from '@repo/ui/richText';
+	import { SESSION_IN_PROGRESS_JOIN_REMARK } from '$lib/config/session';
 	import { sessionPlayerStatusLabel, sessionStatusLabel } from '$lib/types/session';
 	import type { ClubPublic } from '$lib/types/club';
 	import type { SessionListItem } from '$lib/types/session';
@@ -66,10 +68,10 @@
 	);
 	const featuredMeta = $derived(
 		featured.length === 0
-			? 'Open sessions you can join will appear here'
+			? 'Open and in-progress sessions you can join will appear here'
 			: sortedByDistance
-				? `Top ${featured.length} nearest open sessions · tap to view and join`
-				: `Top ${featured.length} upcoming open sessions · tap to view and join`
+				? `Top ${featured.length} nearest joinable sessions · tap to view and join`
+				: `Top ${featured.length} joinable sessions · tap to view and join`
 	);
 	const mySessionsMeta = $derived(
 		mySessions.length === 0
@@ -89,12 +91,18 @@
 	const membershipBadge = (session: SessionListItem) =>
 		session.my_membership ? sessionPlayerStatusLabel(session.my_membership.status) : undefined;
 
+	const sessionDurationBadge = (session: SessionListItem) => {
+		const label = formatSessionDuration(session.start_at, session.end_at);
+		return label === '—' ? undefined : label;
+	};
+
 	let clubSheetOpen = $state(false);
 	let selectedClub = $state<ClubPublic | null>(null);
 	let sessionSheetOpen = $state(false);
 	let selectedSession = $state<SessionListItem | null>(null);
 	let sessionSheetId = $state<string | null>(null);
 	let refreshing = $state(false);
+	let navigatingSessionId = $state<string | null>(null);
 
 	const openClub = (club: ClubPublic) => {
 		selectedClub = club;
@@ -108,7 +116,11 @@
 
 	const openSession = (session: SessionListItem) => {
 		if (shouldOpenLiveSession(session)) {
-			void goto(liveSessionHref(session.id));
+			if (navigatingSessionId) return;
+			navigatingSessionId = session.id;
+			void goto(liveSessionHref(session.id)).finally(() => {
+				navigatingSessionId = null;
+			});
 			return;
 		}
 
@@ -143,7 +155,9 @@
 
 	const sessionDescription = (session: SessionListItem) => {
 		const parts = [session.club?.name, formatDateTime(session.start_at)].filter(Boolean);
-		if (session.my_membership) {
+		if (shouldShowInProgressJoinRemark(session)) {
+			parts.push(SESSION_IN_PROGRESS_JOIN_REMARK);
+		} else if (session.my_membership) {
 			parts.push(sessionPlayerStatusLabel(session.my_membership.status));
 		}
 		return parts.join(' · ');
@@ -246,19 +260,28 @@
 						icon={LayersIcon}
 						accent="brand"
 						badge={session.distanceKm !== null ? formatDistanceKm(session.distanceKm) : undefined}
+						durationBadge={sessionDurationBadge(session)}
 						secondaryBadge={sessionStatusLabel(session.status)}
 						secondaryBadgeBrand={session.status === 'open' || session.status === 'in_progress'}
 						tertiaryBadge={membershipBadge(session)}
 						tertiaryBadgeBrand={session.my_membership?.status === 'confirmed'}
+						loading={navigatingSessionId === session.id}
 						onclick={() => openSession(session)}
 					>
 						{#snippet extra()}
-							<SessionStartCountdown
-								startAt={session.start_at}
-								active={session.status === 'open'}
-								showUntilStart
-								variant="compact"
-							/>
+							{#if session.status === 'in_progress'}
+								<SessionLiveTimers startAt={session.start_at} endAt={session.end_at} class="mb-1" />
+								{#if shouldShowInProgressJoinRemark(session)}
+									<p class="text-xs text-sky-700">{SESSION_IN_PROGRESS_JOIN_REMARK}</p>
+								{/if}
+							{:else if session.status === 'open'}
+								<SessionStartCountdown
+									startAt={session.start_at}
+									active
+									showUntilStart
+									variant="compact"
+								/>
+							{/if}
 						{/snippet}
 					</DashboardTile>
 				{/each}
@@ -303,17 +326,26 @@
 						icon={LayersIcon}
 						accent="violet"
 						badge={session.distanceKm !== null ? formatDistanceKm(session.distanceKm) : undefined}
+						durationBadge={sessionDurationBadge(session)}
 						secondaryBadge={sessionStatusLabel(session.status)}
 						secondaryBadgeBrand={session.status === 'open' || session.status === 'in_progress'}
+						loading={navigatingSessionId === session.id}
 						onclick={() => openSession(session)}
 					>
 						{#snippet extra()}
-							<SessionStartCountdown
-								startAt={session.start_at}
-								active={session.status === 'open'}
-								showUntilStart
-								variant="compact"
-							/>
+							{#if session.status === 'in_progress'}
+								<SessionLiveTimers startAt={session.start_at} endAt={session.end_at} class="mb-1" />
+								{#if shouldShowInProgressJoinRemark(session)}
+									<p class="text-xs text-sky-700">{SESSION_IN_PROGRESS_JOIN_REMARK}</p>
+								{/if}
+							{:else if session.status === 'open'}
+								<SessionStartCountdown
+									startAt={session.start_at}
+									active
+									showUntilStart
+									variant="compact"
+								/>
+							{/if}
 						{/snippet}
 					</DashboardTile>
 				{/each}
@@ -324,7 +356,7 @@
 			href="/sessions"
 			title="Browse all sessions"
 			description={hasMoreSessions
-				? `View all ${joinableSessionCount} open sessions`
+				? `View all ${joinableSessionCount} joinable sessions`
 				: 'See the full sessions list'}
 			icon={LayersIcon}
 			accent="indigo"
