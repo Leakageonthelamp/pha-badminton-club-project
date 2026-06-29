@@ -16,10 +16,12 @@
 	let {
 		courtCount,
 		matches = [],
+		loadingCourtNumber = null,
 		onCourtClick
 	}: {
 		courtCount: number;
 		matches?: CourtMatch[];
+		loadingCourtNumber?: number | null;
 		onCourtClick?: (courtNumber: number) => void;
 	} = $props();
 
@@ -32,7 +34,7 @@
 	);
 
 	const handleCourtClick = (courtNumber: number) => {
-		if (!onCourtClick) return;
+		if (!onCourtClick || loadingCourtNumber !== null) return;
 		onCourtClick(courtNumber);
 	};
 
@@ -105,10 +107,15 @@
 <div class="grid items-stretch gap-3 sm:grid-cols-2">
 	{#each courts as court (court.courtNumber)}
 		{@const clickable = Boolean(onCourtClick)}
+		{@const isLoading = loadingCourtNumber === court.courtNumber}
 		{#if clickable}
 			<button
 				type="button"
-				class="app-court-grid-card w-full text-left transition hover:border-brand-300 hover:shadow-sm"
+				class="app-court-grid-card w-full text-left transition hover:border-brand-300 hover:shadow-sm {isLoading
+					? 'app-court-grid-card--loading'
+					: ''}"
+				disabled={isLoading}
+				aria-busy={isLoading || undefined}
 				onclick={() => handleCourtClick(court.courtNumber)}
 			>
 				{@render courtBody(court, true)}

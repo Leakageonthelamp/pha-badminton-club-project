@@ -42,6 +42,7 @@
 	let matchmakingOpen = $state(false);
 	let matchmakingCourt = $state<number | null>(null);
 	let matchmakingLoading = $state(false);
+	let courtLoadingNumber = $state<number | null>(null);
 
 	const session = $derived(data.session);
 	const activePlayers = $derived(data.players.filter((player) => player.status === 'confirmed'));
@@ -218,9 +219,14 @@
 		};
 
 	const handleCourtClick = (courtNumber: number) => {
+		if (courtLoadingNumber !== null) return;
+
 		const liveMatch = data.courtGridMatches.find((entry) => entry.courtNumber === courtNumber);
 		if (liveMatch?.matchId) {
-			void goto(`/sessions/${session.id}/control/match/${liveMatch.matchId}`);
+			courtLoadingNumber = courtNumber;
+			void goto(`/sessions/${session.id}/control/match/${liveMatch.matchId}`).finally(() => {
+				courtLoadingNumber = null;
+			});
 			return;
 		}
 
@@ -231,24 +237,29 @@
 	const submitMatchmaking = async (userIds: string[]) => {
 		if (!matchmakingCourt) return;
 
+		const courtNumber = matchmakingCourt;
 		matchmakingLoading = true;
+		courtLoadingNumber = courtNumber;
 		const formData = new FormData();
-		formData.set('court_number', String(matchmakingCourt));
+		formData.set('court_number', String(courtNumber));
 		for (const userId of userIds) {
 			formData.append('user_ids', userId);
 		}
 
-		const response = await fetch('?/createMatch', {
-			method: 'POST',
-			body: formData
-		});
+		try {
+			const response = await fetch('?/createMatch', {
+				method: 'POST',
+				body: formData
+			});
 
-		matchmakingLoading = false;
-
-		if (response.ok) {
-			matchmakingOpen = false;
-			matchmakingCourt = null;
-			void invalidate('app:session-control');
+			if (response.ok) {
+				matchmakingOpen = false;
+				matchmakingCourt = null;
+				await invalidate('app:session-control');
+			}
+		} finally {
+			matchmakingLoading = false;
+			courtLoadingNumber = null;
 		}
 	};
 </script>
@@ -673,6 +684,7 @@
 			<CourtGrid
 				courtCount={session.court_count}
 				matches={data.courtGridMatches}
+				loadingCourtNumber={courtLoadingNumber}
 				onCourtClick={handleCourtClick}
 			/>
 			{#if data.completedMatches.length === 0}

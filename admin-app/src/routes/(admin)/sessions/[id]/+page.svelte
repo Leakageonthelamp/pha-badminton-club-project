@@ -15,7 +15,7 @@
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import type { SubmitFunction } from '@sveltejs/kit';
-	import { formatDateTime } from '@repo/ui/datetime';
+	import { formatDate, formatDateTime, formatSessionDuration, formatTime } from '@repo/ui/datetime';
 	import { formatThb } from '$lib/types/club';
 	import {
 		matchTypeLabel,
@@ -39,8 +39,17 @@
 	let cancelModalOpen = $state(false);
 	let playerActionLoading = $state<string | null>(null);
 	let feeActionLoading = $state<string | null>(null);
+	let controlNavLoading = $state(false);
 
 	const session = $derived(data.session);
+
+	const goToSessionControl = () => {
+		if (controlNavLoading) return;
+		controlNavLoading = true;
+		void goto(`/sessions/${session.id}/control`).finally(() => {
+			controlNavLoading = false;
+		});
+	};
 	const waitingPlayers = $derived(data.players.filter((p) => p.status === 'waiting'));
 	const queuedPlayers = $derived(data.players.filter((p) => p.status === 'queued'));
 	const confirmedPlayers = $derived(data.players.filter((p) => p.status === 'confirmed'));
@@ -53,21 +62,6 @@
 					: null)
 	);
 	const toastVariant = $derived(form?.success || data.created || data.edited ? 'success' : 'error');
-
-	const sessionDurationLabel = $derived.by(() => {
-		const start = new Date(session.start_at);
-		const end = new Date(session.end_at);
-		const ms = end.getTime() - start.getTime();
-		if (ms <= 0) return '—';
-
-		const totalMinutes = Math.round(ms / 60_000);
-		const hours = Math.floor(totalMinutes / 60);
-		const minutes = totalMinutes % 60;
-
-		if (minutes === 0) return `${hours} hr`;
-		if (hours === 0) return `${minutes} min`;
-		return `${hours} hr ${minutes} min`;
-	});
 
 	const locationLabel = $derived(
 		session.latitude !== null && session.longitude !== null
@@ -420,7 +414,9 @@
 			<SubmitButton
 				type="button"
 				class="!w-auto"
-				onclick={() => goto(`/sessions/${session.id}/control`)}
+				loading={controlNavLoading}
+				loadingLabel="Opening…"
+				onclick={goToSessionControl}
 			>
 				Session control
 			</SubmitButton>
@@ -433,26 +429,27 @@
 	</AppCard>
 
 	<section class="app-detail-section">
-		<div
-			class="grid gap-4 border-b border-brand-100 bg-gradient-to-br from-brand-50 via-white to-brand-50/50 px-4 py-5 sm:grid-cols-[1fr_auto_1fr_auto_1fr]"
-		>
-			<div>
-				<p class="text-xs font-semibold uppercase tracking-wide text-brand-600">Start</p>
-				<p class="mt-1 text-base font-semibold text-slate-900">{formatDateTime(session.start_at)}</p>
-			</div>
-			<div class="hidden self-center sm:block" aria-hidden="true">
-				<div class="h-10 w-px bg-brand-200"></div>
-			</div>
-			<div class="rounded-2xl border border-brand-100 bg-white/80 px-4 py-3 shadow-sm ring-1 ring-brand-100/80">
-				<p class="text-xs font-semibold uppercase tracking-wide text-brand-600">Duration</p>
-				<p class="mt-1 text-lg font-semibold text-brand-800">{sessionDurationLabel}</p>
-			</div>
-			<div class="hidden self-center sm:block" aria-hidden="true">
-				<div class="h-10 w-px bg-brand-200"></div>
-			</div>
-			<div class="sm:text-right">
-				<p class="text-xs font-semibold uppercase tracking-wide text-brand-600">End</p>
-				<p class="mt-1 text-base font-semibold text-slate-900">{formatDateTime(session.end_at)}</p>
+		<div class="border-b border-brand-100 bg-gradient-to-br from-brand-50 via-white to-brand-50/50 px-4 py-4 sm:px-6">
+			<div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+				<div class="app-history-stat">
+					<p class="app-history-stat-label">Start</p>
+					<p class="app-history-stat-value">{formatTime(session.start_at)}</p>
+					<p class="app-history-stat-hint">{formatDate(session.start_at)}</p>
+				</div>
+				<div class="app-history-stat border-brand-200/80 bg-brand-50/50">
+					<p class="app-history-stat-label">Duration</p>
+					<p class="app-history-stat-value">
+						{formatSessionDuration(session.start_at, session.end_at)}
+					</p>
+					<p class="app-history-stat-hint">
+						{session.court_count} court{session.court_count === 1 ? '' : 's'}
+					</p>
+				</div>
+				<div class="app-history-stat">
+					<p class="app-history-stat-label">End</p>
+					<p class="app-history-stat-value">{formatTime(session.end_at)}</p>
+					<p class="app-history-stat-hint">{formatDate(session.end_at)}</p>
+				</div>
 			</div>
 		</div>
 

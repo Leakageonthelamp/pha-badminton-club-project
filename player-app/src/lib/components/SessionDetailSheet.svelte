@@ -293,6 +293,8 @@
 		return session.shuttle?.name ? `${session.shuttle.name} · ${price}` : price;
 	});
 
+	const detailReady = $derived(!loading);
+
 	const refreshSessionDetail = async () => {
 		if (!sessionId) return;
 		const response = await fetch(`/api/sessions/${sessionId}`);
@@ -608,155 +610,209 @@
 				</div>
 			{/if}
 
-			<div class="min-h-0 flex-1 overflow-y-auto px-4 pb-6">
-				{#if loading && !session?.description}
-					<div class="mt-3 app-skeleton h-16 w-full" aria-hidden="true"></div>
-				{:else if loadError}
+			<div class="min-h-0 flex-1 overflow-y-auto px-4 pb-6" aria-busy={loading}>
+				{#if loadError && !activeSession}
 					<p class="mt-3 text-sm text-red-600">{loadError}</p>
-				{:else if session}
-					{#if membership}
+				{:else}
+					{#if loadError}
+						<p class="mt-3 text-sm text-red-600">{loadError}</p>
+					{/if}
+
+					{#if membership && activeSession}
 						<div class="mt-3 rounded-xl border border-brand-200 bg-brand-50 px-4 py-3">
 							<p class="text-sm font-medium text-brand-800">
 								{sessionPlayerStatusLabel(membership.status)}
 							</p>
-							{#if membership.status === 'waiting'}
-								{#if session.status === 'in_progress'}
-									<p class="mt-2 text-sm text-brand-700">
-										This session is in progress. You cannot cancel your join. The admin may confirm
-										you to play at any time.
-									</p>
-								{:else if isWithinCancelLockWindow}
-									<p class="mt-2 text-sm text-brand-700">
-										The admin is reviewing waiting players now. You can no longer cancel — they may
-										confirm or reject you.
-									</p>
-								{:else}
-									<p class="mt-2 text-sm text-brand-700">
-										The admin will confirm your join request 15 minutes before the session starts.
-										Please be at the venue and ready by then.
-									</p>
-								{/if}
-							{:else if membership.status === 'confirmed'}
-								{#if session.status === 'in_progress'}
-									<p class="mt-2 text-sm text-brand-700">
-										Session is live. Open the live session page to see costs, courts, and request an
-										early leave.
-									</p>
-								{:else}
-									<p class="mt-2 text-sm text-brand-700">
-										You're confirmed for this session. Get ready — it starts
-										{formatDateTime(session.start_at)}. You'll be taken to the live session when play
-										begins.
-									</p>
+							{#if detailReady && session}
+								{#if membership.status === 'waiting'}
+									{#if session.status === 'in_progress'}
+										<p class="mt-2 text-sm text-brand-700">
+											This session is in progress. You cannot cancel your join. The admin may confirm
+											you to play at any time.
+										</p>
+									{:else if isWithinCancelLockWindow}
+										<p class="mt-2 text-sm text-brand-700">
+											The admin is reviewing waiting players now. You can no longer cancel — they may
+											confirm or reject you.
+										</p>
+									{:else}
+										<p class="mt-2 text-sm text-brand-700">
+											The admin will confirm your join request 15 minutes before the session starts.
+											Please be at the venue and ready by then.
+										</p>
+									{/if}
+								{:else if membership.status === 'confirmed'}
+									{#if session.status === 'in_progress'}
+										<p class="mt-2 text-sm text-brand-700">
+											Session is live. Open the live session page to see costs, courts, and request an
+											early leave.
+										</p>
+									{:else}
+										<p class="mt-2 text-sm text-brand-700">
+											You're confirmed for this session. Get ready — it starts
+											{formatDateTime(session.start_at)}. You'll be taken to the live session when play
+											begins.
+										</p>
+									{/if}
 								{/if}
 							{/if}
 						</div>
 					{/if}
 
-					{#if session.has_outstanding_fee}
+					{#if detailReady && session?.has_outstanding_fee}
 						<p class="mt-3 text-sm text-amber-800">
 							You have an outstanding cancellation fee. Settle it before joining another session.
 						</p>
 					{/if}
 
-					{#if showJoinConflict && joinConflictMessage}
+					{#if detailReady && showJoinConflict && joinConflictMessage}
 						<p class="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
 							{joinConflictMessage}
 						</p>
 					{/if}
 
-					<RichTextDisplay
-						html={session.description}
-						class="prose prose-sm mt-4 max-w-none text-sm leading-relaxed text-slate-600"
-					/>
+					{#if loading && !activeSession?.description}
+						<div class="mt-4 app-skeleton h-16 w-full" aria-hidden="true"></div>
+					{:else if activeSession?.description}
+						<RichTextDisplay
+							html={activeSession.description}
+							class="prose prose-sm mt-4 max-w-none text-sm leading-relaxed text-slate-600"
+						/>
+					{/if}
 
 					<div class="mt-6 space-y-4">
-						<div class="rounded-2xl border border-slate-200 bg-white p-4">
-							<h3 class="text-base font-semibold text-slate-900">Schedule</h3>
-							{#if session.start_at && session.end_at}
+						{#if loading && !activeSession?.start_at}
+							<div class="rounded-2xl border border-slate-200 bg-white p-4" aria-hidden="true">
+								<div class="app-skeleton h-5 w-24"></div>
+								<div class="app-skeleton mt-3 h-10 w-full max-w-xs"></div>
+								<div class="app-skeleton mt-3 h-4 w-full"></div>
+								<div class="app-skeleton mt-2 h-4 w-full"></div>
+							</div>
+						{:else if activeSession?.start_at && activeSession.end_at}
+							<div class="rounded-2xl border border-slate-200 bg-white p-4">
+								<h3 class="text-base font-semibold text-slate-900">Schedule</h3>
 								<SessionDurationPill
-									startAt={session.start_at}
-									endAt={session.end_at}
+									startAt={activeSession.start_at}
+									endAt={activeSession.end_at}
 									class="mt-3"
 								/>
-							{/if}
-							<dl class="mt-3 space-y-2 text-sm">
-								<div class="flex justify-between gap-4">
-									<dt class="text-slate-500">Start</dt>
-									<dd class="font-medium text-slate-900">{formatDateTime(session.start_at)}</dd>
-								</div>
-								<div class="flex justify-between gap-4">
-									<dt class="text-slate-500">End</dt>
-									<dd class="font-medium text-slate-900">{formatDateTime(session.end_at)}</dd>
-								</div>
-							</dl>
-						</div>
-
-						<div class="rounded-2xl border border-slate-200 bg-white p-4">
-							<h3 class="text-base font-semibold text-slate-900">Venue</h3>
-							{#if session.venue_name}
-								<p class="mt-2 text-sm text-slate-700">{session.venue_name}</p>
-							{/if}
-							{#if hasLocation && googleMapsUrl && appleMapsUrl}
-								<div class="mt-3 flex flex-wrap gap-x-4 gap-y-2">
-									<a
-										href={googleMapsUrl}
-										target="_blank"
-										rel="noopener noreferrer"
-										class="text-sm font-medium text-brand-700 hover:text-brand-800"
-									>
-										Google Maps
-									</a>
-									<a
-										href={appleMapsUrl}
-										target="_blank"
-										rel="noopener noreferrer"
-										class="text-sm font-medium text-brand-700 hover:text-brand-800"
-									>
-										Apple Maps
-									</a>
-								</div>
-							{/if}
-						</div>
-
-						<div class="rounded-2xl border border-slate-200 bg-white p-4">
-							<h3 class="text-base font-semibold text-slate-900">Capacity & fees</h3>
-							<dl class="mt-3 space-y-2 text-sm">
-								{#if spotsLabel}
+								<dl class="mt-3 space-y-2 text-sm">
 									<div class="flex justify-between gap-4">
-										<dt class="text-slate-500">Availability</dt>
-										<dd class="font-medium text-slate-900">{spotsLabel}</dd>
+										<dt class="text-slate-500">Start</dt>
+										<dd class="font-medium text-slate-900">{formatDateTime(activeSession.start_at)}</dd>
 									</div>
-								{/if}
-								<div class="flex justify-between gap-4">
-									<dt class="text-slate-500">Court fee</dt>
-									<dd class="font-medium text-slate-900">
-										{formatThb(session.court_fee_per_hour)}/hr · {session.court_count} court{session.court_count === 1 ? '' : 's'}
-									</dd>
-								</div>
-								<div class="flex justify-between gap-4">
-									<dt class="text-slate-500">Shuttle</dt>
-									<dd class="text-right font-medium text-slate-900">{shuttleLabel}</dd>
-								</div>
-								{#if session.cancellation_fee > 0}
 									<div class="flex justify-between gap-4">
-										<dt class="text-slate-500">Late cancel fee</dt>
+										<dt class="text-slate-500">End</dt>
+										<dd class="font-medium text-slate-900">{formatDateTime(activeSession.end_at)}</dd>
+									</div>
+								</dl>
+							</div>
+						{/if}
+
+						<div class="rounded-2xl border border-slate-200 bg-white p-4" aria-busy={loading}>
+							<h3 class="text-base font-semibold text-slate-900">Venue</h3>
+							{#if loading && !activeSession?.venue_name && !hasLocation}
+								<div class="mt-3 app-skeleton h-4 w-48 max-w-full" aria-hidden="true"></div>
+								<div class="mt-3 app-skeleton h-4 w-36 max-w-full" aria-hidden="true"></div>
+							{:else}
+								{#if activeSession?.venue_name}
+									<p class="mt-2 text-sm text-slate-700">{activeSession.venue_name}</p>
+								{/if}
+								{#if hasLocation && googleMapsUrl && appleMapsUrl}
+									<div class="mt-3 flex flex-wrap gap-x-4 gap-y-2">
+										<a
+											href={googleMapsUrl}
+											target="_blank"
+											rel="noopener noreferrer"
+											class="text-sm font-medium text-brand-700 hover:text-brand-800"
+										>
+											Google Maps
+										</a>
+										<a
+											href={appleMapsUrl}
+											target="_blank"
+											rel="noopener noreferrer"
+											class="text-sm font-medium text-brand-700 hover:text-brand-800"
+										>
+											Apple Maps
+										</a>
+									</div>
+								{:else if !activeSession?.venue_name}
+									<p class="mt-2 text-sm text-slate-500">Venue location has not been set yet.</p>
+								{/if}
+							{/if}
+						</div>
+
+						<div class="rounded-2xl border border-slate-200 bg-white p-4" aria-busy={loading}>
+							<h3 class="text-base font-semibold text-slate-900">Capacity & fees</h3>
+							{#if loading}
+								<dl class="mt-3 space-y-2 text-sm" aria-hidden="true">
+									<div class="flex justify-between gap-4">
+										<div class="app-skeleton h-4 w-20"></div>
+										<div class="app-skeleton h-4 w-28"></div>
+									</div>
+									<div class="flex justify-between gap-4">
+										<div class="app-skeleton h-4 w-16"></div>
+										<div class="app-skeleton h-4 w-36"></div>
+									</div>
+									<div class="flex justify-between gap-4">
+										<div class="app-skeleton h-4 w-14"></div>
+										<div class="app-skeleton h-4 w-40"></div>
+									</div>
+								</dl>
+							{:else if session}
+								<dl class="mt-3 space-y-2 text-sm">
+									{#if spotsLabel}
+										<div class="flex justify-between gap-4">
+											<dt class="text-slate-500">Availability</dt>
+											<dd class="font-medium text-slate-900">{spotsLabel}</dd>
+										</div>
+									{/if}
+									<div class="flex justify-between gap-4">
+										<dt class="text-slate-500">Court fee</dt>
 										<dd class="font-medium text-slate-900">
-											{formatThb(session.cancellation_fee)} (&lt; 1 hr before start)
+											{formatThb(session.court_fee_per_hour)}/hr · {session.court_count} court{session.court_count === 1 ? '' : 's'}
 										</dd>
 									</div>
-								{/if}
-							</dl>
+									<div class="flex justify-between gap-4">
+										<dt class="text-slate-500">Shuttle</dt>
+										<dd class="text-right font-medium text-slate-900">{shuttleLabel}</dd>
+									</div>
+									{#if session.cancellation_fee > 0}
+										<div class="flex justify-between gap-4">
+											<dt class="text-slate-500">Late cancel fee</dt>
+											<dd class="font-medium text-slate-900">
+												{formatThb(session.cancellation_fee)} (&lt; 1 hr before start)
+											</dd>
+										</div>
+									{/if}
+								</dl>
+							{/if}
 						</div>
 
-						<div class="rounded-2xl border border-slate-200 bg-white p-4">
-							<h3 class="text-base font-semibold text-slate-900">Match settings</h3>
-							<p class="mt-2 text-sm text-slate-600">
-								{session.match_score_type} points · {matchTypeLabel(session.match_type)}
-							</p>
-						</div>
+						{#if loading && !activeSession?.match_score_type}
+							<div class="rounded-2xl border border-slate-200 bg-white p-4" aria-hidden="true">
+								<div class="app-skeleton h-5 w-32"></div>
+								<div class="app-skeleton mt-3 h-4 w-40"></div>
+							</div>
+						{:else if activeSession?.match_score_type}
+							<div class="rounded-2xl border border-slate-200 bg-white p-4">
+								<h3 class="text-base font-semibold text-slate-900">Match settings</h3>
+								<p class="mt-2 text-sm text-slate-600">
+									{activeSession.match_score_type} points · {matchTypeLabel(activeSession.match_type)}
+								</p>
+							</div>
+						{/if}
 
-						{#if session.host}
+						{#if loading}
+							<div class="rounded-2xl border border-slate-200 bg-white p-4" aria-busy="true">
+								<h3 class="text-base font-semibold text-slate-900">Host</h3>
+								<div class="mt-2 flex items-center gap-2" aria-hidden="true">
+									<div class="app-skeleton h-4 w-32"></div>
+									<div class="app-skeleton h-6 w-14 rounded-full"></div>
+								</div>
+							</div>
+						{:else if session?.host}
 							<div class="rounded-2xl border border-slate-200 bg-white p-4">
 								<h3 class="text-base font-semibold text-slate-900">Host</h3>
 								<div class="mt-2 flex items-center gap-2">
@@ -768,7 +824,28 @@
 							</div>
 						{/if}
 
-						{#if showParticipants}
+						{#if loading || !rosterReady}
+							<div class="rounded-2xl border border-slate-200 bg-white p-4" aria-busy="true">
+								<h3 class="text-base font-semibold text-slate-900">Participants</h3>
+								<p class="mt-1 text-xs text-slate-500">
+									Waiting list and buffer queue for this session.
+								</p>
+								<ul
+									class="mt-4 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200"
+									aria-label="Loading participants"
+								>
+									{#each [0, 1, 2] as row (row)}
+										<li class="flex items-center gap-3 bg-white px-3 py-2.5">
+											<div class="app-skeleton h-9 w-9 shrink-0 rounded-full"></div>
+											<div class="min-w-0 flex-1 space-y-2">
+												<div class="app-skeleton h-4 w-32 max-w-full"></div>
+												<div class="app-skeleton h-3 w-24 max-w-full"></div>
+											</div>
+										</li>
+									{/each}
+								</ul>
+							</div>
+						{:else if showParticipants && session}
 							<div class="rounded-2xl border border-slate-200 bg-white p-4">
 								<h3 class="text-base font-semibold text-slate-900">Participants</h3>
 								<p class="mt-1 text-xs text-slate-500">
@@ -886,79 +963,83 @@
 					</div>
 
 					<div class="mt-6 space-y-3">
-						{#if canJoin}
-							<SubmitButton type="button" onclick={() => (joinModalOpen = true)}>
-								Join session
-							</SubmitButton>
-						{:else if showJoinConflict}
-							<SubmitButton type="button" disabled>Join session</SubmitButton>
-						{/if}
+						{#if loading}
+							<div class="app-skeleton h-12 w-full rounded-xl" aria-hidden="true"></div>
+						{:else if session}
+							{#if canJoin}
+								<SubmitButton type="button" onclick={() => (joinModalOpen = true)}>
+									Join session
+								</SubmitButton>
+							{:else if showJoinConflict}
+								<SubmitButton type="button" disabled>Join session</SubmitButton>
+							{/if}
 
-						{#if canCancel}
-							<SubmitButton
-								type="button"
-								variant="secondary"
-								onclick={() => {
-									if (requiresLateCancelFee) {
-										cancelConfirmOpen = true;
-									} else {
-										const form = document.getElementById('cancel-membership-form') as HTMLFormElement | null;
-										form?.requestSubmit();
-									}
-								}}
-								loading={actionLoading}
-							>
-								Cancel join
-							</SubmitButton>
-							<form
-								id="cancel-membership-form"
-								method="POST"
-								action="/sessions?/cancel"
-								class="hidden"
-								use:enhance={enhanceCancel}
-							>
-								<input type="hidden" name="session_id" value={session.id} />
-							</form>
-							{#if membership?.status === 'waiting' && session.cancellation_fee > 0}
+							{#if canCancel}
+								<SubmitButton
+									type="button"
+									variant="secondary"
+									onclick={() => {
+										if (requiresLateCancelFee) {
+											cancelConfirmOpen = true;
+										} else {
+											const form = document.getElementById('cancel-membership-form') as HTMLFormElement | null;
+											form?.requestSubmit();
+										}
+									}}
+									loading={actionLoading}
+								>
+									Cancel join
+								</SubmitButton>
+								<form
+									id="cancel-membership-form"
+									method="POST"
+									action="/sessions?/cancel"
+									class="hidden"
+									use:enhance={enhanceCancel}
+								>
+									<input type="hidden" name="session_id" value={session.id} />
+								</form>
+								{#if membership?.status === 'waiting' && session.cancellation_fee > 0}
+									<p class="text-xs text-slate-500">
+										Cancelling within 1 hour of start may incur a {formatThb(session.cancellation_fee)} fee.
+									</p>
+								{/if}
+							{/if}
+
+							{#if cancelJoinLocked}
+								<SubmitButton type="button" variant="secondary" disabled>
+									Cancel join
+								</SubmitButton>
 								<p class="text-xs text-slate-500">
-									Cancelling within 1 hour of start may incur a {formatThb(session.cancellation_fee)} fee.
+									Cancellation closed within 15 minutes of start. The admin may confirm or reject you. If
+									you play and leave early, you will be billed your court fee share.
 								</p>
 							{/if}
-						{/if}
 
-						{#if cancelJoinLocked}
-							<SubmitButton type="button" variant="secondary" disabled>
-								Cancel join
-							</SubmitButton>
-							<p class="text-xs text-slate-500">
-								Cancellation closed within 15 minutes of start. The admin may confirm or reject you. If
-								you play and leave early, you will be billed your court fee share.
-							</p>
-						{/if}
-
-						{#if canLeave}
-							<SubmitButton
-								type="button"
-								variant="secondary"
-								onclick={goToLiveSession}
-								loading={liveNavLoading}
-								loadingLabel="Opening…"
-							>
-								Leave session
-							</SubmitButton>
-							<p class="text-xs text-slate-500">
-								Early leave bills your court-fee share, requires admin payment confirmation, then admin
-								leave approval — same as on the live session page.
-							</p>
-						{:else if session.status === 'in_progress' && membership?.status === 'confirmed'}
-							<SubmitButton
-								type="button"
-								onclick={goToLiveSession}
-								loading={liveNavLoading}
-								loadingLabel="Opening…"
-							>
-								Open live session
-							</SubmitButton>
+							{#if canLeave}
+								<SubmitButton
+									type="button"
+									variant="secondary"
+									onclick={goToLiveSession}
+									loading={liveNavLoading}
+									loadingLabel="Opening…"
+								>
+									Leave session
+								</SubmitButton>
+								<p class="text-xs text-slate-500">
+									Early leave bills your court-fee share, requires admin payment confirmation, then admin
+									leave approval — same as on the live session page.
+								</p>
+							{:else if session.status === 'in_progress' && membership?.status === 'confirmed'}
+								<SubmitButton
+									type="button"
+									onclick={goToLiveSession}
+									loading={liveNavLoading}
+									loadingLabel="Opening…"
+								>
+									Open live session
+								</SubmitButton>
+							{/if}
 						{/if}
 					</div>
 				{/if}

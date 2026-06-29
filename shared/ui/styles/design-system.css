@@ -116,6 +116,7 @@ body {
 .nav-loading {
 	position: relative;
 	pointer-events: none;
+	color: transparent;
 }
 
 .nav-loading > * {
@@ -364,6 +365,27 @@ body {
 
 	.app-court-grid-card {
 		@apply flex h-full items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3;
+	}
+
+	.app-court-grid-card--loading {
+		@apply relative pointer-events-none text-transparent;
+	}
+
+	.app-court-grid-card--loading > * {
+		@apply invisible opacity-0;
+	}
+
+	.app-court-grid-card--loading::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		margin: auto;
+		width: 1.25rem;
+		height: 1.25rem;
+		border: 2px solid var(--color-brand-600);
+		border-top-color: transparent;
+		border-radius: 9999px;
+		animation: nav-loading-spin 0.7s linear infinite;
 	}
 
 	.app-court-grid-icon {

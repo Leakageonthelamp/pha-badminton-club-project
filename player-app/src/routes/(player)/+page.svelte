@@ -183,7 +183,9 @@
 <section class="space-y-6">
 	{#if liveSession}
 		<DashboardHero eyebrow="Live session" title={liveSession.name} subtitle={liveSessionSubtitle}>
-			<a href={liveSessionHref(liveSession.id)} class="app-hero-action">Go to live session</a>
+			<a href={liveSessionHref(liveSession.id)} class="app-hero-action"
+				><span>Go to live session</span></a
+			>
 		</DashboardHero>
 	{:else}
 		<DashboardHero
