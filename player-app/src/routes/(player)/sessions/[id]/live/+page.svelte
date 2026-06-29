@@ -20,8 +20,10 @@
 	import { formatDateTime, formatUptime } from '@repo/ui/datetime';
 	import { formatMatchScore } from '@repo/ui/matches';
 	import { formatThb, paymentStatusLabel } from '@repo/ui/payments';
+	import { subscribePostgresChangesWithPollFallback } from '@repo/ui/realtimeSubscribe';
 	import { clampIdleSince, derivePlayerLiveStatus } from '@repo/ui/sessionStatus';
 	import PaymentQr from '$lib/components/PaymentQr.svelte';
+	import MatchInviteModal from '$lib/components/MatchInviteModal.svelte';
 	import {
 		canRequestEarlyLeave,
 		deriveLiveSessionUiState,
@@ -42,7 +44,6 @@
 
 	let nowMs = $state(Date.now());
 	let actionLoading = $state<string | null>(null);
-	let inviteModalDismissed = $state(false);
 	let autoNavigatedMatchId = $state<string | null>(null);
 
 	const session = $derived(data.session);
@@ -124,13 +125,7 @@
 			? 'You left early — all settled'
 			: 'Session complete'
 	);
-	const inviteCountdownMs = $derived.by(() => {
-		const expiresAt = data.myPendingInvite?.invite_expires_at;
-		if (!expiresAt) return 0;
-		return Math.max(0, new Date(expiresAt).getTime() - nowMs);
-	});
-	const inviteCountdownLabel = $derived(`${Math.ceil(inviteCountdownMs / 1000)}s`);
-	const showInviteModal = $derived(Boolean(data.myPendingInvite) && !inviteModalDismissed);
+	const showInviteModal = $derived(Boolean(data.myInviteMatch));
 	const matchLocked = $derived(
 		myLiveStatus === 'playing' || isInUnresolvedMatch(data.myOpenMatch)
 	);
@@ -164,84 +159,23 @@
 		void goto(matchLiveHref(session.id, data.myOpenMatch!.id));
 	});
 
-	$effect(() => {
-		if (!data.myPendingInvite) {
-			inviteModalDismissed = false;
-		}
-	});
-
 	onMount(() => {
 		const supabase = createSupabaseBrowserClient();
 		const sessionId = session.id;
-		const invalidateLive = () => void invalidate('app:live-session');
 
-		const channel = supabase
-			.channel(`player-live-session-${sessionId}`)
-			.on(
-				'postgres_changes',
-				{
-					event: '*',
-					schema: 'public',
-					table: 'session_players',
-					filter: `session_id=eq.${sessionId}`
-				},
-				invalidateLive
-			)
-			.on(
-				'postgres_changes',
-				{
-					event: '*',
-					schema: 'public',
-					table: 'payments',
-					filter: `session_id=eq.${sessionId}`
-				},
-				invalidateLive
-			)
-			.on(
-				'postgres_changes',
-				{
-					event: '*',
-					schema: 'public',
-					table: 'session_leave_requests',
-					filter: `session_id=eq.${sessionId}`
-				},
-				invalidateLive
-			)
-			.on(
-				'postgres_changes',
-				{
-					event: 'UPDATE',
-					schema: 'public',
-					table: 'sessions',
-					filter: `id=eq.${sessionId}`
-				},
-				invalidateLive
-			)
-			.on(
-				'postgres_changes',
-				{
-					event: '*',
-					schema: 'public',
-					table: 'matches',
-					filter: `session_id=eq.${sessionId}`
-				},
-				invalidateLive
-			)
-			.on(
-				'postgres_changes',
-				{
-					event: '*',
-					schema: 'public',
-					table: 'match_players',
-					filter: `session_id=eq.${sessionId}`
-				},
-				invalidateLive
-			)
-			.subscribe();
-
-		return () => {
-			void supabase.removeChannel(channel);
-		};
+		return subscribePostgresChangesWithPollFallback(
+			supabase,
+			`player-live-session-${sessionId}`,
+			[
+				{ table: 'session_players', filter: `session_id=eq.${sessionId}` },
+				{ table: 'payments', filter: `session_id=eq.${sessionId}` },
+				{ table: 'session_leave_requests', filter: `session_id=eq.${sessionId}` },
+				{ event: 'UPDATE', table: 'sessions', filter: `id=eq.${sessionId}` },
+				{ table: 'matches', filter: `session_id=eq.${sessionId}` },
+				{ table: 'match_players', filter: `session_id=eq.${sessionId}` }
+			],
+			() => void invalidate('app:live-session')
+		);
 	});
 
 	const handleAction =
@@ -674,29 +608,14 @@
 	</div>
 </AppModal>
 
-<AppModal open={showInviteModal} labelledBy="match-found-title" onClose={() => (inviteModalDismissed = true)}>
-	<div class="app-card-padded space-y-4">
-		<h2 id="match-found-title" class="text-lg font-semibold text-slate-900">Match found</h2>
-		<p class="text-sm text-slate-600">
-			You have {inviteCountdownLabel} to accept or reject this match on Court
-			{data.myPendingInvite?.court_number ?? '—'}.
-		</p>
-		<div class="flex justify-end gap-2">
-			<form method="POST" action="?/respondInvite" use:enhance={handleAction('rejectInvite')}>
-				<input type="hidden" name="match_id" value={data.myPendingInvite?.id ?? ''} />
-				<input type="hidden" name="accept" value="false" />
-				<SubmitButton variant="secondary" loading={actionLoading === 'rejectInvite'}>
-					Reject
-				</SubmitButton>
-			</form>
-			<form method="POST" action="?/respondInvite" use:enhance={handleAction('acceptInvite')}>
-				<input type="hidden" name="match_id" value={data.myPendingInvite?.id ?? ''} />
-				<input type="hidden" name="accept" value="true" />
-				<SubmitButton loading={actionLoading === 'acceptInvite'}>Accept</SubmitButton>
-			</form>
-		</div>
-	</div>
-</AppModal>
+<MatchInviteModal
+	open={showInviteModal}
+	match={data.myInviteMatch}
+	userId={data.userId}
+	nowMs={nowMs}
+	actionLoading={actionLoading}
+	handleAction={handleAction}
+/>
 
 <AppModal open={showScoreConfirmModal} labelledBy="score-result-title" onClose={() => {}}>
 	<div class="app-card-padded space-y-4">

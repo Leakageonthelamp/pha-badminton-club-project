@@ -2,7 +2,7 @@ import {
 	expirePendingMatches,
 	loadMyMatchHistory,
 	loadMyOpenMatch,
-	loadMyPendingInvite,
+	loadMyInviteMatch,
 	loadSessionMatches,
 	respondMatchInvite,
 	respondMatchScore,
@@ -43,9 +43,9 @@ export const load: PageServerLoad = async ({ params, depends, locals: { supabase
 		redirect(303, '/sessions');
 	}
 
-	const [sessionMatches, myPendingInvite, myOpenMatch, myMatchHistory] = await Promise.all([
+	const [sessionMatches, myInviteMatch, myOpenMatch, myMatchHistory] = await Promise.all([
 		loadSessionMatches(supabase, params.id),
-		loadMyPendingInvite(supabase, params.id, user.id),
+		loadMyInviteMatch(supabase, params.id, user.id),
 		loadMyOpenMatch(supabase, params.id, user.id),
 		loadMyMatchHistory(supabase, params.id, user.id)
 	]);
@@ -55,7 +55,7 @@ export const load: PageServerLoad = async ({ params, depends, locals: { supabase
 		userId: user.id,
 		sessionMatches,
 		courtGridMatches: toCourtGridMatches(sessionMatches),
-		myPendingInvite,
+		myInviteMatch,
 		myOpenMatch,
 		myMatchHistory
 	};

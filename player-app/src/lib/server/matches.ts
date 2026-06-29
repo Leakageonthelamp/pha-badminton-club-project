@@ -140,7 +140,7 @@ export const loadMatchForPlayer = async (
 	return detailed;
 };
 
-export const loadMyPendingInvite = async (
+export const loadMyInviteMatch = async (
 	supabase: SupabaseClient,
 	sessionId: string,
 	userId: string
@@ -150,7 +150,7 @@ export const loadMyPendingInvite = async (
 		.select('match_id')
 		.eq('session_id', sessionId)
 		.eq('user_id', userId)
-		.eq('invite_status', 'pending');
+		.in('invite_status', ['pending', 'accepted']);
 
 	if (error || !data?.length) {
 		return null;
@@ -165,6 +165,9 @@ export const loadMyPendingInvite = async (
 
 	return null;
 };
+
+/** @deprecated use loadMyInviteMatch */
+export const loadMyPendingInvite = loadMyInviteMatch;
 
 export const loadMyOpenMatch = async (
 	supabase: SupabaseClient,

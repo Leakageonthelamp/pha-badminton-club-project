@@ -52,6 +52,41 @@ describe('shouldOpenLiveSession', () => {
 			)
 		).toBe(false);
 	});
+
+	it('returns false for waiting or queued memberships', () => {
+		expect(
+			shouldOpenLiveSession(
+				session({
+					status: 'in_progress',
+					my_membership: {
+						id: 'm1',
+						status: 'waiting',
+						fee_owed: 0,
+						fee_status: 'none',
+						joined_at: '2026-06-01T00:00:00.000Z',
+						activity: 'idle',
+						idle_since: null
+					}
+				})
+			)
+		).toBe(false);
+		expect(
+			shouldOpenLiveSession(
+				session({
+					status: 'in_progress',
+					my_membership: {
+						id: 'm1',
+						status: 'queued',
+						fee_owed: 0,
+						fee_status: 'none',
+						joined_at: '2026-06-01T00:00:00.000Z',
+						activity: 'idle',
+						idle_since: null
+					}
+				})
+			)
+		).toBe(false);
+	});
 });
 
 describe('shouldOpenHistorySessionSummary', () => {

@@ -16,6 +16,7 @@
 	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
 	import { formatDateTime, formatUptime } from '@repo/ui/datetime';
 	import { formatMatchScore } from '@repo/ui/matches';
+	import { subscribePostgresChangesWithPollFallback } from '@repo/ui/realtimeSubscribe';
 	import { formatThb, paymentStatusLabel } from '@repo/ui/payments';
 	import type { PaymentStatus } from '@repo/ui/payments';
 	import {
@@ -184,75 +185,20 @@
 
 		const supabase = createSupabaseBrowserClient();
 		const sessionId = session.id;
-		const invalidateControl = () => void invalidate('app:session-control');
 
-		const channel = supabase
-			.channel(`admin-session-control-${sessionId}`)
-			.on(
-				'postgres_changes',
-				{
-					event: '*',
-					schema: 'public',
-					table: 'session_players',
-					filter: `session_id=eq.${sessionId}`
-				},
-				invalidateControl
-			)
-			.on(
-				'postgres_changes',
-				{
-					event: '*',
-					schema: 'public',
-					table: 'payments',
-					filter: `session_id=eq.${sessionId}`
-				},
-				invalidateControl
-			)
-			.on(
-				'postgres_changes',
-				{
-					event: '*',
-					schema: 'public',
-					table: 'session_leave_requests',
-					filter: `session_id=eq.${sessionId}`
-				},
-				invalidateControl
-			)
-			.on(
-				'postgres_changes',
-				{
-					event: 'UPDATE',
-					schema: 'public',
-					table: 'sessions',
-					filter: `id=eq.${sessionId}`
-				},
-				invalidateControl
-			)
-			.on(
-				'postgres_changes',
-				{
-					event: '*',
-					schema: 'public',
-					table: 'matches',
-					filter: `session_id=eq.${sessionId}`
-				},
-				invalidateControl
-			)
-			.on(
-				'postgres_changes',
-				{
-					event: '*',
-					schema: 'public',
-					table: 'match_players',
-					filter: `session_id=eq.${sessionId}`
-				},
-				invalidateControl
-			)
-			.subscribe();
-
-		return () => {
-			void supabase.removeChannel(channel);
-		};
+		return subscribePostgresChangesWithPollFallback(
+			supabase,
+			`admin-session-control-${sessionId}`,
+			[
+				{ table: 'session_players', filter: `session_id=eq.${sessionId}` },
+				{ table: 'payments', filter: `session_id=eq.${sessionId}` },
+				{ table: 'session_leave_requests', filter: `session_id=eq.${sessionId}` },
+				{ event: 'UPDATE', table: 'sessions', filter: `id=eq.${sessionId}` },
+				{ table: 'matches', filter: `session_id=eq.${sessionId}` },
+				{ table: 'match_players', filter: `session_id=eq.${sessionId}` }
+			],
+			() => void invalidate('app:session-control')
+		);
 	});
 
 	const handleAction =

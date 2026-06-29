@@ -23,7 +23,7 @@
 		mapsSearchUrl
 	} from '@repo/ui/geolocation';
 	import { formatDateTime } from '@repo/ui/datetime';
-	import type { SessionDetail, SessionListItem, SessionStatus } from '$lib/types/session';
+	import type { SessionDetail, SessionListItem, SessionPlayerStatus, SessionStatus } from '$lib/types/session';
 	import { liveSessionHref, shouldOpenLiveSession } from '$lib/sessions/navigation';
 	import { SESSION_CANCEL_LOCK_LEAD_MINUTES, SESSION_JOIN_CLOSE_LEAD_MINUTES } from '$lib/config/session';
 	import {
@@ -65,6 +65,7 @@
 	let feeModalAmount = $state(0);
 	let feeModalStatus = $state<'owed' | 'submitted'>('owed');
 	let lastPolledSessionStatus = $state<SessionStatus | null>(null);
+	let lastPolledMembershipStatus = $state<SessionPlayerStatus | null>(null);
 
 	const DISMISS_DRAG_PX = 120;
 
@@ -413,6 +414,7 @@
 	$effect(() => {
 		if (!browser || !open || !sessionId || !visible || !hasActiveMembership) {
 			lastPolledSessionStatus = null;
+			lastPolledMembershipStatus = null;
 			return;
 		}
 
@@ -427,18 +429,25 @@
 
 				const detail = (await response.json()) as SessionDetail;
 				const previousStatus = lastPolledSessionStatus ?? session?.status ?? detail.status;
+				const membershipForNav = detail.my_membership;
+				const previousMembershipStatus =
+					lastPolledMembershipStatus ?? membership?.status ?? membershipForNav?.status ?? null;
 				lastPolledSessionStatus = detail.status;
+				lastPolledMembershipStatus = membershipForNav?.status ?? null;
 				session = detail;
 
-				const membershipForNav = detail.my_membership;
 				if (
-					previousStatus !== 'in_progress' &&
-					detail.status === 'in_progress' &&
 					membershipForNav &&
 					shouldOpenLiveSession({
 						status: detail.status,
 						my_membership: membershipForNav
-					})
+					}) &&
+					(
+						(previousStatus !== 'in_progress' && detail.status === 'in_progress') ||
+						(detail.status === 'in_progress' &&
+							previousMembershipStatus !== 'confirmed' &&
+							membershipForNav.status === 'confirmed')
+					)
 				) {
 					navigating = true;
 					close();
@@ -450,6 +459,7 @@
 		};
 
 		lastPolledSessionStatus = session?.status ?? null;
+		lastPolledMembershipStatus = membership?.status ?? null;
 		void pollSession();
 
 		const pollIntervalMs = () => {
@@ -465,6 +475,7 @@
 		return () => {
 			window.clearInterval(timer);
 			lastPolledSessionStatus = null;
+			lastPolledMembershipStatus = null;
 		};
 	});
 
@@ -901,7 +912,7 @@
 								Early leave bills your court-fee share, requires admin payment confirmation, then admin
 								leave approval — same as on the live session page.
 							</p>
-						{:else if session.status === 'in_progress' && hasActiveMembership}
+						{:else if session.status === 'in_progress' && membership?.status === 'confirmed'}
 							<SubmitButton
 								type="button"
 								onclick={goToLiveSession}

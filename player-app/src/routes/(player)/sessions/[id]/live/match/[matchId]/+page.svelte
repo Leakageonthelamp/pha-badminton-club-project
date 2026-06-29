@@ -16,6 +16,7 @@
 		matchStatusLabel,
 		splitTeams
 	} from '@repo/ui/matches';
+	import { subscribePostgresChangesWithPollFallback } from '@repo/ui/realtimeSubscribe';
 	import { createSupabaseBrowserClient } from '$lib/supabase/client';
 	import type { MatchGameInput } from '$lib/types/match';
 	import type { SubmitFunction } from '@sveltejs/kit';
@@ -61,30 +62,18 @@
 		if (!browser) return;
 
 		const supabase = createSupabaseBrowserClient();
-		const invalidateMatch = () => void invalidate('app:player-match-live');
+		const matchId = match.id;
 
-		const channel = supabase
-			.channel(`player-match-live-${match.id}`)
-			.on(
-				'postgres_changes',
-				{ event: '*', schema: 'public', table: 'matches', filter: `id=eq.${match.id}` },
-				invalidateMatch
-			)
-			.on(
-				'postgres_changes',
-				{ event: '*', schema: 'public', table: 'match_players', filter: `match_id=eq.${match.id}` },
-				invalidateMatch
-			)
-			.on(
-				'postgres_changes',
-				{ event: '*', schema: 'public', table: 'match_games', filter: `match_id=eq.${match.id}` },
-				invalidateMatch
-			)
-			.subscribe();
-
-		return () => {
-			void supabase.removeChannel(channel);
-		};
+		return subscribePostgresChangesWithPollFallback(
+			supabase,
+			`player-match-live-${matchId}`,
+			[
+				{ table: 'matches', filter: `id=eq.${matchId}` },
+				{ table: 'match_players', filter: `match_id=eq.${matchId}` },
+				{ table: 'match_games', filter: `match_id=eq.${matchId}` }
+			],
+			() => void invalidate('app:player-match-live')
+		);
 	});
 
 	$effect(() => {

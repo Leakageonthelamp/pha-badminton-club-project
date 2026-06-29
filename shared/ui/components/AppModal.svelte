@@ -12,12 +12,16 @@
 		open = false,
 		labelledBy,
 		closeLabel = 'Close dialog',
+		closeOnBackdrop = true,
+		closeOnEscape = true,
 		onClose,
 		children
 	}: {
 		open?: boolean;
 		labelledBy: string;
 		closeLabel?: string;
+		closeOnBackdrop?: boolean;
+		closeOnEscape?: boolean;
 		onClose?: () => void;
 		children: import('svelte').Snippet;
 	} = $props();
@@ -51,7 +55,7 @@
 		}
 
 		const onKeydown = (event: KeyboardEvent) => {
-			if (event.key === 'Escape') {
+			if (closeOnEscape && event.key === 'Escape') {
 				onClose?.();
 			}
 		};
@@ -82,12 +86,16 @@
 		in:fade={backdropTransition}
 		out:fade={backdropTransition}
 	>
-		<button
-			type="button"
-			class="absolute inset-0 z-0 cursor-default"
-			aria-label={closeLabel}
-			onclick={() => onClose?.()}
-		></button>
+		{#if closeOnBackdrop}
+			<button
+				type="button"
+				class="absolute inset-0 z-0 cursor-default"
+				aria-label={closeLabel}
+				onclick={() => onClose?.()}
+			></button>
+		{:else}
+			<div class="absolute inset-0 z-0" aria-hidden="true"></div>
+		{/if}
 
 		<div
 			class="relative z-10 w-full max-w-lg"
