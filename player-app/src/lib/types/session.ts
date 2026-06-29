@@ -98,6 +98,15 @@ export type SessionPlayerPublic = {
 	is_me: boolean;
 };
 
+export type SessionJoinConflict = {
+	kind: 'overlapping' | 'too_soon_after_live';
+	session_id: string;
+	session_name: string;
+	start_at: string;
+	end_at: string;
+	membership_status: SessionPlayerStatus;
+};
+
 export type SessionDetail = SessionPublic & {
 	club: SessionClubSummary | null;
 	host: SessionHostProfile | null;
@@ -114,6 +123,8 @@ export type SessionDetail = SessionPublic & {
 	estimated_join_court_share: number | null;
 	/** Confirmed + left players used for billing split before the viewer joins. */
 	billing_active_player_count: number | null;
+	/** Another membership blocks join_session (overlap or live session). */
+	join_conflict: SessionJoinConflict | null;
 };
 
 export type SessionHistoryItem = {

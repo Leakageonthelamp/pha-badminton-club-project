@@ -25,7 +25,8 @@
 	import { formatDateTime } from '@repo/ui/datetime';
 	import type { SessionDetail, SessionListItem, SessionPlayerStatus, SessionStatus } from '$lib/types/session';
 	import { liveSessionHref, shouldOpenLiveSession } from '$lib/sessions/navigation';
-	import { SESSION_CANCEL_LOCK_LEAD_MINUTES, SESSION_JOIN_CLOSE_LEAD_MINUTES } from '$lib/config/session';
+	import { joinConflictMembershipPhrase } from '$lib/sessions/joinConflict';
+	import { SESSION_CANCEL_LOCK_LEAD_MINUTES, SESSION_JOIN_CLOSE_LEAD_MINUTES, LIVE_SESSION_JOIN_BUFFER_HOURS } from '$lib/config/session';
 	import {
 		formatThb,
 		matchTypeLabel,
@@ -192,14 +193,43 @@
 	const waitingPlayers = $derived(session?.waiting_players ?? []);
 	const queuedPlayers = $derived(session?.queued_players ?? []);
 	const confirmedPlayers = $derived(session?.confirmed_players ?? []);
+	const showParticipants = $derived(
+		rosterReady &&
+			session &&
+			(membership !== null ||
+				session.status === 'open' ||
+				session.status === 'in_progress' ||
+				waitingPlayers.length > 0 ||
+				queuedPlayers.length > 0 ||
+				confirmedPlayers.length > 0)
+	);
 	const canJoin = $derived(
 		session &&
+			!membership &&
+			!session.has_outstanding_fee &&
+			!session.join_conflict &&
+			(session.status === 'open' || session.status === 'in_progress') &&
+			Date.now() <
+				new Date(session.end_at).getTime() - SESSION_JOIN_CLOSE_LEAD_MINUTES * 60 * 1000
+	);
+	const showJoinConflict = $derived(
+		session?.join_conflict &&
 			!membership &&
 			!session.has_outstanding_fee &&
 			(session.status === 'open' || session.status === 'in_progress') &&
 			Date.now() <
 				new Date(session.end_at).getTime() - SESSION_JOIN_CLOSE_LEAD_MINUTES * 60 * 1000
 	);
+	const joinConflictMessage = $derived.by(() => {
+		const conflict = session?.join_conflict;
+		if (!conflict) return null;
+
+		if (conflict.kind === 'too_soon_after_live') {
+			return `You're in ${conflict.session_name} (ends ${formatDateTime(conflict.end_at)}). While that session is live, you can only join another that starts at least ${LIVE_SESSION_JOIN_BUFFER_HOURS} hours after it ends.`;
+		}
+
+		return `You're ${joinConflictMembershipPhrase(conflict.membership_status)} ${conflict.session_name} (${formatDateTime(conflict.start_at)} – ${formatDateTime(conflict.end_at)}). You can't join two sessions at the same time.`;
+	});
 	const isInProgressJoin = $derived(session?.status === 'in_progress');
 	const estimatedCourtShare = $derived(
 		isInProgressJoin ? (session?.estimated_join_court_share ?? null) : null
@@ -263,6 +293,14 @@
 		return session.shuttle?.name ? `${session.shuttle.name} · ${price}` : price;
 	});
 
+	const refreshSessionDetail = async () => {
+		if (!sessionId) return;
+		const response = await fetch(`/api/sessions/${sessionId}`);
+		if (response.ok) {
+			session = (await response.json()) as SessionDetail;
+		}
+	};
+
 	const enhanceAction =
 		(closeOnSuccess = false): SubmitFunction =>
 		() => {
@@ -273,16 +311,11 @@
 				if (result.type === 'success') {
 					const data = result.data as { message?: string } | undefined;
 					if (data?.message) toast.success(data.message);
+					joinModalOpen = false;
 					await invalidate('app:sessions');
+					await refreshSessionDetail();
 					if (closeOnSuccess) {
 						close();
-						return;
-					}
-					if (sessionId) {
-						const response = await fetch(`/api/sessions/${sessionId}`);
-						if (response.ok) {
-							session = (await response.json()) as SessionDetail;
-						}
 					}
 					return;
 				}
@@ -321,10 +354,7 @@
 					feeModalStatus = data.feeStatus === 'submitted' ? 'submitted' : 'owed';
 					feeModalOpen = true;
 					if (sessionId) {
-						const response = await fetch(`/api/sessions/${sessionId}`);
-						if (response.ok) {
-							session = (await response.json()) as SessionDetail;
-						}
+						await refreshSessionDetail();
 					}
 					return;
 				}
@@ -629,6 +659,12 @@
 						</p>
 					{/if}
 
+					{#if showJoinConflict && joinConflictMessage}
+						<p class="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+							{joinConflictMessage}
+						</p>
+					{/if}
+
 					<RichTextDisplay
 						html={session.description}
 						class="prose prose-sm mt-4 max-w-none text-sm leading-relaxed text-slate-600"
@@ -732,7 +768,7 @@
 							</div>
 						{/if}
 
-						{#if membership && rosterReady}
+						{#if showParticipants}
 							<div class="rounded-2xl border border-slate-200 bg-white p-4">
 								<h3 class="text-base font-semibold text-slate-900">Participants</h3>
 								<p class="mt-1 text-xs text-slate-500">
@@ -854,6 +890,8 @@
 							<SubmitButton type="button" onclick={() => (joinModalOpen = true)}>
 								Join session
 							</SubmitButton>
+						{:else if showJoinConflict}
+							<SubmitButton type="button" disabled>Join session</SubmitButton>
 						{/if}
 
 						{#if canCancel}
@@ -970,7 +1008,7 @@
 					method="POST"
 					action="/sessions?/join"
 					class="flex flex-wrap gap-2 p-4"
-					use:enhance={enhanceAction(true)}
+					use:enhance={enhanceAction()}
 				>
 					<input type="hidden" name="session_id" value={session.id} />
 					<SubmitButton loading={actionLoading} loadingLabel="Joining…" class="!w-auto">

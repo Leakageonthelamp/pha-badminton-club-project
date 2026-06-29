@@ -4,14 +4,11 @@
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
-	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
 	import { splitTeams } from '@repo/ui/matches';
 	import type { MatchWithDetails } from '$lib/types/match';
 	import type { SubmitFunction } from '@sveltejs/kit';
 
 	const INVITE_WINDOW_MS = 30_000;
-	const RING_RADIUS = 15;
-	const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 	let {
 		open = false,
@@ -43,6 +40,10 @@
 		match?.players.filter((player) => player.invite_status === 'accepted').length ?? 0
 	);
 	const waitingForOthers = $derived(!awaitingResponse && match?.status === 'pending');
+	const inviteWindowOpen = $derived(
+		Boolean(match?.invite_expires_at) && match?.status === 'pending'
+	);
+	const showInviteCountdown = $derived(inviteWindowOpen);
 
 	const countdownMs = $derived.by(() => {
 		const expiresAt = match?.invite_expires_at;
@@ -64,8 +65,6 @@
 	const countdownProgress = $derived(
 		countdownTotalMs > 0 ? Math.max(0, Math.min(1, countdownMs / countdownTotalMs)) : 0
 	);
-
-	const ringOffset = $derived(RING_CIRCUMFERENCE * (1 - countdownProgress));
 
 	const roundLabel = $derived(
 		match?.round_type === 'two_round' ? '2 games' : '1 game'
@@ -116,7 +115,7 @@
 			{/if}
 		</div>
 		<span
-			class="shrink-0 rounded-full px-2 py-0.5 text-[0.65rem] font-semibold {inviteStatusClass(
+			class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold {inviteStatusClass(
 				player.invite_status
 			)}"
 		>
@@ -133,85 +132,55 @@
 		closeOnEscape={false}
 	>
 		<div class="overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5">
-			<div
-				class="relative overflow-hidden border-b border-brand-100 bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 px-5 py-5 text-white"
-			>
-				<div
-					class="pointer-events-none absolute -right-6 -top-8 h-28 w-28 rounded-full bg-white/10"
-					aria-hidden="true"
-				></div>
-				<div
-					class="pointer-events-none absolute -bottom-10 left-1/3 h-24 w-24 rounded-full bg-white/5"
-					aria-hidden="true"
-				></div>
+			<div class="border-b border-brand-700/40 bg-brand-600 px-4 py-3 text-white sm:px-5">
+				<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-white/75">
+					{waitingForOthers ? 'Waiting for players' : "You're invited"}
+				</p>
+				<h2 id="match-found-title" class="mt-0.5 text-base font-bold tracking-tight">
+					Match on Court {match.court_number}
+				</h2>
+				<p class="mt-0.5 text-xs text-white/80">
+					Play to {match.score_type} · {roundLabel}
+				</p>
 
-				<div class="relative flex items-start gap-4">
-					<div
-						class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/20"
-						aria-hidden="true"
-					>
-						<LayersIcon class="h-6 w-6 text-white" />
-					</div>
-
-					<div class="min-w-0 flex-1">
-						<p class="text-xs font-semibold uppercase tracking-wide text-brand-100">
-							{waitingForOthers ? 'Waiting for players' : "You're invited"}
+				<div
+					class="mt-3 grid gap-2 {showInviteCountdown ? 'grid-cols-2' : 'grid-cols-1'}"
+					aria-live="polite"
+				>
+					<div class="rounded-lg bg-white/15 px-2.5 py-2 text-center ring-1 ring-white/20">
+						<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-white/75">
+							Accepted
 						</p>
-						<h2 id="match-found-title" class="mt-1 text-xl font-bold tracking-tight">
-							Match on Court {match.court_number}
-						</h2>
-						<p class="mt-1 text-sm text-brand-100">
-							Play to {match.score_type} · {roundLabel}
+						<p class="mt-0.5 font-mono text-xl font-bold tabular-nums leading-none">
+							{acceptedCount}/4
 						</p>
 					</div>
 
-					{#if awaitingResponse}
-						<div
-							class="relative flex h-16 w-16 shrink-0 items-center justify-center"
-							aria-live="polite"
-						>
-							<svg class="h-16 w-16 -rotate-90" viewBox="0 0 36 36" aria-hidden="true">
-								<circle
-									cx="18"
-									cy="18"
-									r={RING_RADIUS}
-									fill="none"
-									class="stroke-white/25"
-									stroke-width="3"
-								/>
-								<circle
-									cx="18"
-									cy="18"
-									r={RING_RADIUS}
-									fill="none"
-									class="stroke-white transition-[stroke-dashoffset] duration-300 ease-linear"
-									stroke-width="3"
-									stroke-linecap="round"
-									stroke-dasharray={RING_CIRCUMFERENCE}
-									stroke-dashoffset={ringOffset}
-								/>
-							</svg>
-							<span class="absolute font-mono text-lg font-bold tabular-nums">
+					{#if showInviteCountdown}
+						<div class="rounded-lg bg-white/15 px-2.5 py-2 ring-1 ring-white/20">
+							<p
+								class="text-center text-[0.65rem] font-semibold uppercase tracking-wide text-white/75"
+							>
+								Time left
+							</p>
+							<p class="mt-0.5 text-center font-mono text-xl font-bold tabular-nums leading-none">
 								{countdownSeconds}s
-							</span>
-						</div>
-					{:else}
-						<div class="shrink-0 rounded-2xl bg-white/15 px-3 py-2 text-center ring-1 ring-white/20">
-							<p class="font-mono text-2xl font-bold tabular-nums leading-none">
-								{acceptedCount}/4
 							</p>
-							<p class="mt-1 text-[0.65rem] font-semibold uppercase tracking-wide text-brand-100">
-								Accepted
-							</p>
+							<div class="mt-1.5 h-1 overflow-hidden rounded-full bg-white/25">
+								<div
+									class="h-full rounded-full bg-white transition-[width] duration-300 ease-linear"
+									style:width="{countdownProgress * 100}%"
+								></div>
+							</div>
 						</div>
 					{/if}
 				</div>
 			</div>
 
-			<div class="space-y-4 px-5 py-5">
+			<div class="space-y-4 px-4 py-4 sm:px-5 sm:py-5">
 				{#if waitingForOthers}
 					<div
-						class="rounded-xl border border-brand-200 bg-brand-50/70 px-4 py-3 text-center"
+						class="rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-center"
 						aria-live="polite"
 					>
 						<p class="text-sm font-medium text-brand-900">
@@ -219,14 +188,20 @@
 								? ''
 								: 's'}.
 						</p>
-						<p class="mt-1 text-xs text-brand-800">
-							When all four accept, you'll go to match live automatically.
-						</p>
+						{#if inviteWindowOpen}
+							<p class="mt-1 text-sm text-brand-800">
+								All four must accept within {countdownSeconds}s or this match is cancelled.
+							</p>
+						{/if}
 					</div>
-				{:else}
+				{:else if awaitingResponse}
 					<p class="text-sm leading-relaxed text-slate-600">
-						Accept to head to the court. Decline only if you can't play — the offer expires when the
-						timer runs out.
+						{#if inviteWindowOpen}
+							Accept to play on court {match.court_number}. Decline if you can't — the invite ends in
+							{countdownSeconds}s and the match is cancelled if not everyone accepts.
+						{:else}
+							Accept to play on court {match.court_number}. Decline if you can't play.
+						{/if}
 					</p>
 				{/if}
 
@@ -281,10 +256,6 @@
 							</SubmitButton>
 						</form>
 					</div>
-				{:else}
-					<p class="text-center text-xs text-slate-500">
-						Invite expires in {countdownSeconds}s if not all players accept.
-					</p>
 				{/if}
 			</div>
 		</div>

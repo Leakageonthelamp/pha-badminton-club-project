@@ -7,6 +7,7 @@ import type {
 	SessionDetail,
 	SessionHistoryItem,
 	SessionHistoryPage,
+	SessionJoinConflict,
 	SessionListItem,
 	SessionPlayerMembership,
 	SessionPlayerPublic,
@@ -15,6 +16,7 @@ import type {
 } from '$lib/types/session';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { ensureSupabaseAuth } from '$lib/server/supabaseAuth';
+import { pickJoinConflict } from '$lib/sessions/joinConflict';
 import {
 	filterSortPaginateHistory,
 	extractHistoryClubs,
@@ -306,6 +308,50 @@ export const loadUpcomingSessionsForPlayer = async (
 	});
 };
 
+const loadJoinConflictForPlayer = async (
+	supabase: SupabaseClient,
+	userId: string,
+	session: { id: string; start_at: string; end_at: string }
+): Promise<SessionJoinConflict | null> => {
+	const { data, error } = await supabase
+		.from('session_players')
+		.select(
+			`
+			status,
+			session:sessions!inner ( id, name, start_at, end_at, status )
+		`
+		)
+		.eq('user_id', userId)
+		.in('status', ['waiting', 'queued', 'confirmed']);
+
+	if (error) {
+		console.error('Failed to load join conflicts', error);
+		return null;
+	}
+
+	const memberships = (data ?? []).flatMap((row) => {
+		const sessionRow = normalizeRelation(
+			row.session as unknown as {
+				id: string;
+				name: string;
+				start_at: string;
+				end_at: string;
+				status: SessionDetail['status'];
+			} | null
+		);
+		if (!sessionRow) return [];
+
+		return [
+			{
+				status: row.status as SessionPlayerStatus,
+				session: sessionRow
+			}
+		];
+	});
+
+	return pickJoinConflict(session, memberships);
+};
+
 export const loadSessionDetailForPlayer = async (
 	supabase: SupabaseClient,
 	sessionId: string,
@@ -338,13 +384,23 @@ export const loadSessionDetailForPlayer = async (
 		? await hasOutstandingCancellationFee(supabase, userId)
 		: false;
 	const myMembership = memberships.get(sessionId) ?? null;
-	const roster =
-		authReady && myMembership !== null
-			? await loadSessionRoster(supabase, sessionId, userId)
-			: { waiting: [], queued: [], confirmed: [] };
+	const rosterVisible =
+		authReady &&
+		(data.status === 'open' || data.status === 'in_progress' || myMembership !== null);
+	const roster = rosterVisible
+		? await loadSessionRoster(supabase, sessionId, userId)
+		: { waiting: [], queued: [], confirmed: [] };
 	const joinEstimate =
 		data.status === 'in_progress'
 			? await loadJoinCourtShareEstimate(supabase, sessionId)
+			: null;
+	const joinConflict =
+		authReady && !myMembership
+			? await loadJoinConflictForPlayer(supabase, userId, {
+					id: sessionId,
+					start_at: data.start_at as string,
+					end_at: data.end_at as string
+				})
 			: null;
 
 	return {
@@ -363,6 +419,7 @@ export const loadSessionDetailForPlayer = async (
 			| 'confirmed_players'
 			| 'estimated_join_court_share'
 			| 'billing_active_player_count'
+			| 'join_conflict'
 		>),
 		club: normalizeRelation(data.club as SessionDetail['club'] | SessionDetail['club'][]),
 		host: normalizeRelation(data.host as SessionDetail['host'] | SessionDetail['host'][]),
@@ -376,7 +433,8 @@ export const loadSessionDetailForPlayer = async (
 		queued_players: roster.queued,
 		confirmed_players: roster.confirmed,
 		estimated_join_court_share: joinEstimate?.share ?? null,
-		billing_active_player_count: joinEstimate?.active_players ?? null
+		billing_active_player_count: joinEstimate?.active_players ?? null,
+		join_conflict: joinConflict
 	};
 };
 
@@ -409,7 +467,11 @@ export const joinSession = async (
 		return { ok: false, message: error.message };
 	}
 
-	const row = data as SessionPlayerRow;
+	const row = data as SessionPlayerRow | null;
+	if (!row?.id || row.status !== 'waiting' && row.status !== 'queued') {
+		return { ok: false, message: 'Could not join session. Please try again.' };
+	}
+
 	return { ok: true, status: row.status };
 };
 
@@ -790,6 +852,7 @@ export const loadSessionHistoryForPlayer = async (
 			`
 			id,
 			status,
+			updated_at,
 			session:sessions (
 				id,
 				name,
@@ -809,7 +872,12 @@ export const loadSessionHistoryForPlayer = async (
 
 	const dateBounds = date ? dateFilterBounds(date) : null;
 
-	const items: SessionHistoryItem[] = (data ?? []).flatMap((row) => {
+	const itemsBySessionId = new Map<
+		string,
+		{ item: SessionHistoryItem; updatedAtMs: number }
+	>();
+
+	for (const row of data ?? []) {
 		const session = normalizeRelation(
 			row.session as unknown as {
 				id: string;
@@ -820,7 +888,7 @@ export const loadSessionHistoryForPlayer = async (
 				club: { id: string; name: string } | { id: string; name: string }[] | null;
 			} | null
 		);
-		if (!session) return [];
+		if (!session) continue;
 
 		if (dateBounds) {
 			const startMs = new Date(session.start_at).getTime();
@@ -828,25 +896,30 @@ export const loadSessionHistoryForPlayer = async (
 				startMs < new Date(dateBounds.fromIso).getTime() ||
 				startMs > new Date(dateBounds.toIso).getTime()
 			) {
-				return [];
+				continue;
 			}
 		}
 
 		const club = normalizeRelation(session.club);
+		const item: SessionHistoryItem = {
+			id: session.id,
+			name: session.name,
+			club_id: club?.id ?? '',
+			club_name: club?.name ?? 'Club session',
+			status: session.status,
+			start_at: session.start_at,
+			end_at: session.end_at,
+			membership_status: row.status as SessionPlayerStatus
+		};
 
-		return [
-			{
-				id: session.id,
-				name: session.name,
-				club_id: club?.id ?? '',
-				club_name: club?.name ?? 'Club session',
-				status: session.status,
-				start_at: session.start_at,
-				end_at: session.end_at,
-				membership_status: row.status as SessionPlayerStatus
-			}
-		];
-	});
+		const updatedAtMs = new Date(row.updated_at as string).getTime();
+		const existing = itemsBySessionId.get(session.id);
+		if (!existing || updatedAtMs > existing.updatedAtMs) {
+			itemsBySessionId.set(session.id, { item, updatedAtMs });
+		}
+	}
+
+	const items = [...itemsBySessionId.values()].map((entry) => entry.item);
 
 	const clubs = extractHistoryClubs(items);
 	const clubFilter = parseHistoryClub(

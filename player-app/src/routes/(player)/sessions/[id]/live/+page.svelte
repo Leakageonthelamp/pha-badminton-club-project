@@ -125,7 +125,12 @@
 			? 'You left early — all settled'
 			: 'Session complete'
 	);
-	const showInviteModal = $derived(Boolean(data.myInviteMatch));
+	const inviteExpiredLocally = $derived.by(() => {
+		const invite = data.myInviteMatch;
+		if (!invite?.invite_expires_at) return false;
+		return new Date(invite.invite_expires_at).getTime() <= nowMs;
+	});
+	const showInviteModal = $derived(Boolean(data.myInviteMatch) && !inviteExpiredLocally);
 	const matchLocked = $derived(
 		myLiveStatus === 'playing' || isInUnresolvedMatch(data.myOpenMatch)
 	);
@@ -150,6 +155,24 @@
 		}, 1_000);
 
 		return () => window.clearInterval(timer);
+	});
+
+	$effect(() => {
+		if (!browser) return;
+
+		const invite = data.myInviteMatch;
+		if (!invite?.invite_expires_at) return;
+
+		const expiresAt = new Date(invite.invite_expires_at).getTime();
+		const invalidateLive = () => void invalidate('app:live-session');
+
+		if (expiresAt <= Date.now()) {
+			invalidateLive();
+			return;
+		}
+
+		const timer = window.setTimeout(invalidateLive, expiresAt - Date.now());
+		return () => window.clearTimeout(timer);
 	});
 
 	$effect(() => {

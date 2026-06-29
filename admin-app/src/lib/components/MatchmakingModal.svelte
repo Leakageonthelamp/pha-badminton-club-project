@@ -105,7 +105,7 @@
 						{#each [0, 1] as slot (slot)}
 							{@const player = slotPlayer(slot)}
 							<li
-								class="flex min-h-11 items-center gap-2 rounded-lg border px-2.5 py-2 {player
+								class="flex h-12 items-center gap-2 overflow-hidden rounded-lg border px-2.5 {player
 									? 'border-brand-200 bg-white'
 									: 'border-dashed border-brand-200/80 bg-white/50'}"
 							>
@@ -116,17 +116,19 @@
 										size="sm"
 									/>
 									<div class="min-w-0 flex-1">
-										<p class="truncate text-sm font-medium text-slate-800">{playerName(player)}</p>
+										<p class="truncate text-sm font-medium leading-none text-slate-800">
+											{playerName(player)}
+										</p>
 									</div>
 									<button
 										type="button"
-										class="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+										class="shrink-0 rounded-md px-1.5 py-1 text-xs font-medium leading-none text-slate-500 hover:bg-slate-100 hover:text-slate-700"
 										onclick={() => togglePlayer(player.user_id)}
 									>
 										Remove
 									</button>
 								{:else}
-									<p class="text-sm text-brand-700/70">Player {slot + 1}</p>
+									<p class="text-sm leading-none text-brand-700/70">Player {slot + 1}</p>
 								{/if}
 							</li>
 						{/each}
@@ -142,7 +144,7 @@
 						{#each [2, 3] as slot (slot)}
 							{@const player = slotPlayer(slot)}
 							<li
-								class="flex min-h-11 items-center gap-2 rounded-lg border px-2.5 py-2 {player
+								class="flex h-12 items-center gap-2 overflow-hidden rounded-lg border px-2.5 {player
 									? 'border-slate-200 bg-white'
 									: 'border-dashed border-slate-200 bg-white/50'}"
 							>
@@ -153,17 +155,19 @@
 										size="sm"
 									/>
 									<div class="min-w-0 flex-1">
-										<p class="truncate text-sm font-medium text-slate-800">{playerName(player)}</p>
+										<p class="truncate text-sm font-medium leading-none text-slate-800">
+											{playerName(player)}
+										</p>
 									</div>
 									<button
 										type="button"
-										class="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+										class="shrink-0 rounded-md px-1.5 py-1 text-xs font-medium leading-none text-slate-500 hover:bg-slate-100 hover:text-slate-700"
 										onclick={() => togglePlayer(player.user_id)}
 									>
 										Remove
 									</button>
 								{:else}
-									<p class="text-sm text-slate-500">Player {slot - 1}</p>
+									<p class="text-sm leading-none text-slate-500">Player {slot - 1}</p>
 								{/if}
 							</li>
 						{/each}
@@ -172,7 +176,7 @@
 			</div>
 		</div>
 
-		<div class="flex min-h-[19rem] min-w-0 flex-1 flex-col px-5 py-4">
+		<div class="flex min-h-[22rem] min-w-0 flex-1 flex-col px-5 py-4">
 			<div class="mb-2 flex items-center justify-between gap-2">
 				<p class="text-sm font-medium text-slate-800">Idle players</p>
 				<p class="text-xs text-slate-500">{selectedIds.length}/4 selected</p>
@@ -184,7 +188,7 @@
 				</p>
 			{:else}
 				<ul
-					class="min-h-[18.25rem] max-h-[min(32rem,52vh)] space-y-2 overflow-y-auto pr-1"
+					class="min-h-[21rem] max-h-[min(36rem,58vh)] space-y-2 overflow-x-hidden overflow-y-auto p-1"
 				>
 					{#each idlePlayers as player (player.id)}
 						{@const idleSince = clampIdleSince(player.idle_since, sessionStartAt)}
@@ -194,11 +198,11 @@
 						<li>
 							<button
 								type="button"
-								class="flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition {selected
+								class="flex w-full items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5 text-left transition {selected
 									? team === 'A'
-										? 'border-brand-300 bg-brand-50'
-										: 'border-slate-300 bg-slate-100'
-									: 'border-slate-200 hover:border-slate-300'}"
+										? 'bg-brand-50 shadow-[inset_0_0_0_2px_var(--color-brand-400)]'
+										: 'bg-slate-100 shadow-[inset_0_0_0_2px_var(--color-slate-400)]'
+									: 'hover:border-slate-300'}"
 								onclick={() => togglePlayer(player.user_id)}
 							>
 								<UserAvatar

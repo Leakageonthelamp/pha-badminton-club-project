@@ -158,9 +158,16 @@ export const loadMyInviteMatch = async (
 
 	for (const row of data) {
 		const match = await loadMatchForPlayer(supabase, row.match_id, userId);
-		if (match?.status === 'pending') {
-			return match;
+		if (match?.status !== 'pending') continue;
+
+		if (
+			match.invite_expires_at &&
+			new Date(match.invite_expires_at).getTime() <= Date.now()
+		) {
+			continue;
 		}
+
+		return match;
 	}
 
 	return null;
