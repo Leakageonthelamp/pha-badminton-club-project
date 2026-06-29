@@ -160,9 +160,6 @@ export const formatMatchScoreForTeam = (games: MatchGameLike[], team: MatchTeam)
 		)
 		.join(', ');
 
-export const formatTeamRoster = (players: MatchPlayerLike[]): string =>
-	players.map((player) => player.displayName ?? 'Player').join(' · ');
-
 export const courtGridStatusLabel = (status?: MatchStatus | null): string =>
 	status ? matchStatusLabel(status) : 'Idle';
 

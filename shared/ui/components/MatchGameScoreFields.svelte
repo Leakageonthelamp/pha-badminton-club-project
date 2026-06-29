@@ -1,6 +1,6 @@
 <script lang="ts">
+	import TeamRosterList from './TeamRosterList.svelte';
 	import {
-		formatTeamRoster,
 		rallyScoreHint,
 		validateRallyGameScore,
 		type MatchPlayerLike,
@@ -52,7 +52,7 @@
 			<div class="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
 				<div class="space-y-2 text-center">
 					<p class="text-sm font-semibold text-slate-800">Team A</p>
-					<p class="text-xs text-slate-500">{formatTeamRoster(teamA)}</p>
+					<TeamRosterList players={teamA} />
 					<input
 						class="app-score-input"
 						type="number"
@@ -69,7 +69,7 @@
 
 				<div class="space-y-2 text-center">
 					<p class="text-sm font-semibold text-slate-800">Team B</p>
-					<p class="text-xs text-slate-500">{formatTeamRoster(teamB)}</p>
+					<TeamRosterList players={teamB} />
 					<input
 						class="app-score-input"
 						type="number"

@@ -1,9 +1,9 @@
 <script lang="ts">
 	import AppCard from './AppCard.svelte';
+	import TeamRosterList from './TeamRosterList.svelte';
 	import {
 		deriveGameWinner,
 		deriveMatchWinner,
-		formatTeamRoster,
 		type MatchGameLike,
 		type MatchPlayerLike
 	} from '../matches';
@@ -44,9 +44,7 @@
 							: 'bg-white ring-1 ring-slate-200'}"
 					>
 						<p class="text-xs font-semibold text-slate-700">Team A</p>
-						{#if teamA.length}
-							<p class="mt-1 line-clamp-2 text-xs text-slate-500">{formatTeamRoster(teamA)}</p>
-						{/if}
+						<TeamRosterList players={teamA} />
 						<p
 							class="mt-2 font-mono text-3xl font-bold tabular-nums {gameWinner === 'A'
 								? 'text-emerald-700'
@@ -64,9 +62,7 @@
 							: 'bg-white ring-1 ring-slate-200'}"
 					>
 						<p class="text-xs font-semibold text-slate-700">Team B</p>
-						{#if teamB.length}
-							<p class="mt-1 line-clamp-2 text-xs text-slate-500">{formatTeamRoster(teamB)}</p>
-						{/if}
+						<TeamRosterList players={teamB} />
 						<p
 							class="mt-2 font-mono text-3xl font-bold tabular-nums {gameWinner === 'B'
 								? 'text-emerald-700'

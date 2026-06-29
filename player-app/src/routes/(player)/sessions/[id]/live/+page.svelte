@@ -5,6 +5,7 @@
 	import AppCard from '@repo/ui/components/AppCard.svelte';
 	import AppModal from '@repo/ui/components/AppModal.svelte';
 	import CourtGrid from '@repo/ui/components/CourtGrid.svelte';
+	import CourtDetailModal from '@repo/ui/components/CourtDetailModal.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
 	import FormToast from '@repo/ui/components/FormToast.svelte';
@@ -19,20 +20,14 @@
 	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
 	import { formatDateTime, formatUptime } from '@repo/ui/datetime';
 	import MatchSummaryModal from '@repo/ui/components/MatchSummaryModal.svelte';
-	import ChevronDownIcon from '@repo/ui/icons/ChevronDownIcon.svelte';
-	import {
-		deriveMatchWinner,
-		formatMatchScore,
-		matchStatusBadgeClass,
-		matchStatusLabel
-	} from '@repo/ui/matches';
+	import PlayerMatchHistoryCard from '@repo/ui/components/PlayerMatchHistoryCard.svelte';
 	import { formatThb, paymentStatusLabel } from '@repo/ui/payments';
 	import { subscribePostgresChangesWithPollFallback } from '@repo/ui/realtimeSubscribe';
 	import { clampIdleSince, derivePlayerLiveStatus } from '@repo/ui/sessionStatus';
 	import PaymentQr from '$lib/components/PaymentQr.svelte';
 	import MatchInviteModal from '$lib/components/MatchInviteModal.svelte';
 	import MatchScoreConfirmModal from '$lib/components/MatchScoreConfirmModal.svelte';
-	import type { MatchWithDetails } from '$lib/types/match';
+	import type { CourtGridMatch, MatchWithDetails } from '$lib/types/match';
 	import {
 		canRequestEarlyLeave,
 		deriveLiveSessionUiState,
@@ -59,6 +54,8 @@
 	let matchNavLoading = $state(false);
 	let autoNavigatedMatchId = $state<string | null>(null);
 	let selectedHistoryMatch = $state<MatchWithDetails | null>(null);
+	let courtDetailOpen = $state(false);
+	let selectedCourtMatch = $state<CourtGridMatch | null>(null);
 
 	const session = $derived(data.session);
 	const uiState = $derived(
@@ -156,6 +153,13 @@
 	const myScorePendingMatch = $derived(
 		data.myOpenMatch?.status === 'score_pending' ? data.myOpenMatch : null
 	);
+	const sortedMyMatchHistory = $derived(
+		[...data.myMatchHistory].sort((a, b) => {
+			const aMs = new Date(a.ended_at ?? a.created_at).getTime();
+			const bMs = new Date(b.ended_at ?? b.created_at).getTime();
+			return bMs - aMs;
+		})
+	);
 	const showScoreConfirmModal = $derived.by(() => {
 		if (!myScorePendingMatch) return false;
 		const me = myScorePendingMatch.players.find((player) => player.user_id === data.userId);
@@ -244,6 +248,32 @@
 			matchNavLoading = false;
 		});
 	};
+
+	const handleCourtClick = (courtNumber: number) => {
+		const match = data.courtGridMatches.find((entry) => entry.courtNumber === courtNumber);
+		if (!match?.matchId) return;
+
+		selectedCourtMatch = match;
+		courtDetailOpen = true;
+	};
+
+	const openSelectedCourtMatch = () => {
+		if (!selectedCourtMatch?.matchId || sessionActionsBusy) return;
+
+		courtDetailOpen = false;
+		matchNavLoading = true;
+		void goto(matchLiveHref(session.id, selectedCourtMatch.matchId)).finally(() => {
+			matchNavLoading = false;
+		});
+	};
+
+	const showSelectedCourtMatchAction = $derived(
+		Boolean(
+			selectedCourtMatch?.matchId &&
+				data.myOpenMatch?.id === selectedCourtMatch.matchId &&
+				shouldOpenMatchLive(data.myOpenMatch)
+		)
+	);
 </script>
 
 <section class="space-y-6">
@@ -596,45 +626,18 @@
 
 		<AppCard class="space-y-4">
 			<SectionHeading title="Your match history" />
-			{#if data.myMatchHistory.length === 0}
+			{#if sortedMyMatchHistory.length === 0}
 				<EmptyState message="No matches recorded yet." />
 			{:else}
 				<ul class="space-y-2">
-					{#each data.myMatchHistory as match (match.id)}
-						{@const winner = deriveMatchWinner(match.games)}
+					{#each sortedMyMatchHistory as match, index (match.id)}
 						<li>
-							<button
-								type="button"
-								class="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition-colors hover:border-brand-200 hover:bg-brand-50/40"
-								onclick={() => (selectedHistoryMatch = match)}
-							>
-								<div class="min-w-0 flex-1">
-									<div class="flex flex-wrap items-center gap-2">
-										<p class="font-medium text-slate-900">Court {match.court_number}</p>
-										<span
-											class="rounded-full px-2 py-0.5 text-xs font-semibold {matchStatusBadgeClass(
-												match.status
-											)}"
-										>
-											{matchStatusLabel(match.status)}
-										</span>
-										{#if winner}
-											<span class="text-xs font-medium text-emerald-700">
-												Team {winner} won
-											</span>
-										{/if}
-									</div>
-									{#if match.games.length}
-										<p class="mt-1 font-mono text-sm tabular-nums text-slate-700">
-											{formatMatchScore(match.games)}
-										</p>
-									{/if}
-									<p class="mt-1 text-xs text-slate-500">
-										{match.shuttles_used} shuttle{match.shuttles_used === 1 ? '' : 's'}
-									</p>
-								</div>
-								<ChevronDownIcon class="h-5 w-5 shrink-0 -rotate-90 text-slate-400" />
-							</button>
+							<PlayerMatchHistoryCard
+								{match}
+								userId={data.userId}
+								matchNumber={sortedMyMatchHistory.length - index}
+								onClick={() => (selectedHistoryMatch = match)}
+							/>
 						</li>
 					{/each}
 				</ul>
@@ -643,7 +646,11 @@
 
 		<AppCard class="space-y-4">
 			<SectionHeading title="Courts" />
-			<CourtGrid courtCount={session.court_count} matches={data.courtGridMatches} />
+			<CourtGrid
+				courtCount={session.court_count}
+				matches={data.courtGridMatches}
+				onCourtClick={handleCourtClick}
+			/>
 		</AppCard>
 
 		<AppCard class="space-y-4">
@@ -735,6 +742,28 @@
 	actionLoading={actionLoading}
 	isBusy={sessionActionsBusy}
 	handleAction={handleAction}
+/>
+
+{#snippet playerCourtAction()}
+	<SubmitButton
+		type="button"
+		loading={matchNavLoading}
+		loadingLabel="Opening match…"
+		disabled={sessionActionsBusy && !matchNavLoading}
+		onclick={openSelectedCourtMatch}
+	>
+		Open match
+	</SubmitButton>
+{/snippet}
+
+<CourtDetailModal
+	open={courtDetailOpen}
+	court={selectedCourtMatch}
+	onClose={() => {
+		courtDetailOpen = false;
+		selectedCourtMatch = null;
+	}}
+	action={showSelectedCourtMatchAction ? playerCourtAction : undefined}
 />
 
 <MatchSummaryModal

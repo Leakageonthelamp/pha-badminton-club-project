@@ -5,6 +5,7 @@
 	import AppCard from '@repo/ui/components/AppCard.svelte';
 	import AppModal from '@repo/ui/components/AppModal.svelte';
 	import CourtGrid from '@repo/ui/components/CourtGrid.svelte';
+	import CourtDetailModal from '@repo/ui/components/CourtDetailModal.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
 	import FormToast from '@repo/ui/components/FormToast.svelte';
@@ -16,16 +17,9 @@
 	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
 	import ChevronDownIcon from '@repo/ui/icons/ChevronDownIcon.svelte';
 	import MatchSummaryModal from '@repo/ui/components/MatchSummaryModal.svelte';
+	import MatchHistoryCard from '@repo/ui/components/MatchHistoryCard.svelte';
+	import PlayerMatchHistoryCard from '@repo/ui/components/PlayerMatchHistoryCard.svelte';
 	import { formatDateTime, formatUptime } from '@repo/ui/datetime';
-	import {
-		deriveGameWinner,
-		deriveMatchWinner,
-		findPlayerTeam,
-		formatMatchScore,
-		playerMatchResult,
-		matchStatusBadgeClass,
-		matchStatusLabel
-	} from '@repo/ui/matches';
 	import { subscribePostgresChangesWithPollFallback } from '@repo/ui/realtimeSubscribe';
 	import { formatThb, computeCourtTotal, paymentStatusLabel } from '@repo/ui/payments';
 	import type { PaymentStatus } from '@repo/ui/payments';
@@ -40,7 +34,7 @@
 	import type { SessionPlayerWithProfile } from '$lib/types/session';
 	import SessionCancellationFees from '$lib/components/SessionCancellationFees.svelte';
 	import MatchmakingModal from '$lib/components/MatchmakingModal.svelte';
-	import type { MatchWithDetails } from '$lib/types/match';
+	import type { CourtGridMatch, MatchWithDetails } from '$lib/types/match';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { ActionData, PageData } from './$types';
 
@@ -56,6 +50,8 @@
 	let matchmakingCourt = $state<number | null>(null);
 	let matchmakingLoading = $state(false);
 	let courtLoadingNumber = $state<number | null>(null);
+	let courtDetailOpen = $state(false);
+	let selectedCourtMatch = $state<CourtGridMatch | null>(null);
 	let selectedHistoryMatch = $state<MatchWithDetails | null>(null);
 	let expandedPlayerIds = $state<Set<string>>(new Set());
 	let historyPage = $state(1);
@@ -312,15 +308,25 @@
 
 		const liveMatch = data.courtGridMatches.find((entry) => entry.courtNumber === courtNumber);
 		if (liveMatch?.matchId) {
-			courtLoadingNumber = courtNumber;
-			void goto(`/sessions/${session.id}/control/match/${liveMatch.matchId}`).finally(() => {
-				courtLoadingNumber = null;
-			});
+			selectedCourtMatch = liveMatch;
+			courtDetailOpen = true;
 			return;
 		}
 
 		matchmakingCourt = courtNumber;
 		matchmakingOpen = true;
+	};
+
+	const openSelectedCourtMatchControl = () => {
+		if (!selectedCourtMatch?.matchId || courtLoadingNumber !== null) return;
+
+		const courtNumber = selectedCourtMatch.courtNumber;
+		const matchId = selectedCourtMatch.matchId;
+		courtDetailOpen = false;
+		courtLoadingNumber = courtNumber;
+		void goto(`/sessions/${session.id}/control/match/${matchId}`).finally(() => {
+			courtLoadingNumber = null;
+		});
 	};
 
 	const submitMatchmaking = async (userIds: string[]) => {
@@ -353,152 +359,29 @@
 	};
 </script>
 
-{#snippet matchHistoryItem(match: MatchWithDetails)}
-	{@const winner = deriveMatchWinner(match.games)}
-	{@const endedMs = match.ended_at ? new Date(match.ended_at).getTime() : NaN}
-	{@const durationLabel =
-		match.started_at && !Number.isNaN(endedMs) ? formatUptime(match.started_at, endedMs) : null}
-	<li>
-		<button
-			type="button"
-			class="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition-colors hover:border-brand-200 hover:bg-brand-50/40"
-			onclick={() => (selectedHistoryMatch = match)}
+{#snippet playerMatchHistoryPanel(player: SessionPlayerWithProfile)}
+	{#if expandedPlayerIds.has(player.id)}
+		<div
+			id="player-match-history-{player.id}"
+			class="border-t border-slate-100 px-4 pb-3 pt-3"
 		>
-			<div class="min-w-0 flex-1 space-y-2">
-				<div class="flex flex-wrap items-center gap-2">
-					<p class="font-medium text-slate-900">Court {match.court_number}</p>
-					<span
-						class="rounded-full px-2 py-0.5 text-xs font-semibold {matchStatusBadgeClass(
-							match.status
-						)}"
-					>
-						{matchStatusLabel(match.status)}
-					</span>
-					{#if winner}
-						<span class="text-xs font-medium text-emerald-700">Team {winner} won</span>
-					{/if}
-				</div>
-				{#if match.games.length}
-					<div class="rounded-lg bg-slate-50 px-3 py-2 ring-1 ring-slate-100">
-						<p
-							class="font-mono text-xl font-bold leading-none tabular-nums tracking-tight text-slate-900 sm:text-2xl"
-						>
-							{formatMatchScore(match.games)}
-						</p>
-					</div>
-				{/if}
-				<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-					{#if durationLabel}
-						<span>
-							Duration
-							<span class="font-mono font-semibold tabular-nums text-slate-700">
-								{durationLabel}
-							</span>
-						</span>
-					{/if}
-					<span>
-						{match.shuttles_used} shuttle{match.shuttles_used === 1 ? '' : 's'}
-					</span>
-					{#if match.ended_at}
-						<span>{formatDateTime(match.ended_at)}</span>
-					{/if}
-				</div>
-			</div>
-			<ChevronDownIcon class="h-5 w-5 shrink-0 -rotate-90 text-slate-400" />
-		</button>
-	</li>
-{/snippet}
-
-{#snippet playerMatchHistoryItem(match: MatchWithDetails, userId: string, matchNumber: number)}
-	{@const playerTeam = findPlayerTeam(userId, match.players)}
-	{@const result = playerMatchResult(userId, match.players, match.games)}
-	{@const sortedGames = [...match.games].sort((a, b) => a.game_no - b.game_no)}
-	{@const primaryGame = sortedGames[0]}
-	{@const endedMs = match.ended_at ? new Date(match.ended_at).getTime() : NaN}
-	{@const durationLabel =
-		match.started_at && !Number.isNaN(endedMs) ? formatUptime(match.started_at, endedMs) : null}
-	<li>
-		<button
-			type="button"
-			class="flex w-full items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-left transition-colors hover:border-brand-200 hover:bg-brand-50/40"
-			onclick={() => (selectedHistoryMatch = match)}
-		>
-			<div class="min-w-0 flex-1 space-y-1.5">
-				<div class="flex flex-wrap items-center gap-1.5">
-					<p class="text-sm font-medium text-slate-900">Match {matchNumber}</p>
-					{#if result}
-						<span
-							class="rounded-full px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide {result ===
-							'win'
-								? 'bg-emerald-100 text-emerald-800'
-								: 'bg-rose-100 text-rose-800'}"
-						>
-							{result === 'win' ? 'Win' : 'Loss'}
-						</span>
-					{/if}
-				</div>
-				{#if primaryGame && playerTeam}
-					{@const gameWinner = deriveGameWinner(primaryGame)}
-					{@const playerWonGame = playerTeam === gameWinner}
-					{@const playerScore =
-						playerTeam === 'A' ? primaryGame.team_a_score : primaryGame.team_b_score}
-					{@const opponentScore =
-						playerTeam === 'A' ? primaryGame.team_b_score : primaryGame.team_a_score}
-					<div class="flex items-center gap-2">
-						<div
-							class="rounded-md px-2 py-1 text-center ring-1 {playerWonGame
-								? 'bg-emerald-50 ring-emerald-200'
-								: 'bg-slate-50 ring-slate-200'}"
-						>
-							<p class="text-[0.6rem] font-semibold uppercase tracking-wide text-slate-500">You</p>
-							<p
-								class="font-mono text-lg font-bold tabular-nums leading-none {playerWonGame
-									? 'text-emerald-700'
-									: 'text-slate-900'}"
-							>
-								{playerScore}
-							</p>
-						</div>
-						<span class="text-[0.65rem] font-semibold text-slate-400">vs</span>
-						<div
-							class="rounded-md px-2 py-1 text-center ring-1 {gameWinner && !playerWonGame
-								? 'bg-emerald-50 ring-emerald-200'
-								: 'bg-slate-50 ring-slate-200'}"
-						>
-							<p class="text-[0.6rem] font-semibold uppercase tracking-wide text-slate-500">
-								Opp
-							</p>
-							<p
-								class="font-mono text-lg font-bold tabular-nums leading-none {gameWinner &&
-								!playerWonGame
-									? 'text-emerald-700'
-									: 'text-slate-900'}"
-							>
-								{opponentScore}
-							</p>
-						</div>
-						{#if sortedGames.length > 1}
-							<span class="text-[0.65rem] text-slate-500">
-								+{sortedGames.length - 1} more game{sortedGames.length - 1 === 1 ? '' : 's'}
-							</span>
-						{/if}
-					</div>
-				{/if}
-				<div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[0.65rem] text-slate-500">
-					{#if durationLabel}
-						<span class="font-mono tabular-nums text-slate-600">{durationLabel}</span>
-					{/if}
-					<span>
-						{match.shuttles_used} shuttle{match.shuttles_used === 1 ? '' : 's'}
-					</span>
-					{#if match.ended_at}
-						<span>{formatDateTime(match.ended_at)}</span>
-					{/if}
-				</div>
-			</div>
-			<ChevronDownIcon class="h-4 w-4 shrink-0 -rotate-90 text-slate-400" />
-		</button>
-	</li>
+			<ul class="space-y-1.5">
+				{#each completedMatchesByUser.get(player.user_id) ?? [] as match, index (match.id)}
+					{@const matchNumber =
+						(completedMatchesByUser.get(player.user_id)?.length ?? 0) - index}
+					<li>
+						<PlayerMatchHistoryCard
+							{match}
+							userId={player.user_id}
+							{matchNumber}
+							compact
+							onClick={() => (selectedHistoryMatch = match)}
+						/>
+					</li>
+				{/each}
+			</ul>
+		</div>
+	{/if}
 {/snippet}
 
 {#snippet playerRosterToggleRow(
@@ -574,23 +457,6 @@
 					</p>
 				</div>
 			{/if}
-		</div>
-	{/if}
-{/snippet}
-
-{#snippet playerMatchHistoryPanel(player: SessionPlayerWithProfile)}
-	{#if expandedPlayerIds.has(player.id)}
-		<div
-			id="player-match-history-{player.id}"
-			class="border-t border-slate-100 px-4 pb-3 pt-3"
-		>
-			<ul class="space-y-1.5">
-				{#each completedMatchesByUser.get(player.user_id) ?? [] as match, index (match.id)}
-					{@const matchNumber =
-						(completedMatchesByUser.get(player.user_id)?.length ?? 0) - index}
-					{@render playerMatchHistoryItem(match, player.user_id, matchNumber)}
-				{/each}
-			</ul>
 		</div>
 	{/if}
 {/snippet}
@@ -992,7 +858,7 @@
 				<div>
 					<h2 class="text-lg font-semibold text-slate-900">Courts & matches</h2>
 					<p class="text-sm text-slate-500">
-						Tap an idle court to assign a match. Active courts open match control.
+						Tap a court to view details or assign a match on idle courts.
 					</p>
 				</div>
 			</div>
@@ -1013,7 +879,9 @@
 					</p>
 					<ul class="space-y-2">
 						{#each paginatedCompletedMatches as match (match.id)}
-							{@render matchHistoryItem(match)}
+							<li>
+								<MatchHistoryCard {match} onClick={() => (selectedHistoryMatch = match)} />
+							</li>
 						{/each}
 					</ul>
 					{#if historyPageCount > 1}
@@ -1257,6 +1125,18 @@
 	</AppModal>
 {/if}
 
+{#snippet adminCourtAction()}
+	<SubmitButton
+		type="button"
+		loading={courtLoadingNumber === selectedCourtMatch?.courtNumber}
+		loadingLabel="Opening match…"
+		disabled={courtLoadingNumber !== null && courtLoadingNumber !== selectedCourtMatch?.courtNumber}
+		onclick={openSelectedCourtMatchControl}
+	>
+		{selectedCourtMatch?.status === 'suspended' ? 'Resolve score' : 'Open match control'}
+	</SubmitButton>
+{/snippet}
+
 <MatchmakingModal
 	open={matchmakingOpen}
 	courtNumber={matchmakingCourt}
@@ -1268,6 +1148,16 @@
 		matchmakingCourt = null;
 	}}
 	onSubmit={submitMatchmaking}
+/>
+
+<CourtDetailModal
+	open={courtDetailOpen}
+	court={selectedCourtMatch}
+	onClose={() => {
+		courtDetailOpen = false;
+		selectedCourtMatch = null;
+	}}
+	action={adminCourtAction}
 />
 
 <MatchSummaryModal

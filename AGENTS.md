@@ -69,7 +69,8 @@ keep it per-app. App-specific branding stays per-app too.
 - `@repo/ui/transactions` — unified transaction filter/status helpers (both apps' transaction lists)
 - `@repo/ui/matches` — match status labels, team split, score formatting; **rally game score validation**
   (`validateRallyGameScore`, `validateMatchGames`, `rallyScoreHint`) — see **Match rally scoring** below
-- `CourtGrid` (`@repo/ui/components/CourtGrid.svelte`) — shared court display (live + control; idle until Phase 4 matches)
+- `CourtGrid` (`@repo/ui/components/CourtGrid.svelte`) — court tile grid (court name + status); pair with `CourtDetailModal` for rosters and actions
+- `CourtDetailModal` (`@repo/ui/components/CourtDetailModal.svelte`) — court detail modal (Team A/B rosters, status, optional action snippet)
 - `MatchGameScoreFields` (`@repo/ui/components/MatchGameScoreFields.svelte`) — Team A vs B score entry with inline validation
 
 ## Styles

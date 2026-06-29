@@ -367,15 +367,59 @@ body {
 		@apply flex h-full items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3;
 	}
 
-	.app-court-grid-card--loading {
+	.app-court-tile {
+		@apply flex h-full min-h-44 flex-col items-center justify-center gap-4 rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50/90 p-5 text-center shadow-sm;
+	}
+
+	.app-court-tile:hover {
+		@apply border-brand-300 shadow-md;
+	}
+
+	.app-court-icon {
+		@apply relative shrink-0 rounded-2xl border-2 border-brand-300 bg-gradient-to-b from-brand-50 via-white to-brand-50/40 shadow-sm ring-1 ring-brand-100/80;
+	}
+
+	.app-court-icon--md {
+		@apply h-28 w-[4.75rem];
+	}
+
+	.app-court-icon--lg {
+		@apply h-32 w-24;
+	}
+
+	.app-court-icon-net-h {
+		@apply absolute inset-x-3 top-1/2 h-0.5 -translate-y-1/2 rounded-full bg-brand-300/90;
+	}
+
+	.app-court-icon-net-v {
+		@apply absolute inset-y-3 left-1/2 w-0.5 -translate-x-1/2 rounded-full bg-brand-300/90;
+	}
+
+	.app-court-icon--lg .app-court-icon-net-h {
+		@apply inset-x-4;
+	}
+
+	.app-court-icon--lg .app-court-icon-net-v {
+		@apply inset-y-4;
+	}
+
+	/* legacy alias — court grid used this class name before CourtIcon */
+	.app-court-tile-icon {
+		@apply relative h-28 w-[4.75rem] shrink-0 rounded-2xl border-2 border-brand-300 bg-gradient-to-b from-brand-50 via-white to-brand-50/40 shadow-sm ring-1 ring-brand-100/80;
+	}
+
+	.app-court-grid-card--loading,
+	.app-court-tile--loading {
 		@apply relative pointer-events-none text-transparent;
 	}
 
-	.app-court-grid-card--loading > * {
+	.app-court-grid-card--loading > *,
+	.app-court-tile--loading > * {
 		@apply invisible opacity-0;
 	}
 
-	.app-court-grid-card--loading::after {
+	.app-court-grid-card--loading::after,
+	.app-court-tile--loading::after {
 		content: '';
 		position: absolute;
 		inset: 0;

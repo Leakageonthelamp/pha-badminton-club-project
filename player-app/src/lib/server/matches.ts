@@ -219,7 +219,13 @@ export const loadMyMatchHistory = async (
 
 export const toCourtGridMatches = (matches: MatchWithDetails[]): CourtGridMatch[] =>
 	matches
-		.filter((match) => match.status === 'pending' || match.status === 'active')
+		.filter(
+			(match) =>
+				match.status === 'pending' ||
+				match.status === 'active' ||
+				match.status === 'score_pending' ||
+				match.status === 'suspended'
+		)
 		.map((match) => {
 			const { teamA, teamB } = splitTeams(
 				match.players.map((player) => ({
