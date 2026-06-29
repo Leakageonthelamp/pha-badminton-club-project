@@ -34,6 +34,10 @@ export const matchLiveHref = (sessionId: string, matchId: string): string =>
 	`/sessions/${sessionId}/live/match/${matchId}`;
 
 export const shouldOpenMatchLive = (match: { status: string } | null | undefined): boolean =>
+	hasCourtMatch(match);
+
+/** Auto-redirect when play starts — not when score confirmation begins. */
+export const shouldAutoOpenMatchLive = (match: { status: string } | null | undefined): boolean =>
 	match?.status === 'active';
 
 export const isInUnresolvedMatch = (match: { status: string } | null | undefined): boolean =>

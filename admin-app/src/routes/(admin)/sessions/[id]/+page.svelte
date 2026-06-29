@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import FormToast from '@repo/ui/components/FormToast.svelte';
 	import AppCard from '@repo/ui/components/AppCard.svelte';
 	import AppModal from '@repo/ui/components/AppModal.svelte';
@@ -27,6 +28,7 @@
 	} from '$lib/types/session';
 	import SessionHistoryDetail from '$lib/components/SessionHistoryDetail.svelte';
 	import SessionCancellationFees from '$lib/components/SessionCancellationFees.svelte';
+	import { toast } from '@repo/ui/toast/toast.svelte';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -53,15 +55,28 @@
 	const waitingPlayers = $derived(data.players.filter((p) => p.status === 'waiting'));
 	const queuedPlayers = $derived(data.players.filter((p) => p.status === 'queued'));
 	const confirmedPlayers = $derived(data.players.filter((p) => p.status === 'confirmed'));
-	const toastMessage = $derived(
-		form?.message ??
-			(data.edited
-				? 'Session updated and returned to draft. Open it again when ready.'
-				: data.created
-					? 'Session created.'
-					: null)
-	);
-	const toastVariant = $derived(form?.success || data.created || data.edited ? 'success' : 'error');
+	const toastMessage = $derived(form?.message ?? null);
+	const toastVariant = $derived(form?.success ? 'success' : 'error');
+
+	let flashToastShown = $state(false);
+
+	$effect(() => {
+		if (flashToastShown) return;
+
+		const flashMessage = data.edited
+			? 'Session updated and returned to draft. Open it again when ready.'
+			: data.created
+				? 'Session created.'
+				: null;
+		if (!flashMessage) return;
+
+		flashToastShown = true;
+		toast.show(flashMessage, 'success');
+
+		if (page.url.searchParams.has('created') || page.url.searchParams.has('edited')) {
+			void goto(page.url.pathname, { replaceState: true, keepFocus: true, noScroll: true });
+		}
+	});
 
 	const locationLabel = $derived(
 		session.latitude !== null && session.longitude !== null
@@ -125,7 +140,6 @@
 		};
 
 	const participantActionClass = '!w-auto !rounded-lg !px-3 !py-1.5 !text-sm';
-
 </script>
 
 {#snippet participantsSection()}
@@ -222,7 +236,9 @@
 			</div>
 
 			<div class="space-y-3">
-				<h3 class="app-section-heading">Buffer queue ({queuedPlayers.length}/{session.max_buffer})</h3>
+				<h3 class="app-section-heading">
+					Buffer queue ({queuedPlayers.length}/{session.max_buffer})
+				</h3>
 				{#if queuedPlayers.length === 0}
 					<p class="text-sm text-slate-500">No players in the buffer queue.</p>
 				{:else}
@@ -302,321 +318,322 @@
 		bind:feeActionLoading
 	/>
 {:else}
-<section class="space-y-6">
-	<DashboardHero
-		eyebrow="Session"
-		title={session.name}
-		subtitle={session.club?.name ?? 'Club session'}
-	>
-		<div class="app-hero-status {sessionStatusHeroClass(session.status)}">
-			<span
-				class="app-hero-status-dot {sessionStatusShowsLiveDot(session.status) ? 'animate-pulse' : ''}"
-				aria-hidden="true"
-			></span>
-			<div class="min-w-0 flex-1">
-				<p class="app-hero-status-label">Session status</p>
-				<p class="app-hero-status-value">{sessionStatusLabel(session.status)}</p>
-			</div>
-			{#if data.isHost}
-				<span class="app-hero-badge shrink-0">You created this</span>
-			{:else}
-				<span class="app-hero-badge shrink-0">Observation only</span>
+	<section class="space-y-6">
+		<div class="grid gap-6 lg:items-stretch">
+			<DashboardHero
+				eyebrow="Session"
+				title={session.name}
+				subtitle={session.club?.name ?? 'Club session'}
+			>
+				<div class="app-hero-status {sessionStatusHeroClass(session.status)}">
+					<span
+						class="app-hero-status-dot {sessionStatusShowsLiveDot(session.status)
+							? 'animate-pulse'
+							: ''}"
+						aria-hidden="true"
+					></span>
+					<div class="min-w-0 flex-1">
+						<p class="app-hero-status-label">Session status</p>
+						<p class="app-hero-status-value">{sessionStatusLabel(session.status)}</p>
+					</div>
+					{#if data.isHost}
+						<span class="app-hero-badge shrink-0">You created this</span>
+					{:else}
+						<span class="app-hero-badge shrink-0">Observation only</span>
+					{/if}
+				</div>
+			</DashboardHero>
+
+			{#if data.canControl}
+				<AppCard class="flex h-full flex-col justify-between gap-4 border-sky-200 bg-sky-50/60">
+					<div>
+						<h2 class="text-lg font-semibold text-sky-900">Session in progress</h2>
+						<p class="mt-1 text-sm text-sky-800">
+							Open session control to manage live play, courts, and participants.
+						</p>
+					</div>
+					<SubmitButton
+						type="button"
+						class="w-full! sm:w-auto"
+						loading={controlNavLoading}
+						loadingLabel="Opening…"
+						onclick={goToSessionControl}
+					>
+						Session control
+					</SubmitButton>
+				</AppCard>
 			{/if}
 		</div>
-	</DashboardHero>
 
-	<SessionStartCountdown
-		startAt={session.start_at}
-		active={session.status === 'open'}
-		showUntilStart
-		class="mt-4"
-	/>
+		<SessionStartCountdown
+			startAt={session.start_at}
+			active={session.status === 'open'}
+			showUntilStart
+			class="mt-4"
+		/>
 
-	{@render participantsSection()}
+		{@render participantsSection()}
 
-	{#if data.canManage && data.cancellationFees.length > 0}
+		{#if data.canManage && data.cancellationFees.length > 0}
+			<AppCard class="space-y-4">
+				<div>
+					<h2 class="text-lg font-semibold text-slate-900">Cancellation fees</h2>
+					<p class="mt-1 text-sm text-slate-600">
+						Late cancellations waiting for payment or admin confirmation.
+					</p>
+				</div>
+				<SessionCancellationFees
+					fees={data.cancellationFees}
+					sessionId={session.id}
+					bind:feeActionLoading
+				/>
+			</AppCard>
+		{/if}
+
+		{#if session.status === 'draft'}
+			<AppCard class="space-y-4 border-amber-200 bg-amber-50/60">
+				<div>
+					<h2 class="text-lg font-semibold text-amber-900">Draft session</h2>
+					<p class="mt-2 text-sm text-amber-800">
+						This session is hidden from players until you open it. Open by
+						{formatDateTime(data.draftOpenDeadline)} (1 hour before start) or it will be auto-cancelled.
+					</p>
+				</div>
+				{#if data.canOpen}
+					<SubmitButton type="button" class="!w-auto" onclick={() => (openModalOpen = true)}>
+						Open session
+					</SubmitButton>
+				{:else if data.canManage}
+					<p class="text-sm text-amber-800">The open window has passed.</p>
+				{/if}
+			</AppCard>
+		{/if}
+
+		{#if data.canModify}
+			<AppCard class="space-y-4">
+				<div>
+					<h2 class="text-lg font-semibold text-slate-900">Manage session</h2>
+					<p class="mt-1 text-sm text-slate-600">
+						Edit or cancel until 15 minutes before start. After that, changes are locked.
+					</p>
+				</div>
+				<div class="flex flex-wrap gap-2">
+					<SubmitButton
+						type="button"
+						variant="secondary"
+						class="!w-auto"
+						onclick={() => goto(`/sessions/${session.id}/edit`)}
+					>
+						Edit session
+					</SubmitButton>
+					<SubmitButton
+						type="button"
+						variant="ghost"
+						class="!w-auto !text-red-700 hover:!bg-red-50"
+						onclick={() => (cancelModalOpen = true)}
+					>
+						Cancel session
+					</SubmitButton>
+				</div>
+			</AppCard>
+		{/if}
+
 		<AppCard class="space-y-4">
-			<div>
-				<h2 class="text-lg font-semibold text-slate-900">Cancellation fees</h2>
-				<p class="mt-1 text-sm text-slate-600">
-					Late cancellations waiting for payment or admin confirmation.
-				</p>
-			</div>
-			<SessionCancellationFees
-				fees={data.cancellationFees}
-				sessionId={session.id}
-				bind:feeActionLoading
-			/>
+			<h2 class="text-lg font-semibold text-slate-900">Description</h2>
+			<RichTextDisplay html={session.description} />
 		</AppCard>
-	{/if}
 
-	{#if session.status === 'draft'}
-		<AppCard class="space-y-4 border-amber-200 bg-amber-50/60">
-			<div>
-				<h2 class="text-lg font-semibold text-amber-900">Draft session</h2>
-				<p class="mt-2 text-sm text-amber-800">
-					This session is hidden from players until you open it. Open by
-					{formatDateTime(data.draftOpenDeadline)} (1 hour before start) or it will be
-					auto-cancelled.
-				</p>
+		<section class="app-detail-section">
+			<div
+				class="border-b border-brand-100 bg-gradient-to-br from-brand-50 via-white to-brand-50/50 px-4 py-4 sm:px-6"
+			>
+				<div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+					<div class="app-history-stat">
+						<p class="app-history-stat-label">Start</p>
+						<p class="app-history-stat-value">{formatTime(session.start_at)}</p>
+						<p class="app-history-stat-hint">{formatDate(session.start_at)}</p>
+					</div>
+					<div class="app-history-stat border-brand-200/80 bg-brand-50/50">
+						<p class="app-history-stat-label">Duration</p>
+						<p class="app-history-stat-value">
+							{formatSessionDuration(session.start_at, session.end_at)}
+						</p>
+						<p class="app-history-stat-hint">
+							{session.court_count} court{session.court_count === 1 ? '' : 's'}
+						</p>
+					</div>
+					<div class="app-history-stat">
+						<p class="app-history-stat-label">End</p>
+						<p class="app-history-stat-value">{formatTime(session.end_at)}</p>
+						<p class="app-history-stat-hint">{formatDate(session.end_at)}</p>
+					</div>
+				</div>
 			</div>
-			{#if data.canOpen}
-				<SubmitButton
-					type="button"
-					class="!w-auto"
-					onclick={() => (openModalOpen = true)}
-				>
-					Open session
-				</SubmitButton>
-			{:else if data.canManage}
-				<p class="text-sm text-amber-800">The open window has passed.</p>
-			{/if}
-		</AppCard>
-	{/if}
 
-	{#if data.canModify}
-		<AppCard class="space-y-4">
-			<div>
-				<h2 class="text-lg font-semibold text-slate-900">Manage session</h2>
-				<p class="mt-1 text-sm text-slate-600">
-					Edit or cancel until 15 minutes before start. After that, changes are locked.
-				</p>
+			<div class="app-detail-section-body space-y-6">
+				<div class="app-detail-section-header">
+					<span class="app-detail-section-icon" aria-hidden="true">
+						<LayersIcon class="h-5 w-5" />
+					</span>
+					<div>
+						<h2 class="text-lg font-semibold text-slate-900">Session details</h2>
+						<p class="text-sm text-slate-500">Overview, venue, capacity, and match settings</p>
+					</div>
+				</div>
+
+				<div class="space-y-3">
+					<h3 class="app-section-heading">Overview</h3>
+					<dl class="app-detail-contact-grid">
+						<div class="app-detail-contact-item">
+							<dt class="app-detail-contact-label">
+								<span class="inline-flex items-center gap-1.5">
+									<BuildingIcon class="h-4 w-4 text-brand-500" />
+									Club
+								</span>
+							</dt>
+							<dd class="app-detail-contact-value">{session.club?.name ?? '—'}</dd>
+						</div>
+						<div class="app-detail-contact-item">
+							<dt class="app-detail-contact-label">
+								<span class="inline-flex items-center gap-1.5">
+									<UserIcon class="h-4 w-4 text-brand-500" />
+									Host
+								</span>
+							</dt>
+							<dd class="app-detail-contact-value">{session.host?.display_name ?? '—'}</dd>
+						</div>
+						<div class="app-detail-contact-item sm:col-span-2">
+							<dt class="app-detail-contact-label">Status</dt>
+							<dd class="app-detail-contact-value">
+								<span
+									class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold {sessionStatusBadgeClass(
+										session.status
+									)}"
+								>
+									{sessionStatusLabel(session.status)}
+								</span>
+							</dd>
+						</div>
+					</dl>
+				</div>
+
+				<div class="space-y-3">
+					<h3 class="app-section-heading">Venue</h3>
+					<dl class="app-detail-contact-grid">
+						<div class="app-detail-contact-item app-detail-contact-item--wide">
+							<dt class="app-detail-contact-label">Venue name</dt>
+							<dd class="app-detail-contact-value text-base">{session.venue_name ?? '—'}</dd>
+						</div>
+						<div class="app-detail-contact-item app-detail-contact-item--wide">
+							<dt class="app-detail-contact-label">Map coordinates</dt>
+							<dd class="app-detail-contact-value">
+								{#if locationLabel && mapsUrl}
+									<a
+										href={mapsUrl}
+										target="_blank"
+										rel="noopener noreferrer"
+										class="font-mono text-sm text-brand-700 underline decoration-brand-200 underline-offset-2 hover:text-brand-800"
+									>
+										{locationLabel}
+									</a>
+									<span class="text-xs text-slate-500">Open in Maps</span>
+								{:else}
+									<span class="text-slate-500">—</span>
+								{/if}
+							</dd>
+						</div>
+					</dl>
+				</div>
+
+				<div class="space-y-3">
+					<h3 class="app-section-heading">Capacity & pricing</h3>
+					<dl class="app-detail-meta-grid">
+						<div class="app-detail-meta-item">
+							<dt class="app-detail-meta-label">Players</dt>
+							<dd class="app-detail-meta-value">
+								<span class="text-lg font-semibold text-brand-700">{session.min_players}</span>
+								<span class="text-slate-400"> – </span>
+								<span class="text-lg font-semibold text-brand-700">{session.max_players}</span>
+								<span class="ml-1 text-xs font-normal text-slate-500">min – max</span>
+							</dd>
+						</div>
+						<div class="app-detail-meta-item">
+							<dt class="app-detail-meta-label">Courts</dt>
+							<dd class="app-detail-meta-value">
+								<span class="text-lg font-semibold text-brand-700">{session.court_count}</span>
+							</dd>
+						</div>
+						<div class="app-detail-meta-item">
+							<dt class="app-detail-meta-label">Court fee / hour</dt>
+							<dd class="app-detail-meta-value text-base text-brand-800">
+								{formatThb(session.court_fee_per_hour)}
+							</dd>
+						</div>
+						<div class="app-detail-meta-item sm:col-span-2">
+							<dt class="app-detail-meta-label">Shuttle</dt>
+							<dd class="app-detail-meta-value">{shuttleLabel}</dd>
+						</div>
+						<div class="app-detail-meta-item">
+							<dt class="app-detail-meta-label">Buffer queue</dt>
+							<dd class="app-detail-meta-value">
+								<span class="text-lg font-semibold text-brand-700">{session.max_buffer}</span>
+								<span class="ml-1 text-xs font-normal text-slate-500">max overflow</span>
+							</dd>
+						</div>
+						<div class="app-detail-meta-item">
+							<dt class="app-detail-meta-label">Late cancel fee</dt>
+							<dd class="app-detail-meta-value text-base text-brand-800">
+								{formatThb(session.cancellation_fee)}
+							</dd>
+						</div>
+					</dl>
+				</div>
+
+				<div class="space-y-3">
+					<h3 class="app-section-heading">Match settings</h3>
+					<dl class="app-detail-contact-grid">
+						<div class="app-detail-contact-item">
+							<dt class="app-detail-contact-label">
+								<span class="inline-flex items-center gap-1.5">
+									<SettingsIcon class="h-4 w-4 text-brand-500" />
+									Match score
+								</span>
+							</dt>
+							<dd class="app-detail-contact-value">{session.match_score_type} points</dd>
+						</div>
+						<div class="app-detail-contact-item">
+							<dt class="app-detail-contact-label">
+								<span class="inline-flex items-center gap-1.5">
+									<SettingsIcon class="h-4 w-4 text-brand-500" />
+									Match type
+								</span>
+							</dt>
+							<dd class="app-detail-contact-value">{matchTypeLabel(session.match_type)}</dd>
+						</div>
+					</dl>
+				</div>
 			</div>
-			<div class="flex flex-wrap gap-2">
-				<SubmitButton
-					type="button"
-					variant="secondary"
-					class="!w-auto"
-					onclick={() => goto(`/sessions/${session.id}/edit`)}
-				>
-					Edit session
-				</SubmitButton>
+		</section>
+
+		{#if data.isSuperAdmin && session.status !== 'closed' && session.status !== 'cancelled'}
+			<AppCard class="space-y-4 border-red-200 bg-red-50/40">
+				<div>
+					<h2 class="text-lg font-semibold text-red-900">Danger zone</h2>
+					<p class="mt-2 text-sm text-red-800">
+						Force end this session immediately. Super admins only.
+					</p>
+				</div>
 				<SubmitButton
 					type="button"
 					variant="ghost"
-					class="!w-auto !text-red-700 hover:!bg-red-50"
-					onclick={() => (cancelModalOpen = true)}
+					class="!w-auto !text-red-700 hover:!bg-red-100"
+					onclick={() => (forceEndModalOpen = true)}
 				>
-					Cancel session
+					Force end session
 				</SubmitButton>
-			</div>
-		</AppCard>
-	{/if}
-
-	{#if data.canControl}
-		<AppCard class="space-y-4 border-sky-200 bg-sky-50/60">
-			<div>
-				<h2 class="text-lg font-semibold text-sky-900">Session in progress</h2>
-				<p class="mt-1 text-sm text-sky-800">
-					Open session control to manage live play, courts, and participants.
-				</p>
-			</div>
-			<SubmitButton
-				type="button"
-				class="!w-auto"
-				loading={controlNavLoading}
-				loadingLabel="Opening…"
-				onclick={goToSessionControl}
-			>
-				Session control
-			</SubmitButton>
-		</AppCard>
-	{/if}
-
-	<AppCard class="space-y-4">
-		<h2 class="text-lg font-semibold text-slate-900">Description</h2>
-		<RichTextDisplay html={session.description} />
-	</AppCard>
-
-	<section class="app-detail-section">
-		<div class="border-b border-brand-100 bg-gradient-to-br from-brand-50 via-white to-brand-50/50 px-4 py-4 sm:px-6">
-			<div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-				<div class="app-history-stat">
-					<p class="app-history-stat-label">Start</p>
-					<p class="app-history-stat-value">{formatTime(session.start_at)}</p>
-					<p class="app-history-stat-hint">{formatDate(session.start_at)}</p>
-				</div>
-				<div class="app-history-stat border-brand-200/80 bg-brand-50/50">
-					<p class="app-history-stat-label">Duration</p>
-					<p class="app-history-stat-value">
-						{formatSessionDuration(session.start_at, session.end_at)}
-					</p>
-					<p class="app-history-stat-hint">
-						{session.court_count} court{session.court_count === 1 ? '' : 's'}
-					</p>
-				</div>
-				<div class="app-history-stat">
-					<p class="app-history-stat-label">End</p>
-					<p class="app-history-stat-value">{formatTime(session.end_at)}</p>
-					<p class="app-history-stat-hint">{formatDate(session.end_at)}</p>
-				</div>
-			</div>
-		</div>
-
-		<div class="app-detail-section-body space-y-6">
-			<div class="app-detail-section-header">
-				<span class="app-detail-section-icon" aria-hidden="true">
-					<LayersIcon class="h-5 w-5" />
-				</span>
-				<div>
-					<h2 class="text-lg font-semibold text-slate-900">Session details</h2>
-					<p class="text-sm text-slate-500">Overview, venue, capacity, and match settings</p>
-				</div>
-			</div>
-
-			<div class="space-y-3">
-				<h3 class="app-section-heading">Overview</h3>
-				<dl class="app-detail-contact-grid">
-					<div class="app-detail-contact-item">
-						<dt class="app-detail-contact-label">
-							<span class="inline-flex items-center gap-1.5">
-								<BuildingIcon class="h-4 w-4 text-brand-500" />
-								Club
-							</span>
-						</dt>
-						<dd class="app-detail-contact-value">{session.club?.name ?? '—'}</dd>
-					</div>
-					<div class="app-detail-contact-item">
-						<dt class="app-detail-contact-label">
-							<span class="inline-flex items-center gap-1.5">
-								<UserIcon class="h-4 w-4 text-brand-500" />
-								Host
-							</span>
-						</dt>
-						<dd class="app-detail-contact-value">{session.host?.display_name ?? '—'}</dd>
-					</div>
-					<div class="app-detail-contact-item sm:col-span-2">
-						<dt class="app-detail-contact-label">Status</dt>
-						<dd class="app-detail-contact-value">
-							<span
-								class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold {sessionStatusBadgeClass(
-									session.status
-								)}"
-							>
-								{sessionStatusLabel(session.status)}
-							</span>
-						</dd>
-					</div>
-				</dl>
-			</div>
-
-			<div class="space-y-3">
-				<h3 class="app-section-heading">Venue</h3>
-				<dl class="app-detail-contact-grid">
-					<div class="app-detail-contact-item app-detail-contact-item--wide">
-						<dt class="app-detail-contact-label">Venue name</dt>
-						<dd class="app-detail-contact-value text-base">{session.venue_name ?? '—'}</dd>
-					</div>
-					<div class="app-detail-contact-item app-detail-contact-item--wide">
-						<dt class="app-detail-contact-label">Map coordinates</dt>
-						<dd class="app-detail-contact-value">
-							{#if locationLabel && mapsUrl}
-								<a
-									href={mapsUrl}
-									target="_blank"
-									rel="noopener noreferrer"
-									class="font-mono text-sm text-brand-700 underline decoration-brand-200 underline-offset-2 hover:text-brand-800"
-								>
-									{locationLabel}
-								</a>
-								<span class="text-xs text-slate-500">Open in Maps</span>
-							{:else}
-								<span class="text-slate-500">—</span>
-							{/if}
-						</dd>
-					</div>
-				</dl>
-			</div>
-
-			<div class="space-y-3">
-				<h3 class="app-section-heading">Capacity & pricing</h3>
-				<dl class="app-detail-meta-grid">
-					<div class="app-detail-meta-item">
-						<dt class="app-detail-meta-label">Players</dt>
-						<dd class="app-detail-meta-value">
-							<span class="text-lg font-semibold text-brand-700">{session.min_players}</span>
-							<span class="text-slate-400"> – </span>
-							<span class="text-lg font-semibold text-brand-700">{session.max_players}</span>
-							<span class="ml-1 text-xs font-normal text-slate-500">min – max</span>
-						</dd>
-					</div>
-					<div class="app-detail-meta-item">
-						<dt class="app-detail-meta-label">Courts</dt>
-						<dd class="app-detail-meta-value">
-							<span class="text-lg font-semibold text-brand-700">{session.court_count}</span>
-						</dd>
-					</div>
-					<div class="app-detail-meta-item">
-						<dt class="app-detail-meta-label">Court fee / hour</dt>
-						<dd class="app-detail-meta-value text-base text-brand-800">
-							{formatThb(session.court_fee_per_hour)}
-						</dd>
-					</div>
-					<div class="app-detail-meta-item sm:col-span-2">
-						<dt class="app-detail-meta-label">Shuttle</dt>
-						<dd class="app-detail-meta-value">{shuttleLabel}</dd>
-					</div>
-					<div class="app-detail-meta-item">
-						<dt class="app-detail-meta-label">Buffer queue</dt>
-						<dd class="app-detail-meta-value">
-							<span class="text-lg font-semibold text-brand-700">{session.max_buffer}</span>
-							<span class="ml-1 text-xs font-normal text-slate-500">max overflow</span>
-						</dd>
-					</div>
-					<div class="app-detail-meta-item">
-						<dt class="app-detail-meta-label">Late cancel fee</dt>
-						<dd class="app-detail-meta-value text-base text-brand-800">
-							{formatThb(session.cancellation_fee)}
-						</dd>
-					</div>
-				</dl>
-			</div>
-
-			<div class="space-y-3">
-				<h3 class="app-section-heading">Match settings</h3>
-				<dl class="app-detail-contact-grid">
-					<div class="app-detail-contact-item">
-						<dt class="app-detail-contact-label">
-							<span class="inline-flex items-center gap-1.5">
-								<SettingsIcon class="h-4 w-4 text-brand-500" />
-								Match score
-							</span>
-						</dt>
-						<dd class="app-detail-contact-value">{session.match_score_type} points</dd>
-					</div>
-					<div class="app-detail-contact-item">
-						<dt class="app-detail-contact-label">
-							<span class="inline-flex items-center gap-1.5">
-								<SettingsIcon class="h-4 w-4 text-brand-500" />
-								Match type
-							</span>
-						</dt>
-						<dd class="app-detail-contact-value">{matchTypeLabel(session.match_type)}</dd>
-					</div>
-				</dl>
-			</div>
-		</div>
+			</AppCard>
+		{/if}
 	</section>
-
-	{#if data.isSuperAdmin && session.status !== 'closed' && session.status !== 'cancelled'}
-		<AppCard class="space-y-4 border-red-200 bg-red-50/40">
-			<div>
-				<h2 class="text-lg font-semibold text-red-900">Danger zone</h2>
-				<p class="mt-2 text-sm text-red-800">
-					Force end this session immediately. Super admins only.
-				</p>
-			</div>
-			<SubmitButton
-				type="button"
-				variant="ghost"
-				class="!w-auto !text-red-700 hover:!bg-red-100"
-				onclick={() => (forceEndModalOpen = true)}
-			>
-				Force end session
-			</SubmitButton>
-		</AppCard>
-	{/if}
-</section>
 {/if}
 
 {#if !data.isHistoryView && forceEndModalOpen}
@@ -665,9 +682,7 @@
 	>
 		<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
 			<div class="border-b border-brand-100 bg-brand-50 px-4 py-4">
-				<h2 id="open-session-title" class="text-lg font-semibold text-brand-900">
-					Open session?
-				</h2>
+				<h2 id="open-session-title" class="text-lg font-semibold text-brand-900">Open session?</h2>
 				<p class="mt-2 text-sm text-brand-800">
 					Players will be able to discover and join this session once it is open.
 				</p>

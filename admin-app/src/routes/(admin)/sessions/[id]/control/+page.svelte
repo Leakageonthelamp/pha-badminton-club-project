@@ -14,20 +14,33 @@
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
 	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
+	import ChevronDownIcon from '@repo/ui/icons/ChevronDownIcon.svelte';
+	import MatchSummaryModal from '@repo/ui/components/MatchSummaryModal.svelte';
 	import { formatDateTime, formatUptime } from '@repo/ui/datetime';
-	import { formatMatchScore } from '@repo/ui/matches';
+	import {
+		deriveGameWinner,
+		deriveMatchWinner,
+		findPlayerTeam,
+		formatMatchScore,
+		playerMatchResult,
+		matchStatusBadgeClass,
+		matchStatusLabel
+	} from '@repo/ui/matches';
 	import { subscribePostgresChangesWithPollFallback } from '@repo/ui/realtimeSubscribe';
-	import { formatThb, paymentStatusLabel } from '@repo/ui/payments';
+	import { formatThb, computeCourtTotal, paymentStatusLabel } from '@repo/ui/payments';
 	import type { PaymentStatus } from '@repo/ui/payments';
 	import {
 		clampIdleSince,
 		derivePlayerLiveStatus,
-		idleSinceSortKey
+		idleSinceSortKey,
+		type PlayerLiveStatus
 	} from '@repo/ui/sessionStatus';
 	import { createSupabaseBrowserClient } from '$lib/supabase/client';
 	import { sessionStatusBadgeClass, sessionStatusLabel } from '$lib/types/session';
+	import type { SessionPlayerWithProfile } from '$lib/types/session';
 	import SessionCancellationFees from '$lib/components/SessionCancellationFees.svelte';
 	import MatchmakingModal from '$lib/components/MatchmakingModal.svelte';
+	import type { MatchWithDetails } from '$lib/types/match';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { ActionData, PageData } from './$types';
 
@@ -43,8 +56,84 @@
 	let matchmakingCourt = $state<number | null>(null);
 	let matchmakingLoading = $state(false);
 	let courtLoadingNumber = $state<number | null>(null);
+	let selectedHistoryMatch = $state<MatchWithDetails | null>(null);
+	let expandedPlayerIds = $state<Set<string>>(new Set());
+	let historyPage = $state(1);
+
+	const MATCH_HISTORY_PAGE_SIZE = 5;
+
+	const sortedCompletedMatches = $derived(
+		[...data.completedMatches].sort((a, b) => {
+			const aMs = new Date(a.ended_at ?? a.created_at).getTime();
+			const bMs = new Date(b.ended_at ?? b.created_at).getTime();
+			return bMs - aMs;
+		})
+	);
+	const historyPageCount = $derived(
+		Math.max(1, Math.ceil(sortedCompletedMatches.length / MATCH_HISTORY_PAGE_SIZE))
+	);
+	const paginatedCompletedMatches = $derived(
+		sortedCompletedMatches.slice(
+			(historyPage - 1) * MATCH_HISTORY_PAGE_SIZE,
+			historyPage * MATCH_HISTORY_PAGE_SIZE
+		)
+	);
+
+	$effect(() => {
+		if (historyPage > historyPageCount) {
+			historyPage = historyPageCount;
+		}
+	});
+
+	const completedMatchesByUser = $derived.by(() => {
+		const map = new Map<string, MatchWithDetails[]>();
+
+		for (const match of data.matches) {
+			if (match.status !== 'completed') continue;
+
+			for (const player of match.players) {
+				const list = map.get(player.user_id) ?? [];
+				list.push(match);
+				map.set(player.user_id, list);
+			}
+		}
+
+		for (const [userId, matches] of map) {
+			map.set(
+				userId,
+				[...matches].sort((a, b) => {
+					const aMs = new Date(a.ended_at ?? a.created_at).getTime();
+					const bMs = new Date(b.ended_at ?? b.created_at).getTime();
+					return bMs - aMs;
+				})
+			);
+		}
+
+		return map;
+	});
+
+	const matchCountForPlayer = (userId: string) => completedMatchesByUser.get(userId)?.length ?? 0;
+
+	function togglePlayerMatchHistory(playerId: string) {
+		const next = new Set(expandedPlayerIds);
+		if (next.has(playerId)) next.delete(playerId);
+		else next.add(playerId);
+		expandedPlayerIds = next;
+	}
 
 	const session = $derived(data.session);
+	const totalCourtFee = $derived(
+		computeCourtTotal({
+			courtFeePerHour: session.court_fee_per_hour,
+			startAt: session.start_at,
+			endAt: session.end_at,
+			courtCount: session.court_count
+		})
+	);
+	const shuttlesUsed = $derived(
+		data.matches.reduce((sum, match) => sum + match.shuttles_used, 0)
+	);
+	const totalShuttleFee = $derived(shuttlesUsed * session.shuttle_price_per_each);
 	const activePlayers = $derived(data.players.filter((player) => player.status === 'confirmed'));
 	const checklistPlayers = $derived.by(() => {
 		const confirmed = data.players.filter((player) => player.status === 'confirmed');
@@ -264,6 +353,267 @@
 	};
 </script>
 
+{#snippet matchHistoryItem(match: MatchWithDetails)}
+	{@const winner = deriveMatchWinner(match.games)}
+	{@const endedMs = match.ended_at ? new Date(match.ended_at).getTime() : NaN}
+	{@const durationLabel =
+		match.started_at && !Number.isNaN(endedMs) ? formatUptime(match.started_at, endedMs) : null}
+	<li>
+		<button
+			type="button"
+			class="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition-colors hover:border-brand-200 hover:bg-brand-50/40"
+			onclick={() => (selectedHistoryMatch = match)}
+		>
+			<div class="min-w-0 flex-1 space-y-2">
+				<div class="flex flex-wrap items-center gap-2">
+					<p class="font-medium text-slate-900">Court {match.court_number}</p>
+					<span
+						class="rounded-full px-2 py-0.5 text-xs font-semibold {matchStatusBadgeClass(
+							match.status
+						)}"
+					>
+						{matchStatusLabel(match.status)}
+					</span>
+					{#if winner}
+						<span class="text-xs font-medium text-emerald-700">Team {winner} won</span>
+					{/if}
+				</div>
+				{#if match.games.length}
+					<div class="rounded-lg bg-slate-50 px-3 py-2 ring-1 ring-slate-100">
+						<p
+							class="font-mono text-xl font-bold leading-none tabular-nums tracking-tight text-slate-900 sm:text-2xl"
+						>
+							{formatMatchScore(match.games)}
+						</p>
+					</div>
+				{/if}
+				<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+					{#if durationLabel}
+						<span>
+							Duration
+							<span class="font-mono font-semibold tabular-nums text-slate-700">
+								{durationLabel}
+							</span>
+						</span>
+					{/if}
+					<span>
+						{match.shuttles_used} shuttle{match.shuttles_used === 1 ? '' : 's'}
+					</span>
+					{#if match.ended_at}
+						<span>{formatDateTime(match.ended_at)}</span>
+					{/if}
+				</div>
+			</div>
+			<ChevronDownIcon class="h-5 w-5 shrink-0 -rotate-90 text-slate-400" />
+		</button>
+	</li>
+{/snippet}
+
+{#snippet playerMatchHistoryItem(match: MatchWithDetails, userId: string, matchNumber: number)}
+	{@const playerTeam = findPlayerTeam(userId, match.players)}
+	{@const result = playerMatchResult(userId, match.players, match.games)}
+	{@const sortedGames = [...match.games].sort((a, b) => a.game_no - b.game_no)}
+	{@const primaryGame = sortedGames[0]}
+	{@const endedMs = match.ended_at ? new Date(match.ended_at).getTime() : NaN}
+	{@const durationLabel =
+		match.started_at && !Number.isNaN(endedMs) ? formatUptime(match.started_at, endedMs) : null}
+	<li>
+		<button
+			type="button"
+			class="flex w-full items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-left transition-colors hover:border-brand-200 hover:bg-brand-50/40"
+			onclick={() => (selectedHistoryMatch = match)}
+		>
+			<div class="min-w-0 flex-1 space-y-1.5">
+				<div class="flex flex-wrap items-center gap-1.5">
+					<p class="text-sm font-medium text-slate-900">Match {matchNumber}</p>
+					{#if result}
+						<span
+							class="rounded-full px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide {result ===
+							'win'
+								? 'bg-emerald-100 text-emerald-800'
+								: 'bg-rose-100 text-rose-800'}"
+						>
+							{result === 'win' ? 'Win' : 'Loss'}
+						</span>
+					{/if}
+				</div>
+				{#if primaryGame && playerTeam}
+					{@const gameWinner = deriveGameWinner(primaryGame)}
+					{@const playerWonGame = playerTeam === gameWinner}
+					{@const playerScore =
+						playerTeam === 'A' ? primaryGame.team_a_score : primaryGame.team_b_score}
+					{@const opponentScore =
+						playerTeam === 'A' ? primaryGame.team_b_score : primaryGame.team_a_score}
+					<div class="flex items-center gap-2">
+						<div
+							class="rounded-md px-2 py-1 text-center ring-1 {playerWonGame
+								? 'bg-emerald-50 ring-emerald-200'
+								: 'bg-slate-50 ring-slate-200'}"
+						>
+							<p class="text-[0.6rem] font-semibold uppercase tracking-wide text-slate-500">You</p>
+							<p
+								class="font-mono text-lg font-bold tabular-nums leading-none {playerWonGame
+									? 'text-emerald-700'
+									: 'text-slate-900'}"
+							>
+								{playerScore}
+							</p>
+						</div>
+						<span class="text-[0.65rem] font-semibold text-slate-400">vs</span>
+						<div
+							class="rounded-md px-2 py-1 text-center ring-1 {gameWinner && !playerWonGame
+								? 'bg-emerald-50 ring-emerald-200'
+								: 'bg-slate-50 ring-slate-200'}"
+						>
+							<p class="text-[0.6rem] font-semibold uppercase tracking-wide text-slate-500">
+								Opp
+							</p>
+							<p
+								class="font-mono text-lg font-bold tabular-nums leading-none {gameWinner &&
+								!playerWonGame
+									? 'text-emerald-700'
+									: 'text-slate-900'}"
+							>
+								{opponentScore}
+							</p>
+						</div>
+						{#if sortedGames.length > 1}
+							<span class="text-[0.65rem] text-slate-500">
+								+{sortedGames.length - 1} more game{sortedGames.length - 1 === 1 ? '' : 's'}
+							</span>
+						{/if}
+					</div>
+				{/if}
+				<div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[0.65rem] text-slate-500">
+					{#if durationLabel}
+						<span class="font-mono tabular-nums text-slate-600">{durationLabel}</span>
+					{/if}
+					<span>
+						{match.shuttles_used} shuttle{match.shuttles_used === 1 ? '' : 's'}
+					</span>
+					{#if match.ended_at}
+						<span>{formatDateTime(match.ended_at)}</span>
+					{/if}
+				</div>
+			</div>
+			<ChevronDownIcon class="h-4 w-4 shrink-0 -rotate-90 text-slate-400" />
+		</button>
+	</li>
+{/snippet}
+
+{#snippet playerRosterToggleRow(
+	player: SessionPlayerWithProfile,
+	liveStatus: PlayerLiveStatus,
+	idleLabel: string | null,
+	meta: import('svelte').Snippet
+)}
+	{@const matchCount = matchCountForPlayer(player.user_id)}
+	{@const expanded = expandedPlayerIds.has(player.id)}
+	{@const expandable = matchCount > 0}
+	{@const displayName = player.profile?.display_name ?? 'Unknown player'}
+	{#if expandable}
+		<button
+			type="button"
+			class="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-slate-50/80"
+			aria-expanded={expanded}
+			aria-controls="player-match-history-{player.id}"
+			aria-label="{displayName} — {matchCount} match{matchCount === 1 ? '' : 'es'}, {expanded
+				? 'collapse'
+				: 'expand'} history"
+			onclick={() => togglePlayerMatchHistory(player.id)}
+		>
+			<UserAvatar
+				displayName={player.profile?.display_name ?? 'Player'}
+				avatarUrl={player.profile?.avatar_url ?? null}
+				size="sm"
+			/>
+			<div class="min-w-0 flex-1">
+				{@render playerRosterIdentity(player, liveStatus)}
+				{@render meta()}
+			</div>
+			<div class="flex shrink-0 items-center gap-2 self-center">
+				{#if idleLabel && liveStatus === 'idle'}
+					<div class="text-right">
+						<p
+							class="font-mono text-xl font-bold tabular-nums leading-none text-brand-800"
+							aria-live="polite"
+						>
+							{idleLabel}
+						</p>
+						<p class="mt-1 text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
+							Idle time
+						</p>
+					</div>
+				{/if}
+				<ChevronDownIcon
+					class="h-5 w-5 shrink-0 text-slate-400 transition {expanded ? 'rotate-180' : ''}"
+				/>
+			</div>
+		</button>
+	{:else}
+		<div class="flex items-start gap-3 px-4 py-3">
+			<UserAvatar
+				displayName={player.profile?.display_name ?? 'Player'}
+				avatarUrl={player.profile?.avatar_url ?? null}
+				size="sm"
+			/>
+			<div class="min-w-0 flex-1">
+				{@render playerRosterIdentity(player, liveStatus)}
+				{@render meta()}
+			</div>
+			{#if idleLabel && liveStatus === 'idle'}
+				<div class="shrink-0 text-right">
+					<p
+						class="font-mono text-xl font-bold tabular-nums leading-none text-brand-800"
+						aria-live="polite"
+					>
+						{idleLabel}
+					</p>
+					<p class="mt-1 text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
+						Idle time
+					</p>
+				</div>
+			{/if}
+		</div>
+	{/if}
+{/snippet}
+
+{#snippet playerMatchHistoryPanel(player: SessionPlayerWithProfile)}
+	{#if expandedPlayerIds.has(player.id)}
+		<div
+			id="player-match-history-{player.id}"
+			class="border-t border-slate-100 px-4 pb-3 pt-3"
+		>
+			<ul class="space-y-1.5">
+				{#each completedMatchesByUser.get(player.user_id) ?? [] as match, index (match.id)}
+					{@const matchNumber =
+						(completedMatchesByUser.get(player.user_id)?.length ?? 0) - index}
+					{@render playerMatchHistoryItem(match, player.user_id, matchNumber)}
+				{/each}
+			</ul>
+		</div>
+	{/if}
+{/snippet}
+
+{#snippet playerRosterIdentity(player: SessionPlayerWithProfile, liveStatus: PlayerLiveStatus)}
+	{@const displayName = player.profile?.display_name ?? 'Unknown player'}
+	{@const matchCount = matchCountForPlayer(player.user_id)}
+	<p class="truncate font-semibold text-slate-900">
+		{displayName}
+	</p>
+	<div class="mt-1 flex flex-wrap items-center gap-2">
+		{#if player.profile?.tag}
+			<TagPill tag={player.profile.tag} />
+		{/if}
+		<PlayerStatusBadge status={liveStatus} />
+		<span
+			class="inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ring-1 bg-slate-100 text-slate-700 ring-slate-200"
+		>
+			{matchCount} match{matchCount === 1 ? '' : 'es'}
+		</span>
+	</div>
+{/snippet}
+
 <section class="space-y-6">
 	<DashboardHero
 		eyebrow="Live session control"
@@ -342,10 +692,10 @@
 		</ol>
 	</AppCard>
 
-	<!-- Quick stats (2×2 — admin shell is max-w-lg; avoid 4 cols at sm viewport) -->
+	<!-- Quick stats (2 cols — admin shell is max-w-lg) -->
 	<div class="grid grid-cols-2 gap-3">
 		<div class="app-card-padded flex min-h-24 flex-col items-center justify-center gap-1 text-center">
-			<p class="text-2xl font-bold tabular-nums text-brand-700">{activePlayers.length}</p>
+			<p class="text-2xl font-bold tabular-nums text-brand-700">{data.activePlayerCount}</p>
 			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">Players</p>
 		</div>
 		<div class="app-card-padded flex min-h-24 flex-col items-center justify-center gap-1 text-center">
@@ -356,11 +706,35 @@
 			<p class="text-xl font-bold tabular-nums leading-tight text-brand-700">
 				{formatThb(data.perPlayerCost)}
 			</p>
-			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">Per player</p>
+			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
+				Court fee per player
+			</p>
+		</div>
+		<div class="app-card-padded flex min-h-24 flex-col items-center justify-center gap-1 text-center">
+			<p class="text-xl font-bold tabular-nums leading-tight text-brand-700">
+				{formatThb(totalCourtFee)}
+			</p>
+			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
+				Total court fee
+			</p>
+		</div>
+		<div class="app-card-padded flex min-h-24 flex-col items-center justify-center gap-1 text-center">
+			<p class="text-2xl font-bold tabular-nums text-brand-700">{shuttlesUsed}</p>
+			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
+				Shuttles usage
+			</p>
+		</div>
+		<div class="app-card-padded flex min-h-24 flex-col items-center justify-center gap-1 text-center">
+			<p class="text-xl font-bold tabular-nums leading-tight text-brand-700">
+				{formatThb(totalShuttleFee)}
+			</p>
+			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
+				Total shuttles fee
+			</p>
 		</div>
 		<div class="app-card-padded flex min-h-24 flex-col items-center justify-center gap-1 text-center">
 			<p class="text-2xl font-bold tabular-nums text-brand-700">
-				{paymentsApprovedCount}/{activePlayers.length || '—'}
+				{paymentsApprovedCount}/{data.activePlayerCount || '—'}
 			</p>
 			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">Paid</p>
 		</div>
@@ -516,45 +890,18 @@
 						activity: player.activity
 					})}
 					{@const idleLabel = playerIdleLabel(player.idle_since)}
-					<li class="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-						<div class="flex items-center gap-3">
-							<UserAvatar
-								displayName={player.profile?.display_name ?? 'Player'}
-								avatarUrl={player.profile?.avatar_url ?? null}
-								size="sm"
-							/>
-							<div class="min-w-0 flex-1">
-								<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-									<p class="truncate font-semibold text-slate-900">
-										{player.profile?.display_name ?? 'Unknown player'}
-									</p>
-									{#if player.profile?.tag}
-										<TagPill tag={player.profile.tag} />
-									{/if}
-									<PlayerStatusBadge status={liveStatus} />
-								</div>
-								{#if liveStatus === 'break'}
-									<p class="mt-1 text-xs text-amber-700">On break — not available for assignment</p>
-								{:else if liveStatus === 'billing'}
-									<p class="mt-1 text-xs text-sky-700">Waiting for payment confirmation</p>
-								{:else if liveStatus === 'leave'}
-									<p class="mt-1 text-xs text-slate-500">Left the session</p>
-								{/if}
-							</div>
-							{#if idleLabel && liveStatus === 'idle'}
-								<div class="shrink-0 text-right">
-									<p
-										class="font-mono text-xl font-bold tabular-nums leading-none text-brand-800"
-										aria-live="polite"
-									>
-										{idleLabel}
-									</p>
-									<p class="mt-1 text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
-										Idle time
-									</p>
-								</div>
+					<li class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+						{#snippet statusMeta()}
+							{#if liveStatus === 'break'}
+								<p class="mt-1 text-xs text-amber-700">On break — not available for assignment</p>
+							{:else if liveStatus === 'billing'}
+								<p class="mt-1 text-xs text-sky-700">Waiting for payment confirmation</p>
+							{:else if liveStatus === 'leave'}
+								<p class="mt-1 text-xs text-slate-500">Left the session</p>
 							{/if}
-						</div>
+						{/snippet}
+						{@render playerRosterToggleRow(player, liveStatus, idleLabel, statusMeta)}
+						{@render playerMatchHistoryPanel(player)}
 					</li>
 				{/each}
 			</ul>
@@ -569,52 +916,19 @@
 					})}
 					{@const idleLabel = playerIdleLabel(player.idle_since)}
 					<li
-						class="rounded-2xl border p-4 {status === 'submitted'
+						class="overflow-hidden rounded-2xl border {status === 'submitted'
 							? 'border-sky-200 bg-sky-50/40'
 							: status === 'approved'
 								? 'border-emerald-200 bg-emerald-50/30'
 								: 'border-slate-200 bg-white'}"
 					>
-						<div class="flex flex-wrap items-start justify-between gap-3">
-							<div class="flex min-w-0 items-center gap-3">
-								<UserAvatar
-									displayName={player.profile?.display_name ?? 'Player'}
-									avatarUrl={player.profile?.avatar_url ?? null}
-									size="sm"
-								/>
-								<div class="min-w-0">
-									<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-										<p class="truncate font-semibold text-slate-900">
-											{player.profile?.display_name ?? 'Unknown player'}
-										</p>
-										{#if player.profile?.tag}
-											<TagPill tag={player.profile.tag} />
-										{/if}
-										<PlayerStatusBadge status={liveStatus} />
-									</div>
-									<p class="mt-1 text-xs text-slate-500">{paymentRowHint(status)}</p>
-								</div>
-							</div>
-
-							{#if idleLabel && liveStatus === 'idle'}
-								<div class="shrink-0 text-right">
-									<p
-										class="font-mono text-xl font-bold tabular-nums leading-none text-brand-800"
-										aria-live="polite"
-									>
-										{idleLabel}
-									</p>
-									<p
-										class="mt-1 text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500"
-									>
-										Idle time
-									</p>
-								</div>
-							{/if}
-						</div>
+						{#snippet settlementMeta()}
+							<p class="mt-1 text-xs text-slate-500">{paymentRowHint(status)}</p>
+						{/snippet}
+						{@render playerRosterToggleRow(player, liveStatus, idleLabel, settlementMeta)}
 
 						<div
-							class="mt-3 flex flex-wrap items-center justify-end gap-2 border-t border-slate-100/80 pt-3"
+							class="flex flex-wrap items-center justify-end gap-2 border-t border-slate-100/80 px-4 py-3"
 						>
 							<span class="text-sm font-semibold text-slate-800">
 								{payment ? formatThb(payment.total_amount) : formatThb(data.perPlayerCost)}
@@ -643,6 +957,7 @@
 								</form>
 							{/if}
 						</div>
+						{@render playerMatchHistoryPanel(player)}
 					</li>
 				{/each}
 			</ul>
@@ -687,26 +1002,44 @@
 				loadingCourtNumber={courtLoadingNumber}
 				onCourtClick={handleCourtClick}
 			/>
-			{#if data.completedMatches.length === 0}
+			{#if sortedCompletedMatches.length === 0}
 				<EmptyState message="No matches recorded yet." />
 			{:else}
-				<ul class="divide-y divide-slate-100 rounded-xl border border-slate-200">
-					{#each data.completedMatches as match (match.id)}
-						<li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-							<div>
-								<p class="font-medium text-slate-800">
-									Court {match.court_number}
-									{#if match.games.length}
-										· {formatMatchScore(match.games)}
-									{/if}
-								</p>
-								<p class="text-xs text-slate-500">
-									{match.shuttles_used} shuttle{match.shuttles_used === 1 ? '' : 's'}
-								</p>
-							</div>
-						</li>
-					{/each}
-				</ul>
+				<div class="space-y-3">
+					<p class="text-xs font-medium text-slate-500">
+						{sortedCompletedMatches.length} completed match{sortedCompletedMatches.length === 1
+							? ''
+							: 'es'}
+					</p>
+					<ul class="space-y-2">
+						{#each paginatedCompletedMatches as match (match.id)}
+							{@render matchHistoryItem(match)}
+						{/each}
+					</ul>
+					{#if historyPageCount > 1}
+						<div class="flex items-center justify-between gap-3 text-sm">
+							<button
+								type="button"
+								class="font-medium text-brand-700 disabled:text-slate-400"
+								disabled={historyPage <= 1}
+								onclick={() => (historyPage -= 1)}
+							>
+								Previous
+							</button>
+							<span class="text-slate-500">
+								Page {historyPage} of {historyPageCount}
+							</span>
+							<button
+								type="button"
+								class="font-medium text-brand-700 disabled:text-slate-400"
+								disabled={historyPage >= historyPageCount}
+								onclick={() => (historyPage += 1)}
+							>
+								Next
+							</button>
+						</div>
+					{/if}
+				</div>
 			{/if}
 		</div>
 	</section>
@@ -935,4 +1268,10 @@
 		matchmakingCourt = null;
 	}}
 	onSubmit={submitMatchmaking}
+/>
+
+<MatchSummaryModal
+	open={selectedHistoryMatch !== null}
+	match={selectedHistoryMatch}
+	onClose={() => (selectedHistoryMatch = null)}
 />

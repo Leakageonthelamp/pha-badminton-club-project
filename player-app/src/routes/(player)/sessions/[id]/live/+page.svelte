@@ -18,13 +18,21 @@
 	import HomeIcon from '@repo/ui/icons/HomeIcon.svelte';
 	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
 	import { formatDateTime, formatUptime } from '@repo/ui/datetime';
-	import { formatMatchScore } from '@repo/ui/matches';
+	import MatchSummaryModal from '@repo/ui/components/MatchSummaryModal.svelte';
+	import ChevronDownIcon from '@repo/ui/icons/ChevronDownIcon.svelte';
+	import {
+		deriveMatchWinner,
+		formatMatchScore,
+		matchStatusBadgeClass,
+		matchStatusLabel
+	} from '@repo/ui/matches';
 	import { formatThb, paymentStatusLabel } from '@repo/ui/payments';
 	import { subscribePostgresChangesWithPollFallback } from '@repo/ui/realtimeSubscribe';
 	import { clampIdleSince, derivePlayerLiveStatus } from '@repo/ui/sessionStatus';
 	import PaymentQr from '$lib/components/PaymentQr.svelte';
 	import MatchInviteModal from '$lib/components/MatchInviteModal.svelte';
 	import MatchScoreConfirmModal from '$lib/components/MatchScoreConfirmModal.svelte';
+	import type { MatchWithDetails } from '$lib/types/match';
 	import {
 		canRequestEarlyLeave,
 		deriveLiveSessionUiState,
@@ -35,7 +43,8 @@
 		isInUnresolvedMatch,
 		isMatchLiveDismissed,
 		matchLiveHref,
-		shouldOpenMatchLive
+		shouldOpenMatchLive,
+		shouldAutoOpenMatchLive
 	} from '$lib/sessions/navigation';
 	import { createSupabaseBrowserClient } from '$lib/supabase/client';
 	import { sessionStatusBadgeClass, sessionStatusLabel } from '$lib/types/session';
@@ -49,6 +58,7 @@
 	let actionLoading = $state<string | null>(null);
 	let matchNavLoading = $state(false);
 	let autoNavigatedMatchId = $state<string | null>(null);
+	let selectedHistoryMatch = $state<MatchWithDetails | null>(null);
 
 	const session = $derived(data.session);
 	const uiState = $derived(
@@ -185,7 +195,7 @@
 	});
 
 	$effect(() => {
-		if (!browser || !shouldOpenMatchLive(data.myOpenMatch)) return;
+		if (!browser || !shouldAutoOpenMatchLive(data.myOpenMatch)) return;
 
 		const matchId = data.myOpenMatch!.id;
 		if (isMatchLiveDismissed(session.id, matchId)) return;
@@ -589,18 +599,42 @@
 			{#if data.myMatchHistory.length === 0}
 				<EmptyState message="No matches recorded yet." />
 			{:else}
-				<ul class="divide-y divide-slate-100">
+				<ul class="space-y-2">
 					{#each data.myMatchHistory as match (match.id)}
-						<li class="py-3">
-							<p class="font-medium text-slate-800">
-								Court {match.court_number}
-								{#if match.games.length}
-									· {formatMatchScore(match.games)}
-								{/if}
-							</p>
-							<p class="text-xs text-slate-500">
-								{match.shuttles_used} shuttle{match.shuttles_used === 1 ? '' : 's'}
-							</p>
+						{@const winner = deriveMatchWinner(match.games)}
+						<li>
+							<button
+								type="button"
+								class="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition-colors hover:border-brand-200 hover:bg-brand-50/40"
+								onclick={() => (selectedHistoryMatch = match)}
+							>
+								<div class="min-w-0 flex-1">
+									<div class="flex flex-wrap items-center gap-2">
+										<p class="font-medium text-slate-900">Court {match.court_number}</p>
+										<span
+											class="rounded-full px-2 py-0.5 text-xs font-semibold {matchStatusBadgeClass(
+												match.status
+											)}"
+										>
+											{matchStatusLabel(match.status)}
+										</span>
+										{#if winner}
+											<span class="text-xs font-medium text-emerald-700">
+												Team {winner} won
+											</span>
+										{/if}
+									</div>
+									{#if match.games.length}
+										<p class="mt-1 font-mono text-sm tabular-nums text-slate-700">
+											{formatMatchScore(match.games)}
+										</p>
+									{/if}
+									<p class="mt-1 text-xs text-slate-500">
+										{match.shuttles_used} shuttle{match.shuttles_used === 1 ? '' : 's'}
+									</p>
+								</div>
+								<ChevronDownIcon class="h-5 w-5 shrink-0 -rotate-90 text-slate-400" />
+							</button>
 						</li>
 					{/each}
 				</ul>
@@ -701,4 +735,11 @@
 	actionLoading={actionLoading}
 	isBusy={sessionActionsBusy}
 	handleAction={handleAction}
+/>
+
+<MatchSummaryModal
+	open={selectedHistoryMatch !== null}
+	match={selectedHistoryMatch}
+	highlightUserId={data.userId}
+	onClose={() => (selectedHistoryMatch = null)}
 />

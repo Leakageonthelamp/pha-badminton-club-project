@@ -2,8 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
 	deriveGameWinner,
 	deriveMatchWinner,
+	findPlayerTeam,
 	formatMatchScore,
+	formatMatchScoreForTeam,
 	isValidRallyGameScore,
+	matchScoreResponseLabel,
+	playerMatchResult,
 	splitTeams,
 	validateMatchGames,
 	validateRallyGameScore
@@ -54,6 +58,19 @@ describe('matches helpers', () => {
 		).toBe('21-18, 19-21');
 	});
 
+	it('findPlayerTeam and playerMatchResult resolve per-player outcomes', () => {
+		const players = [
+			{ user_id: 'u1', team: 'A' as const },
+			{ user_id: 'u2', team: 'B' as const }
+		];
+		const games = [{ game_no: 1, team_a_score: 21, team_b_score: 15 }];
+
+		expect(findPlayerTeam('u1', players)).toBe('A');
+		expect(playerMatchResult('u1', players, games)).toBe('win');
+		expect(playerMatchResult('u2', players, games)).toBe('lose');
+		expect(formatMatchScoreForTeam(games, 'B')).toBe('15-21');
+	});
+
 	it('validateRallyGameScore accepts normal and deuce wins', () => {
 		expect(validateRallyGameScore(21, 18, 21)).toBeNull();
 		expect(validateRallyGameScore(10, 21, 21)).toBeNull();
@@ -90,5 +107,12 @@ describe('matches helpers', () => {
 	it('isValidRallyGameScore mirrors validateRallyGameScore', () => {
 		expect(isValidRallyGameScore(21, 18, 21)).toBe(true);
 		expect(isValidRallyGameScore(21, 20, 21)).toBe(false);
+	});
+
+	it('matchScoreResponseLabel distinguishes submitter and responses', () => {
+		expect(matchScoreResponseLabel('pending', true)).toBe('Submitted');
+		expect(matchScoreResponseLabel('accepted', false)).toBe('Accepted');
+		expect(matchScoreResponseLabel('rejected', false)).toBe('Rejected');
+		expect(matchScoreResponseLabel('pending', false)).toBe('Waiting');
 	});
 });

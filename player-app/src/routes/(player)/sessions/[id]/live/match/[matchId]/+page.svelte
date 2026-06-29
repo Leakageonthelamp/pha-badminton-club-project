@@ -7,13 +7,14 @@
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import FormToast from '@repo/ui/components/FormToast.svelte';
 	import MatchGameScoreFields from '@repo/ui/components/MatchGameScoreFields.svelte';
+	import MatchScoreDisplay from '@repo/ui/components/MatchScoreDisplay.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
 	import { formatUptime } from '@repo/ui/datetime';
 	import {
-		deriveMatchWinner,
-		formatMatchScore,
+		matchScoreResponseBadgeClass,
+		matchScoreResponseLabel,
 		matchStatusLabel,
 		splitTeams,
 		validateMatchGames
@@ -22,7 +23,7 @@
 	import { createSupabaseBrowserClient } from '$lib/supabase/client';
 	import { clearMatchLiveDismissed, dismissMatchLive } from '$lib/sessions/navigation';
 	import MatchScoreConfirmModal from '$lib/components/MatchScoreConfirmModal.svelte';
-	import type { MatchGameInput } from '$lib/types/match';
+	import type { MatchGameInput, MatchPlayerWithProfile } from '$lib/types/match';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { ActionData, PageData } from './$types';
 
@@ -78,6 +79,10 @@
 			myPlayer.user_id !== match.score_submitted_by &&
 			myPlayer.score_response === 'pending'
 	);
+	const showScoreResponses = $derived(match.status === 'score_pending');
+
+	const isScoreSubmitter = (player: MatchPlayerWithProfile) =>
+		player.user_id === match.score_submitted_by;
 
 	$effect(() => {
 		if (scoreModalOpen) return;
@@ -184,6 +189,39 @@
 	const gamesJson = $derived(JSON.stringify(buildGames()));
 </script>
 
+{#snippet playerRow(player: MatchPlayerWithProfile)}
+	<li class="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50/60 p-3">
+		<UserAvatar
+			displayName={player.profile?.display_name ?? 'Player'}
+			avatarUrl={player.profile?.avatar_url ?? null}
+			size="sm"
+		/>
+		<div class="min-w-0 flex-1">
+			<p class="truncate font-medium text-slate-800">
+				{player.profile?.display_name ?? 'Player'}
+				{#if player.user_id === data.userId}
+					<span class="text-slate-500">(you)</span>
+				{/if}
+			</p>
+			<div class="mt-1 flex flex-wrap items-center gap-2">
+				{#if player.profile?.tag}
+					<TagPill tag={player.profile.tag} />
+				{/if}
+				{#if showScoreResponses}
+					<span
+						class="rounded-full px-2.5 py-0.5 text-xs font-semibold {matchScoreResponseBadgeClass(
+							player.score_response,
+							isScoreSubmitter(player)
+						)}"
+					>
+						{matchScoreResponseLabel(player.score_response, isScoreSubmitter(player))}
+					</span>
+				{/if}
+			</div>
+		</div>
+	</li>
+{/snippet}
+
 <section class="app-page space-y-6">
 	<DashboardHero eyebrow="Match live" title={`Court ${match.court_number}`} subtitle={session.name}>
 		<span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
@@ -193,7 +231,7 @@
 
 	<FormToast message={form?.message ?? null} variant={form?.success ? 'success' : 'error'} />
 
-	<div class="grid gap-4 sm:grid-cols-2">
+	<div class="grid grid-cols-2 gap-4">
 		<AppCard class="space-y-2">
 			<p class="text-sm text-slate-500">Match time</p>
 			<p class="font-mono text-2xl font-semibold text-slate-900">{uptimeLabel}</p>
@@ -204,58 +242,31 @@
 		</AppCard>
 	</div>
 
-	<div class="grid gap-4 md:grid-cols-2">
-		<AppCard class="space-y-3">
-			<h2 class="text-sm font-semibold text-slate-800">Team A</h2>
-			<ul class="space-y-2">
-				{#each teams.teamA as player (player.id)}
-					<li class="flex items-center gap-3">
-						<UserAvatar
-							displayName={player.profile?.display_name ?? 'Player'}
-							avatarUrl={player.profile?.avatar_url ?? null}
-							size="sm"
-						/>
-						<div>
-							<p class="font-medium text-slate-800">{player.profile?.display_name ?? 'Player'}</p>
-							{#if player.profile?.tag}
-								<TagPill tag={player.profile.tag} />
-							{/if}
-						</div>
-					</li>
-				{/each}
-			</ul>
-		</AppCard>
-		<AppCard class="space-y-3">
-			<h2 class="text-sm font-semibold text-slate-800">Team B</h2>
-			<ul class="space-y-2">
-				{#each teams.teamB as player (player.id)}
-					<li class="flex items-center gap-3">
-						<UserAvatar
-							displayName={player.profile?.display_name ?? 'Player'}
-							avatarUrl={player.profile?.avatar_url ?? null}
-							size="sm"
-						/>
-						<div>
-							<p class="font-medium text-slate-800">{player.profile?.display_name ?? 'Player'}</p>
-							{#if player.profile?.tag}
-								<TagPill tag={player.profile.tag} />
-							{/if}
-						</div>
-					</li>
-				{/each}
-			</ul>
-		</AppCard>
-	</div>
-
 	{#if match.games.length}
-		<AppCard class="space-y-2">
-			<h2 class="text-sm font-semibold text-slate-800">Score</h2>
-			<p class="text-lg font-medium text-slate-900">{formatMatchScore(match.games)}</p>
-			{#if deriveMatchWinner(match.games)}
-				<p class="text-sm text-slate-600">Winner: Team {deriveMatchWinner(match.games)}</p>
-			{/if}
-		</AppCard>
+		<MatchScoreDisplay games={match.games} teamA={teamAForScore} teamB={teamBForScore} />
 	{/if}
+
+	<AppCard class="space-y-4">
+		<h2 class="text-sm font-semibold text-slate-800">Players</h2>
+		<div class="space-y-4">
+			<div class="space-y-2">
+				<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Team A</p>
+				<ul class="space-y-2">
+					{#each teams.teamA as player (player.id)}
+						{@render playerRow(player)}
+					{/each}
+				</ul>
+			</div>
+			<div class="space-y-2">
+				<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Team B</p>
+				<ul class="space-y-2">
+					{#each teams.teamB as player (player.id)}
+						{@render playerRow(player)}
+					{/each}
+				</ul>
+			</div>
+		</div>
+	</AppCard>
 
 	{#if canSubmitScore}
 		<AppCard class="space-y-3">

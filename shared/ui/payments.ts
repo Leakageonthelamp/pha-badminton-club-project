@@ -6,6 +6,23 @@ export type CourtShareInput = {
 	activePlayers: number;
 };
 
+export type CourtTotalInput = Omit<CourtShareInput, 'activePlayers'>;
+
+/** Full session court cost before splitting across players. */
+export const computeCourtTotal = ({
+	courtFeePerHour,
+	startAt,
+	endAt,
+	courtCount
+}: CourtTotalInput): number => {
+	const startMs = new Date(startAt).getTime();
+	const endMs = new Date(endAt).getTime();
+	if (Number.isNaN(startMs) || Number.isNaN(endMs) || endMs <= startMs) return 0;
+
+	const durationHours = (endMs - startMs) / (1000 * 60 * 60);
+	return Math.round(courtFeePerHour * durationHours * courtCount * 100) / 100;
+};
+
 /** Even split of full session court cost across active players (confirmed + left). */
 export const computeCourtShare = ({
 	courtFeePerHour,
@@ -16,13 +33,7 @@ export const computeCourtShare = ({
 }: CourtShareInput): number => {
 	if (activePlayers <= 0) return 0;
 
-	const startMs = new Date(startAt).getTime();
-	const endMs = new Date(endAt).getTime();
-	if (Number.isNaN(startMs) || Number.isNaN(endMs) || endMs <= startMs) return 0;
-
-	const durationHours = (endMs - startMs) / (1000 * 60 * 60);
-	const courtTotal = courtFeePerHour * durationHours * courtCount;
-
+	const courtTotal = computeCourtTotal({ courtFeePerHour, startAt, endAt, courtCount });
 	return Math.round((courtTotal / activePlayers) * 100) / 100;
 };
 

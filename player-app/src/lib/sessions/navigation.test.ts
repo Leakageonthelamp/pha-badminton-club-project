@@ -169,9 +169,11 @@ describe('matchLiveHref', () => {
 });
 
 describe('shouldOpenMatchLive', () => {
-	it('returns true only for active matches', () => {
+	it('returns true for on-court and score-confirmation states', () => {
 		expect(shouldOpenMatchLive({ status: 'active' })).toBe(true);
-		expect(shouldOpenMatchLive({ status: 'score_pending' })).toBe(false);
+		expect(shouldOpenMatchLive({ status: 'score_pending' })).toBe(true);
+		expect(shouldOpenMatchLive({ status: 'suspended' })).toBe(true);
+		expect(shouldOpenMatchLive({ status: 'pending' })).toBe(false);
 		expect(shouldOpenMatchLive(null)).toBe(false);
 	});
 });

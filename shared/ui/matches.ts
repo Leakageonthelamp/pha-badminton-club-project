@@ -18,9 +18,16 @@ export type MatchScoreType = 15 | 21;
 
 export type MatchRoundType = 'one_round' | 'two_round';
 
+export type MatchScoreResponse = 'pending' | 'accepted' | 'rejected';
+
 export type MatchPlayerLike = {
 	team: MatchTeam;
 	displayName?: string | null;
+};
+
+export type MatchPlayerUserLike = {
+	user_id: string;
+	team: MatchTeam;
 };
 
 export type MatchGameLike = {
@@ -67,6 +74,36 @@ export const matchStatusBadgeClass = (status: MatchStatus): string => {
 	}
 };
 
+export const matchScoreResponseLabel = (
+	response: MatchScoreResponse,
+	isSubmitter = false
+): string => {
+	if (isSubmitter) return 'Submitted';
+	switch (response) {
+		case 'accepted':
+			return 'Accepted';
+		case 'rejected':
+			return 'Rejected';
+		default:
+			return 'Waiting';
+	}
+};
+
+export const matchScoreResponseBadgeClass = (
+	response: MatchScoreResponse,
+	isSubmitter = false
+): string => {
+	if (isSubmitter) return 'bg-brand-100 text-brand-800';
+	switch (response) {
+		case 'accepted':
+			return 'bg-emerald-100 text-emerald-800';
+		case 'rejected':
+			return 'bg-rose-100 text-rose-800';
+		default:
+			return 'bg-amber-100 text-amber-800';
+	}
+};
+
 export const splitTeams = <T extends MatchPlayerLike>(players: T[]): { teamA: T[]; teamB: T[] } => ({
 	teamA: players.filter((player) => player.team === 'A'),
 	teamB: players.filter((player) => player.team === 'B')
@@ -95,6 +132,32 @@ export const formatMatchScore = (games: MatchGameLike[]): string =>
 	games
 		.sort((a, b) => a.game_no - b.game_no)
 		.map((game) => `${game.team_a_score}-${game.team_b_score}`)
+		.join(', ');
+
+export const findPlayerTeam = (
+	userId: string,
+	players: MatchPlayerUserLike[]
+): MatchTeam | null => players.find((player) => player.user_id === userId)?.team ?? null;
+
+export const playerMatchResult = (
+	userId: string,
+	players: MatchPlayerUserLike[],
+	games: MatchGameLike[]
+): 'win' | 'lose' | null => {
+	const team = findPlayerTeam(userId, players);
+	const winner = deriveMatchWinner(games);
+	if (!team || !winner) return null;
+	return team === winner ? 'win' : 'lose';
+};
+
+export const formatMatchScoreForTeam = (games: MatchGameLike[], team: MatchTeam): string =>
+	[...games]
+		.sort((a, b) => a.game_no - b.game_no)
+		.map((game) =>
+			team === 'A'
+				? `${game.team_a_score}-${game.team_b_score}`
+				: `${game.team_b_score}-${game.team_a_score}`
+		)
 		.join(', ');
 
 export const formatTeamRoster = (players: MatchPlayerLike[]): string =>
