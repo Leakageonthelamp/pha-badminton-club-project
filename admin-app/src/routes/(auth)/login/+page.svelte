@@ -30,7 +30,7 @@
 
 <section class="space-y-6">
 	<DashboardHero title="Admin sign in" subtitle="Super admin and club admin. Use your player account credentials." footerCenter>
-		<AppLogo size={48} class="mx-auto opacity-95" />
+		<AppLogo size={48} tone="white" class="mx-auto opacity-95" />
 	</DashboardHero>
 
 	<AppCard class="space-y-4">

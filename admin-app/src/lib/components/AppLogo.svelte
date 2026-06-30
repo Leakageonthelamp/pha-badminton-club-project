@@ -1,26 +1,28 @@
 <script lang="ts">
 	import { appConfig } from '$lib/config/app';
+	import SettingsIcon from '@repo/ui/icons/SettingsIcon.svelte';
 
 	let {
 		size = 40,
 		title = appConfig.shortName,
-		class: className = ''
+		class: className = '',
+		tone = 'brand'
 	}: {
 		size?: number;
 		title?: string;
 		class?: string;
+		tone?: 'brand' | 'white';
 	} = $props();
+
+	const colorClass = $derived(tone === 'white' ? 'text-white' : 'text-brand-800');
 </script>
 
-<svg width={size} height={size} viewBox="0 0 48 48" class={className} role="img" aria-label={title}>
-	<rect x="2" y="2" width="44" height="44" rx="12" fill="#7d3ca3" />
-	<path
-		d="M24 10.5L33.5 14.2V23.2C33.5 28.4 24 37.5 24 37.5C24 37.5 14.5 28.4 14.5 23.2V14.2L24 10.5Z"
-		fill="#ffffff"
-	/>
-	<circle cx="24" cy="17.2" r="2.4" fill="#7d3ca3" />
-	<path
-		d="M24 19.4C21.2 20.2 19.6 22 19.2 24.1L24 30.8L28.8 24.1C28.4 22 26.8 20.2 24 19.4Z"
-		fill="#7d3ca3"
-	/>
-</svg>
+<span
+	role="img"
+	aria-label={title}
+	class="inline-flex shrink-0 items-center justify-center {className}"
+	style:width="{size}px"
+	style:height="{size}px"
+>
+	<SettingsIcon class="h-full w-full {colorClass}" />
+</span>

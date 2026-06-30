@@ -1,62 +1,36 @@
 #!/usr/bin/env python3
-"""Generate circular shuttlecock PWA icons for PH Badminton Club."""
+"""Rasterize logo.svg into PWA PNG icons for Clubhouse."""
 
 from __future__ import annotations
 
+import shutil
+import subprocess
 from pathlib import Path
 
-from PIL import Image, ImageDraw
-
 ROOT = Path(__file__).resolve().parents[1] / "static"
-BRAND = (150, 74, 192)
-WHITE = (255, 255, 255)
+LOGO = ROOT / "logo.svg"
+MASKABLE = ROOT / "logo-maskable.svg"
+RSVG = shutil.which("rsvg-convert")
 
 
-def draw_shuttlecock(draw: ImageDraw.ImageDraw, cx: float, cy: float, scale: float) -> None:
-    cork_r = scale * 0.14
-    cork_y = cy - scale * 0.18
-    draw.ellipse(
-        (cx - cork_r, cork_y - cork_r, cx + cork_r, cork_y + cork_r),
-        fill=WHITE,
+def render(svg: Path, size: int, out: Path) -> None:
+    if RSVG is None:
+        raise SystemExit("rsvg-convert not found — install librsvg (e.g. brew install librsvg)")
+
+    subprocess.run(
+        [RSVG, "-w", str(size), "-h", str(size), "-o", str(out), str(svg)],
+        check=True,
     )
-
-    skirt_w = scale * 0.28
-    skirt_top = cork_y + cork_r * 0.55
-    skirt_mid_y = cy + scale * 0.1
-    skirt_tip_y = cy + scale * 0.36
-    draw.polygon(
-        [
-            (cx, skirt_top),
-            (cx - skirt_w, skirt_mid_y),
-            (cx, skirt_tip_y),
-            (cx + skirt_w, skirt_mid_y),
-        ],
-        fill=WHITE,
-    )
-
-
-def draw_icon(size: int, *, inset_ratio: float = 0.0) -> Image.Image:
-    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(img)
-
-    inset = size * inset_ratio
-    draw.ellipse((inset, inset, size - inset - 1, size - inset - 1), fill=BRAND)
-
-    center = size / 2
-    icon_scale = size * (0.52 - inset_ratio * 0.35)
-    draw_shuttlecock(draw, center, center, icon_scale)
-
-    return img
 
 
 def main() -> None:
     ROOT.mkdir(parents=True, exist_ok=True)
 
     for size, name in ((192, "icon-192.png"), (512, "icon-512.png"), (180, "apple-touch-icon.png")):
-        draw_icon(size).save(ROOT / name, format="PNG")
+        render(LOGO, size, ROOT / name)
 
-    draw_icon(32).save(ROOT / "favicon.png", format="PNG")
-    draw_icon(512, inset_ratio=0.08).save(ROOT / "icon-maskable-512.png", format="PNG")
+    render(LOGO, 32, ROOT / "favicon.png")
+    render(MASKABLE, 512, ROOT / "icon-maskable-512.png")
     print("Generated PWA icons in static/")
 
 

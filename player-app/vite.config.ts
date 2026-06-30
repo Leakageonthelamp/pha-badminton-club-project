@@ -8,8 +8,8 @@ import { defineConfig, loadEnv } from 'vite';
 export default defineConfig(({ mode }) => {
 	const env = loadEnv(mode, process.cwd(), '');
 	const port = Number(env.PORT) || 5173;
-	const appName = env.PUBLIC_APP_NAME || 'PH Badminton Club';
-	const appShortName = env.PUBLIC_APP_SHORT_NAME || 'PH Badminton';
+	const appName = env.PUBLIC_APP_NAME || 'Clubhouse';
+	const appShortName = env.PUBLIC_APP_SHORT_NAME || 'Clubhouse';
 	const analyze = env.ANALYZE === 'true';
 
 	return {
@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => {
 					id: '/',
 					name: appName,
 					short_name: appShortName,
-					description: 'Organize 2v2 badminton club sessions, matches, and payments.',
+					description: 'Clubhouse — organize 2v2 badminton club sessions, matches, and payments.',
 					lang: 'en',
 					dir: 'ltr',
 					theme_color: '#964ac0',

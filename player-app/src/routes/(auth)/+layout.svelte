@@ -12,13 +12,15 @@
 	const backHref = $derived(getBackHref(page.url.pathname));
 </script>
 
-<header class="mb-8 flex items-center justify-between gap-3">
+<header class="app-topbar mb-6 flex items-center justify-between gap-3">
 	{#if showBack}
 		<BackLink href={backHref} />
 	{:else}
-		<a href="/login" class="flex min-w-0 items-center gap-3">
-			<AppLogo size={36} title={appConfig.name} />
-			<span class="truncate text-lg font-semibold text-brand-800">{appConfig.name}</span>
+		<a href="/login" class="app-topbar-brand">
+			<span class="app-topbar-mark">
+				<AppLogo size={32} title={appConfig.name} />
+			</span>
+			<span class="app-topbar-title">{appConfig.name}</span>
 		</a>
 	{/if}
 </header>

@@ -26,7 +26,7 @@
 		subtitle="Register with email or phone. You need at least one unique identifier."
 		footerCenter
 	>
-		<AppLogo size={48} class="mx-auto opacity-95" />
+		<AppLogo size={48} tone="white" class="mx-auto opacity-95" />
 	</DashboardHero>
 
 	<AppCard class="space-y-4">

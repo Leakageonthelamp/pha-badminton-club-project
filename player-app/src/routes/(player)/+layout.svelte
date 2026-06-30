@@ -56,15 +56,17 @@
 	});
 </script>
 
-<header class="relative z-30 mb-8 flex items-center justify-between gap-3 overflow-visible">
-	<div class="flex min-w-0 items-center gap-1">
+<header class="app-topbar relative z-30 mb-6 overflow-visible">
+	<div class="flex min-w-0 items-center gap-0.5">
 		{#if showBack}
 			<BackLink href={backHref} />
 			<HomeLink href="/" />
 		{:else}
-			<a href="/" class="flex min-w-0 items-center gap-3">
-				<AppLogo size={36} title={appConfig.name} />
-				<span class="truncate text-lg font-semibold text-brand-800">{appConfig.name}</span>
+			<a href="/" class="app-topbar-brand">
+				<span class="app-topbar-mark">
+					<AppLogo size={32} title={appConfig.name} />
+				</span>
+				<span class="app-topbar-title">{appConfig.name}</span>
 			</a>
 		{/if}
 	</div>
