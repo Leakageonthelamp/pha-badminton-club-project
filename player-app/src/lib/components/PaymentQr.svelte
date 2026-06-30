@@ -1,7 +1,5 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import generatePayload from 'promptpay-qr';
-	import QRCode from 'qrcode';
 
 	let {
 		target,
@@ -16,23 +14,29 @@
 	let dataUrl = $state<string | null>(null);
 	let errorMessage = $state<string | null>(null);
 
-	onMount(async () => {
+	onMount(() => {
 		if (!target || amount <= 0) {
 			errorMessage = 'Payment details are not available.';
 			return;
 		}
 
-		try {
-			const payload = generatePayload(target, { amount });
-			dataUrl = await QRCode.toDataURL(payload, {
-				width: 240,
-				margin: 1,
-				color: { dark: '#1e293b', light: '#ffffff' }
-			});
-		} catch (error) {
-			console.error('Failed to generate PromptPay QR', error);
-			errorMessage = 'Could not generate payment QR.';
-		}
+		void (async () => {
+			try {
+				const [{ default: generatePayload }, QRCode] = await Promise.all([
+					import('promptpay-qr'),
+					import('qrcode')
+				]);
+				const payload = generatePayload(target, { amount });
+				dataUrl = await QRCode.toDataURL(payload, {
+					width: 240,
+					margin: 1,
+					color: { dark: '#1e293b', light: '#ffffff' }
+				});
+			} catch (error) {
+				console.error('Failed to generate PromptPay QR', error);
+				errorMessage = 'Could not generate payment QR.';
+			}
+		})();
 	});
 </script>
 

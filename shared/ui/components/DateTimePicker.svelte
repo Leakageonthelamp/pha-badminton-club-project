@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import flatpickr from 'flatpickr';
 	import type { Instance } from 'flatpickr/dist/types/instance';
-	import 'flatpickr/dist/flatpickr.min.css';
 	import { dateToLocalInput, localInputToDate } from '../datetime';
 
 	let {
@@ -158,9 +156,17 @@
 		inputEl.autocomplete = 'off';
 
 		let instance: Instance | null = null;
+		let destroyed = false;
 		const committedThisOpen = { current: false };
 
-		instance = flatpickr(inputEl, {
+		void (async () => {
+			const [{ default: flatpickr }] = await Promise.all([
+				import('flatpickr'),
+				import('flatpickr/dist/flatpickr.min.css')
+			]);
+			if (destroyed || !inputEl) return;
+
+			instance = flatpickr(inputEl, {
 			enableTime: true,
 			time_24hr: true,
 			clickOpens: false,
@@ -203,9 +209,11 @@
 			}
 		});
 
-		picker = instance;
+			picker = instance;
+		})();
 
 		return () => {
+			destroyed = true;
 			instance?.destroy();
 			picker = null;
 		};

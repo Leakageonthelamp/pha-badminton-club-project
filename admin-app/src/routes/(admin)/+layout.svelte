@@ -13,6 +13,7 @@
 	import { appConfig } from '$lib/config/app';
 	import { getBackHref, getHomePath, shouldShowBack } from '$lib/navigation/back';
 	import { refreshAuthCacheIfNeeded } from '$lib/navigation/authCache';
+	import { attachVisibilityRevalidate } from '@repo/ui/visibilityRevalidate';
 	import type { LayoutData } from './$types';
 
 	let { data, children }: { data: LayoutData; children: import('svelte').Snippet } = $props();
@@ -63,19 +64,11 @@
 		}
 	});
 
-	// Refetch profile/clubs when returning to the app so changes made elsewhere
-	// show without a manual reload.
-	// ponytail: invalidateAll re-runs every load on focus; fine at this scale.
+	// Refetch when returning after a long absence (e.g. profile edited in player-app).
+	// ponytail: 30s threshold skips invalidateAll on quick tab flips.
 	$effect(() => {
-		const revalidate = () => {
-			if (document.visibilityState === 'visible') invalidateAll();
-		};
-		document.addEventListener('visibilitychange', revalidate);
-		window.addEventListener('focus', revalidate);
-		return () => {
-			document.removeEventListener('visibilitychange', revalidate);
-			window.removeEventListener('focus', revalidate);
-		};
+		if (!browser) return;
+		return attachVisibilityRevalidate(() => void invalidateAll());
 	});
 </script>
 

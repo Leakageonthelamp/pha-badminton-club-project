@@ -2,6 +2,7 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { SvelteKitPWA } from '@vite-pwa/sveltekit';
+import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, loadEnv } from 'vite';
 
 export default defineConfig(({ mode }) => {
@@ -9,6 +10,7 @@ export default defineConfig(({ mode }) => {
 	const port = Number(env.PORT) || 5173;
 	const appName = env.PUBLIC_APP_NAME || 'PH Badminton Club';
 	const appShortName = env.PUBLIC_APP_SHORT_NAME || 'PH Badminton';
+	const analyze = env.ANALYZE === 'true';
 
 	return {
 		server: {
@@ -18,6 +20,15 @@ export default defineConfig(({ mode }) => {
 		plugins: [
 			tailwindcss(),
 			sveltekit(),
+			...(analyze
+				? [
+						visualizer({
+							filename: 'stats.html',
+							gzipSize: true,
+							open: false
+						})
+					]
+				: []),
 			SvelteKitPWA({
 				registerType: 'prompt',
 				devOptions: {

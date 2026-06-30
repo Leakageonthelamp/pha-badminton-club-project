@@ -12,6 +12,9 @@
 	let imageFailed = $state(false);
 
 	const initial = $derived(displayName.slice(0, 1).toUpperCase() || '?');
+	const sizePx = $derived(
+		size === 'sm' ? 36 : size === 'lg' ? 44 : size === 'xl' ? 64 : 40
+	);
 	const sizeClass = $derived(
 		size === 'sm'
 			? 'h-9 w-9 text-sm'
@@ -32,6 +35,10 @@
 	<img
 		src={avatarUrl}
 		alt=""
+		width={sizePx}
+		height={sizePx}
+		loading="lazy"
+		decoding="async"
 		class="{sizeClass} shrink-0 rounded-full object-cover"
 		referrerpolicy="no-referrer"
 		onerror={() => (imageFailed = true)}

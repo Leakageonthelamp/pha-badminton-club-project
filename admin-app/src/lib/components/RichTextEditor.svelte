@@ -1,10 +1,6 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
-	import { Editor } from '@tiptap/core';
-	import Color from '@tiptap/extension-color';
-	import Highlight from '@tiptap/extension-highlight';
-	import { TextStyle } from '@tiptap/extension-text-style';
-	import StarterKit from '@tiptap/starter-kit';
+	import type { Editor } from '@tiptap/core';
 	import { portal } from '@repo/ui/actions/portal';
 
 	let {
@@ -93,47 +89,65 @@
 	onMount(() => {
 		if (!element) return;
 
-		editor = new Editor({
-			element,
-			extensions: [
-				StarterKit.configure({
-					link: {
-						openOnClick: false,
-						autolink: true,
-						defaultProtocol: 'https'
-					}
-				}),
-				TextStyle,
-				Color,
-				Highlight.configure({ multicolor: true })
-			],
-			content: value,
-			editable: !disabled,
-			onUpdate: ({ editor: currentEditor }) => {
-				value = currentEditor.getHTML();
-			},
-			onSelectionUpdate: ({ editor: currentEditor }) => syncActive(currentEditor),
-			onTransaction: ({ editor: currentEditor }) => syncActive(currentEditor)
-		});
+		let destroyed = false;
+		let cleanupPointerDown: (() => void) | undefined;
 
-		syncActive(editor);
+		void (async () => {
+			const [{ Editor }, { default: StarterKit }, { TextStyle }, { default: Color }, { default: Highlight }] =
+				await Promise.all([
+					import('@tiptap/core'),
+					import('@tiptap/starter-kit'),
+					import('@tiptap/extension-text-style'),
+					import('@tiptap/extension-color'),
+					import('@tiptap/extension-highlight')
+				]);
 
-		const onPointerDown = (event: PointerEvent) => {
-			const target = event.target;
-			if (!(target instanceof Node)) return;
-			if (
-				target instanceof Element &&
-				(target.closest('[data-rich-text-menu]') || target.closest('[data-rich-text-menu-trigger]'))
-			) {
-				return;
-			}
-			closeMenus();
-		};
+			if (destroyed || !element) return;
 
-		document.addEventListener('pointerdown', onPointerDown);
+			editor = new Editor({
+				element,
+				extensions: [
+					StarterKit.configure({
+						link: {
+							openOnClick: false,
+							autolink: true,
+							defaultProtocol: 'https'
+						}
+					}),
+					TextStyle,
+					Color,
+					Highlight.configure({ multicolor: true })
+				],
+				content: value,
+				editable: !disabled,
+				onUpdate: ({ editor: currentEditor }) => {
+					value = currentEditor.getHTML();
+				},
+				onSelectionUpdate: ({ editor: currentEditor }) => syncActive(currentEditor),
+				onTransaction: ({ editor: currentEditor }) => syncActive(currentEditor)
+			});
+
+			syncActive(editor);
+
+			const onPointerDown = (event: PointerEvent) => {
+				const target = event.target;
+				if (!(target instanceof Node)) return;
+				if (
+					target instanceof Element &&
+					(target.closest('[data-rich-text-menu]') || target.closest('[data-rich-text-menu-trigger]'))
+				) {
+					return;
+				}
+				closeMenus();
+			};
+
+			document.addEventListener('pointerdown', onPointerDown);
+			cleanupPointerDown = () => document.removeEventListener('pointerdown', onPointerDown);
+		})();
 
 		return () => {
-			document.removeEventListener('pointerdown', onPointerDown);
+			destroyed = true;
+			cleanupPointerDown?.();
 			editor?.destroy();
 			editor = null;
 		};
