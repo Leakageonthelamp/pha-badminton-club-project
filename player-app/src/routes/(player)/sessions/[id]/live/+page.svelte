@@ -19,7 +19,7 @@
 	import HomeIcon from '@repo/ui/icons/HomeIcon.svelte';
 	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
 	import { formatDateTime, formatUptime } from '@repo/ui/datetime';
-	import MatchSummaryModal from '@repo/ui/components/MatchSummaryModal.svelte';
+	import MatchSummarySheet from '$lib/components/MatchSummarySheet.svelte';
 	import PlayerMatchHistoryCard from '@repo/ui/components/PlayerMatchHistoryCard.svelte';
 	import { playerMatchResult } from '@repo/ui/matches';
 	import { formatThb, paymentStatusLabel, computePlayerShuttleShare, deriveShuttlesFromShare } from '@repo/ui/payments';
@@ -1007,7 +1007,7 @@
 	action={showSelectedCourtMatchAction ? playerCourtAction : undefined}
 />
 
-<MatchSummaryModal
+<MatchSummarySheet
 	open={selectedHistoryMatch !== null}
 	match={selectedHistoryMatch}
 	highlightUserId={data.userId}

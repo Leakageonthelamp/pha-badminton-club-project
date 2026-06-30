@@ -11,7 +11,7 @@
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import DashboardIcon from '@repo/ui/components/DashboardIcon.svelte';
 	import DatePicker from '@repo/ui/components/DatePicker.svelte';
-	import MatchSummaryModal from '@repo/ui/components/MatchSummaryModal.svelte';
+	import MatchSummarySheet from '$lib/components/MatchSummarySheet.svelte';
 	import PlayerMatchHistoryCard from '@repo/ui/components/PlayerMatchHistoryCard.svelte';
 	import SelectMenu from '@repo/ui/components/SelectMenu.svelte';
 	import { formatDateTime, formatUptime } from '@repo/ui/datetime';
@@ -354,7 +354,7 @@
 	</AppCard>
 </section>
 
-<MatchSummaryModal
+<MatchSummarySheet
 	open={summaryOpen}
 	match={selectedMatch}
 	highlightUserId={data.userId}
