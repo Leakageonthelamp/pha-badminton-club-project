@@ -62,4 +62,48 @@ describe('subscribePostgresChangesWithPollFallback', () => {
 		cleanup();
 		vi.useRealTimers();
 	});
+
+	it('resyncs channel and refetches when tab becomes visible after subscribe', () => {
+		const onChange = vi.fn();
+		let subscribeCb: ((status: string) => void) | undefined;
+		const channel = {
+			on: vi.fn().mockReturnThis(),
+			subscribe: vi.fn((cb: (status: string) => void) => {
+				subscribeCb = cb;
+			})
+		};
+		const supabase = {
+			channel: vi.fn(() => channel),
+			removeChannel: vi.fn()
+		};
+
+		const listeners = new Map<string, () => void>();
+		const documentStub = {
+			visibilityState: 'visible' as DocumentVisibilityState,
+			addEventListener: vi.fn((type: string, handler: () => void) => {
+				listeners.set(type, handler);
+			}),
+			removeEventListener: vi.fn()
+		};
+		vi.stubGlobal('document', documentStub);
+
+		const cleanup = subscribePostgresChangesWithPollFallback(
+			supabase as never,
+			'test',
+			[{ table: 'matches' }],
+			onChange
+		);
+
+		expect(supabase.channel).toHaveBeenCalledTimes(1);
+		subscribeCb?.('SUBSCRIBED');
+		onChange.mockClear();
+
+		listeners.get('visibilitychange')?.();
+		expect(onChange).toHaveBeenCalledTimes(1);
+		expect(supabase.removeChannel).toHaveBeenCalledWith(channel);
+		expect(supabase.channel).toHaveBeenCalledTimes(2);
+
+		cleanup();
+		vi.unstubAllGlobals();
+	});
 });

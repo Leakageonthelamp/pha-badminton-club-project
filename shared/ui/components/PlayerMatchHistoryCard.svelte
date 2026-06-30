@@ -41,7 +41,6 @@
 	const playerTeam = $derived(findPlayerTeam(userId, match.players));
 	const result = $derived(playerMatchResult(userId, match.players, match.games));
 	const sortedGames = $derived([...match.games].sort((a, b) => a.game_no - b.game_no));
-	const primaryGame = $derived(sortedGames[0]);
 	const durationLabel = $derived.by(() => {
 		if (!match.started_at || !match.ended_at) return null;
 		const endedMs = new Date(match.ended_at).getTime();
@@ -79,49 +78,56 @@
 				</span>
 			{/if}
 		</div>
-		{#if primaryGame && playerTeam}
-			{@const gameWinner = deriveGameWinner(primaryGame)}
-			{@const playerWonGame = playerTeam === gameWinner}
-			{@const playerScore =
-				playerTeam === 'A' ? primaryGame.team_a_score : primaryGame.team_b_score}
-			{@const opponentScore =
-				playerTeam === 'A' ? primaryGame.team_b_score : primaryGame.team_a_score}
-			<div class="flex items-center gap-2">
-				<div
-					class="rounded-md px-2 py-1 text-center ring-1 {playerWonGame
-						? 'bg-emerald-50 ring-emerald-200'
-						: 'bg-slate-50 ring-slate-200'}"
-				>
-					<p class="text-[0.6rem] font-semibold uppercase tracking-wide text-slate-500">You</p>
-					<p
-						class="font-mono text-lg font-bold tabular-nums leading-none {playerWonGame
-							? 'text-emerald-700'
-							: 'text-slate-900'}"
-					>
-						{playerScore}
-					</p>
-				</div>
-				<span class="text-[0.65rem] font-semibold text-slate-400">vs</span>
-				<div
-					class="rounded-md px-2 py-1 text-center ring-1 {gameWinner && !playerWonGame
-						? 'bg-emerald-50 ring-emerald-200'
-						: 'bg-slate-50 ring-slate-200'}"
-				>
-					<p class="text-[0.6rem] font-semibold uppercase tracking-wide text-slate-500">Opp</p>
-					<p
-						class="font-mono text-lg font-bold tabular-nums leading-none {gameWinner &&
-						!playerWonGame
-							? 'text-emerald-700'
-							: 'text-slate-900'}"
-					>
-						{opponentScore}
-					</p>
-				</div>
-				{#if sortedGames.length > 1}
-					<span class="text-[0.65rem] text-slate-500">
-						+{sortedGames.length - 1} more game{sortedGames.length - 1 === 1 ? '' : 's'}
-					</span>
-				{/if}
+		{#if sortedGames.length > 0 && playerTeam}
+			<div class="flex flex-wrap items-center gap-2">
+				{#each sortedGames as game, index (game.game_no)}
+					{@const gameWinner = deriveGameWinner(game)}
+					{@const playerWonGame = playerTeam === gameWinner}
+					{@const playerScore = playerTeam === 'A' ? game.team_a_score : game.team_b_score}
+					{@const opponentScore = playerTeam === 'A' ? game.team_b_score : game.team_a_score}
+					<div class="flex items-center gap-2">
+						{#if sortedGames.length > 1}
+							<span class="text-[0.6rem] font-semibold text-slate-400">G{game.game_no}</span>
+						{/if}
+						<div
+							class="rounded-md px-2 py-1 text-center ring-1 {playerWonGame
+								? 'bg-emerald-50 ring-emerald-200'
+								: 'bg-slate-50 ring-slate-200'}"
+						>
+							<p class="text-[0.6rem] font-semibold uppercase tracking-wide text-slate-500">You</p>
+							<p
+								class="font-mono {sortedGames.length > 1
+									? 'text-base'
+									: 'text-lg'} font-bold tabular-nums leading-none {playerWonGame
+									? 'text-emerald-700'
+									: 'text-slate-900'}"
+							>
+								{playerScore}
+							</p>
+						</div>
+						<span class="text-[0.65rem] font-semibold text-slate-400">vs</span>
+						<div
+							class="rounded-md px-2 py-1 text-center ring-1 {gameWinner && !playerWonGame
+								? 'bg-emerald-50 ring-emerald-200'
+								: 'bg-slate-50 ring-slate-200'}"
+						>
+							<p class="text-[0.6rem] font-semibold uppercase tracking-wide text-slate-500">Opp</p>
+							<p
+								class="font-mono {sortedGames.length > 1
+									? 'text-base'
+									: 'text-lg'} font-bold tabular-nums leading-none {gameWinner &&
+								!playerWonGame
+									? 'text-emerald-700'
+									: 'text-slate-900'}"
+							>
+								{opponentScore}
+							</p>
+						</div>
+					</div>
+					{#if index < sortedGames.length - 1}
+						<span class="text-slate-300" aria-hidden="true">·</span>
+					{/if}
+				{/each}
 			</div>
 		{/if}
 		<div

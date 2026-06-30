@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
 
 export type PostgresChangeListen = {
 	event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
@@ -25,6 +25,8 @@ export const subscribePostgresChangesWithPollFallback = (
 	let disposed = false;
 	let realtimeActive = false;
 	let pollTimer: ReturnType<typeof setInterval> | undefined;
+	let connectTimer: ReturnType<typeof setTimeout> | undefined;
+	let channel: RealtimeChannel;
 
 	const startPolling = () => {
 		if (disposed || pollTimer || realtimeActive) return;
@@ -37,40 +39,83 @@ export const subscribePostgresChangesWithPollFallback = (
 		pollTimer = undefined;
 	};
 
-	let channel = supabase.channel(channelName);
-	for (const listener of listeners) {
-		channel = channel.on(
-			'postgres_changes',
-			{
-				event: listener.event ?? '*',
-				schema: 'public',
-				table: listener.table,
-				...(listener.filter ? { filter: listener.filter } : {})
-			},
-			onChange
-		);
-	}
+	const clearConnectTimer = () => {
+		if (!connectTimer) return;
+		clearTimeout(connectTimer);
+		connectTimer = undefined;
+	};
 
-	channel.subscribe((status) => {
+	const scheduleConnectTimeout = () => {
+		clearConnectTimer();
+		connectTimer = setTimeout(() => {
+			if (disposed || realtimeActive) return;
+			startPolling();
+		}, connectTimeoutMs);
+	};
+
+	const handleSubscribeStatus = (status: string) => {
 		if (disposed) return;
 		if (status === 'SUBSCRIBED') {
 			realtimeActive = true;
 			stopPolling();
-		} else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+			clearConnectTimer();
+		} else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
 			realtimeActive = false;
 			startPolling();
 		}
-	});
+	};
 
-	const connectTimer = setTimeout(() => {
-		if (disposed || realtimeActive) return;
-		startPolling();
-	}, connectTimeoutMs);
+	const connect = () => {
+		let next = supabase.channel(channelName);
+		for (const listener of listeners) {
+			next = next.on(
+				'postgres_changes',
+				{
+					event: listener.event ?? '*',
+					schema: 'public',
+					table: listener.table,
+					...(listener.filter ? { filter: listener.filter } : {})
+				},
+				onChange
+			);
+		}
+		next.subscribe(handleSubscribeStatus);
+		channel = next;
+		scheduleConnectTimeout();
+	};
+
+	// ponytail: backgrounded tabs kill WS without an error status — resync on visible/online rebuilds the channel
+	const resync = () => {
+		if (disposed) return;
+		if (typeof document === 'undefined' || document.visibilityState !== 'visible') return;
+
+		realtimeActive = false;
+		stopPolling();
+		clearConnectTimer();
+		void supabase.removeChannel(channel);
+		connect();
+		onChange();
+	};
+
+	connect();
+
+	if (typeof document !== 'undefined') {
+		document.addEventListener('visibilitychange', resync);
+	}
+	if (typeof globalThis.window !== 'undefined') {
+		globalThis.window.addEventListener('online', resync);
+	}
 
 	return () => {
 		disposed = true;
-		clearTimeout(connectTimer);
+		clearConnectTimer();
 		stopPolling();
+		if (typeof document !== 'undefined') {
+			document.removeEventListener('visibilitychange', resync);
+		}
+		if (typeof globalThis.window !== 'undefined') {
+			globalThis.window.removeEventListener('online', resync);
+		}
 		void supabase.removeChannel(channel);
 	};
 };
