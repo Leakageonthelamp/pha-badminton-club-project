@@ -36,11 +36,15 @@
 		open = false,
 		match = null,
 		highlightUserId = null,
+		sessionName = null,
+		sessionHref = null,
 		onClose
 	}: {
 		open?: boolean;
 		match: MatchSummaryLike | null;
 		highlightUserId?: string | null;
+		sessionName?: string | null;
+		sessionHref?: string | null;
 		onClose: () => void;
 	} = $props();
 
@@ -88,13 +92,22 @@
 						{matchStatusLabel(match.status)}
 					</span>
 				</div>
-				<div class="mt-3 flex flex-wrap gap-3 text-sm text-slate-600">
+				<div class="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-600">
 					{#if durationLabel}
 						<span class="font-mono tabular-nums">{durationLabel}</span>
 					{/if}
 					<span>
 						{match.shuttles_used} shuttle{match.shuttles_used === 1 ? '' : 's'}
 					</span>
+					{#if sessionName && sessionHref}
+						<a
+							href={sessionHref}
+							class="font-medium text-brand-700 hover:text-brand-800"
+							onclick={onClose}
+						>
+							{sessionName} →
+						</a>
+					{/if}
 				</div>
 			</div>
 

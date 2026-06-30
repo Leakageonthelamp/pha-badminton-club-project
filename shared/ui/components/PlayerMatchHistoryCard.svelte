@@ -13,6 +13,8 @@
 		match,
 		userId,
 		matchNumber,
+		title,
+		subtitle,
 		onClick,
 		disabled = false,
 		compact = false
@@ -26,11 +28,15 @@
 		};
 		userId: string;
 		matchNumber: number;
+		title?: string;
+		subtitle?: string;
 		onClick: () => void;
 		disabled?: boolean;
 		/** Smaller padding — for nested lists inside roster accordions */
 		compact?: boolean;
 	} = $props();
+
+	const cardTitle = $derived(title ?? `Match ${matchNumber}`);
 
 	const playerTeam = $derived(findPlayerTeam(userId, match.players));
 	const result = $derived(playerMatchResult(userId, match.players, match.games));
@@ -55,8 +61,11 @@
 	<div class="min-w-0 flex-1 space-y-1.5">
 		<div class="flex flex-wrap items-center gap-1.5">
 			<p class="{compact ? 'text-sm' : 'text-base'} font-medium text-slate-900">
-				Match {matchNumber}
+				{cardTitle}
 			</p>
+			{#if subtitle}
+				<span class="text-xs text-slate-500">{subtitle}</span>
+			{/if}
 			{#if result}
 				<span
 					class="rounded-full px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide {result ===

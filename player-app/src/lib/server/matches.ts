@@ -1,9 +1,19 @@
+import {
+	computeMatchSummary,
+	extractHistorySessions,
+	filterSortPaginateMatchHistory,
+	parseHistorySession
+} from '$lib/matches/history';
 import type {
 	CourtGridMatch,
 	MatchGameInput,
+	MatchHistoryItem,
+	MatchHistoryPage,
+	MatchResultFilter,
 	MatchWithDetails
 } from '$lib/types/match';
-import { formatMatchScore, splitTeams } from '@repo/ui/matches';
+import { ensureSupabaseAuth } from '$lib/server/supabaseAuth';
+import { formatMatchScore, playerMatchResult, splitTeams } from '@repo/ui/matches';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 const normalizeRelation = <T>(value: T | T[] | null | undefined): T | null => {
@@ -215,6 +225,138 @@ export const loadMyMatchHistory = async (
 			match.status === 'completed' &&
 			match.players.some((player) => player.user_id === userId)
 	);
+};
+
+const emptyMatchHistoryPage = (
+	options: {
+		page: number;
+		resultFilter: MatchResultFilter;
+		sessionFilter: string;
+		date: string;
+	}
+): MatchHistoryPage =>
+	filterSortPaginateMatchHistory([], {
+		resultFilter: options.resultFilter,
+		sessionFilter: options.sessionFilter,
+		page: options.page,
+		date: options.date,
+		summary: computeMatchSummary([])
+	});
+
+export const loadMatchHistoryForPlayer = async (
+	supabase: SupabaseClient,
+	userId: string,
+	options: {
+		page?: number;
+		resultFilter?: MatchResultFilter;
+		sessionFilter?: string;
+		date?: string;
+	}
+): Promise<MatchHistoryPage> => {
+	const page = Math.max(1, options.page ?? 1);
+	const resultFilter = options.resultFilter ?? '';
+	const date = options.date ?? '';
+
+	await ensureSupabaseAuth(supabase);
+
+	const { data: playerRows, error: playerError } = await supabase
+		.from('match_players')
+		.select('match_id')
+		.eq('user_id', userId);
+
+	if (playerError || !playerRows?.length) {
+		return emptyMatchHistoryPage({ page, resultFilter, sessionFilter: '', date });
+	}
+
+	const matchIds = [...new Set(playerRows.map((row) => row.match_id))];
+
+	const { data: matches, error } = await supabase
+		.from('matches')
+		.select(
+			`
+			${matchSelect},
+			session:sessions (
+				id,
+				name,
+				start_at,
+				club:clubs ( id, name )
+			)
+		`
+		)
+		.in('id', matchIds)
+		.eq('status', 'completed')
+		.order('ended_at', { ascending: false });
+
+	if (error) {
+		console.error('Failed to load match history', error);
+		return emptyMatchHistoryPage({ page, resultFilter, sessionFilter: '', date });
+	}
+
+	type SessionJoin = {
+		id: string;
+		name: string;
+		start_at: string;
+		club: { id: string; name: string } | { id: string; name: string }[] | null;
+	};
+
+	const sessionByMatchId = new Map<
+		string,
+		{ session: SessionJoin; club: { id: string; name: string } | null }
+	>();
+	const baseMatches: Omit<MatchWithDetails, 'players' | 'games'>[] = [];
+
+	for (const row of matches ?? []) {
+		const session = normalizeRelation(
+			row.session as SessionJoin | SessionJoin[] | null | undefined
+		);
+		if (!session) continue;
+
+		const club = normalizeRelation(session.club);
+		sessionByMatchId.set(row.id, { session, club });
+		const { session: _session, ...matchRow } = row as typeof row & { session?: unknown };
+		baseMatches.push(matchRow as Omit<MatchWithDetails, 'players' | 'games'>);
+	}
+
+	const detailed = await attachMatchDetails(supabase, baseMatches);
+
+	const items: MatchHistoryItem[] = detailed.map((match) => {
+		const joined = sessionByMatchId.get(match.id);
+		const session = joined?.session;
+		const club = joined?.club;
+		const startedMs = match.started_at ? new Date(match.started_at).getTime() : Number.NaN;
+		const endedMs = match.ended_at ? new Date(match.ended_at).getTime() : Number.NaN;
+		const durationMs =
+			!Number.isNaN(startedMs) && !Number.isNaN(endedMs) && endedMs >= startedMs
+				? endedMs - startedMs
+				: null;
+
+		return {
+			...match,
+			session_name: session?.name ?? 'Session',
+			session_start_at: session?.start_at ?? match.created_at,
+			club_id: club?.id ?? '',
+			club_name: club?.name ?? 'Club session',
+			result: playerMatchResult(userId, match.players, match.games),
+			score: formatMatchScore(match.games),
+			durationMs
+		};
+	});
+
+	const summary = computeMatchSummary(items);
+	const sessions = extractHistorySessions(items);
+	const sessionFilter = parseHistorySession(
+		options.sessionFilter ?? '',
+		new Set(sessions.map((session) => session.id))
+	);
+
+	return filterSortPaginateMatchHistory(items, {
+		resultFilter,
+		sessionFilter,
+		page,
+		date,
+		sessions,
+		summary
+	});
 };
 
 export const toCourtGridMatches = (matches: MatchWithDetails[]): CourtGridMatch[] =>

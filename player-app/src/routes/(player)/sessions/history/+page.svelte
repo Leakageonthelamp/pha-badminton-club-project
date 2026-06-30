@@ -27,12 +27,19 @@
 	let dateFilter = $state('');
 	let sheetOpen = $state(false);
 	let selectedSessionId = $state<string | null>(null);
+	let navigatingSessionId = $state<string | null>(null);
+	let paginationNav = $state<'prev' | 'next' | null>(null);
+	let linkNav = $state<'clear' | 'browse' | null>(null);
 
 	const history = $derived(data.history);
 	const clubOptions = $derived(clubFilterOptions(history.clubs));
 
 	const isFetching = $derived(
 		navigating.to !== null && navigating.to.url.pathname === '/sessions/history'
+	);
+
+	const historyActionsBusy = $derived(
+		isFetching || navigatingSessionId !== null || paginationNav !== null || linkNav !== null
 	);
 
 	const hasActiveFilters = $derived(
@@ -57,13 +64,42 @@
 	};
 
 	const openSession = (item: SessionHistoryItem) => {
+		if (historyActionsBusy) return;
+
 		if (shouldOpenHistorySessionSummary(item)) {
-			void goto(liveSessionHref(item.id));
+			navigatingSessionId = item.id;
+			void goto(liveSessionHref(item.id)).finally(() => {
+				navigatingSessionId = null;
+			});
 			return;
 		}
 
 		selectedSessionId = item.id;
 		sheetOpen = true;
+	};
+
+	const goToPage = (page: number, direction: 'prev' | 'next') => {
+		if (historyActionsBusy) return;
+		paginationNav = direction;
+		void goto(buildPageUrl(page)).finally(() => {
+			paginationNav = null;
+		});
+	};
+
+	const goClearFilters = () => {
+		if (historyActionsBusy) return;
+		linkNav = 'clear';
+		void goto('/sessions/history').finally(() => {
+			linkNav = null;
+		});
+	};
+
+	const goBrowseSessions = () => {
+		if (historyActionsBusy) return;
+		linkNav = 'browse';
+		void goto('/sessions').finally(() => {
+			linkNav = null;
+		});
 	};
 
 	const closeSheet = () => {
@@ -112,7 +148,7 @@
 					class="app-filter-submit"
 					aria-label="Filter session history"
 					title="Filter"
-					disabled={isFetching}
+					disabled={historyActionsBusy}
 					aria-busy={isFetching}
 				>
 					{#if isFetching}
@@ -166,23 +202,41 @@
 					<p class="mx-auto mt-1 max-w-xs text-sm text-slate-500">
 						Try another date, club, or status, or reset to see your full session history.
 					</p>
-					<a
-						href="/sessions/history"
-						class="mt-4 inline-flex text-sm font-medium text-brand-700 hover:text-brand-800"
+					<button
+						type="button"
+						class="mt-4 inline-flex items-center gap-2 text-sm font-medium text-brand-700 hover:text-brand-800 disabled:opacity-50"
+						disabled={historyActionsBusy}
+						aria-busy={linkNav === 'clear'}
+						onclick={goClearFilters}
 					>
+						{#if linkNav === 'clear'}
+							<span
+								class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-brand-700"
+								aria-hidden="true"
+							></span>
+						{/if}
 						Clear filters
-					</a>
+					</button>
 				{:else}
 					<p class="mt-3 text-sm font-medium text-slate-900">No session history yet</p>
 					<p class="mx-auto mt-1 max-w-xs text-sm text-slate-500">
 						Sessions you join will appear here once you have played.
 					</p>
-					<a
-						href="/sessions"
-						class="mt-4 inline-flex text-sm font-medium text-brand-700 hover:text-brand-800"
+					<button
+						type="button"
+						class="mt-4 inline-flex items-center gap-2 text-sm font-medium text-brand-700 hover:text-brand-800 disabled:opacity-50"
+						disabled={historyActionsBusy}
+						aria-busy={linkNav === 'browse'}
+						onclick={goBrowseSessions}
 					>
+						{#if linkNav === 'browse'}
+							<span
+								class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-brand-700"
+								aria-hidden="true"
+							></span>
+						{/if}
 						Browse sessions →
-					</a>
+					</button>
 				{/if}
 			</div>
 		{:else}
@@ -191,7 +245,12 @@
 					<li>
 						<button
 							type="button"
-							class="history-session-row w-full rounded-xl border border-slate-200 bg-white p-4 text-left transition hover:border-brand-200 hover:bg-brand-50/40 active:bg-brand-50/60"
+							class="history-session-row w-full rounded-xl border border-slate-200 bg-white p-4 text-left transition hover:border-brand-200 hover:bg-brand-50/40 active:bg-brand-50/60 {navigatingSessionId ===
+							item.id
+								? 'nav-loading'
+								: ''}"
+							disabled={historyActionsBusy && navigatingSessionId !== item.id}
+							aria-busy={navigatingSessionId === item.id}
 							onclick={() => openSession(item)}
 						>
 							<div class="flex items-start justify-between gap-3">
@@ -218,11 +277,39 @@
 			{#if history.hasPrevPage || history.hasNextPage}
 				<div class="flex items-center justify-center gap-3 pt-1 text-sm">
 					{#if history.hasPrevPage}
-						<a href={buildPageUrl(history.page - 1)} class="font-medium text-brand-700">← Prev</a>
+						<button
+							type="button"
+							class="inline-flex items-center gap-1.5 font-medium text-brand-700 disabled:opacity-50"
+							disabled={historyActionsBusy}
+							aria-busy={paginationNav === 'prev'}
+							onclick={() => goToPage(history.page - 1, 'prev')}
+						>
+							{#if paginationNav === 'prev'}
+								<span
+									class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-brand-700"
+									aria-hidden="true"
+								></span>
+							{/if}
+							← Prev
+						</button>
 					{/if}
 					<span class="text-slate-500">{history.page}</span>
 					{#if history.hasNextPage}
-						<a href={buildPageUrl(history.page + 1)} class="font-medium text-brand-700">Next →</a>
+						<button
+							type="button"
+							class="inline-flex items-center gap-1.5 font-medium text-brand-700 disabled:opacity-50"
+							disabled={historyActionsBusy}
+							aria-busy={paginationNav === 'next'}
+							onclick={() => goToPage(history.page + 1, 'next')}
+						>
+							{#if paginationNav === 'next'}
+								<span
+									class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-brand-700"
+									aria-hidden="true"
+								></span>
+							{/if}
+							Next →
+						</button>
 					{/if}
 				</div>
 			{/if}

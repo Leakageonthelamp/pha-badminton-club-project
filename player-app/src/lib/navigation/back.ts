@@ -5,7 +5,8 @@ const BACK_HREF: Record<string, string> = {
 	'/register': '/login',
 	'/profile': '/',
 	'/sessions': '/',
-	'/sessions/history': '/sessions'
+	'/sessions/history': '/sessions',
+	'/matches/history': '/'
 };
 
 const LIVE_SESSION_PATH = /^\/sessions\/[^/]+\/live$/;

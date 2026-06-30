@@ -66,3 +66,42 @@ export type CourtGridMatch = {
 	teamB: string[];
 	score?: string;
 };
+
+export type MatchResultFilter = '' | 'win' | 'lose';
+
+export type MatchHistorySessionOption = {
+	id: string;
+	name: string;
+};
+
+export type MatchHistorySummary = {
+	totalMatches: number;
+	wins: number;
+	losses: number;
+	winRate: number | null;
+	avgDurationMs: number | null;
+	totalShuttles: number;
+};
+
+export type MatchHistoryItem = MatchWithDetails & {
+	session_name: string;
+	session_start_at: string;
+	club_id: string;
+	club_name: string;
+	result: 'win' | 'lose' | null;
+	score: string;
+	durationMs: number | null;
+};
+
+export type MatchHistoryPage = {
+	items: MatchHistoryItem[];
+	summary: MatchHistorySummary;
+	sessions: MatchHistorySessionOption[];
+	page: number;
+	totalCount: number;
+	hasNextPage: boolean;
+	hasPrevPage: boolean;
+	resultFilter: MatchResultFilter;
+	sessionFilter: string;
+	date: string;
+};

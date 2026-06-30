@@ -227,6 +227,13 @@
 				accent="indigo"
 			/>
 			<DashboardTile
+				href="/matches/history"
+				title="Match history"
+				description="Wins, scores, and stats"
+				icon={LayersIcon}
+				accent="violet"
+			/>
+			<DashboardTile
 				href="/profile"
 				title="Profile"
 				description="Account and payments"
