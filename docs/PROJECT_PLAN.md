@@ -106,7 +106,7 @@ Single source of truth; ELO is global per player for v1 (simplest correct model)
 - `clubs`: name, owner_id (super admin), max_active_sessions, venue_name, promptpay_type/target, latitude, longitude
 - `club_admins`: club_id, user_id (membership = who can admin a club)
 - `club_shuttles`: per-club shuttle inventory (speed, pricing)
-- `sessions`: club_id, host_id, name, description, start_at, end_at, **finished_at**, **ended_early**, **settlement_started_at** (`0045`), venue_name, latitude, longitude, court_count, court_fee_per_hour, shuttle_id, shuttle_price_per_each, max_players, min_players, match_score_type, match_type, **cancellation_fee**, **max_buffer**, **promptpay_type**, **promptpay_target**, **cancel_source / cancel_reason / cancelled_by**, status (**draft**|open|in_progress|closed|cancelled)
+- `sessions`: club_id, host_id, name, description, start_at, end_at, **finished_at**, **ended_early**, **settlement_started_at** (`0045`), venue_name, latitude, longitude, court_count, court_fee_per_hour, **fixed_court_fee_per_player** (`0047`, nullable — flat per-player court fee), shuttle_id, shuttle_price_per_each, **shuttle_cost_per_each** (`0047`, club's real per-shuttle cost snapshot for profit), max_players, min_players, match_score_type, match_type, **cancellation_fee**, **max_buffer**, **promptpay_type**, **promptpay_target**, **cancel_source / cancel_reason / cancelled_by**, status (**draft**|open|in_progress|closed|cancelled)
 - `session_players`: session_id, user_id, status (**waiting|queued|confirmed|rejected|cancelled|left**), **activity (idle|playing|break|billing)**, **idle_since**, fee_owed, **fee_status (none|owed|submitted|paid|waived)**, fee_paid_at, fee_decided_by, joined_at, decided_at, left_at. Writes via RPC only.
 - `session_leave_requests`: session_id, user_id, status (pending|approved|rejected|cancelled), requested_at, decided_by, decided_at. Writes via RPC only.
 - `matches` (`0032`): session_id, court_number, status (**pending|active|score_pending|suspended|completed|cancelled**), **match_mode** (manual|auto), **round_type** (one_round|two_round), **score_type** (15|21), **shuttles_used**, **invite_expires_at**, score_submitted_by, created_by, started_at, ended_at. Writes via RPC only.
@@ -189,8 +189,9 @@ flowchart TD
 Settlement runs in `security definer` RPCs (no Edge Function needed), surfaced live over Realtime
 on player `/sessions/[id]/live` and admin `/sessions/[id]/control`:
 
-- **court_share** = `compute_session_court_share` = court_fee_per_hour × hours × court_count ÷ active_players (`confirmed` + `left`).
+- **court_share** = `compute_session_court_share` (`0047`): when `fixed_court_fee_per_player` is set every player owes that flat fee (play any match, leave anytime); otherwise the cost-share split court_fee_per_hour × hours × court_count ÷ active_players (`confirmed` + `left`).
 - **shuttle_share** = `compute_session_player_shuttle_share` — even 4-way split of `(shuttle_price_per_each × shuttles_used)` per completed match the player participated in, summed across the session (`0032`). Admin adds shuttles during a match via `add_match_shuttle`. Included in settlement snapshots (`0045`).
+- **Session profit (`0047`)** = court profit + shuttle profit (admin-only display via `computeSessionProfit` in `@repo/ui/payments`). Court profit = `fixed_court_fee_per_player × billed_players − real court cost` (0 in cost-share mode). Shuttle profit = `shuttles_used × (shuttle_price_per_each − shuttle_cost_per_each)`, where `shuttle_cost_per_each` is the club's real per-shuttle cost snapshotted onto the session at create/edit.
 - **settlement_started_at** (`0045`): stamped when admin runs `begin_session_settlement` or `end_session_early`; gates control-page settlement UI separately from per-player early-leave bills.
 - **Live activity (`0030`):** confirmed players have `activity` (`idle|playing|break|billing`) + `idle_since`. Player toggles break via `set_session_break`. Leave/settlement sets `activity='billing'`; cancel leave resets to `idle`. UI labels/badges via `@repo/ui/sessionStatus`; idle timer uses `clampIdleSince` so pre-start idle never shows negative uptime.
 - **Early leave (during `in_progress`):** player `request_session_leave` → snapshots a `pending` payment → `activity='billing'` → pays via client PromptPay QR (`PaymentQr`) → `submit_payment` → admin `approve_payment` → admin `approve_session_leave` (requires approved payment) → player set `left`.
@@ -458,6 +459,7 @@ Admin-app: **create + edit + list + detail + participant management + draft/open
 - `0029_cancel_lock_before_start.sql` — waiting players cannot self-cancel within 15 min of `start_at`
 - `0030_session_player_activity.sql` — `activity` / `idle_since` on `session_players`; `set_session_break`; leave/settlement sets `billing`
 - `0031_session_end_early.sql` — `ended_early` flag; `end_session_early` RPC; `close_session` allows close before `end_at` when ended early
+- `0047_session_fixed_court_fee_profit.sql` — `fixed_court_fee_per_player` (nullable flat fee) + `shuttle_cost_per_each` (real per-shuttle cost snapshot) on sessions; `compute_session_court_share` / `estimate_join_court_share` honor the fixed fee; powers admin session-profit display
 
 - `clubs.venue_name` — default venue label prefilled on session create
 - `sessions`: … `status` (`draft` \| `open` \| `in_progress` \| `closed` \| `cancelled`), **`ended_early`**, …
@@ -483,13 +485,23 @@ Close is **admin-driven** (`close_session`, gated on `end_at` **or** `ended_earl
 
 When a player leaves or a session ends, per-player charges:
 
-- **Court share** = `court_fee_per_hour × duration_hours × court_count ÷ active_players` — **implemented** (`compute_session_court_share`; active = `confirmed` + `left`)
-  - Example: 200 THB/hr × 4 hrs × 4 courts ÷ 10 players = **320 THB**
+- **Court share** = `court_fee_per_hour × duration_hours × court_count ÷ active_players`, OR a flat `fixed_court_fee_per_player` when set — **implemented** (`compute_session_court_share`; active = `confirmed` + `left`)
+  - Cost-share example: 200 THB/hr × 4 hrs × 4 courts ÷ 10 players = **320 THB**
+  - Fixed-fee example: `fixed_court_fee_per_player` = 350 → every player owes **350 THB** regardless of matches played or leave time
 - **Shuttle share** = even 4-way split per match × `shuttles_used`, summed per player — **implemented** (`compute_session_player_shuttle_share` in `0032`; wired into settlement in `0045`)
   - Example: shuttle_price_per_each 80, 1 shuttle on a match → each of 4 players owes **20 THB** for that match
 - **Session total** = court_share + shuttle_share (example → **420 THB**)
 
 `shuttle_price_per_each` is set per session (may differ from club default for markup).
+
+### Session profit (`0047`) — admin-only
+
+A club profits from a session two ways; both surface in the admin app (session detail config note, live `/control` projected-profit tile, history `SessionHistoryDetail`):
+
+1. **Court fee** — set `fixed_court_fee_per_player` above the real court cost ÷ players. With cost-sharing (no fixed fee) court profit is **0** (players just split the real cost). The session form shows the estimated actual court cost (`court_count × court_fee_per_hour × duration`) so the admin can price the flat fee above it.
+2. **Shuttle fee** — set `shuttle_price_per_each` above the club's real per-shuttle cost. The real cost is snapshotted to `shuttle_cost_per_each` at create/edit so profit reporting stays accurate even if `club_shuttles` pricing later changes.
+
+`computeSessionProfit` (`@repo/ui/payments`) returns court/shuttle revenue, cost, and profit. Active sessions show a **projected** profit (billed players = confirmed + left, shuttles used so far); closed sessions show the **actual** profit.
 
 ### Deferred (later phases)
 
@@ -640,6 +652,7 @@ Court + shuttle share settlement, early leave, end early, and cancellation-fee c
 - `0027_cancellation_fee_payments.sql` — fee lifecycle + submit/confirm/waive RPCs
 - `0032_matches.sql` — shuttle share calculation
 - `0045_session_settlement_started.sql` — `sessions.settlement_started_at`; shuttle share included in all settlement snapshots
+- `0047_session_fixed_court_fee_profit.sql` — optional `fixed_court_fee_per_player` + `shuttle_cost_per_each` snapshot; fixed-fee court share + admin session-profit reporting
 
 ### Settlement flows
 
@@ -655,6 +668,6 @@ Court + shuttle share settlement, early leave, end early, and cancellation-fee c
 ### Unchanged constraints
 
 - PromptPay QR client-generated (`promptpay-qr` + `qrcode`, player-app only)
-- Money formatted via `@repo/ui/payments` (`formatThb`, `computeCourtShare`)
+- Money formatted via `@repo/ui/payments` (`formatThb`, `computeCourtShare`); session profit via `computeSessionProfit` (admin-only)
 - No auto reconciliation with bank transfers
 

@@ -28,6 +28,7 @@ export type SessionPublic = {
 	min_players: number;
 	court_count: number;
 	court_fee_per_hour: number;
+	fixed_court_fee_per_player: number | null;
 	shuttle_price_per_each: number;
 	match_score_type: MatchScoreType;
 	match_type: MatchType;

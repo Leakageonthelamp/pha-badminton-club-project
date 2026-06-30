@@ -22,7 +22,7 @@
 	import MatchSummarySheet from '$lib/components/MatchSummarySheet.svelte';
 	import PlayerMatchHistoryCard from '@repo/ui/components/PlayerMatchHistoryCard.svelte';
 	import { playerMatchResult } from '@repo/ui/matches';
-	import { formatThb, paymentStatusLabel, computePlayerShuttleShare, deriveShuttlesFromShare } from '@repo/ui/payments';
+	import { formatThb, paymentStatusLabel, computePlayerShuttleShare, deriveShuttlesFromShare, courtFeePerPlayerModeHint, courtFeePerPlayerModeLabel } from '@repo/ui/payments';
 	import { subscribePostgresChangesWithPollFallback } from '@repo/ui/realtimeSubscribe';
 	import { clampIdleSince, derivePlayerLiveStatus } from '@repo/ui/sessionStatus';
 	import PaymentQr from '$lib/components/PaymentQr.svelte';
@@ -99,6 +99,9 @@
 		data.sessionMatches.filter((match) => match.status === 'completed').length
 	);
 	const myCourtShare = $derived(data.myPayment?.court_share ?? data.perPlayerCost);
+	const courtFeePerPlayerHint = $derived(
+		courtFeePerPlayerModeHint(session.fixed_court_fee_per_player, data.activePlayerCount)
+	);
 	const myShuttleShare = $derived(
 		data.myPayment?.shuttle_share ??
 			computePlayerShuttleShare(myShuttlesUsed, session.shuttle_price_per_each)
@@ -379,10 +382,10 @@
 		<div class="app-cost-lines">
 			<div class="app-cost-line">
 				<div class="min-w-0">
-					<p class="app-cost-line-label">Court fee</p>
-					<p class="app-cost-line-hint">
-						Split across {data.activePlayerCount} active player{data.activePlayerCount === 1 ? '' : 's'}
+					<p class="app-cost-line-label">
+						Court fee per player · {courtFeePerPlayerModeLabel(session.fixed_court_fee_per_player)}
 					</p>
+					<p class="app-cost-line-hint">{courtFeePerPlayerHint}</p>
 				</div>
 				<p class="app-cost-line-amount">{formatThb(myCourtShare)}</p>
 			</div>
@@ -979,6 +982,7 @@
 <MatchScoreConfirmModal
 	open={showScoreConfirmModal}
 	match={myScorePendingMatch}
+	userId={data.userId}
 	formAction="?/respondScore"
 	actionLoading={actionLoading}
 	isBusy={sessionActionsBusy}

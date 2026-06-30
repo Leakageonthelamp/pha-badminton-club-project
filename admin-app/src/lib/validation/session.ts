@@ -71,6 +71,13 @@ export const buildSessionInputSchema = (
 			court_fee_per_hour: z.coerce
 				.number({ invalid_type_error: 'Court fee must be a number' })
 				.min(0, 'Court fee cannot be negative'),
+			fixed_court_fee_per_player: z.preprocess(
+				(val) => (val === '' || val === null || val === undefined ? null : val),
+				z.coerce
+					.number({ invalid_type_error: 'Fixed court fee must be a number' })
+					.min(0, 'Fixed court fee cannot be negative')
+					.nullable()
+			),
 			shuttle_id: z.string().uuid('Select a shuttle'),
 			shuttle_price_per_each: z.coerce
 				.number({ invalid_type_error: 'Shuttle price must be a number' })

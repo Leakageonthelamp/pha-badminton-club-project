@@ -1,4 +1,5 @@
-import { computeCourtShare, isOutstandingCancellationFee } from '@repo/ui/payments';
+import { computeCourtShare, computeSessionProfit, isOutstandingCancellationFee } from '@repo/ui/payments';
+import type { SessionProfit } from '@repo/ui/payments';
 import { formatSessionDuration } from '@repo/ui/datetime';
 import type { SessionPaymentWithProfile } from '$lib/types/payment';
 import type { SessionDetail, SessionPlayerStatus, SessionPlayerWithProfile } from '$lib/types/session';
@@ -68,6 +69,8 @@ export type SessionHistorySummary = {
 	matchCount: number;
 	totalShuttleUsage: number;
 	perPlayerCourtShare: number;
+	hasFixedCourtFee: boolean;
+	profit: SessionProfit;
 	paymentsApprovedCount: number;
 	paymentsSubmittedCount: number;
 	paymentsPendingCount: number;
@@ -101,7 +104,9 @@ export const buildSessionHistorySummary = (
 		| 'updated_at'
 		| 'court_fee_per_hour'
 		| 'court_count'
+		| 'fixed_court_fee_per_player'
 		| 'shuttle_price_per_each'
+		| 'shuttle_cost_per_each'
 	>,
 	players: SessionPlayerWithProfile[],
 	payments: SessionPaymentWithProfile[],
@@ -115,7 +120,23 @@ export const buildSessionHistorySummary = (
 		startAt: session.start_at,
 		endAt: session.end_at,
 		courtCount: session.court_count,
-		activePlayers: attendedCount
+		activePlayers: attendedCount,
+		fixedCourtFeePerPlayer: session.fixed_court_fee_per_player
+	});
+	const totalShuttleUsage =
+		shuttleUsageFromMatches > 0
+			? shuttleUsageFromMatches
+			: computeTotalShuttleUsage(payments, session.shuttle_price_per_each);
+	const profit = computeSessionProfit({
+		fixedCourtFeePerPlayer: session.fixed_court_fee_per_player,
+		courtFeePerHour: session.court_fee_per_hour,
+		startAt: session.start_at,
+		endAt: session.end_at,
+		courtCount: session.court_count,
+		billedPlayers: attendedCount,
+		shuttlesUsed: totalShuttleUsage,
+		shuttlePricePerEach: session.shuttle_price_per_each,
+		shuttleCostPerEach: session.shuttle_cost_per_each
 	});
 
 	const paymentsApprovedCount = payments.filter((payment) => payment.status === 'approved').length;
@@ -147,11 +168,10 @@ export const buildSessionHistorySummary = (
 		attendedCount,
 		rosterCount: players.length,
 		matchCount,
-		totalShuttleUsage:
-			shuttleUsageFromMatches > 0
-				? shuttleUsageFromMatches
-				: computeTotalShuttleUsage(payments, session.shuttle_price_per_each),
+		totalShuttleUsage,
 		perPlayerCourtShare,
+		hasFixedCourtFee: session.fixed_court_fee_per_player != null,
+		profit,
 		paymentsApprovedCount,
 		paymentsSubmittedCount,
 		paymentsPendingCount,

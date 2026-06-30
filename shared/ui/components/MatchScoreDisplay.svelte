@@ -13,7 +13,8 @@
 		teamA,
 		teamB,
 		heading = 'Match score',
-		embedded = false
+		embedded = false,
+		viewerTeam = null
 	}: {
 		games: MatchGameLike[];
 		teamA: MatchPlayerLike[];
@@ -21,10 +22,24 @@
 		heading?: string | null;
 		/** No outer card — for use inside modals */
 		embedded?: boolean;
+		/** Highlights the viewer's team on the scoreboard. */
+		viewerTeam?: 'A' | 'B' | null;
 	} = $props();
 
 	const sortedGames = $derived([...games].sort((a, b) => a.game_no - b.game_no));
 	const matchWinner = $derived(deriveMatchWinner(games));
+
+	const teamPanelClass = (team: 'A' | 'B', gameWinner: 'A' | 'B' | null) => {
+		if (gameWinner === team) {
+			return viewerTeam === team
+				? 'bg-emerald-50 ring-2 ring-emerald-300'
+				: 'bg-emerald-50 ring-1 ring-emerald-200';
+		}
+		if (viewerTeam === team) {
+			return 'bg-brand-50/90 ring-2 ring-brand-400';
+		}
+		return 'bg-white ring-1 ring-slate-200';
+	};
 </script>
 
 {#snippet scoreBody()}
@@ -37,13 +52,14 @@
 						Game {game.game_no}
 					</p>
 				{/if}
-				<div class="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-					<div
-						class="rounded-lg px-2 py-3 text-center {gameWinner === 'A'
-							? 'bg-emerald-50 ring-1 ring-emerald-200'
-							: 'bg-white ring-1 ring-slate-200'}"
-					>
+				<div class="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-stretch gap-3">
+					<div class="rounded-lg px-2 py-3 text-center {teamPanelClass('A', gameWinner)}">
 						<p class="text-xs font-semibold text-slate-700">Team A</p>
+						{#if viewerTeam === 'A'}
+							<p class="text-xs font-bold text-brand-700">Your team</p>
+						{:else if viewerTeam}
+							<p class="text-xs invisible" aria-hidden="true">Your team</p>
+						{/if}
 						<TeamRosterList players={teamA} />
 						<p
 							class="mt-2 font-mono text-3xl font-bold tabular-nums {gameWinner === 'A'
@@ -54,14 +70,15 @@
 						</p>
 					</div>
 
-					<span class="text-sm font-semibold text-slate-400">vs</span>
+					<span class="self-center text-sm font-semibold text-slate-400">vs</span>
 
-					<div
-						class="rounded-lg px-2 py-3 text-center {gameWinner === 'B'
-							? 'bg-emerald-50 ring-1 ring-emerald-200'
-							: 'bg-white ring-1 ring-slate-200'}"
-					>
+					<div class="rounded-lg px-2 py-3 text-center {teamPanelClass('B', gameWinner)}">
 						<p class="text-xs font-semibold text-slate-700">Team B</p>
+						{#if viewerTeam === 'B'}
+							<p class="text-xs font-bold text-brand-700">Your team</p>
+						{:else if viewerTeam}
+							<p class="text-xs invisible" aria-hidden="true">Your team</p>
+						{/if}
 						<TeamRosterList players={teamB} />
 						<p
 							class="mt-2 font-mono text-3xl font-bold tabular-nums {gameWinner === 'B'

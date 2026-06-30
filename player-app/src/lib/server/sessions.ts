@@ -50,6 +50,7 @@ const sessionListSelect = `
 	min_players,
 	court_count,
 	court_fee_per_hour,
+	fixed_court_fee_per_player,
 	shuttle_price_per_each,
 	match_score_type,
 	match_type,
@@ -691,6 +692,7 @@ export const loadLiveSessionForPlayer = async (
 		startAt: session.start_at,
 		endAt: session.end_at,
 		courtCount: session.court_count,
+		fixedCourtFeePerPlayer: session.fixed_court_fee_per_player,
 		activePlayers: activePlayerCount
 	});
 

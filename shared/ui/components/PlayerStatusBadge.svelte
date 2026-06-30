@@ -5,7 +5,14 @@
 		type PlayerLiveStatus
 	} from '../sessionStatus';
 
-	let { status }: { status: PlayerLiveStatus } = $props();
+	let {
+		status,
+		courtNumber = null
+	}: {
+		status: PlayerLiveStatus;
+		/** When status is playing, shown as "Playing on court N". */
+		courtNumber?: number | null;
+	} = $props();
 </script>
 
 <span
@@ -13,5 +20,5 @@
 		status
 	)}"
 >
-	{playerLiveStatusLabel(status)}
+	{playerLiveStatusLabel(status, courtNumber)}
 </span>

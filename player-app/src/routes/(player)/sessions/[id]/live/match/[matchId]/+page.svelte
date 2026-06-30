@@ -324,6 +324,7 @@
 				scoreType={match.score_type}
 				teamA={teamAForScore}
 				teamB={teamBForScore}
+				viewerTeam={myPlayer?.team ?? null}
 				disabled={actionLoading === 'submitScore'}
 			/>
 			{#if scoreFormError}
@@ -359,6 +360,7 @@
 <MatchScoreConfirmModal
 	open={showScoreConfirm}
 	match={showScoreConfirm ? match : null}
+	userId={data.userId}
 	formAction="/sessions/{session.id}/live?/respondScore"
 	actionLoading={actionLoading}
 	isBusy={isBusy}

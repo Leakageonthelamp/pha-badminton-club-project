@@ -23,7 +23,14 @@ export const derivePlayerLiveStatus = ({
 	}
 };
 
-export const playerLiveStatusLabel = (status: PlayerLiveStatus): string => {
+export const playerLiveStatusLabel = (
+	status: PlayerLiveStatus,
+	courtNumber?: number | null
+): string => {
+	if (status === 'playing' && courtNumber != null) {
+		return `Playing on court ${courtNumber}`;
+	}
+
 	switch (status) {
 		case 'idle':
 			return 'Idle';

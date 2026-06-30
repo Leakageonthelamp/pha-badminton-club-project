@@ -18,6 +18,7 @@
 	import { whileSubmitting } from '$lib/forms/submitting';
 	import type { Club, PromptPayType } from '$lib/types/club';
 	import { formatThb, shuttlePricePerEach } from '$lib/types/club';
+	import { computeCourtShare } from '@repo/ui/payments';
 	import type { SessionDetail } from '$lib/types/session';
 
 	type ShuttleOption = {
@@ -63,6 +64,10 @@
 			minPlayers: isEdit ? String(formSession.min_players) : '',
 			courtCount: isEdit ? String(formSession.court_count) : '',
 			courtFeePerHour: isEdit ? String(formSession.court_fee_per_hour) : '',
+			fixedCourtFeePerPlayer:
+				isEdit && formSession.fixed_court_fee_per_player !== null
+					? String(formSession.fixed_court_fee_per_player)
+					: '',
 			shuttleId: isEdit ? (formSession.shuttle_id ?? '') : '',
 			shuttlePricePerEachValue: isEdit ? String(formSession.shuttle_price_per_each) : '',
 			matchScoreType: isEdit ? String(formSession.match_score_type) : '21',
@@ -113,6 +118,7 @@
 	let minPlayers = $state('');
 	let courtCount = $state('');
 	let courtFeePerHour = $state('');
+	let fixedCourtFeePerPlayer = $state('');
 	let shuttleId = $state('');
 	let shuttlePricePerEachValue = $state('');
 	let matchScoreType = $state('21');
@@ -141,6 +147,7 @@
 		minPlayers = initial.minPlayers;
 		courtCount = initial.courtCount;
 		courtFeePerHour = initial.courtFeePerHour;
+		fixedCourtFeePerPlayer = initial.fixedCourtFeePerPlayer;
 		shuttleId = initial.shuttleId;
 		shuttlePricePerEachValue = initial.shuttlePricePerEachValue;
 		matchScoreType = initial.matchScoreType;
@@ -200,6 +207,23 @@
 
 	const startAtUtc = $derived(startAtLocal ? localInputToUtcSafe(startAtLocal) : '');
 	const endAtUtc = $derived(endAtLocal ? localInputToUtcSafe(endAtLocal) : '');
+
+	const estimatedCourtCostPerPlayer = $derived(
+		startAtUtc &&
+			endAtUtc &&
+			courtFeePerHour !== '' &&
+			courtCount !== '' &&
+			maxPlayers !== '' &&
+			Number(maxPlayers) > 0
+			? computeCourtShare({
+					courtFeePerHour: Number(courtFeePerHour),
+					startAt: startAtUtc,
+					endAt: endAtUtc,
+					courtCount: Number(courtCount),
+					activePlayers: Number(maxPlayers)
+				})
+			: null
+	);
 	const endMinLocal = $derived(
 		startAtLocal ? (addHoursToLocalInput(startAtLocal, 1) ?? undefined) : undefined
 	);
@@ -483,6 +507,47 @@
 					class={inputClass}
 				/>
 			</div>
+		</div>
+
+		<div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+			<p class="text-sm font-medium text-slate-700">Estimated actual court cost per player</p>
+			{#if estimatedCourtCostPerPlayer !== null}
+				<p class="mt-1 text-lg font-semibold text-slate-900">
+					{formatThb(estimatedCourtCostPerPlayer)}
+				</p>
+				<p class="mt-1 text-xs text-slate-500">
+					{courtCount} court{Number(courtCount) === 1 ? '' : 's'} × {formatThb(
+						Number(courtFeePerHour || 0)
+					)}/hr × session length ÷ {maxPlayers} max players. Your cost per player — set a fixed fee
+					above it to profit.
+				</p>
+			{:else}
+				<p class="mt-1 text-xs text-slate-500">
+					Set the schedule, court count, court fee, and max players to see your estimated cost per
+					player.
+				</p>
+			{/if}
+		</div>
+
+		<div class="max-w-md">
+			<label for="fixed_court_fee_per_player" class={labelClass}>
+				Fixed court fee per player (THB) — optional
+			</label>
+			<input
+				id="fixed_court_fee_per_player"
+				name="fixed_court_fee_per_player"
+				type="number"
+				min="0"
+				step="0.01"
+				bind:value={fixedCourtFeePerPlayer}
+				placeholder="Leave blank to split the cost evenly"
+				class={inputClass}
+			/>
+			<p class="mt-1 text-xs text-slate-500">
+				When set, every player pays this flat court fee no matter how many matches they play or when
+				they leave (shuttles still bill per use). Leave blank to split the actual court cost evenly
+				among players.
+			</p>
 		</div>
 	</div>
 

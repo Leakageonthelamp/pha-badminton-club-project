@@ -12,6 +12,7 @@
 	let {
 		open = false,
 		match = null,
+		userId = null,
 		formAction,
 		actionLoading = null,
 		isBusy = false,
@@ -19,6 +20,7 @@
 	}: {
 		open?: boolean;
 		match: MatchWithDetails | null;
+		userId?: string | null;
 		formAction: string;
 		actionLoading?: string | null;
 		isBusy?: boolean;
@@ -26,6 +28,10 @@
 	} = $props();
 
 	const teams = $derived(match ? splitTeams(match.players) : { teamA: [], teamB: [] });
+	const viewerTeam = $derived.by(() => {
+		if (!match || !userId) return null;
+		return match.players.find((player) => player.user_id === userId)?.team ?? null;
+	});
 	const teamAForDisplay = $derived(
 		teams.teamA.map((player) => ({
 			team: 'A' as const,
@@ -67,10 +73,16 @@
 			</div>
 
 			<div class="p-4">
+				{#if viewerTeam}
+					<p class="mb-3 text-sm font-medium text-brand-800">
+						Your team is highlighted on the scoreboard below.
+					</p>
+				{/if}
 				<MatchScoreDisplay
 					games={match.games}
 					teamA={teamAForDisplay}
 					teamB={teamBForDisplay}
+					{viewerTeam}
 					heading={null}
 					embedded
 				/>

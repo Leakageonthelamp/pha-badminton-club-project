@@ -24,7 +24,8 @@ import {
 	toCourtGridMatches
 } from '$lib/server/matches';
 import { loadSessionDetail, sweepOverdueDraftSessions, sweepStartedSessions } from '$lib/server/sessions';
-import { computeCourtShare, isOutstandingCancellationFee } from '@repo/ui/payments';
+import { computeMatchShuttleUsage } from '$lib/sessions/sessionHistory';
+import { computeCourtShare, computeSessionProfit, isOutstandingCancellationFee } from '@repo/ui/payments';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -81,7 +82,21 @@ export const load: PageServerLoad = async ({
 		startAt: session.start_at,
 		endAt: session.end_at,
 		courtCount: session.court_count,
-		activePlayers: activePlayerCount
+		activePlayers: activePlayerCount,
+		fixedCourtFeePerPlayer: session.fixed_court_fee_per_player
+	});
+
+	// Projected profit so far: billed players (confirmed + left) and shuttles used in completed matches.
+	const projectedProfit = computeSessionProfit({
+		fixedCourtFeePerPlayer: session.fixed_court_fee_per_player,
+		courtFeePerHour: session.court_fee_per_hour,
+		startAt: session.start_at,
+		endAt: session.end_at,
+		courtCount: session.court_count,
+		billedPlayers: billedPlayers.length,
+		shuttlesUsed: computeMatchShuttleUsage(matches),
+		shuttlePricePerEach: session.shuttle_price_per_each,
+		shuttleCostPerEach: session.shuttle_cost_per_each
 	});
 
 	const endReached = Date.now() >= new Date(session.end_at).getTime();
@@ -108,6 +123,7 @@ export const load: PageServerLoad = async ({
 		courtGridMatches: toCourtGridMatches(matches),
 		completedMatches: matches.filter((match) => match.status === 'completed'),
 		perPlayerCost,
+		projectedProfit,
 		activePlayerCount,
 		endReached,
 		settlementStarted,

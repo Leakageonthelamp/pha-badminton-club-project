@@ -21,7 +21,7 @@
 	import PlayerMatchHistoryCard from '@repo/ui/components/PlayerMatchHistoryCard.svelte';
 	import { formatDateTime, formatUptime } from '@repo/ui/datetime';
 	import { subscribePostgresChangesWithPollFallback } from '@repo/ui/realtimeSubscribe';
-	import { formatThb, computeCourtTotal, paymentStatusLabel } from '@repo/ui/payments';
+	import { formatThb, computeCourtTotal, paymentStatusLabel, courtFeePerPlayerModeHint, courtFeePerPlayerModeLabel, courtFeePerPlayerModeNoun } from '@repo/ui/payments';
 	import type { PaymentStatus } from '@repo/ui/payments';
 	import {
 		clampIdleSince,
@@ -110,6 +110,22 @@
 
 	const matchCountForPlayer = (userId: string) => completedMatchesByUser.get(userId)?.length ?? 0;
 
+	const activeCourtByUserId = $derived.by(() => {
+		const map = new Map<string, number>();
+
+		for (const match of data.matches) {
+			if (match.status === 'completed' || match.status === 'cancelled') continue;
+
+			for (const player of match.players) {
+				map.set(player.user_id, match.court_number);
+			}
+		}
+
+		return map;
+	});
+
+	const courtForPlayer = (userId: string) => activeCourtByUserId.get(userId) ?? null;
+
 	function togglePlayerMatchHistory(playerId: string) {
 		const next = new Set(expandedPlayerIds);
 		if (next.has(playerId)) next.delete(playerId);
@@ -118,6 +134,12 @@
 	}
 
 	const session = $derived(data.session);
+	const courtFeePerPlayerHint = $derived(
+		courtFeePerPlayerModeHint(session.fixed_court_fee_per_player, data.activePlayerCount)
+	);
+	const courtFeePerPlayerNoun = $derived(
+		courtFeePerPlayerModeNoun(session.fixed_court_fee_per_player)
+	);
 	const totalCourtFee = $derived(
 		computeCourtTotal({
 			courtFeePerHour: session.court_fee_per_hour,
@@ -181,6 +203,14 @@
 	);
 
 	const billedPlayerCount = $derived(checklistPlayers.length);
+	const projectedProfit = $derived(data.projectedProfit);
+	const profitPositive = $derived(projectedProfit.totalProfit >= 0);
+
+	const courtRevenueLabel = $derived(
+		session.fixed_court_fee_per_player != null
+			? `${billedPlayerCount} player${billedPlayerCount === 1 ? '' : 's'} × ${formatThb(session.fixed_court_fee_per_player)} fixed fee`
+			: `${billedPlayerCount} player${billedPlayerCount === 1 ? '' : 's'} · shared court cost`
+	);
 
 	const paymentsAwaitingConfirm = $derived(
 		data.payments.filter((payment) => payment.status === 'submitted').length
@@ -326,7 +356,13 @@
 	};
 
 	const openSelectedCourtMatchControl = () => {
-		if (!selectedCourtMatch?.matchId || courtLoadingNumber !== null) return;
+		if (
+			!selectedCourtMatch?.matchId ||
+			courtLoadingNumber !== null ||
+			selectedCourtMatch.status === 'pending'
+		) {
+			return;
+		}
 
 		const courtNumber = selectedCourtMatch.courtNumber;
 		const matchId = selectedCourtMatch.matchId;
@@ -472,6 +508,7 @@
 {#snippet playerRosterIdentity(player: SessionPlayerWithProfile, liveStatus: PlayerLiveStatus)}
 	{@const displayName = player.profile?.display_name ?? 'Unknown player'}
 	{@const matchCount = matchCountForPlayer(player.user_id)}
+	{@const playingCourt = liveStatus === 'playing' ? courtForPlayer(player.user_id) : null}
 	<p class="truncate font-semibold text-slate-900">
 		{displayName}
 	</p>
@@ -479,7 +516,7 @@
 		{#if player.profile?.tag}
 			<TagPill tag={player.profile.tag} />
 		{/if}
-		<PlayerStatusBadge status={liveStatus} />
+		<PlayerStatusBadge status={liveStatus} courtNumber={playingCourt} />
 		<span
 			class="inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ring-1 bg-slate-100 text-slate-700 ring-slate-200"
 		>
@@ -582,7 +619,10 @@
 				{formatThb(data.perPlayerCost)}
 			</p>
 			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
-				Court fee per player
+				Court fee per player · {courtFeePerPlayerModeLabel(session.fixed_court_fee_per_player)}
+			</p>
+			<p class="text-[0.6rem] font-normal normal-case leading-snug text-slate-400">
+				{courtFeePerPlayerHint}
 			</p>
 		</div>
 		<div class="app-card-padded flex min-h-24 flex-col items-center justify-center gap-1 text-center">
@@ -622,6 +662,105 @@
 			</p>
 		</div>
 	</div>
+
+	<AppCard
+		class="space-y-4 {profitPositive
+			? 'border-emerald-200 bg-emerald-50/40'
+			: 'border-rose-200 bg-rose-50/40'}"
+	>
+		<div>
+			<h2 class="text-base font-semibold text-slate-900">Profit breakdown</h2>
+			<p class="mt-1 text-sm text-slate-600">
+				Projected from {billedPlayerCount} billed player{billedPlayerCount === 1 ? '' : 's'}
+				· {shuttlesUsed} shuttle{shuttlesUsed === 1 ? '' : 's'} used so far
+			</p>
+		</div>
+
+		<div class="space-y-4 text-sm">
+			<div class="space-y-2">
+				<h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Court</h3>
+				<dl class="space-y-1.5">
+					<div class="flex items-baseline justify-between gap-3">
+						<dt class="text-slate-600">Your actual cost</dt>
+						<dd class="shrink-0 tabular-nums font-medium text-slate-900">
+							{formatThb(projectedProfit.courtCost)}
+						</dd>
+					</div>
+					<p class="text-xs text-slate-500">
+						{session.court_count} court{session.court_count === 1 ? '' : 's'} × {formatThb(
+							session.court_fee_per_hour
+						)}/hr · session length
+					</p>
+					<div class="flex items-baseline justify-between gap-3">
+						<dt class="text-slate-600">Player revenue</dt>
+						<dd class="shrink-0 tabular-nums font-medium text-slate-900">
+							{formatThb(projectedProfit.courtRevenue)}
+						</dd>
+					</div>
+					<p class="text-xs text-slate-500">{courtRevenueLabel}</p>
+					<div class="flex items-baseline justify-between gap-3 border-t border-slate-200/80 pt-2">
+						<dt class="font-medium text-slate-700">Court profit</dt>
+						<dd
+							class="shrink-0 tabular-nums font-semibold {projectedProfit.courtProfit >= 0
+								? 'text-emerald-700'
+								: 'text-rose-700'}"
+						>
+							{formatThb(projectedProfit.courtProfit)}
+						</dd>
+					</div>
+				</dl>
+			</div>
+
+			<div class="space-y-2">
+				<h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Shuttle</h3>
+				<dl class="space-y-1.5">
+					<div class="flex items-baseline justify-between gap-3">
+						<dt class="text-slate-600">Player revenue</dt>
+						<dd class="shrink-0 tabular-nums font-medium text-slate-900">
+							{formatThb(projectedProfit.shuttleRevenue)}
+						</dd>
+					</div>
+					<p class="text-xs text-slate-500">
+						{shuttlesUsed} × {formatThb(session.shuttle_price_per_each)} charged to players
+					</p>
+					<div class="flex items-baseline justify-between gap-3">
+						<dt class="text-slate-600">Your actual cost</dt>
+						<dd class="shrink-0 tabular-nums font-medium text-slate-900">
+							{formatThb(projectedProfit.shuttleCost)}
+						</dd>
+					</div>
+					<p class="text-xs text-slate-500">
+						{shuttlesUsed} × {formatThb(session.shuttle_cost_per_each)} club cost per shuttle
+					</p>
+					<div class="flex items-baseline justify-between gap-3 border-t border-slate-200/80 pt-2">
+						<dt class="font-medium text-slate-700">Shuttle profit</dt>
+						<dd
+							class="shrink-0 tabular-nums font-semibold {projectedProfit.shuttleProfit >= 0
+								? 'text-emerald-700'
+								: 'text-rose-700'}"
+						>
+							{formatThb(projectedProfit.shuttleProfit)}
+						</dd>
+					</div>
+				</dl>
+			</div>
+
+			<div
+				class="flex items-baseline justify-between gap-3 rounded-xl border px-3 py-2.5 {profitPositive
+					? 'border-emerald-200 bg-white/70'
+					: 'border-rose-200 bg-white/70'}"
+			>
+				<dt class="text-base font-semibold text-slate-900">Total projected profit</dt>
+				<dd
+					class="shrink-0 text-lg font-bold tabular-nums {profitPositive
+						? 'text-emerald-700'
+						: 'text-rose-700'}"
+				>
+					{formatThb(projectedProfit.totalProfit)}
+				</dd>
+			</div>
+		</div>
+	</AppCard>
 
 	{#if needsAttention}
 		<AppCard class="space-y-2 border-amber-200 bg-amber-50/70">
@@ -948,7 +1087,7 @@
 		{#if session.ended_early}
 			<div class="rounded-xl border border-amber-200 bg-amber-50/70 px-3 py-2.5 text-sm text-amber-900">
 				<strong>Ended early.</strong> Every active player was billed
-				{formatThb(data.perPlayerCost)} (full court fee share). Confirm each PromptPay transfer below,
+				{formatThb(data.perPlayerCost)} ({courtFeePerPlayerNoun}). Confirm each PromptPay transfer below,
 				then close when all payments are approved.
 			</div>
 		{:else if session.status === 'in_progress' && !data.endReached && !data.settlementStarted}
@@ -957,7 +1096,7 @@
 				{formatDateTime(session.end_at)}. Bills all {activePlayers.length} active player{activePlayers.length ===
 				1
 					? ''
-					: 's'} immediately at {formatThb(data.perPlayerCost)} each (full scheduled court share).
+					: 's'} immediately at {formatThb(data.perPlayerCost)} each ({courtFeePerPlayerNoun}).
 				Players must pay before leaving; you confirm each transfer, then close. Cannot be undone.
 			</div>
 		{/if}
@@ -1061,7 +1200,7 @@
 				<p class="mt-2 text-sm text-amber-900">
 					This ends the session immediately and cannot be undone. All {activePlayers.length} active
 					player{activePlayers.length === 1 ? '' : 's'} will be billed
-					<strong>{formatThb(data.perPlayerCost)}</strong> each (full court fee share). They must pay
+					<strong>{formatThb(data.perPlayerCost)}</strong> each ({courtFeePerPlayerNoun}). They must pay
 					before leaving — you confirm each transfer here, then close the session.
 				</p>
 			</div>
@@ -1100,7 +1239,7 @@
 					Start settlement?
 				</h2>
 				<p class="mt-2 text-sm text-brand-800">
-					Each active player will owe <strong>{formatThb(data.perPlayerCost)}</strong> (court fee share).
+					Each active player will owe <strong>{formatThb(data.perPlayerCost)}</strong> ({courtFeePerPlayerNoun}).
 					They pay via PromptPay on their phone; you confirm each transfer here.
 				</p>
 			</div>
@@ -1149,15 +1288,23 @@
 {/if}
 
 {#snippet adminCourtAction()}
-	<SubmitButton
-		type="button"
-		loading={courtLoadingNumber === selectedCourtMatch?.courtNumber}
-		loadingLabel="Opening match…"
-		disabled={courtLoadingNumber !== null && courtLoadingNumber !== selectedCourtMatch?.courtNumber}
-		onclick={openSelectedCourtMatchControl}
-	>
-		{selectedCourtMatch?.status === 'suspended' ? 'Resolve score' : 'Open match control'}
-	</SubmitButton>
+	<div class="space-y-2">
+		{#if selectedCourtMatch?.status === 'pending'}
+			<p class="text-center text-xs text-slate-500">
+				Waiting for all players to accept — match control opens once play starts.
+			</p>
+		{/if}
+		<SubmitButton
+			type="button"
+			loading={courtLoadingNumber === selectedCourtMatch?.courtNumber}
+			loadingLabel="Opening match…"
+			disabled={selectedCourtMatch?.status === 'pending' ||
+				(courtLoadingNumber !== null && courtLoadingNumber !== selectedCourtMatch?.courtNumber)}
+			onclick={openSelectedCourtMatchControl}
+		>
+			{selectedCourtMatch?.status === 'suspended' ? 'Resolve score' : 'Open match control'}
+		</SubmitButton>
+	</div>
 {/snippet}
 
 <MatchmakingModal

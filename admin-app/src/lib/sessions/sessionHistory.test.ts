@@ -54,7 +54,9 @@ const baseSession = {
 	updated_at: '2026-06-28T22:05:00.000Z',
 	court_fee_per_hour: 200,
 	court_count: 2,
+	fixed_court_fee_per_player: null,
 	shuttle_price_per_each: 25,
+	shuttle_cost_per_each: 20,
 	max_players: 12
 };
 
@@ -97,6 +99,31 @@ describe('sessionHistory helpers', () => {
 		expect(summary.totalBilled).toBe(300);
 		expect(summary.matchCount).toBe(0);
 		expect(summary.totalShuttleUsage).toBe(0);
+		// Cost-share mode: no court profit, no shuttle usage → zero profit.
+		expect(summary.hasFixedCourtFee).toBe(false);
+		expect(summary.profit.courtProfit).toBe(0);
+		expect(summary.profit.totalProfit).toBe(0);
+	});
+
+	it('reports court + shuttle profit when a fixed court fee is set', () => {
+		// Court cost 200×4×2 = 1600; 2 attended × fixed 250 = 500 revenue is below cost here,
+		// so use enough billed players to profit: 8 attended.
+		const players = Array.from({ length: 8 }, (_, i) =>
+			basePlayer({ id: `p${i}`, user_id: `u${i}`, status: 'confirmed' })
+		);
+		const summary = buildSessionHistorySummary(
+			{ ...baseSession, fixed_court_fee_per_player: 250 },
+			players,
+			[],
+			[{ status: 'completed', shuttles_used: 10 }]
+		);
+
+		expect(summary.hasFixedCourtFee).toBe(true);
+		expect(summary.perPlayerCourtShare).toBe(250);
+		expect(summary.profit.courtRevenue).toBe(2000); // 8 × 250
+		expect(summary.profit.courtProfit).toBe(400); // 2000 − 1600
+		expect(summary.profit.shuttleProfit).toBe(50); // 10 × (25 − 20)
+		expect(summary.profit.totalProfit).toBe(450);
 	});
 
 	it('derives shuttle usage from billed shuttle shares', () => {

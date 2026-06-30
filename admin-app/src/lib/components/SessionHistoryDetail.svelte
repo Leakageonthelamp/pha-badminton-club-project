@@ -8,7 +8,7 @@
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
 	import { formatDateTime } from '@repo/ui/datetime';
-	import { formatThb, paymentStatusLabel, cancellationFeeStatusLabel } from '@repo/ui/payments';
+	import { formatThb, paymentStatusLabel, cancellationFeeStatusLabel, courtFeePerPlayerModeHint, courtFeePerPlayerModeLabel } from '@repo/ui/payments';
 	import type { PaymentStatus } from '@repo/ui/payments';
 	import { buildSessionHistorySummary, isAttendedPlayer, isOutstandingCancellationFee } from '$lib/sessions/sessionHistory';
 	import { formatThb as formatClubThb } from '$lib/types/club';
@@ -164,11 +164,33 @@
 				</p>
 			</div>
 			<div class="app-history-stat">
-				<p class="app-history-stat-label">Court share</p>
+				<p class="app-history-stat-label">
+					Court fee per player · {courtFeePerPlayerModeLabel(session.fixed_court_fee_per_player)}
+				</p>
 				<p class="app-history-stat-value app-history-stat-value--money">
 					{formatThb(summary.perPlayerCourtShare)}
 				</p>
-				<p class="app-history-stat-hint">Per attended player</p>
+				<p class="app-history-stat-hint">
+					{courtFeePerPlayerModeHint(
+						session.fixed_court_fee_per_player,
+						summary.attendedCount
+					)}
+				</p>
+			</div>
+			<div
+				class="app-history-stat {summary.profit.totalProfit >= 0
+					? 'border-emerald-200/80 bg-emerald-50/50'
+					: 'border-rose-200/80 bg-rose-50/50'}"
+			>
+				<p class="app-history-stat-label">Session profit</p>
+				<p class="app-history-stat-value app-history-stat-value--money">
+					{formatThb(summary.profit.totalProfit)}
+				</p>
+				<p class="app-history-stat-hint">
+					Court {formatThb(summary.profit.courtProfit)} · Shuttle {formatThb(
+						summary.profit.shuttleProfit
+					)}
+				</p>
 			</div>
 		</div>
 	</section>
@@ -449,6 +471,14 @@
 					<div class="app-detail-meta-item">
 						<dt class="app-detail-meta-label">Court fee / hour</dt>
 						<dd class="app-detail-meta-value">{formatClubThb(session.court_fee_per_hour)}</dd>
+					</div>
+					<div class="app-detail-meta-item">
+						<dt class="app-detail-meta-label">Fixed court fee / player</dt>
+						<dd class="app-detail-meta-value">
+							{session.fixed_court_fee_per_player !== null
+								? formatClubThb(session.fixed_court_fee_per_player)
+								: 'Split evenly'}
+						</dd>
 					</div>
 					<div class="app-detail-meta-item sm:col-span-2">
 						<dt class="app-detail-meta-label">Shuttle</dt>

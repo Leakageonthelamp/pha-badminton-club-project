@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { computePlayerShuttleShare, deriveShuttlesFromShare } from './payments.js';
+import {
+	computePlayerShuttleShare,
+	courtFeePerPlayerModeHint,
+	courtFeePerPlayerModeLabel,
+	courtFeePerPlayerModeNoun,
+	deriveShuttlesFromShare
+} from './payments.js';
 
 describe('computePlayerShuttleShare', () => {
 	it('returns 0 when no shuttles used', () => {
@@ -25,5 +31,16 @@ describe('deriveShuttlesFromShare', () => {
 	it('returns 0 when share or price is zero', () => {
 		expect(deriveShuttlesFromShare(0, 60)).toBe(0);
 		expect(deriveShuttlesFromShare(45, 0)).toBe(0);
+	});
+});
+
+describe('courtFeePerPlayerModeLabel', () => {
+	it('distinguishes fixed fee from shared cost', () => {
+		expect(courtFeePerPlayerModeLabel(350)).toBe('Fixed fee');
+		expect(courtFeePerPlayerModeLabel(null)).toBe('Shared cost');
+		expect(courtFeePerPlayerModeNoun(350)).toBe('fixed court fee');
+		expect(courtFeePerPlayerModeNoun(null)).toBe('shared court cost');
+		expect(courtFeePerPlayerModeHint(350)).toBe('Fixed fee — same amount for every player');
+		expect(courtFeePerPlayerModeHint(null, 8)).toBe('Shared cost — split across 8 active players');
 	});
 });

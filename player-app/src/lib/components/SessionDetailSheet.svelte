@@ -22,6 +22,10 @@
 		mapsSearchUrl
 	} from '@repo/ui/geolocation';
 	import { formatDateTime } from '@repo/ui/datetime';
+	import {
+		courtFeePerPlayerModeHint,
+		courtFeePerPlayerModeLabel
+	} from '@repo/ui/payments';
 	import type { SessionDetail, SessionListItem, SessionPlayerStatus, SessionStatus } from '$lib/types/session';
 	import { liveSessionHref, shouldOpenLiveSession } from '$lib/sessions/navigation';
 	import { isLiveSessionEnded } from '$lib/sessions/liveState';
@@ -809,6 +813,28 @@
 											{formatThb(session.court_fee_per_hour)}/hr · {session.court_count} court{session.court_count === 1 ? '' : 's'}
 										</dd>
 									</div>
+									{#if session.fixed_court_fee_per_player !== null}
+										<div class="flex justify-between gap-4">
+											<dt class="text-slate-500">
+												Court fee per player · {courtFeePerPlayerModeLabel(
+													session.fixed_court_fee_per_player
+												)}
+											</dt>
+											<dd class="text-right font-medium text-slate-900">
+												{formatThb(session.fixed_court_fee_per_player)} · play any match, leave
+												anytime
+											</dd>
+										</div>
+									{:else}
+										<div class="flex justify-between gap-4">
+											<dt class="text-slate-500">
+												Court fee per player · {courtFeePerPlayerModeLabel(null)}
+											</dt>
+											<dd class="text-right text-sm font-medium text-slate-700">
+												{courtFeePerPlayerModeHint(null)}
+											</dd>
+										</div>
+									{/if}
 									<div class="flex justify-between gap-4">
 										<dt class="text-slate-500">Shuttle</dt>
 										<dd class="text-right font-medium text-slate-900">{shuttleLabel}</dd>
@@ -1047,7 +1073,9 @@
 								</SubmitButton>
 								<p class="text-xs text-slate-500">
 									Cancellation closed within 15 minutes of start. The admin may confirm or reject you. If
-									you play and leave early, you will be billed your court fee share.
+									you play and leave early, you will be billed your court fee per player ({courtFeePerPlayerModeLabel(
+										session.fixed_court_fee_per_player
+									).toLowerCase()}).
 								</p>
 							{/if}
 
@@ -1093,10 +1121,15 @@
 						{#if isInProgressJoin}
 							<p>This session has already started.</p>
 							<p>
-								Once you join, you cannot cancel your membership. To leave, you must pay at least
-								your court fee share{#if estimatedCourtShare !== null}
-									(currently about {formatThb(estimatedCourtShare)}{#if estimatedCourtSharePlayerCount !== null}
-										split across {estimatedCourtSharePlayerCount} active player{estimatedCourtSharePlayerCount === 1 ? '' : 's'} if you join{/if}){/if}.
+								Once you join, you cannot cancel your membership. To leave, you must pay your
+								court fee per player ({courtFeePerPlayerModeLabel(
+									session.fixed_court_fee_per_player
+								).toLowerCase()}{#if estimatedCourtShare !== null}
+									— currently about {formatThb(estimatedCourtShare)}{#if session.fixed_court_fee_per_player === null && estimatedCourtSharePlayerCount !== null}
+										, split across {estimatedCourtSharePlayerCount} active player{estimatedCourtSharePlayerCount ===
+										1
+											? ''
+											: 's'} if you join{/if}{/if}).
 							</p>
 							<p>
 								Unpaid session fees will prevent you from joining other sessions until they are

@@ -19,6 +19,7 @@
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import { formatDate, formatDateTime, formatSessionDuration, formatTime } from '@repo/ui/datetime';
+	import { computeCourtTotal } from '@repo/ui/payments';
 	import { formatThb } from '$lib/types/club';
 	import {
 		matchTypeLabel,
@@ -115,6 +116,15 @@
 		session.shuttle
 			? `${session.shuttle.name} · ${formatThb(session.shuttle_price_per_each)} each`
 			: '—'
+	);
+
+	const estimatedCourtCost = $derived(
+		computeCourtTotal({
+			courtFeePerHour: session.court_fee_per_hour,
+			startAt: session.start_at,
+			endAt: session.end_at,
+			courtCount: session.court_count
+		})
 	);
 
 	const handleForceEnd: SubmitFunction = () => {
@@ -620,6 +630,27 @@
 							<dt class="app-detail-meta-label">Court fee / hour</dt>
 							<dd class="app-detail-meta-value text-base text-brand-800">
 								{formatThb(session.court_fee_per_hour)}
+							</dd>
+						</div>
+						<div class="app-detail-meta-item">
+							<dt class="app-detail-meta-label">Est. court cost</dt>
+							<dd class="app-detail-meta-value text-base text-brand-800">
+								{formatThb(estimatedCourtCost)}
+							</dd>
+						</div>
+						<div class="app-detail-meta-item sm:col-span-2">
+							<dt class="app-detail-meta-label">Fixed court fee / player</dt>
+							<dd class="app-detail-meta-value text-base text-brand-800">
+								{#if session.fixed_court_fee_per_player !== null}
+									{formatThb(session.fixed_court_fee_per_player)}
+									<span class="ml-1 text-xs font-normal text-emerald-600">
+										court profit {formatThb(
+											session.fixed_court_fee_per_player * confirmedPlayers.length - estimatedCourtCost
+										)} @ {confirmedPlayers.length} confirmed
+									</span>
+								{:else}
+									<span class="text-slate-500">Split evenly (cost-share)</span>
+								{/if}
 							</dd>
 						</div>
 						<div class="app-detail-meta-item sm:col-span-2">

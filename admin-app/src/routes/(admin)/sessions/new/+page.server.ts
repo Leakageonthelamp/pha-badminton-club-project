@@ -2,6 +2,7 @@ import { resolveEffectiveAppRole } from '$lib/server/adminDashboardMode';
 import { assertCanManageClub, loadManagedClubs } from '$lib/server/clubAccess';
 import { countActiveClubSessions, loadShuttlesForClubs } from '$lib/server/sessions';
 import { sanitizeRichText } from '$lib/server/sanitizeHtml';
+import { shuttlePricePerEach } from '$lib/types/club';
 import { sessionInputSchema } from '$lib/validation/session';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
@@ -62,6 +63,7 @@ export const actions: Actions = {
 			min_players: formData.get('min_players'),
 			court_count: formData.get('court_count'),
 			court_fee_per_hour: formData.get('court_fee_per_hour'),
+			fixed_court_fee_per_player: formData.get('fixed_court_fee_per_player'),
 			shuttle_id: formData.get('shuttle_id'),
 			shuttle_price_per_each: formData.get('shuttle_price_per_each'),
 			match_score_type: formData.get('match_score_type'),
@@ -97,7 +99,7 @@ export const actions: Actions = {
 
 		const { data: shuttle, error: shuttleError } = await supabase
 			.from('club_shuttles')
-			.select('id')
+			.select('id, price, number_per_box')
 			.eq('id', parsed.data.shuttle_id)
 			.eq('club_id', club.id)
 			.maybeSingle();
@@ -106,6 +108,7 @@ export const actions: Actions = {
 			return fail(400, { message: 'Selected shuttle is not valid for this club' });
 		}
 
+		const shuttleCostPerEach = shuttlePricePerEach(shuttle);
 		const description = sanitizeRichText(parsed.data.description);
 
 		const { data, error: insertError } = await supabase
@@ -125,8 +128,10 @@ export const actions: Actions = {
 				min_players: parsed.data.min_players,
 				court_count: parsed.data.court_count,
 				court_fee_per_hour: parsed.data.court_fee_per_hour,
+				fixed_court_fee_per_player: parsed.data.fixed_court_fee_per_player,
 				shuttle_id: parsed.data.shuttle_id,
 				shuttle_price_per_each: parsed.data.shuttle_price_per_each,
+				shuttle_cost_per_each: shuttleCostPerEach,
 				match_score_type: parsed.data.match_score_type,
 				match_type: parsed.data.match_type,
 				cancellation_fee: parsed.data.cancellation_fee,

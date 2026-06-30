@@ -65,7 +65,7 @@ keep it per-app. App-specific branding stays per-app too.
 - `@repo/ui/sessionStatus` — live player activity status (`derivePlayerLiveStatus`, `playerLiveStatusLabel`/`BadgeClass`, `clampIdleSince`/`idleSinceSortKey` for idle timer)
 - `@repo/ui/richText` — `richTextPlainText`, `richTextExcerpt`, `isRichTextEmpty` (list cards + empty checks)
 - `@repo/ui/geolocation` — stored user location helpers (player distance sort)
-- `@repo/ui/payments` — `computeCourtShare`, `formatThb` (THB money formatting), payment/leave/fee status labels
+- `@repo/ui/payments` — `computeCourtShare` (flat `fixedCourtFeePerPlayer` or even split), `computeSessionProfit` (admin-only court+shuttle profit), `formatThb` (THB money formatting), payment/leave/fee status labels
 - `@repo/ui/transactions` — unified transaction filter/status helpers (both apps' transaction lists)
 - `@repo/ui/matches` — match status labels, team split, score formatting; **rally game score validation**
   (`validateRallyGameScore`, `validateMatchGames`, `rallyScoreHint`) — see **Match rally scoring** below
@@ -211,6 +211,11 @@ The `/live` (player) and `/control` (admin) pages are **real**, including match/
   `playing` on match start and reset to `idle` when match completes/cancels; `payments` stays source of truth for money.
 - **Settlement:** court share via `compute_session_court_share`; shuttle share via
   `compute_session_player_shuttle_share` (even 4-way split per match × `shuttles_used`, summed at settlement).
+- **Fixed court fee + profit (`0047`):** optional `sessions.fixed_court_fee_per_player` makes every player pay one
+  flat court fee (any matches, leave anytime; shuttles still per-use); null = even cost-share (zero court profit).
+  `sessions.shuttle_cost_per_each` snapshots the club's real per-shuttle cost at create/edit. Admin-only session
+  profit (court + shuttle markup) via `computeSessionProfit`; projected for live sessions, actual once closed.
+  Shown on admin session detail config, `/control` profit tile, and `SessionHistoryDetail`.
 - **Roster RLS:** `0019`/`0020`/`0039` — members (and browse-before-join for open sessions) see roster via
   `is_active_session_member()` / open-session policies; player loads must call `ensureSupabaseAuth()` before RLS queries.
 - **Transactions:** player `PlayerTransactionsPanel` (profile), admin `(admin)/transactions/`; `@repo/ui/transactions`.
