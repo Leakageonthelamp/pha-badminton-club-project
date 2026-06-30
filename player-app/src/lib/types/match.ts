@@ -67,7 +67,7 @@ export type CourtGridMatch = {
 	score?: string;
 };
 
-export type MatchResultFilter = '' | 'win' | 'lose';
+export type MatchResultFilter = '' | 'win' | 'lose' | 'draw';
 
 export type MatchHistorySessionOption = {
 	id: string;
@@ -78,6 +78,7 @@ export type MatchHistorySummary = {
 	totalMatches: number;
 	wins: number;
 	losses: number;
+	draws: number;
 	winRate: number | null;
 	avgDurationMs: number | null;
 	totalShuttles: number;
@@ -88,7 +89,7 @@ export type MatchHistoryItem = MatchWithDetails & {
 	session_start_at: string;
 	club_id: string;
 	club_name: string;
-	result: 'win' | 'lose' | null;
+	result: 'win' | 'lose' | 'draw' | null;
 	score: string;
 	durationMs: number | null;
 };

@@ -6,6 +6,7 @@
 	import { formatUptime } from '../datetime';
 	import {
 		deriveMatchWinner,
+		isMatchDraw,
 		matchStatusBadgeClass,
 		matchStatusLabel,
 		splitTeams,
@@ -50,6 +51,7 @@
 
 	const teams = $derived(match ? splitTeams(match.players) : { teamA: [], teamB: [] });
 	const matchWinner = $derived(match ? deriveMatchWinner(match.games) : null);
+	const matchDraw = $derived(match ? isMatchDraw(match.games) : false);
 	const teamAForScore = $derived(
 		teams.teamA.map((player) => ({
 			team: 'A' as const,
@@ -74,7 +76,7 @@
 	<AppModal open={open} labelledBy="match-summary-title" onClose={onClose}>
 		<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
 			<div class="border-b border-slate-100 bg-gradient-to-br from-slate-50 via-white to-brand-50/40 px-4 py-4">
-				<div class="flex flex-wrap items-start justify-between gap-3">
+				<div class="flex flex-wrap items-start justify-between gap-3 pr-10">
 					<div>
 						<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Match summary</p>
 						<h2 id="match-summary-title" class="mt-1 text-lg font-semibold text-slate-900">
@@ -82,6 +84,8 @@
 						</h2>
 						{#if matchWinner}
 							<p class="mt-1 text-sm text-emerald-700">Team {matchWinner} won</p>
+						{:else if matchDraw}
+							<p class="mt-1 text-sm text-slate-600">Match drawn</p>
 						{/if}
 					</div>
 					<span

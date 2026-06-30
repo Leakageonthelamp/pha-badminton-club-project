@@ -8,6 +8,7 @@
 	import { formatUptime } from '@repo/ui/datetime';
 	import {
 		deriveMatchWinner,
+		isMatchDraw,
 		matchStatusBadgeClass,
 		matchStatusLabel,
 		splitTeams
@@ -42,6 +43,7 @@
 
 	const teams = $derived(match ? splitTeams(match.players) : { teamA: [], teamB: [] });
 	const matchWinner = $derived(match ? deriveMatchWinner(match.games) : null);
+	const matchDraw = $derived(match ? isMatchDraw(match.games) : false);
 	const teamAForScore = $derived(
 		teams.teamA.map((player) => ({
 			team: 'A' as const,
@@ -222,6 +224,8 @@
 					</h2>
 					{#if matchWinner}
 						<p class="mt-1 text-sm text-emerald-700">Team {matchWinner} won</p>
+					{:else if matchDraw}
+						<p class="mt-1 text-sm text-slate-600">Match drawn</p>
 					{/if}
 					<div class="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-600">
 						{#if durationLabel}

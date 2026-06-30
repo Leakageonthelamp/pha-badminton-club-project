@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { enhance } from '$app/forms';
-	import { goto } from '$app/navigation';
+	import { goto, invalidate } from '$app/navigation';
 	import { page } from '$app/state';
 	import FormToast from '@repo/ui/components/FormToast.svelte';
 	import AppCard from '@repo/ui/components/AppCard.svelte';
@@ -20,6 +20,7 @@
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import { formatDate, formatDateTime, formatSessionDuration, formatTime } from '@repo/ui/datetime';
+	import { subscribePostgresChangesWithPollFallback } from '@repo/ui/realtimeSubscribe';
 	import { computeCourtTotal } from '@repo/ui/payments';
 	import { formatThb } from '$lib/types/club';
 	import {
@@ -32,6 +33,7 @@
 	} from '$lib/types/session';
 	import SessionHistoryDetail from '$lib/components/SessionHistoryDetail.svelte';
 	import SessionCancellationFees from '$lib/components/SessionCancellationFees.svelte';
+	import { createSupabaseBrowserClient } from '$lib/supabase/client';
 	import { toast } from '@repo/ui/toast/toast.svelte';
 	import type { ActionData, PageData } from './$types';
 
@@ -72,15 +74,53 @@
 	const toastVariant = $derived(form?.success ? 'success' : 'error');
 
 	let flashToastShown = $state(false);
+	let startSweepTriggered = $state(false);
 
 	$effect(() => {
-		if (!browser || session.status !== 'in_progress') return;
+		session.id;
+		startSweepTriggered = false;
+	});
+
+	$effect(() => {
+		if (!browser) return;
+		if (session.status !== 'in_progress' && session.status !== 'open') return;
 
 		const timer = window.setInterval(() => {
 			nowMs = Date.now();
 		}, 1_000);
 
 		return () => window.clearInterval(timer);
+	});
+
+	$effect(() => {
+		if (
+			!browser ||
+			session.status !== 'open' ||
+			startSweepTriggered ||
+			nowMs < new Date(session.start_at).getTime()
+		) {
+			return;
+		}
+
+		startSweepTriggered = true;
+		void invalidate('app:session-detail');
+	});
+
+	$effect(() => {
+		if (!browser) return;
+
+		const supabase = createSupabaseBrowserClient();
+		const sessionId = session.id;
+
+		return subscribePostgresChangesWithPollFallback(
+			supabase,
+			`admin-session-detail-${sessionId}`,
+			[
+				{ event: 'UPDATE', table: 'sessions', filter: `id=eq.${sessionId}` },
+				{ table: 'session_players', filter: `session_id=eq.${sessionId}` }
+			],
+			() => void invalidate('app:session-detail')
+		);
 	});
 
 	$effect(() => {

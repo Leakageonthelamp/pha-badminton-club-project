@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { fade, fly } from 'svelte/transition';
 	import { portal } from '../actions/portal';
+	import XMarkIcon from '../icons/XMarkIcon.svelte';
 	import {
 		modalBackdropTransition,
 		modalPanelTransition,
@@ -28,6 +29,10 @@
 
 	let mounted = $state(false);
 	let reduceMotion = $state(false);
+
+	const showCloseButton = $derived(
+		Boolean(onClose) && (closeOnBackdrop || closeOnEscape)
+	);
 
 	const backdropTransition = $derived(
 		reduceMotion ? modalPanelTransitionReduced : modalBackdropTransition
@@ -98,11 +103,21 @@
 		{/if}
 
 		<div
-			class="relative z-10 w-full max-w-lg"
+			class="relative z-10 max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto overscroll-contain"
 			in:fly={panelTransition}
 			out:fly={panelTransition}
 			onoutroend={onPanelOutroEnd}
 		>
+			{#if showCloseButton}
+				<button
+					type="button"
+					class="absolute right-3 top-3 z-20 rounded-lg bg-white/90 p-1.5 text-slate-500 shadow-sm ring-1 ring-slate-200 hover:bg-slate-100 hover:text-slate-700"
+					aria-label={closeLabel}
+					onclick={() => onClose?.()}
+				>
+					<XMarkIcon class="h-5 w-5" />
+				</button>
+			{/if}
 			{@render children()}
 		</div>
 	</div>

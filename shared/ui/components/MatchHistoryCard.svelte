@@ -4,6 +4,7 @@
 	import {
 		deriveMatchWinner,
 		formatMatchScore,
+		isMatchDraw,
 		matchStatusBadgeClass,
 		matchStatusLabel,
 		type MatchGameLike,
@@ -26,6 +27,7 @@
 	} = $props();
 
 	const winner = $derived(deriveMatchWinner(match.games));
+	const matchDraw = $derived(isMatchDraw(match.games));
 	const durationLabel = $derived.by(() => {
 		if (!match.started_at || !match.ended_at) return null;
 		const endedMs = new Date(match.ended_at).getTime();
@@ -49,6 +51,8 @@
 			</span>
 			{#if winner}
 				<span class="text-xs font-medium text-emerald-700">Team {winner} won</span>
+			{:else if matchDraw}
+				<span class="text-xs font-medium text-slate-600">Draw</span>
 			{/if}
 		</div>
 		{#if match.games.length}

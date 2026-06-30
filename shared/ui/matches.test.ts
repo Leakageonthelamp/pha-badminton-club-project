@@ -5,6 +5,7 @@ import {
 	findPlayerTeam,
 	formatMatchScore,
 	formatMatchScoreForTeam,
+	isMatchDraw,
 	isValidRallyGameScore,
 	matchScoreResponseLabel,
 	playerMatchResult,
@@ -49,6 +50,23 @@ describe('matches helpers', () => {
 		).toBe('A');
 	});
 
+	it('isMatchDraw detects 1-1 two-round split', () => {
+		const splitGames = [
+			{ game_no: 1, team_a_score: 21, team_b_score: 18 },
+			{ game_no: 2, team_a_score: 19, team_b_score: 21 }
+		];
+
+		expect(isMatchDraw(splitGames)).toBe(true);
+		expect(isMatchDraw([{ game_no: 1, team_a_score: 21, team_b_score: 18 }])).toBe(false);
+		expect(
+			isMatchDraw([
+				{ game_no: 1, team_a_score: 21, team_b_score: 18 },
+				{ game_no: 2, team_a_score: 21, team_b_score: 15 }
+			])
+		).toBe(false);
+		expect(isMatchDraw([])).toBe(false);
+	});
+
 	it('formatMatchScore sorts by game number', () => {
 		expect(
 			formatMatchScore([
@@ -69,6 +87,20 @@ describe('matches helpers', () => {
 		expect(playerMatchResult('u1', players, games)).toBe('win');
 		expect(playerMatchResult('u2', players, games)).toBe('lose');
 		expect(formatMatchScoreForTeam(games, 'B')).toBe('15-21');
+	});
+
+	it('playerMatchResult returns draw for 1-1 split', () => {
+		const players = [
+			{ user_id: 'u1', team: 'A' as const },
+			{ user_id: 'u2', team: 'B' as const }
+		];
+		const splitGames = [
+			{ game_no: 1, team_a_score: 21, team_b_score: 18 },
+			{ game_no: 2, team_a_score: 19, team_b_score: 21 }
+		];
+
+		expect(playerMatchResult('u1', players, splitGames)).toBe('draw');
+		expect(playerMatchResult('u2', players, splitGames)).toBe('draw');
 	});
 
 	it('validateRallyGameScore accepts normal and deuce wins', () => {

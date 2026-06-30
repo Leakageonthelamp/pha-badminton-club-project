@@ -12,7 +12,8 @@ export const MATCH_HISTORY_PAGE_SIZE = 10;
 export const resultFilterOptions: { value: MatchResultFilter; label: string }[] = [
 	{ value: '', label: 'All results' },
 	{ value: 'win', label: 'Wins' },
-	{ value: 'lose', label: 'Losses' }
+	{ value: 'lose', label: 'Losses' },
+	{ value: 'draw', label: 'Draws' }
 ];
 
 export const extractHistorySessions = (
@@ -55,6 +56,7 @@ export const parseHistorySession = (value: string | null, allowedIds: Set<string
 export const computeMatchSummary = (items: MatchHistoryItem[]): MatchHistorySummary => {
 	let wins = 0;
 	let losses = 0;
+	let draws = 0;
 	let durationTotal = 0;
 	let durationCount = 0;
 	let totalShuttles = 0;
@@ -62,6 +64,7 @@ export const computeMatchSummary = (items: MatchHistoryItem[]): MatchHistorySumm
 	for (const item of items) {
 		if (item.result === 'win') wins += 1;
 		else if (item.result === 'lose') losses += 1;
+		else if (item.result === 'draw') draws += 1;
 
 		if (item.durationMs !== null && item.durationMs >= 0) {
 			durationTotal += item.durationMs;
@@ -77,6 +80,7 @@ export const computeMatchSummary = (items: MatchHistoryItem[]): MatchHistorySumm
 		totalMatches: items.length,
 		wins,
 		losses,
+		draws,
 		winRate: decided > 0 ? Math.round((wins / decided) * 100) : null,
 		avgDurationMs: durationCount > 0 ? Math.round(durationTotal / durationCount) : null,
 		totalShuttles

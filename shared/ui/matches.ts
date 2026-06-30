@@ -128,6 +128,22 @@ export const deriveMatchWinner = (games: MatchGameLike[]): MatchTeam | null => {
 	return winsA > winsB ? 'A' : 'B';
 };
 
+/** True only when every game is decided and each team won an equal number (e.g. 1-1 two-round). */
+export const isMatchDraw = (games: MatchGameLike[]): boolean => {
+	if (games.length === 0) return false;
+
+	let winsA = 0;
+	let winsB = 0;
+
+	for (const game of games) {
+		const winner = deriveGameWinner(game);
+		if (winner === 'A') winsA += 1;
+		else if (winner === 'B') winsB += 1;
+	}
+
+	return winsA + winsB === games.length && winsA === winsB;
+};
+
 export const formatMatchScore = (games: MatchGameLike[]): string =>
 	games
 		.sort((a, b) => a.game_no - b.game_no)
@@ -143,10 +159,13 @@ export const playerMatchResult = (
 	userId: string,
 	players: MatchPlayerUserLike[],
 	games: MatchGameLike[]
-): 'win' | 'lose' | null => {
+): 'win' | 'lose' | 'draw' | null => {
 	const team = findPlayerTeam(userId, players);
+	if (!team) return null;
+	if (isMatchDraw(games)) return 'draw';
+
 	const winner = deriveMatchWinner(games);
-	if (!team || !winner) return null;
+	if (!winner) return null;
 	return team === winner ? 'win' : 'lose';
 };
 

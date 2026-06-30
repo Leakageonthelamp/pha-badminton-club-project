@@ -21,8 +21,11 @@ export const load: PageServerLoad = async ({
 	params,
 	url,
 	cookies,
+	depends,
 	locals: { supabase, user, appRole }
 }) => {
+	depends('app:session-detail');
+
 	if (!user || !appRole) {
 		error(401, 'Sign in required');
 	}

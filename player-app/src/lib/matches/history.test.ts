@@ -50,9 +50,23 @@ describe('computeMatchSummary', () => {
 		expect(summary.totalMatches).toBe(3);
 		expect(summary.wins).toBe(2);
 		expect(summary.losses).toBe(1);
+		expect(summary.draws).toBe(0);
 		expect(summary.winRate).toBe(67);
 		expect(summary.avgDurationMs).toBe(1_200_000);
 		expect(summary.totalShuttles).toBe(6);
+	});
+
+	it('counts draws separately and excludes them from win rate', () => {
+		const items = [
+			baseItem({ id: 'a', ended_at: '2026-06-29T10:30:00.000Z', result: 'win' }),
+			baseItem({ id: 'b', ended_at: '2026-06-28T10:30:00.000Z', result: 'lose' }),
+			baseItem({ id: 'c', ended_at: '2026-06-27T10:30:00.000Z', result: 'draw' })
+		];
+
+		const summary = computeMatchSummary(items);
+
+		expect(summary.draws).toBe(1);
+		expect(summary.winRate).toBe(50);
 	});
 });
 
@@ -99,6 +113,24 @@ describe('filterSortPaginateMatchHistory', () => {
 		});
 		expect(byResult.items).toHaveLength(1);
 		expect(byResult.items[0]?.id).toBe('a');
+
+		const byDraw = filterSortPaginateMatchHistory(
+			[
+				...items,
+				baseItem({
+					id: 'c',
+					ended_at: '2026-06-27T10:30:00.000Z',
+					result: 'draw'
+				})
+			],
+			{
+				resultFilter: 'draw',
+				page: 1,
+				summary
+			}
+		);
+		expect(byDraw.items).toHaveLength(1);
+		expect(byDraw.items[0]?.id).toBe('c');
 
 		const bySession = filterSortPaginateMatchHistory(items, {
 			resultFilter: '',
@@ -157,6 +189,7 @@ describe('parseResultFilter', () => {
 	it('accepts known result filters only', () => {
 		expect(parseResultFilter('win')).toBe('win');
 		expect(parseResultFilter('lose')).toBe('lose');
+		expect(parseResultFilter('draw')).toBe('draw');
 		expect(parseResultFilter('unknown')).toBe('');
 	});
 });

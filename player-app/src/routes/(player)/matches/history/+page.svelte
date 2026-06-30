@@ -124,7 +124,7 @@
 						Record
 					</dt>
 					<dd class="mt-1 text-lg font-semibold tabular-nums text-slate-900">
-						{history.summary.wins}W · {history.summary.losses}L
+						{history.summary.wins}W · {history.summary.losses}L · {history.summary.draws}D
 					</dd>
 				</div>
 				<div class="rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2.5">

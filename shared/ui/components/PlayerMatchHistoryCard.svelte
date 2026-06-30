@@ -71,9 +71,11 @@
 					class="rounded-full px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide {result ===
 					'win'
 						? 'bg-emerald-100 text-emerald-800'
-						: 'bg-rose-100 text-rose-800'}"
+						: result === 'lose'
+							? 'bg-rose-100 text-rose-800'
+							: 'bg-slate-100 text-slate-700'}"
 				>
-					{result === 'win' ? 'Win' : 'Loss'}
+					{result === 'win' ? 'Win' : result === 'lose' ? 'Loss' : 'Draw'}
 				</span>
 			{/if}
 		</div>

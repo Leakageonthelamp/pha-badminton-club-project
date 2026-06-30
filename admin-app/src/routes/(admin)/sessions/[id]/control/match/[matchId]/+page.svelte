@@ -14,6 +14,7 @@
 	import {
 		deriveMatchWinner,
 		formatMatchScore,
+		isMatchDraw,
 		matchStatusLabel,
 		splitTeams,
 		validateMatchGames
@@ -56,6 +57,7 @@
 		match.started_at ? formatUptime(match.started_at, nowMs) : '—'
 	);
 	const winner = $derived(deriveMatchWinner(match.games));
+	const matchDraw = $derived(isMatchDraw(match.games));
 
 	$effect(() => {
 		gameScores = Array.from({ length: gameCount }, (_, index) => ({
@@ -250,6 +252,8 @@
 			<p class="text-lg font-medium text-slate-900">{formatMatchScore(match.games)}</p>
 			{#if winner}
 				<p class="text-sm text-slate-600">Winner: Team {winner}</p>
+			{:else if matchDraw}
+				<p class="text-sm text-slate-600">Match drawn</p>
 			{/if}
 		</AppCard>
 	{/if}
