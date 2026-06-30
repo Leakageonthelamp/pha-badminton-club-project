@@ -28,26 +28,14 @@
 
 	let open = $state(false);
 	let switching = $state(false);
-	let triggerEl = $state<HTMLButtonElement | null>(null);
-	let menuTop = $state(0);
-	let menuRight = $state(0);
 
 	const currentOption = $derived(
 		options.find((option) => option.id === currentWorkspace) ?? options[0] ?? null
 	);
 
-	function updateMenuPosition() {
-		if (!triggerEl) return;
-
-		const rect = triggerEl.getBoundingClientRect();
-		menuTop = rect.bottom + 8;
-		menuRight = Math.max(8, window.innerWidth - rect.right);
-	}
-
 	function toggleMenu() {
 		if (switching) return;
 		open = !open;
-		if (open) updateMenuPosition();
 	}
 
 	function closeMenu() {
@@ -79,25 +67,11 @@
 		}
 	}
 
-	$effect(() => {
-		if (!open) return;
-
-		updateMenuPosition();
-		const onLayoutChange = () => updateMenuPosition();
-		window.addEventListener('resize', onLayoutChange);
-		window.addEventListener('scroll', onLayoutChange, true);
-
-		return () => {
-			window.removeEventListener('resize', onLayoutChange);
-			window.removeEventListener('scroll', onLayoutChange, true);
-		};
-	});
 </script>
 
 {#if canSwitch && options.length > 1}
 	<div class="relative shrink-0">
 		<button
-			bind:this={triggerEl}
 			type="button"
 			class="app-nav-icon-btn app-nav-icon-btn--admin-ws"
 			aria-expanded={open}
@@ -127,9 +101,7 @@
 			></button>
 
 			<div
-				class="fixed z-50 w-56 max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg"
-				style:top="{menuTop}px"
-				style:right="{menuRight}px"
+				class="absolute right-0 top-full z-50 mt-2 w-56 max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg"
 				role="menu"
 			>
 				<div class="border-b border-slate-100 px-3 py-2.5">
