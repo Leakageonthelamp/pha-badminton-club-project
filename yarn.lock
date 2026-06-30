@@ -3373,6 +3373,7 @@ __metadata:
     "@types/node": "npm:^22.15.21"
     "@types/sanitize-html": "npm:^2.16.1"
     "@vercel/analytics": "npm:^2.0.1"
+    "@vite-pwa/sveltekit": "npm:^1.0.0"
     flatpickr: "npm:^4.6.13"
     leaflet: "npm:^1.9.4"
     rollup-plugin-visualizer: "npm:^7.0.1"

@@ -72,13 +72,13 @@ export default defineConfig(({ mode }) => {
 							purpose: 'any'
 						},
 						{
-							src: '/icon-maskable-512.png',
+							src: '/icon-maskable-512.png?v=2',
 							sizes: '512x512',
 							type: 'image/png',
 							purpose: 'maskable'
 						},
 						{
-							src: '/icon-maskable-1024.png',
+							src: '/icon-maskable-1024.png?v=2',
 							sizes: '1024x1024',
 							type: 'image/png',
 							purpose: 'maskable'

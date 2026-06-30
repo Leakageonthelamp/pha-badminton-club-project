@@ -10,6 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1] / "static"
 LOGO = ROOT / "logo.svg"
 MASKABLE = ROOT / "logo-maskable.svg"
+APPLE_TOUCH = ROOT / "apple-touch.svg"
 RSVG = shutil.which("rsvg-convert")
 
 # ponytail: 1024px master + 512 apple-touch — OS splash scales down, not up (stays sharp on mobile)
@@ -17,7 +18,6 @@ ICON_SIZES: tuple[tuple[int, str], ...] = (
 	(192, "icon-192.png"),
 	(512, "icon-512.png"),
 	(1024, "icon-1024.png"),
-	(512, "apple-touch-icon.png"),
 )
 
 
@@ -37,6 +37,7 @@ def main() -> None:
 	for size, name in ICON_SIZES:
 		render(LOGO, size, ROOT / name)
 
+	render(APPLE_TOUCH, 512, ROOT / "apple-touch-icon.png")
 	render(LOGO, 32, ROOT / "favicon.png")
 	render(MASKABLE, 512, ROOT / "icon-maskable-512.png")
 	render(MASKABLE, 1024, ROOT / "icon-maskable-1024.png")

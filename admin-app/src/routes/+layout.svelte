@@ -2,6 +2,8 @@
 	import '../app.css';
 	import { afterNavigate, beforeNavigate } from '$app/navigation';
 	import { appConfig } from '$lib/config/app';
+	import PwaHead from '$lib/components/PwaHead.svelte';
+	import PwaPrompts from '$lib/components/PwaPrompts.svelte';
 	import ServiceUnavailable from '$lib/components/ServiceUnavailable.svelte';
 	import LocationPermissionPrompt from '@repo/ui/components/LocationPermissionPrompt.svelte';
 	import ToastContainer from '@repo/ui/components/ToastContainer.svelte';
@@ -47,6 +49,8 @@
 	afterNavigate(clearPending);
 </script>
 
+<PwaHead />
+
 <svelte:head>
 	<title>{appConfig.name}</title>
 	<meta name="apple-mobile-web-app-title" content={appConfig.shortName} />
@@ -66,3 +70,7 @@
 </div>
 
 <ToastContainer />
+
+{#if !data.serviceUnavailable}
+	<PwaPrompts appName={appConfig.name} />
+{/if}
