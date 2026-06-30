@@ -11,13 +11,13 @@ ph-badminton-club-project/
 ├── docs/PROJECT_PLAN.md      # this file
 ├── shared/ui/                # Shared dashboard UI (both apps import via @repo/ui)
 ├── supabase/                 # Shared DB schema & migrations
-├── player-app/               # Player PWA (SvelteKit) — Phase 1–3 done; Phase 7 payments in progress
-├── admin-app/                # Admin PWA (SvelteKit) — Phase 2–3 done; Phase 7 payments in progress
+├── player-app/               # Player PWA (SvelteKit) — Phases 1–5 & 7 done; Phase 6 ELO pending
+├── admin-app/                # Admin PWA (SvelteKit) — Phases 2–5 & 7 done; Phase 6 ELO pending
 └── package.json              # Yarn workspaces root
 ```
 
-- **Player app:** `player-app/` — auth, profile, session discovery/join, live session (Realtime), early-leave + PromptPay payment, cancellation-fee payment, transaction history
-- **Admin app:** `admin-app/` — super-admin club/user management (Phase 2a); club-admin dashboard/settings (Phase 2b); sessions create/list/detail/join management + full lifecycle + live **session control** (settlement, payment approval, leave approval, close) + cancellation-fee confirm/waive + transactions
+- **Player app:** `player-app/` — auth, profile (incl. self-service credentials), session discovery/join/history, live session (Realtime), manual match invites + in-match scoring, match history, early-leave + PromptPay payment (court + shuttle share), cancellation-fee payment, transaction history
+- **Admin app:** `admin-app/` — super-admin club/user management (Phase 2a); club-admin dashboard/settings (Phase 2b); sessions create/list/detail/join management + full lifecycle + live **session control** (manual matchmaking, court grid, per-match control, settlement, payment approval, leave approval, close, dispute resolve) + cancellation-fee confirm/waive + transactions
 - **Shared backend:** Supabase migrations in `supabase/` (repo root); both apps use the same Supabase project
 
 **Root scripts:** `yarn dev:player`, `yarn dev:admin`, `yarn build:player`, `yarn build:admin`, `yarn check:player`, `yarn check:admin`, `yarn test:player`, `yarn test:admin`, `yarn db:push` (apply Supabase migrations)
@@ -96,25 +96,33 @@ flowchart TD
   player -->|plays, logs score| match
 ```
 
-## Data model (Postgres) - full target
+## Data model (Postgres)
 
-Single source of truth; ELO is global per player for v1 (simplest correct model). Tables are introduced incrementally per phase; the full target is:
+Single source of truth; ELO is global per player for v1 (simplest correct model). Tables are introduced incrementally per phase.
 
-- `profiles` (1:1 with `auth.users`): display_name, avatar_url, email, phone (unique), app_role (player|club_admin|super_admin)
-- `clubs`: name, owner_id (super admin), max_active_sessions
+### As-built (current)
+
+- `profiles` (1:1 with `auth.users`): display_name, avatar_url, email (unique when set), phone (unique), **sign_in_method** (`email`|`phone`|`google`|`facebook`, `0010`), app_role (player|club_admin|super_admin)
+- `clubs`: name, owner_id (super admin), max_active_sessions, venue_name, promptpay_type/target, latitude, longitude
 - `club_admins`: club_id, user_id (membership = who can admin a club)
+- `club_shuttles`: per-club shuttle inventory (speed, pricing)
+- `sessions`: club_id, host_id, name, description, start_at, end_at, **finished_at**, **ended_early**, **settlement_started_at** (`0045`), venue_name, latitude, longitude, court_count, court_fee_per_hour, shuttle_id, shuttle_price_per_each, max_players, min_players, match_score_type, match_type, **cancellation_fee**, **max_buffer**, **promptpay_type**, **promptpay_target**, **cancel_source / cancel_reason / cancelled_by**, status (**draft**|open|in_progress|closed|cancelled)
+- `session_players`: session_id, user_id, status (**waiting|queued|confirmed|rejected|cancelled|left**), **activity (idle|playing|break|billing)**, **idle_since**, fee_owed, **fee_status (none|owed|submitted|paid|waived)**, fee_paid_at, fee_decided_by, joined_at, decided_at, left_at. Writes via RPC only.
+- `session_leave_requests`: session_id, user_id, status (pending|approved|rejected|cancelled), requested_at, decided_by, decided_at. Writes via RPC only.
+- `matches` (`0032`): session_id, court_number, status (**pending|active|score_pending|suspended|completed|cancelled**), **match_mode** (manual|auto), **round_type** (one_round|two_round), **score_type** (15|21), **shuttles_used**, **invite_expires_at**, score_submitted_by, created_by, started_at, ended_at. Writes via RPC only.
+- `match_players` (`0032`): match_id, session_id, user_id, team (**A|B**), **invite_status** (pending|accepted|rejected), **score_response** (pending|accepted|rejected), responded_at. Writes via RPC only.
+- `match_games` (`0032`): match_id, game_no (1|2), team_a_score, team_b_score. Writes via RPC only.
+- `payments`: session_id, user_id, court_share, **shuttle_share** (computed from match shuttle usage at settlement), total_amount, status (pending|submitted|approved), decided_by, decided_at. **Implemented** (`0024`, shuttle share wired in `0032`/`0045`); one row per session+user, written via RPC only. QR is generated client-side (no stored `qr_payload`).
+
+Court occupancy is derived from live `matches` rows (one live match per court); there is no separate `session_courts` table.
+
+### Future target (not yet built)
+
 - `player_ratings`: user_id, elo (default 1500), matches_played, wins, losses, status (active|suspended)
-- `sessions`: club_id, host_id, name, description, start_at, end_at, **finished_at**, **ended_early**, venue_name, latitude, longitude, court_count, court_fee_per_hour, shuttle_id, shuttle_price_per_each, max_players, min_players, match_score_type, match_type, **cancellation_fee**, **max_buffer**, **promptpay_type**, **promptpay_target**, **cancel_source / cancel_reason / cancelled_by**, status (**draft**|open|in_progress|closed|cancelled). Target (not yet): `geography(Point)`, elo_min, elo_max.
-- `session_players`: session_id, user_id, status (**waiting|queued|confirmed|rejected|cancelled|left**), **activity (idle|playing|break|billing)**, **idle_since**, fee_owed, **fee_status (none|owed|submitted|paid|waived)**, **fee_paid_at**, **fee_decided_by**, joined_at, decided_at, left_at. Writes via RPC only (`join_session`, `cancel_session_membership`, `confirm_session_player`, `reject_session_player`, `leave_session`, `set_session_break`, `submit_cancellation_fee`, `confirm_cancellation_fee`, `waive_cancellation_fee`).
-- `session_leave_requests`: session_id, user_id, status (pending|approved|rejected|cancelled), requested_at, decided_by, decided_at. Early-leave during `in_progress`; one pending per player. Writes via RPC only.
-- `session_courts`: session_id, court_number, status (idle|occupied)
-- `matches`: session_id, court_number, mode (auto|manual), status (offered|accepted|in_progress|awaiting_score|disputed|completed|cancelled), started_at, ended_at
-- `match_players`: match_id, user_id, team (a|b), accepted (bool)
-- `match_results`: match_id, score_a, score_b, submitted_by, status (pending|confirmed|disputed|admin_resolved)
-- `match_result_votes`: match_id, user_id, vote (accept|reject) -- needs 3 of 4 to confirm
-- `match_shuttle_usage`: match_id, shuttle_count (default 1, admin can add)
 - `elo_history`: user_id, match_id, elo_before, elo_after, delta
-- `payments`: session_id, user_id, court_share, shuttle_share (0 until Phase 4 match data), total_amount, status (pending|submitted|approved), decided_by, decided_at. **Implemented** (`0024`); one row per session+user, written via RPC only (`begin_session_settlement`, `submit_payment`, `approve_payment`). QR is generated client-side (no stored `qr_payload`).
+- `sessions`: PostGIS `geography(Point)`, elo_min, elo_max for join gates
+- Auto ELO matchmaking via Edge Function (schema has `match_mode 'auto'` but no pairing logic yet)
+- Push notifications for match offers / score confirmations
 
 ## Key flows
 
@@ -138,34 +146,35 @@ sequenceDiagram
 
 ### 2. Matchmaking + accept
 
-Admin picks an idle court + mode. Auto mode: an Edge Function pairs active players by closest ELO into balanced 2v2 teams (team rating = avg of pair). Manual mode: admin hand-picks 4. Offer pushed to all 4; all must accept -> match `in_progress`, court -> occupied.
+**Implemented (Phase 4 — manual):** Club admin opens **Session control**, picks an idle court via `MatchmakingModal`, and hand-picks 4 confirmed idle players → `create_match` RPC → match status **`pending`**, 90s invite window (`0041`). All 4 players receive a Realtime-backed invite modal; each calls `respond_match_invite` (accept/decline). When all 4 accept → **`active`**, players' `activity` → **`playing`**, court shows occupied on `CourtGrid`. If anyone declines or the invite expires → **`cancelled`**. `expire_pending_matches` runs via pg_cron + lazy sweep. **Auto ELO pairing not started** — UI shows disabled "Coming soon"; `match_mode 'auto'` exists in schema only.
+
+**Target (later):** Edge Function pairs active players by closest ELO into balanced 2v2 teams; push notifications for offers.
 
 ```mermaid
 sequenceDiagram
-  participant A as Admin
-  participant FN as Edge Function (matchmake)
+  participant A as Club Admin
   participant DB as Supabase
   participant P as 4 Players
-  A->>FN: create match (court, auto|manual)
-  FN->>DB: build balanced teams, status=offered
-  DB-->>P: realtime/push: match offer (court, teammates)
-  P->>DB: accept (match_players.accepted=true)
-  DB->>DB: all 4 accepted -> status=in_progress, court=occupied
+  A->>DB: create_match(court, 4 player ids)
+  DB-->>P: Realtime invite (90s window)
+  P->>DB: respond_match_invite accept/decline
+  DB->>DB: all 4 accepted -> status=active, activity=playing
 ```
 
 ### 3. Score logging + peer confirmation + dispute
 
-One player submits score -> other 3 vote. >= 3/4 accept (incl. submitter) -> confirmed, ELO calc runs. If rejected (fails 3/4) -> `disputed`, players cannot start a new match (SUSPENDED) until a club admin resolves.
+**Implemented (Phase 5):** During **`active`**, a player submits game scores via `submit_match_score` → match → **`score_pending`**. The other 3 players respond via `respond_match_score` (accept/reject on `match_players.score_response`). **All non-submitter peers must accept** → **`completed`**, court freed, players return to **`idle`**. Any reject → **`suspended`**; admin resolves via `resolve_match_score` (or admin can `end_match_with_score` / `end_match_no_score` from control). Rally scores validated in DB (`0042`) and client (`@repo/ui/matches`). ELO calc on confirm is **deferred to Phase 6**.
+
+**Original design intent** (simplified in as-built): 3-of-4 voting via separate votes table — replaced by per-player `score_response` on `match_players`.
 
 ```mermaid
 flowchart TD
-  submit[Player submits score] --> votes{>= 3 of 4 accept?}
-  votes -->|yes| confirmed[Result confirmed]
-  confirmed --> elo[ELO calc + history + W/L]
-  votes -->|no| disputed[Disputed -> players suspended]
-  disputed --> admin[Admin reviews + sets winner]
-  admin --> elo
-  elo --> freeCourt[Court freed, players active again]
+  submit[Player submit_match_score] --> pending[score_pending]
+  pending --> peers{All peers accept?}
+  peers -->|yes| completed[completed - court freed]
+  peers -->|no| suspended[suspended]
+  suspended --> admin[Admin resolve_match_score]
+  admin --> completed
 ```
 
 ### 4. ELO (doubles)
@@ -175,12 +184,14 @@ flowchart TD
 - delta = K \* (actual - expected), K ~ 32 (configurable, lower at high games_played).
 - Apply same delta to both players on a team; write `elo_history` + update `player_ratings`. Recompute rank ordering for the club leaderboard.
 
-### 5. Payment on leave / close (free PromptPay) — **implemented (court share)**
+### 5. Payment on leave / close (free PromptPay) — **implemented**
 
-Settlement runs in `security definer` RPCs (no Edge Function needed yet), surfaced live over Realtime
+Settlement runs in `security definer` RPCs (no Edge Function needed), surfaced live over Realtime
 on player `/sessions/[id]/live` and admin `/sessions/[id]/control`:
 
-- **court_share** = `compute_session_court_share` = court_fee_per_hour × hours × court_count ÷ active_players (`confirmed` + `left`). **shuttle_share** stays 0 until Phase 4 records matches.
+- **court_share** = `compute_session_court_share` = court_fee_per_hour × hours × court_count ÷ active_players (`confirmed` + `left`).
+- **shuttle_share** = `compute_session_player_shuttle_share` — even 4-way split of `(shuttle_price_per_each × shuttles_used)` per completed match the player participated in, summed across the session (`0032`). Admin adds shuttles during a match via `add_match_shuttle`. Included in settlement snapshots (`0045`).
+- **settlement_started_at** (`0045`): stamped when admin runs `begin_session_settlement` or `end_session_early`; gates control-page settlement UI separately from per-player early-leave bills.
 - **Live activity (`0030`):** confirmed players have `activity` (`idle|playing|break|billing`) + `idle_since`. Player toggles break via `set_session_break`. Leave/settlement sets `activity='billing'`; cancel leave resets to `idle`. UI labels/badges via `@repo/ui/sessionStatus`; idle timer uses `clampIdleSince` so pre-start idle never shows negative uptime.
 - **Early leave (during `in_progress`):** player `request_session_leave` → snapshots a `pending` payment → `activity='billing'` → pays via client PromptPay QR (`PaymentQr`) → `submit_payment` → admin `approve_payment` → admin `approve_session_leave` (requires approved payment) → player set `left`.
 - **End early (`0031`):** admin `end_session_early` during `in_progress` → sets `ended_early`, bills all confirmed players immediately → admin approves payments → `close_session` allowed before scheduled `end_at` when `ended_early`.
@@ -208,17 +219,17 @@ Player routes under `player-app/src/routes/`; admin routes under `admin-app/src/
 | 1     | Player Auth & Profile (email/phone + password, Google, Facebook, 7-day session, profile edit) | Completed   |
 | 2     | DB schema + RLS + roles + clubs / admin hierarchy + club settings                             | Completed   |
 | 3     | Sessions (CRUD, geo discovery, join/waitlist/queue, admin confirm, full lifecycle, live + control) | Completed   |
-| 4     | Matchmaking (manual then auto) + match accept + realtime offers                               | Not started |
-| 5     | Scoring + peer confirmation + dispute/suspend + admin resolve                                 | Not started |
+| 4     | Matchmaking (manual then auto) + match accept + realtime offers                               | Completed (manual); **auto ELO matchmaking not started** |
+| 5     | Scoring + peer confirmation + dispute/suspend + admin resolve                                 | Completed   |
 | 6     | ELO engine + history + leaderboard                                                            | Not started |
-| 7     | Payment summary + PromptPay QR + admin confirm                                                | In progress (court-share settlement + leave + cancellation-fee collection done over Realtime; **shuttle share** waits on Phase 4 match data) |
+| 7     | Payment summary + PromptPay QR + admin confirm                                                | Completed (court + shuttle share settlement, early leave, end early, cancellation-fee collection over Realtime) |
 | 8     | Push notifications + offline polish + final QA                                                | Not started |
 
 ---
 
 ## Phase 1 - Player Auth & Profile (detailed spec)
 
-First MVP module: register/login with email OR phone + password, plus Google & Facebook, 7-day sessions, and a profile page to edit display name + avatar. Email, phone, and password are read-only this phase (changed by admin in a later phase).
+First MVP module: register/login with email OR phone + password, plus Google & Facebook, 7-day sessions, and a profile page to edit display name + avatar. Email, phone, and password were read-only in the initial Phase 1 scope (see **Post-Phase-1 amendment** below).
 
 ### Locked decisions
 
@@ -226,7 +237,7 @@ First MVP module: register/login with email OR phone + password, plus Google & F
 - Register requires: display name + password + (email OR phone, at least one; both unique).
 - No email verification - instant login after register (user created via admin API with `email_confirm: true`, so it works regardless of dashboard toggle).
 - Session lasts 7 days (auth cookie `maxAge` + Supabase session time-box).
-- Profile editable: display name, avatar. Read-only: email, phone, password (request admin).
+- Profile editable: display name, avatar. *(Phase 1 scope: email, phone, password read-only — superseded by amendment below.)*
 - OAuth: Google + Facebook.
 
 ### Architecture
@@ -262,7 +273,7 @@ Auth runs in SvelteKit server form actions using `@supabase/ssr` (sets HttpOnly 
 - `(auth)/register/+page.svelte` + `+page.server.ts` - display name, password, one identifier field (email or phone).
 - `(auth)/login/+page.svelte` + `+page.server.ts` - single identifier field (auto-detect email/phone) + password; Google/Facebook buttons.
 - `auth/callback/+server.ts` - exchanges OAuth code for session, redirects to profile.
-- `(player)/profile/+page.svelte` + `+page.server.ts` - edit display name + avatar upload (Supabase Storage); email/phone shown read-only with a "contact admin to change" note.
+- `(player)/profile/+page.svelte` + `+page.server.ts` - edit display name + avatar upload (Supabase Storage); credentials self-service (see amendment).
 - `logout/+page.server.ts` - signOut.
 - `+layout.server.ts` / `+layout.svelte` / `hooks.server.ts` - supabase client, session load, guard protected `(player)` routes.
 
@@ -284,9 +295,15 @@ Auth runs in SvelteKit server form actions using `@supabase/ssr` (sets HttpOnly 
 - Auth > Sessions: set time-box to 168 hours (7 days).
 - Run the migration (Supabase CLI or SQL editor).
 
-### Out of scope (Phase 1)
+### Out of scope (Phase 1 — original)
 
-ELO, sessions, matches, payments, push notifications, self-service email/phone/password change.
+ELO, sessions, matches, payments, push notifications. *(Self-service email/phone/password change was originally out of scope; shipped later — see amendment.)*
+
+### Post-Phase-1 amendment — profile credentials (`0010_profile_credentials.sql`)
+
+Players and admins can self-service update email, phone, sign-in preference, and password on `/profile` in both apps. Adds `profiles.sign_in_method` (`email`|`phone`|`google`|`facebook`); `lock_readonly_fields()` updated to allow self-service credential updates while still blocking `app_role` changes.
+
+- Test: `player-app/src/lib/server/profileCredentials.test.ts`
 
 ---
 
@@ -393,7 +410,7 @@ Uses shared dashboard design system (see **UI design system** above): `Dashboard
 
 Admin-app: **create + edit + list + detail + participant management + draft/open lifecycle + live session control** (settlement, payment approval, leave approval, close). Player-app: **browse/join sessions + my joined sessions + live session** (Realtime, early leave, PromptPay payment).
 
-> Phase 3 is **complete**; the live `/control` and `/live` pages plus PromptPay settlement (Phase 7, court share) ship on top of it. Only in-session **match/court** control remains a placeholder (Phase 4).
+> Phase 3 is **complete**. Match/court control (Phase 4) and scoring (Phase 5) ship on the live `/control` and `/live` pages — see Phase 4/5 sections below.
 
 ### Role capabilities (sessions)
 
@@ -410,7 +427,7 @@ Admin-app: **create + edit + list + detail + participant management + draft/open
 - `(admin)/sessions/new/` — create form (club admin / super-admin in club workspace only)
 - `(admin)/sessions/[id]/` — session detail + waiting list, buffer queue, confirmed roster; open draft; super-admin force-end
 - `(admin)/sessions/[id]/edit/` — edit open/draft session; cancel releases players (`release_active_session_players`)
-- `(admin)/sessions/[id]/control/` — **live session control** (in_progress only): **end session early** (bills all), start settlement, approve payments, approve/reject early-leave requests, confirm/waive cancellation fees, close session. Realtime via `depends('app:session-control')`. Courts/matches still placeholder (Phase 4).
+- `(admin)/sessions/[id]/control/` — **live session control** (in_progress only): court grid + manual matchmaking, **end session early** (bills all), start settlement, approve payments, approve/reject early-leave requests, confirm/waive cancellation fees, close session. Realtime via `depends('app:session-control')`. Per-match admin page at `/control/match/[matchId]` (Phase 4/5).
 - `(admin)/transactions/` — cross-session payment + cancellation-fee history
 - `(admin)/dashboard/` — **Ongoing** + **Upcoming** session panels (`UpcomingSessionsPanel`)
 
@@ -419,8 +436,8 @@ Admin-app: **create + edit + list + detail + participant management + draft/open
 - `(player)/` — home: **My sessions**, featured sessions, nearby clubs
 - `(player)/sessions/` — upcoming session list (`depends('app:sessions')`)
 - `(player)/sessions/history/` — past sessions (filter by status, club, date; paginated)
-- `(player)/sessions/[id]/live/` — **live session** (joined + `in_progress`): uptime, idle timer, break toggle, roster activity badges, cost estimate, early-leave request, PromptPay payment modal; Realtime via `depends('app:live-session')`
-- `(player)/profile/` — outstanding cancellation fees + transaction history (`PlayerTransactionsPanel`)
+- `(player)/sessions/[id]/live/` — **live session** (joined + `in_progress`): court grid, match invites, uptime, idle timer, break toggle, roster activity badges, cost estimate (court + shuttle), early-leave request, PromptPay payment modal; Realtime via `depends('app:live-session')`. In-match page at `/live/match/[matchId]` (Phase 4/5).
+- `(player)/profile/` — self-service credentials, outstanding cancellation fees + transaction history (`PlayerTransactionsPanel`)
 - `api/sessions/[id]/`, `api/clubs/[id]/` — JSON for bottom sheets
 - Form actions on `/sessions`: `join`, `cancel`, `leave`, `submitFee` → Supabase RPCs
 
@@ -468,8 +485,8 @@ When a player leaves or a session ends, per-player charges:
 
 - **Court share** = `court_fee_per_hour × duration_hours × court_count ÷ active_players` — **implemented** (`compute_session_court_share`; active = `confirmed` + `left`)
   - Example: 200 THB/hr × 4 hrs × 4 courts ÷ 10 players = **320 THB**
-- **Shuttle share** = `(shuttle_price_per_each ÷ 4) × games_played_by_player` — **deferred to Phase 4** (no match data yet; stored as 0)
-  - Example: (80 ÷ 4) × 5 games = **100 THB**
+- **Shuttle share** = even 4-way split per match × `shuttles_used`, summed per player — **implemented** (`compute_session_player_shuttle_share` in `0032`; wired into settlement in `0045`)
+  - Example: shuttle_price_per_each 80, 1 shuttle on a match → each of 4 players owes **20 THB** for that match
 - **Session total** = court_share + shuttle_share (example → **420 THB**)
 
 `shuttle_price_per_each` is set per session (may differ from club default for markup).
@@ -478,9 +495,10 @@ When a player leaves or a session ends, per-player charges:
 
 - PostGIS server-side nearby filter (client haversine only today)
 - ELO min/max on join
-- Live match/court control UI — court assignment, matchmaking, `playing` activity from matches (Phase 4; `CourtGrid` idle, "match control arrives later"; break/idle/billing activity is done)
+- Auto ELO matchmaking (Edge Function)
 - Auto-close sessions at `end_at` (close is admin-driven today)
-- **Shuttle share** in settlement (needs Phase 4 match/shuttle data)
+- ELO calc after confirmed scores (Phase 6)
+- Push notifications for match offers / score confirmations (Phase 8)
 - Free-text admin cancel reason field (admin cancel writes a fixed role-based string today)
 
 ### UI notes
@@ -508,5 +526,135 @@ When a player leaves or a session ends, per-player charges:
 - `admin-app/src/lib/sessions/sessionCancel.test.ts` — cancel source/reason display
 - `admin-app/src/lib/sessions/sessionHistory.test.ts` — history summary, fee counts, `finished_at`
 - `admin-app/src/lib/validation/session.test.ts` — session form incl. PromptPay fields
+- `shared/ui/matches.test.ts` — rally game score validation
+- `player-app/src/lib/matches/history.test.ts` — match history filters + pagination
+- `player-app/src/lib/server/profileCredentials.test.ts` — credential self-service (Phase 1 amendment)
 - `supabase/tests/session_players_self_check.sql` — documents RPC smoke checks after `db:reset`
+
+---
+
+## Phase 4 — Manual matchmaking + court control
+
+Admin assigns 4 idle confirmed players to a court; all 4 must accept a 90s Realtime invite before the match goes **active**. Court grid on live/control pages shows idle vs occupied courts. **Auto ELO pairing not started.**
+
+### Role capabilities (matches)
+
+| Role | Match access | Capabilities |
+| ---- | ------------ | ------------ |
+| **Club Admin** | `/sessions/[id]/control`, `/control/match/[matchId]` | Manual matchmaking (`MatchmakingModal`), add shuttle during match, end match with/without score, resolve suspended scores |
+| **Player** | `/sessions/[id]/live`, `/live/match/[matchId]`, `/matches/history` | Accept/decline invites, submit/confirm scores, view match history |
+
+### Admin routes (Phase 4)
+
+- `(admin)/sessions/[id]/control/` — `CourtGrid`, `MatchmakingModal`, in-session completed-match list; Realtime `depends('app:session-control')` on `sessions`, `session_players`, `matches`, `match_players`, `payments`, `session_leave_requests`
+- `(admin)/sessions/[id]/control/match/[matchId]/` — per-match control: rosters, add shuttle, end with/without score, resolve dispute; Realtime `depends('app:session-match-control')`
+
+### Player routes (Phase 4)
+
+- `(player)/sessions/[id]/live/` — `CourtGrid`, `MatchInviteModal`, in-session match history, auto-nav to open match; Realtime `depends('app:live-session')`
+- `(player)/sessions/[id]/live/match/[matchId]/` — in-match view: submit score, view score-pending state; Realtime `depends('app:player-match-live')`
+- `(player)/matches/history/` — cross-session match history (filters, stats, pagination)
+
+### Data (`0032`–`0046` match migrations)
+
+- `0032_matches.sql` — `matches`, `match_players`, `match_games`; Realtime publication; core RPCs; `compute_session_player_shuttle_share`; pg_cron `expire_pending_matches`
+- `0036_match_invite_expire_after_accept.sql` — invite timer stops after first accept; match stays pending until all 4 respond
+- `0037_match_invite_shared_countdown.sql` — shared countdown for all 4 players
+- `0041_match_invite_window_90s.sql` — invite window extended to 90 seconds
+- `0043_block_join_during_open_match.sql` — `join_session` blocked while player has open match
+- `0044_left_member_match_read.sql` — left members can read session matches (recap/history)
+- `0046_create_match_block_after_end.sql` — `create_match` blocked after scheduled end or early end
+
+Also session-adjacent: `0033` (join court-share estimate), `0034`/`0035`/`0038`/`0039`/`0040` (roster visibility, waiting idle, live join buffer, sweep fix).
+
+### Match RPCs (writes via RPC only — never insert/update `matches` / `match_players` / `match_games` from app code)
+
+- `create_match`, `respond_match_invite`, `expire_pending_matches`
+- `add_match_shuttle`, `end_match_no_score`, `end_match_with_score`
+- Helpers: `is_user_in_open_match`, `set_match_players_playing`, `release_match_players_to_idle`
+
+### Match lifecycle
+
+`pending` → (all 4 accept) → `active` → (score submitted) → `score_pending` → `completed` | `suspended` → (admin resolve) → `completed` | `cancelled` (decline/expiry/admin)
+
+### Rules (RPC-enforced)
+
+- One live match per court (`pending` or `active` on that court_number)
+- Players in open match cannot join other sessions (`0043`)
+- No new matches after session end or `ended_early` (`0046`)
+- Break/leave blocked while in active or unresolved match
+
+### Shared UI
+
+- `CourtGrid`, `CourtDetailModal` — court tile grid + detail modal
+- Admin: `MatchmakingModal` — manual 4-player picker (auto mode disabled)
+- Player: `MatchInviteModal` — accept/decline with countdown
+- `MatchHistoryCard`, `PlayerMatchHistoryCard`, `MatchSummaryModal` — history lists
+
+### Out of scope (Phase 4)
+
+- Auto ELO pairing Edge Function
+- Push notifications for match offers
+
+---
+
+## Phase 5 — Scoring, confirmation, disputes
+
+Peer-confirmed rally scores with admin dispute resolution. ELO updates deferred to Phase 6.
+
+### Migration
+
+- `0042_match_rally_score_validation.sql` — `validate_rally_game_score` / `validate_match_games` in Postgres; wired into score RPCs
+
+### Score RPCs
+
+- `submit_match_score` — player submits game scores → `score_pending`
+- `respond_match_score` — peer accept/reject
+- `resolve_match_score` — admin resolves `suspended` match
+- `end_match_with_score`, `end_match_no_score` — admin ends from control page
+
+### Scoring rules
+
+Sessions snapshot `match_score_type` (`15` or `21`) onto each match's `score_type`. Validation mirrored in `@repo/ui/matches` for client-side UX. See [AGENTS.md](../AGENTS.md) **Match rally scoring** for normal win and deuce rules.
+
+### Player UI
+
+- `MatchGameScoreFields` + `validateMatchGames` on submit
+- `MatchScoreConfirmModal` — peer confirm/reject on live session
+- `MatchScoreDisplay` — read-only score rendering
+
+### Tests
+
+- `shared/ui/matches.test.ts`
+- `player-app/src/lib/matches/history.test.ts`
+
+---
+
+## Phase 7 — Payments (complete)
+
+Court + shuttle share settlement, early leave, end early, and cancellation-fee collection — all over Realtime on live/control pages. No payment gateway; admin manually confirms PromptPay transfers.
+
+### Key migrations
+
+- `0024_session_payments_leave.sql` — `payments`, `session_leave_requests`, settlement RPCs
+- `0027_cancellation_fee_payments.sql` — fee lifecycle + submit/confirm/waive RPCs
+- `0032_matches.sql` — shuttle share calculation
+- `0045_session_settlement_started.sql` — `sessions.settlement_started_at`; shuttle share included in all settlement snapshots
+
+### Settlement flows
+
+- **Early leave:** `request_session_leave` → payment snapshot (court + shuttle) → PromptPay QR → `submit_payment` → admin `approve_payment` → `approve_session_leave`
+- **End early:** admin `end_session_early` → bills all confirmed players (court + shuttle) → approve payments → `close_session` before `end_at`
+- **Close:** `begin_session_settlement` → per-player bills → pay → `approve_payment` each → `close_session` (after `end_at` or `ended_early`, all payments approved, fees resolved)
+
+### UI
+
+- Player: `PaymentQr`, `CancellationFeeModal`, `PlayerTransactionsPanel`
+- Admin: payment approval on control page; `SessionCancellationFees`; `(admin)/transactions/` cross-session history
+
+### Unchanged constraints
+
+- PromptPay QR client-generated (`promptpay-qr` + `qrcode`, player-app only)
+- Money formatted via `@repo/ui/payments` (`formatThb`, `computeCourtShare`)
+- No auto reconciliation with bank transfers
 

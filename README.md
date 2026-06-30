@@ -11,28 +11,29 @@ A mobile-first monorepo for organizing 2v2 badminton club sessions: player auth 
 | 1     | Player auth & profile                   | **Completed** |
 | 2     | DB schema, RLS, clubs & admin hierarchy | **Completed** |
 | 3     | Sessions (geo discovery, join/approve, lifecycle, live + control) | **Completed** |
-| 4     | Matchmaking + realtime offers           | Not started   |
-| 5     | Scoring, disputes, admin resolve        | Not started   |
+| 4     | Matchmaking + realtime offers           | **Completed (manual)**; auto ELO not started |
+| 5     | Scoring, disputes, admin resolve        | **Completed** |
 | 6     | ELO engine + leaderboard                | Not started   |
-| 7     | Payment summary + PromptPay QR          | In progress (court-share settlement, early leave, cancellation-fee collection done; **shuttle share** waits on Phase 4) |
+| 7     | Payment summary + PromptPay QR          | **Completed** (court + shuttle share settlement, early leave, cancellation fees) |
 | 8     | Push notifications + offline polish     | Not started   |
 
 **Shipped (`player-app`):**
 
 - Register / login with **email or Thai phone** + password; **Google & Facebook** OAuth; 7-day cookies
-- Profile: edit display name & avatar; email / phone / password read-only; **outstanding fees + transaction history**
-- **Session discovery** (distance-sorted), join / waitlist / queue, **my sessions** on home
-- **Live session** (Realtime): uptime, cost estimate, roster, **early-leave request**, **PromptPay payment QR**
+- Profile: edit display name, avatar, **email / phone / password**; **outstanding fees + transaction history**
+- **Session discovery** (distance-sorted), join / waitlist / queue, **my sessions** on home; **session history**
+- **Live session** (Realtime): court grid, **match invites**, uptime, cost estimate (court + shuttle), roster, break toggle, **early-leave request**, **PromptPay payment QR**
+- **In-match scoring**: submit scores, peer confirm/reject; **match history** (`/matches/history`)
 - Installable **PWA** (manifest, service worker, app icons); mobile-oriented UI
 
 **Shipped (`admin-app`):**
 
 - Super-admin: club CRUD, assign club admins, user management; club-admin: dashboard + club settings (shuttles, PromptPay, location)
-- Sessions: create / edit / list / detail, confirm/reject players, draft & min-player **lifecycle**
-- **Live session control** (Realtime): settlement, payment approval, early-leave approval, **close session**, cancellation-fee confirm/waive
-- Cross-session **transactions** view
+- Sessions: create / edit / list / detail / history, confirm/reject players, draft & min-player **lifecycle**
+- **Live session control** (Realtime): **manual matchmaking**, court grid, per-match control (shuttles, score resolve), settlement, payment approval, early-leave approval, **close session**, cancellation-fee confirm/waive
+- Cross-session **transactions** view (`/transactions`)
 
-**Not yet built:** matchmaking, live match/court control, scoring & disputes, ELO/leaderboard, shuttle-share billing, push notifications.
+**Not yet built:** auto ELO matchmaking, ELO/leaderboard (Phase 6), push notifications (Phase 8).
 
 ## Monorepo layout
 
@@ -62,8 +63,8 @@ Supabase migrations live in `supabase/` at the repo root. Both `player-app` and 
 | Tests           | Vitest                                                                      |
 | Package manager | Yarn 4 (Berry)                                                              |
 
-**In use now:** Supabase Realtime (live session), PromptPay QR (`promptpay-qr` + `qrcode`, client-side in player-app).
-**Planned (later phases):** PostGIS, Web Push, Edge Functions for matchmaking / ELO / shuttle billing.
+**In use now:** Supabase Realtime (live session + matches), PromptPay QR (`promptpay-qr` + `qrcode`, client-side in player-app), manual matchmaking + peer scoring.
+**Planned (later phases):** PostGIS, Web Push, Edge Functions for auto ELO matchmaking / ELO calc.
 
 ## Prerequisites
 
@@ -112,6 +113,7 @@ The Supabase CLI is a root dev dependency — use `yarn db:*` / `yarn supabase:*
    - **CLI:** link once, then push:
      ```bash
      yarn supabase link --project-ref <your-project-ref>
+     # or: yarn supabase:link --project-ref <your-project-ref>
      yarn db:push
      ```
    - **Dashboard:** paste `supabase/migrations/0001_init.sql` into the SQL editor.
@@ -149,9 +151,10 @@ Run from the **repo root**:
 | `yarn lint:fix`     | ESLint with auto-fix              |
 | `yarn format`       | Prettier format (whole repo)      |
 | `yarn format:check` | Prettier check (CI)               |
-| `yarn icons:player` | Regenerate PWA icon PNGs          |
+| `yarn icons:player` / `yarn icons:admin` | Regenerate PWA icon PNGs          |
 | `yarn db:push`      | Push migrations to linked Supabase project |
 | `yarn db:migration:new <name>` | Create a new migration file |
+| `yarn supabase:link` | Alias for `yarn supabase link`   |
 | `yarn supabase:start` | Start local Supabase stack        |
 | `yarn supabase:stop`  | Stop local Supabase stack         |
 
@@ -162,7 +165,7 @@ yarn workspace player-app dev
 yarn workspace player-app test
 ```
 
-## Player app routes (auth + core)
+## Player app routes
 
 | Route            | Purpose                                             |
 | ---------------- | --------------------------------------------------- |
@@ -170,12 +173,36 @@ yarn workspace player-app test
 | `/register`      | Create account (display name, identifier, password) |
 | `/`              | Home: my sessions, featured sessions, nearby clubs  |
 | `/sessions`      | Browse / join upcoming sessions (distance-sorted)   |
-| `/sessions/[id]/live` | Live session (Realtime): leave + PromptPay payment |
-| `/profile`       | Edit display name & avatar; outstanding fees + transactions |
+| `/sessions/history` | Past sessions (filters, pagination)              |
+| `/sessions/[id]/live` | Live session: court grid, invites, leave, payment |
+| `/sessions/[id]/live/match/[matchId]` | In-match: submit/confirm scores        |
+| `/matches/history` | Cross-session match history (filters, stats)     |
+| `/profile`       | Display name, avatar, credentials; fees + transactions |
 | `/auth/callback` | OAuth session exchange                              |
 | `/logout`        | Sign out                                            |
 
-See [docs/PROJECT_PLAN.md](docs/PROJECT_PLAN.md) for the full route map (incl. admin app).
+API (bottom sheets): `/api/sessions/[id]`, `/api/clubs/[id]`.
+
+## Admin app routes
+
+| Route            | Purpose                                             |
+| ---------------- | --------------------------------------------------- |
+| `/login`         | Email/phone + password; OAuth (no register)         |
+| `/`              | Super-admin home: clubs list + quick actions        |
+| `/dashboard`     | Club-admin home: ongoing/upcoming sessions          |
+| `/clubs/new`, `/clubs/[id]` | Create club / club settings + admins     |
+| `/users`, `/users/[id]` | User search, role view, ban/delete (super admin) |
+| `/sessions`, `/sessions/new` | Upcoming sessions / create session           |
+| `/sessions/history` | Past sessions                                    |
+| `/sessions/[id]`, `/sessions/[id]/edit` | Detail + roster / edit session      |
+| `/sessions/[id]/control` | Live control: matchmaking, settlement, close     |
+| `/sessions/[id]/control/match/[matchId]` | Per-match: shuttles, score resolve      |
+| `/transactions`  | Payment + cancellation-fee history                  |
+| `/profile`       | Display name, avatar, credentials                     |
+| `/auth/callback` | OAuth session exchange                              |
+| `/logout`        | Sign out                                            |
+
+See [docs/PROJECT_PLAN.md](docs/PROJECT_PLAN.md) for full phase specs.
 
 ## Architecture (Phase 1)
 
@@ -194,7 +221,7 @@ Phone-only users get a synthesized auth email (`{e164}@phone.ph-badminton.local`
 2. Implement the phase scope in `player-app/` and/or `admin-app/` (promote shared UI to `shared/ui/`).
 3. Update phase status and notes in the plan doc when done.
 
-Next up: **Phase 4** — matchmaking + realtime match offers + live court control (the `/control` and `/live` court grids are wired but idle today), which also unlocks shuttle-share billing in Phase 7.
+Next up: **Phase 6** — ELO engine + history + leaderboard, then **Phase 8** — push notifications + offline polish.
 
 ## License
 

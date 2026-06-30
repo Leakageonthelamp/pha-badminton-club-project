@@ -54,9 +54,9 @@ keep it per-app. App-specific branding stays per-app too.
 - `IdentifierField` — depends on `$lib/validation/identifier`.
 - `AvatarCropModal` — depends on `$lib/images/cropAvatar`.
 - Single-app components: `MapPinPicker`, `UpcomingSessionsPanel`, `SessionListLink`, `SessionForm`,
-  `SessionCancellationFees`, `SessionHistoryDetail` (admin); `ClubDetailSheet`, `SessionDetailSheet`,
+  `SessionCancellationFees`, `SessionHistoryDetail`, `MatchmakingModal` (admin); `ClubDetailSheet`, `SessionDetailSheet`,
   `DisplayNameField`, `PwaHead`, `PwaPrompts`, `PaymentQr`, `CancellationFeeModal`,
-  `PlayerTransactionsPanel` (player). PromptPay QR (`PaymentQr`, depends on `promptpay-qr` + `qrcode`)
+  `PlayerTransactionsPanel`, `MatchInviteModal`, `MatchScoreConfirmModal` (player). PromptPay QR (`PaymentQr`, depends on `promptpay-qr` + `qrcode`)
   lives **player-only** — admin never renders QR.
 
 ### Shared UI modules (non-component)
@@ -72,6 +72,7 @@ keep it per-app. App-specific branding stays per-app too.
 - `CourtGrid` (`@repo/ui/components/CourtGrid.svelte`) — court tile grid (court name + status); pair with `CourtDetailModal` for rosters and actions
 - `CourtDetailModal` (`@repo/ui/components/CourtDetailModal.svelte`) — court detail modal (Team A/B rosters, status, optional action snippet)
 - `MatchGameScoreFields` (`@repo/ui/components/MatchGameScoreFields.svelte`) — Team A vs B score entry with inline validation
+- `MatchScoreDisplay`, `MatchHistoryCard`, `PlayerMatchHistoryCard`, `MatchSummaryModal` — score display and match history cards
 
 ## Styles
 
@@ -122,11 +123,13 @@ Applies to **both apps**. Use the shared helpers in `shared/ui/datetime.ts`
 These hold across both apps and all phases. Follow them before inventing a new pattern.
 
 1. **Sensitive domain tables are write-via-RPC only.** App code NEVER `insert`/`update`/`delete`
-   `sessions`, `session_players`, `payments`, or `session_leave_requests` directly. All state
-   transitions go through `security definer` RPCs (`join_session`, `cancel_session_membership`,
-   `set_session_break`, `end_session_early`, `approve_payment`, `close_session`, `confirm_cancellation_fee`, …). RLS on these tables grants
-   **select only**; the RPC is the single enforcement point for every rule (capacity, timing windows,
-   fees, role checks). Add the rule once in the RPC, not per caller.
+   `sessions`, `session_players`, `payments`, `session_leave_requests`, `matches`, `match_players`, or
+   `match_games` directly. All state transitions go through `security definer` RPCs (`join_session`,
+   `cancel_session_membership`, `set_session_break`, `end_session_early`, `approve_payment`, `close_session`,
+   `confirm_cancellation_fee`, `create_match`, `respond_match_invite`, `submit_match_score`,
+   `respond_match_score`, `resolve_match_score`, …). RLS on these tables grants **select only**; the RPC is
+   the single enforcement point for every rule (capacity, timing windows, fees, role checks). Add the rule
+   once in the RPC, not per caller.
 2. **Realtime = subscribe then invalidate, never mutate local state.** For live data, open a browser
    Supabase channel (`createSupabaseBrowserClient().channel(...).on('postgres_changes', …)`) and on any
    event call `invalidate('app:<key>')` so the server `load` re-runs (pages declare the matching
@@ -188,42 +191,42 @@ These hold across both apps and all phases. Follow them before inventing a new p
 
 ## Live session, payments & settlement (Phase 7 — implemented)
 
-The `/live` (player) and `/control` (admin) pages are **real**, not placeholders. Match/court control
-inside them is still Phase 4 (`CourtGrid` shows idle courts; "match control arrives later").
+The `/live` (player) and `/control` (admin) pages are **real**, including match/court control (Phase 4–5).
 
-- **DB:** `0023_session_live_realtime.sql` (Realtime publication on `sessions` + `session_players`),
-  `0024_session_payments_leave.sql` (`payments` + `session_leave_requests` tables; RPCs
-  `request_session_leave`, `cancel_session_leave`, `submit_payment`, `approve_payment`,
-  `begin_session_settlement`, `approve_session_leave`, `reject_session_leave`, `close_session`,
-  `end_session_early`; `compute_session_court_share`), `0025_session_promptpay.sql` (session-level `promptpay_type` /
-  `promptpay_target` snapshot, required on create/edit), `0030_session_player_activity.sql` (`activity` /
-  `idle_since` on `session_players`; `set_session_break`), `0031_session_end_early.sql` (`ended_early`).
-- **Player live (`(player)/sessions/[id]/live/`):** `loadLiveSessionForPlayer` +
-  `requestSessionLeave` / `cancelSessionLeave` / `submitPayment` / `setSessionBreak` in
-  `player-app/src/lib/server/sessions.ts`; UI state machine in `player-app/src/lib/sessions/liveState.ts`;
-  activity labels/badges + idle timer via `@repo/ui/sessionStatus` (`clampIdleSince` so pre-start idle
-  never shows negative uptime); PromptPay QR via `PaymentQr.svelte`; payment modal auto-opens when the bill is `pending`/`submitted`.
-- **Admin control (`(admin)/sessions/[id]/control/`):** helpers in
-  `admin-app/src/lib/server/sessionControl.ts` (`loadSessionPayments`, `loadSessionLeaveRequests`,
-  approve payment/leave, settlement, `endSessionEarly`, close). Flow: `begin_session_settlement` or
-  `end_session_early` → per-player `approve_payment` → `close_session` (after `end_at` **or** `ended_early`,
-  all confirmed players have an `approved` payment, and all cancellation fees resolved). Leave requests need an approved payment before
-  `approve_session_leave`.
-- **Activity mirror (`0030`):** `session_players.activity` (`idle|playing|break|billing`) is a
-  roster-visible mirror of billing/leave state; `payments` stays the source of truth for money.
-  `request_session_leave` / `begin_session_settlement` set `billing`; `cancel_session_leave` resets to
-  `idle`. `playing` is reserved for Phase 4 match data.
-- **Court share only today:** `compute_session_court_share` =
-  `court_fee_per_hour × hours × court_count ÷ active_players` (`confirmed` + `left`). Shuttle share is
-  schema-ready but UI says "appears when matches are recorded" (Phase 4).
-- **Roster RLS:** `0019`/`0020` — members see roster via `is_active_session_member()` security
-  definer; player loads must call `ensureSupabaseAuth()` before RLS queries
-  (`player-app/src/lib/server/supabaseAuth.ts`).
-- **Transactions:** unified payment history (session court bills + cancellation fees) — player
-  `PlayerTransactionsPanel` (profile), admin `(admin)/transactions/`; helpers in each app's
-  `src/lib/server/transactions.ts` + `@repo/ui/transactions`.
-- **Session history:** admin `(admin)/sessions/history/` + `SessionHistoryDetail`; player
-  `(player)/sessions/history/` with filters (status, club, date) — parallel pattern, app-local helpers.
+- **DB:** `0023_session_live_realtime.sql` (Realtime on `sessions` + `session_players`),
+  `0024_session_payments_leave.sql` (`payments` + `session_leave_requests`; settlement/leave/close RPCs;
+  `compute_session_court_share`), `0025_session_promptpay.sql`, `0030_session_player_activity.sql`,
+  `0031_session_end_early.sql`, `0032_matches.sql` (match tables + Realtime + shuttle share),
+  `0045_session_settlement_started.sql` (`settlement_started_at`).
+- **Player live (`(player)/sessions/[id]/live/`):** court grid, match invites, break/leave/payment; helpers in
+  `player-app/src/lib/server/sessions.ts` + `player-app/src/lib/server/matches.ts`; UI state in
+  `player-app/src/lib/sessions/liveState.ts`; activity via `@repo/ui/sessionStatus`; PromptPay via `PaymentQr.svelte`.
+- **Player match (`(player)/sessions/[id]/live/match/[matchId]/`):** submit score, view score-pending state;
+  Realtime `depends('app:player-match-live')`.
+- **Admin control (`(admin)/sessions/[id]/control/`):** court grid, manual matchmaking, settlement, payment/leave
+  approval, close; helpers in `admin-app/src/lib/server/sessionControl.ts` + `admin-app/src/lib/server/matches.ts`.
+- **Admin match (`(admin)/sessions/[id]/control/match/[matchId]/`):** add shuttle, end match, resolve disputes;
+  Realtime `depends('app:session-match-control')`.
+- **Activity mirror (`0030`):** `session_players.activity` (`idle|playing|break|billing`); match RPCs set
+  `playing` on match start and reset to `idle` when match completes/cancels; `payments` stays source of truth for money.
+- **Settlement:** court share via `compute_session_court_share`; shuttle share via
+  `compute_session_player_shuttle_share` (even 4-way split per match × `shuttles_used`, summed at settlement).
+- **Roster RLS:** `0019`/`0020`/`0039` — members (and browse-before-join for open sessions) see roster via
+  `is_active_session_member()` / open-session policies; player loads must call `ensureSupabaseAuth()` before RLS queries.
+- **Transactions:** player `PlayerTransactionsPanel` (profile), admin `(admin)/transactions/`; `@repo/ui/transactions`.
+- **History:** admin `(admin)/sessions/history/` + `SessionHistoryDetail`; player `(player)/sessions/history/` and
+  `(player)/matches/history/`.
+
+## Match control (Phase 4–5 — implemented)
+
+Manual matchmaking + peer scoring on live/control pages. **Auto ELO matchmaking not started.**
+
+- **DB:** `0032`–`0046` — see [docs/PROJECT_PLAN.md](docs/PROJECT_PLAN.md) Phase 4/5 sections.
+- **Realtime:** subscribe to `matches` + `match_players`, then `invalidate('app:live-session'|'app:session-control'|'app:player-match-live'|'app:session-match-control')` — same subscribe-then-invalidate rule as sessions.
+- **Key RPCs:** `create_match`, `respond_match_invite`, `add_match_shuttle`, `submit_match_score`,
+  `respond_match_score`, `resolve_match_score`, `end_match_with_score`, `end_match_no_score`.
+- **Invite window:** 90 seconds; all 4 must accept → `active`.
+- **Scoring rules:** see **Match rally scoring** below; never invent ad-hoc score rules in app code.
 
 ## Super admin home (`admin-app` `/`)
 
