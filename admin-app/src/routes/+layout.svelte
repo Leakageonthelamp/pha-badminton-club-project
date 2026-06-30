@@ -6,6 +6,7 @@
 	import PwaPrompts from '$lib/components/PwaPrompts.svelte';
 	import ServiceUnavailable from '$lib/components/ServiceUnavailable.svelte';
 	import LocationPermissionPrompt from '@repo/ui/components/LocationPermissionPrompt.svelte';
+	import SamsungLightThemeNotice from '@repo/ui/components/SamsungLightThemeNotice.svelte';
 	import ToastContainer from '@repo/ui/components/ToastContainer.svelte';
 	import { dev } from '$app/environment';
 	import { injectAnalytics } from '@vercel/analytics/sveltekit';
@@ -64,6 +65,7 @@
 			<LocationPermissionPrompt
 				description="Allow location access so you can set club venues on the map and manage nearby clubs."
 			/>
+			<SamsungLightThemeNotice />
 			{@render children()}
 		{/if}
 	</div>

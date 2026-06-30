@@ -22,6 +22,7 @@
 }
 
 :root {
+	color-scheme: light only;
 	--app-bg: #f8fafc;
 	--app-accent: #964ac0;
 	--motion-page-duration: 420ms;
@@ -38,6 +39,7 @@ html {
 
 body {
 	@apply h-dvh overflow-hidden bg-slate-50 font-sans text-slate-900 antialiased;
+	color-scheme: light only;
 	padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
 }
 
@@ -50,6 +52,7 @@ body {
 	textarea,
 	select {
 		font: inherit;
+		color-scheme: light only;
 	}
 
 	button:not(:disabled),
@@ -81,14 +84,19 @@ body {
 		padding-top: calc(env(safe-area-inset-top) + 1.5rem);
 		padding-left: max(0.5rem, env(safe-area-inset-left));
 		padding-right: max(0.5rem, env(safe-area-inset-right));
-		padding-bottom: max(1rem, env(safe-area-inset-bottom));
+		padding-bottom: max(1rem, env(safe-area-max-inset-bottom, env(safe-area-inset-bottom, 0px)));
 	}
+}
 
-	.app-fixed-bottom {
-		bottom: max(1rem, env(safe-area-inset-bottom));
-		left: max(1rem, env(safe-area-inset-left));
-		right: max(1rem, env(safe-area-inset-right));
-	}
+/* Chrome Android edge-to-edge: track dynamic gesture bar without layout thrash. */
+.app-fixed-bottom {
+	left: max(1rem, env(safe-area-inset-left, 0px));
+	right: max(1rem, env(safe-area-inset-right, 0px));
+	padding-bottom: env(safe-area-max-inset-bottom, env(safe-area-inset-bottom, 0px));
+	bottom: calc(
+		max(1rem, env(safe-area-inset-bottom, 0px)) -
+			env(safe-area-max-inset-bottom, env(safe-area-inset-bottom, 0px))
+	);
 }
 
 .page-panel--animated {
@@ -171,7 +179,7 @@ body {
 	-webkit-overflow-scrolling: touch;
 	overscroll-behavior-y: contain;
 	padding-top: 1.5rem;
-	padding-bottom: max(1rem, env(safe-area-inset-bottom));
+	padding-bottom: max(1rem, env(safe-area-max-inset-bottom, env(safe-area-inset-bottom, 0px)));
 }
 
 @layer components {
