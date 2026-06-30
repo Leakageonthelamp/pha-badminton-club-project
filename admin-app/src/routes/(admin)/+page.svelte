@@ -3,6 +3,7 @@
 	import DashboardIcon from '@repo/ui/components/DashboardIcon.svelte';
 	import DashboardTile from '@repo/ui/components/DashboardTile.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
+	import Pagination from '@repo/ui/components/Pagination.svelte';
 	import SectionHeading from '@repo/ui/components/SectionHeading.svelte';
 	import SelectMenu from '@repo/ui/components/SelectMenu.svelte';
 	import UserGroupIcon from '@repo/ui/icons/UserGroupIcon.svelte';
@@ -12,6 +13,7 @@
 	import UserIcon from '@repo/ui/icons/UserIcon.svelte';
 	import CalendarDaysIcon from '@repo/ui/icons/CalendarDaysIcon.svelte';
 	import { isRichTextEmpty, richTextExcerpt, richTextPlainText } from '@repo/ui/richText';
+	import { paginate } from '@repo/ui/pagination';
 	import { adminRoleHeroBadgeClass } from '$lib/adminRoleHero';
 	import { appRoleLabel, type AppRole } from '$lib/types/auth';
 	import type { Club } from '$lib/types/club';
@@ -22,6 +24,7 @@
 
 	let searchQuery = $state('');
 	let statusFilter = $state<'all' | 'active' | 'inactive'>('all');
+	let listPage = $state(1);
 
 	const profileName = $derived(data.profile?.display_name ?? 'Super admin');
 	const clubCount = $derived(data.clubs.length);
@@ -58,6 +61,14 @@
 			return haystack.includes(normalizedSearch);
 		})
 	);
+
+	const pagedClubs = $derived(paginate(filteredClubs, listPage));
+
+	$effect(() => {
+		searchQuery;
+		statusFilter;
+		listPage = 1;
+	});
 
 	function clubSubtitle(club: Club): string {
 		if (club.venue_name) return club.venue_name;
@@ -209,7 +220,7 @@
 					{/if}
 
 					<ul class="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
-						{#each filteredClubs as club (club.id)}
+						{#each pagedClubs.items as club (club.id)}
 							<li>
 								<a
 									href="/clubs/{club.id}"
@@ -243,6 +254,14 @@
 							</li>
 						{/each}
 					</ul>
+					<Pagination
+						page={pagedClubs.page}
+						totalPages={pagedClubs.totalPages}
+						hasPrev={pagedClubs.hasPrev}
+						hasNext={pagedClubs.hasNext}
+						onprev={() => (listPage -= 1)}
+						onnext={() => (listPage += 1)}
+					/>
 				</div>
 			{/if}
 		</div>

@@ -10,6 +10,7 @@
 	import SessionLiveTimers from '@repo/ui/components/SessionLiveTimers.svelte';
 	import SessionStartCountdown from '@repo/ui/components/SessionStartCountdown.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
+	import DashboardIcon from '@repo/ui/components/DashboardIcon.svelte';
 	import DashboardTile from '@repo/ui/components/DashboardTile.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
 	import SectionHeading from '@repo/ui/components/SectionHeading.svelte';
@@ -27,6 +28,7 @@
 		USER_LOCATION_STORED_EVENT
 	} from '@repo/ui/geolocation';
 	import { isRichTextEmpty, richTextExcerpt } from '@repo/ui/richText';
+	import { DASHBOARD_PREVIEW_LIMIT } from '@repo/ui/pagination';
 	import { SESSION_IN_PROGRESS_JOIN_REMARK } from '$lib/config/session';
 	import { sessionPlayerStatusLabel, sessionStatusLabel } from '$lib/types/session';
 	import type { ClubPublic } from '$lib/types/club';
@@ -40,6 +42,8 @@
 	const clubs = $derived(clubsWithDistance(data.clubs ?? [], userLocation));
 	const openSessionCounts = $derived(openSessionCountByClub(data.sessions ?? []));
 	const mySessions = $derived(myJoinedSessions(data.sessions ?? [], userLocation));
+	const previewMySessions = $derived(mySessions.slice(0, DASHBOARD_PREVIEW_LIMIT));
+	const hasMoreMySessions = $derived(mySessions.length > DASHBOARD_PREVIEW_LIMIT);
 	const featured = $derived(featuredSessions(data.sessions ?? [], userLocation));
 	const sortedByDistance = $derived(userLocation !== null);
 	const profileName = $derived(data.profile?.display_name ?? 'Player');
@@ -105,6 +109,12 @@
 	let sessionSheetId = $state<string | null>(null);
 	let refreshing = $state(false);
 	let navigatingSessionId = $state<string | null>(null);
+	let clubsExpanded = $state(false);
+
+	const previewClubs = $derived(
+		clubsExpanded ? clubs : clubs.slice(0, DASHBOARD_PREVIEW_LIMIT)
+	);
+	const hasMoreClubs = $derived(clubs.length > DASHBOARD_PREVIEW_LIMIT);
 
 	const openClub = (club: ClubPublic) => {
 		selectedClub = club;
@@ -264,7 +274,7 @@
 			<EmptyState message="You haven't joined any upcoming sessions yet." />
 		{:else}
 			<div class="grid grid-cols-1 gap-3">
-				{#each mySessions as session (session.id)}
+				{#each previewMySessions as session (session.id)}
 					<DashboardTile
 						title={session.name}
 						description={joinedSessionDescription(session)}
@@ -297,6 +307,15 @@
 					</DashboardTile>
 				{/each}
 			</div>
+			{#if hasMoreMySessions}
+				<ActionRowLink
+					href="/sessions"
+					title="View all my sessions"
+					description="See all {mySessions.length} joined sessions"
+					icon={CalendarDaysIcon}
+					accent="brand"
+				/>
+			{/if}
 		{/if}
 	</div>
 
@@ -386,7 +405,7 @@
 			<EmptyState message="No active clubs yet. Check back later." />
 		{:else}
 			<div class="grid grid-cols-2 gap-3">
-				{#each clubs as club (club.id)}
+				{#each previewClubs as club (club.id)}
 					{@const openCount = openSessionCounts.get(club.id) ?? 0}
 					<DashboardTile
 						title={club.name}
@@ -402,6 +421,21 @@
 					/>
 				{/each}
 			</div>
+			{#if hasMoreClubs && !clubsExpanded}
+				<!-- ponytail: no /clubs route — expand in-page instead of a dedicated list page -->
+				<button
+					type="button"
+					class="app-action-row group w-full text-left"
+					onclick={() => (clubsExpanded = true)}
+				>
+					<DashboardIcon icon={UserGroupIcon} accent="indigo" />
+					<div class="min-w-0 flex-1">
+						<p class="font-semibold text-slate-900">View all clubs</p>
+						<p class="text-sm leading-snug text-slate-500">See all {clubs.length} clubs</p>
+					</div>
+					<span class="app-action-row-arrow" aria-hidden="true">→</span>
+				</button>
+			{/if}
 		{/if}
 	</div>
 </section>

@@ -104,6 +104,7 @@ keep it per-app. App-specific branding stays per-app too.
 - `@repo/ui/richText` — `richTextPlainText`, `richTextExcerpt`, `isRichTextEmpty` (list cards + empty checks)
 - `@repo/ui/geolocation` — stored user location helpers (player distance sort)
 - `@repo/ui/payments` — `computeCourtShare` (flat `fixedCourtFeePerPlayer` or even split), `computeSessionProfit` (admin-only court+shuttle profit), `formatThb` (THB money formatting), payment/leave/fee status labels
+- `@repo/ui/pagination` — `PAGE_SIZE` (10), `DASHBOARD_PREVIEW_LIMIT` (5), `paginate()` for client-side list slicing
 - `@repo/ui/transactions` — unified transaction filter/status helpers (both apps' transaction lists)
 - `@repo/ui/matches` — match status labels, team split, score formatting; **rally game score validation**
   (`validateRallyGameScore`, `validateMatchGames`, `rallyScoreHint`) — see **Match rally scoring** below
@@ -112,6 +113,7 @@ keep it per-app. App-specific branding stays per-app too.
 - `MatchGameScoreFields` (`@repo/ui/components/MatchGameScoreFields.svelte`) — Team A vs B score entry with inline validation
 - `SlipPreviewModal` (`@repo/ui/components/SlipPreviewModal.svelte`) — bank transfer slip image preview with missing-file fallback
 - `SlipPreviewButton` (`@repo/ui/components/SlipPreviewButton.svelte`) — compact eye-icon chip to open `SlipPreviewModal`
+- `Pagination` (`@repo/ui/components/Pagination.svelte`) — shared Prev/Next row for catalog lists (href or callback mode, optional pending spinner)
 - `MatchScoreDisplay`, `MatchHistoryCard`, `PlayerMatchHistoryCard`, `MatchSummaryModal` — score display and match history cards
 
 ## Styles

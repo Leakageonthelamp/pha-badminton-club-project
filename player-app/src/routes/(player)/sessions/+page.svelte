@@ -11,6 +11,7 @@
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import DashboardTile from '@repo/ui/components/DashboardTile.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
+	import Pagination from '@repo/ui/components/Pagination.svelte';
 	import CalendarDaysIcon from '@repo/ui/icons/CalendarDaysIcon.svelte';
 	import RefreshIcon from '@repo/ui/icons/RefreshIcon.svelte';
 	import { formatDateTime, formatSessionDuration } from '@repo/ui/datetime';
@@ -21,6 +22,7 @@
 	} from '@repo/ui/geolocation';
 	import { sessionPlayerStatusLabel, sessionStatusLabel } from '$lib/types/session';
 	import type { SessionListItem } from '$lib/types/session';
+	import { paginate } from '@repo/ui/pagination';
 	import type { LayoutData } from '../$types';
 	import type { PageData } from './$types';
 
@@ -43,6 +45,15 @@
 	let selectedSession = $state<SessionListItem | null>(null);
 	let refreshing = $state(false);
 	let navigatingSessionId = $state<string | null>(null);
+	let listPage = $state(1);
+
+	const pagedSessions = $derived(paginate(sessions, listPage));
+
+	$effect(() => {
+		data.sessions;
+		userLocation;
+		listPage = 1;
+	});
 
 	const openSession = (session: SessionListItem) => {
 		if (shouldOpenLiveSession(session) || shouldViewSessionLivePage(session)) {
@@ -154,7 +165,7 @@
 			<EmptyState message="No upcoming sessions yet. Check back later." />
 		{:else}
 			<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-				{#each sessions as session (session.id)}
+				{#each pagedSessions.items as session (session.id)}
 					<DashboardTile
 						title={session.name}
 						description={sessionDescription(session)}
@@ -186,6 +197,14 @@
 					</DashboardTile>
 				{/each}
 			</div>
+			<Pagination
+				page={pagedSessions.page}
+				totalPages={pagedSessions.totalPages}
+				hasPrev={pagedSessions.hasPrev}
+				hasNext={pagedSessions.hasNext}
+				onprev={() => (listPage -= 1)}
+				onnext={() => (listPage += 1)}
+			/>
 		{/if}
 	</div>
 </section>

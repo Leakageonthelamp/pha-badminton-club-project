@@ -1,16 +1,20 @@
 <script lang="ts">
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
+	import Pagination from '@repo/ui/components/Pagination.svelte';
 	import SectionHeading from '@repo/ui/components/SectionHeading.svelte';
 	import SessionListLink from '$lib/components/SessionListLink.svelte';
 	import { clubWorkspaceState } from '$lib/clubWorkspace.svelte';
 	import { adminRoleHeroBadgeClass } from '$lib/adminRoleHero';
 	import { filterSessionsByClub } from '$lib/sessions/list';
 	import { appRoleLabel, type AppRole } from '$lib/types/auth';
+	import { paginate } from '@repo/ui/pagination';
 	import type { LayoutData } from '../../$types';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData & LayoutData } = $props();
+
+	let listPage = $state(1);
 
 	const effectiveAppRole = $derived(data.effectiveAppRole ?? null);
 	const roleLabel = $derived(
@@ -23,6 +27,13 @@
 			? data.historySessions
 			: filterSessionsByClub(data.historySessions, selectedClubId)
 	);
+	const pagedHistory = $derived(paginate(filteredHistory, listPage));
+
+	$effect(() => {
+		selectedClubId;
+		data.historySessions;
+		listPage = 1;
+	});
 </script>
 
 <section class="space-y-6">
@@ -41,7 +52,7 @@
 			<EmptyState message="No closed or cancelled sessions yet." />
 		{:else}
 			<div class="space-y-3">
-				{#each filteredHistory as session (session.id)}
+				{#each pagedHistory.items as session (session.id)}
 					<SessionListLink
 						{session}
 						userId={data.userId}
@@ -50,6 +61,14 @@
 						pendingCancellationFees={data.outstandingCancellationFeesBySession[session.id] ?? 0}
 					/>
 				{/each}
+				<Pagination
+					page={pagedHistory.page}
+					totalPages={pagedHistory.totalPages}
+					hasPrev={pagedHistory.hasPrev}
+					hasNext={pagedHistory.hasNext}
+					onprev={() => (listPage -= 1)}
+					onnext={() => (listPage += 1)}
+				/>
 			</div>
 		{/if}
 	</div>

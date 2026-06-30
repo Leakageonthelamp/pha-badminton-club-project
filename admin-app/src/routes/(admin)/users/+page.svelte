@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { navigating } from '$app/state';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
+	import Pagination from '@repo/ui/components/Pagination.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
 	import SectionHeading from '@repo/ui/components/SectionHeading.svelte';
 	import SelectMenu from '@repo/ui/components/SelectMenu.svelte';
@@ -171,31 +172,13 @@
 				{/each}
 			</ul>
 
-			{#if data.hasPrevPage || data.hasNextPage}
-				<div class="flex justify-between gap-3">
-					{#if data.hasPrevPage}
-						<a
-							href={buildPageUrl(data.page - 1)}
-							class="text-sm font-medium text-brand-700 hover:text-brand-800"
-						>
-							Previous
-						</a>
-					{:else}
-						<span></span>
-					{/if}
-					<span class="text-sm text-slate-500">Page {data.page}</span>
-					{#if data.hasNextPage}
-						<a
-							href={buildPageUrl(data.page + 1)}
-							class="text-sm font-medium text-brand-700 hover:text-brand-800"
-						>
-							Next
-						</a>
-					{:else}
-						<span></span>
-					{/if}
-				</div>
-			{/if}
+			<Pagination
+				page={data.page}
+				hasPrev={data.hasPrevPage}
+				hasNext={data.hasNextPage}
+				prevHref={data.hasPrevPage ? buildPageUrl(data.page - 1) : undefined}
+				nextHref={data.hasNextPage ? buildPageUrl(data.page + 1) : undefined}
+			/>
 		</div>
 	{/if}
 </section>

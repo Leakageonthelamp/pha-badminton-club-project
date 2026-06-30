@@ -5,7 +5,7 @@ import type { AppRole, Profile } from '$lib/types/auth';
 import { appRoleLabel } from '$lib/types/auth';
 import type { PageServerLoad } from './$types';
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 10;
 
 const VALID_ROLE_FILTERS = new Set<AppRole>(['player', 'club_admin', 'super_admin']);
 

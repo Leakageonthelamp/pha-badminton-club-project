@@ -2,6 +2,7 @@
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import DatePicker from '@repo/ui/components/DatePicker.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
+	import Pagination from '@repo/ui/components/Pagination.svelte';
 	import SelectMenu from '@repo/ui/components/SelectMenu.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import ChevronDownIcon from '@repo/ui/icons/ChevronDownIcon.svelte';
@@ -28,6 +29,7 @@
 		type AdminTransactionFilters
 	} from '$lib/transactions/list';
 	import { appRoleLabel, type AppRole } from '$lib/types/auth';
+	import { paginate } from '@repo/ui/pagination';
 	import { slipPreviewUrl } from '$lib/slips';
 	import type { AdminTransaction } from '$lib/types/transaction';
 	import type { LayoutData } from '../$types';
@@ -38,6 +40,7 @@
 	let filters = $state<AdminTransactionFilters>(emptyAdminTransactionFilters());
 	let showAdvanced = $state(false);
 	let slipPreviewPath = $state<string | null>(null);
+	let listPage = $state(1);
 
 	const typeChipOptions: { value: '' | TransactionKind; label: string }[] = [
 		{ value: '', label: 'All' },
@@ -61,6 +64,7 @@
 	const clubOptions = $derived(clubFilterOptions(data.transactions));
 	const playerOptions = $derived(playerFilterOptions(scopedTransactions));
 	const filteredTransactions = $derived(filterAdminTransactions(scopedTransactions, filters));
+	const pagedTransactions = $derived(paginate(filteredTransactions, listPage));
 	const advancedFilterCount = $derived(countAdvancedFilters(filters));
 
 	const hasActiveFilters = $derived(
@@ -89,6 +93,13 @@
 
 	const kindShort = (kind: AdminTransaction['kind']): string =>
 		kind === 'session_fee' ? 'Session fee' : 'Late cancel';
+
+	$effect(() => {
+		selectedClubId;
+		scopedTransactions;
+		filters;
+		listPage = 1;
+	});
 </script>
 
 <section class="space-y-5">
@@ -259,7 +270,7 @@
 			</EmptyState>
 		{:else}
 			<ul class="space-y-2">
-				{#each filteredTransactions as transaction (transaction.id)}
+				{#each pagedTransactions.items as transaction (transaction.id)}
 					<li
 						class="rounded-2xl border border-slate-200/80 bg-white px-4 py-3 shadow-sm ring-1 ring-slate-100"
 					>
@@ -313,6 +324,14 @@
 					</li>
 				{/each}
 			</ul>
+			<Pagination
+				page={pagedTransactions.page}
+				totalPages={pagedTransactions.totalPages}
+				hasPrev={pagedTransactions.hasPrev}
+				hasNext={pagedTransactions.hasNext}
+				onprev={() => (listPage -= 1)}
+				onnext={() => (listPage += 1)}
+			/>
 		{/if}
 	</div>
 </section>

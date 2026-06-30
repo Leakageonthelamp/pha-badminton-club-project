@@ -11,6 +11,7 @@
 	} from '$lib/types/session';
 	import type { SessionHistoryItem } from '$lib/types/session';
 	import AppCard from '@repo/ui/components/AppCard.svelte';
+	import Pagination from '@repo/ui/components/Pagination.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import DashboardIcon from '@repo/ui/components/DashboardIcon.svelte';
 	import DatePicker from '@repo/ui/components/DatePicker.svelte';
@@ -274,45 +275,15 @@
 				{/each}
 			</ul>
 
-			{#if history.hasPrevPage || history.hasNextPage}
-				<div class="flex items-center justify-center gap-3 pt-1 text-sm">
-					{#if history.hasPrevPage}
-						<button
-							type="button"
-							class="inline-flex items-center gap-1.5 font-medium text-brand-700 disabled:opacity-50"
-							disabled={historyActionsBusy}
-							aria-busy={paginationNav === 'prev'}
-							onclick={() => goToPage(history.page - 1, 'prev')}
-						>
-							{#if paginationNav === 'prev'}
-								<span
-									class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-brand-700"
-									aria-hidden="true"
-								></span>
-							{/if}
-							← Prev
-						</button>
-					{/if}
-					<span class="text-slate-500">{history.page}</span>
-					{#if history.hasNextPage}
-						<button
-							type="button"
-							class="inline-flex items-center gap-1.5 font-medium text-brand-700 disabled:opacity-50"
-							disabled={historyActionsBusy}
-							aria-busy={paginationNav === 'next'}
-							onclick={() => goToPage(history.page + 1, 'next')}
-						>
-							{#if paginationNav === 'next'}
-								<span
-									class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-brand-700"
-									aria-hidden="true"
-								></span>
-							{/if}
-							Next →
-						</button>
-					{/if}
-				</div>
-			{/if}
+			<Pagination
+				page={history.page}
+				hasPrev={history.hasPrevPage}
+				hasNext={history.hasNextPage}
+				pending={paginationNav}
+				disabled={historyActionsBusy}
+				onprev={() => goToPage(history.page - 1, 'prev')}
+				onnext={() => goToPage(history.page + 1, 'next')}
+			/>
 		{/if}
 		</div>
 	</AppCard>

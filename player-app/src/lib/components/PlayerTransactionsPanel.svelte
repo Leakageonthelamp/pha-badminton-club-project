@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { navigating } from '$app/state';
 	import AppCard from '@repo/ui/components/AppCard.svelte';
+	import Pagination from '@repo/ui/components/Pagination.svelte';
 	import DashboardIcon from '@repo/ui/components/DashboardIcon.svelte';
 	import DatePicker from '@repo/ui/components/DatePicker.svelte';
 	import SelectMenu from '@repo/ui/components/SelectMenu.svelte';
@@ -203,17 +204,14 @@
 			{/each}
 		</ul>
 
-		{#if transactions.hasPrevPage || transactions.hasNextPage}
-			<div class="flex items-center justify-center gap-3 text-xs">
-				{#if transactions.hasPrevPage}
-					<a href={buildPageUrl(transactions.page - 1)} class="font-medium text-brand-700">← Prev</a>
-				{/if}
-				<span class="text-slate-500">{transactions.page}</span>
-				{#if transactions.hasNextPage}
-					<a href={buildPageUrl(transactions.page + 1)} class="font-medium text-brand-700">Next →</a>
-				{/if}
-			</div>
-		{/if}
+		<Pagination
+			page={transactions.page}
+			hasPrev={transactions.hasPrevPage}
+			hasNext={transactions.hasNextPage}
+			prevHref={transactions.hasPrevPage ? buildPageUrl(transactions.page - 1) : undefined}
+			nextHref={transactions.hasNextPage ? buildPageUrl(transactions.page + 1) : undefined}
+			size="xs"
+		/>
 	{/if}
 </AppCard>
 

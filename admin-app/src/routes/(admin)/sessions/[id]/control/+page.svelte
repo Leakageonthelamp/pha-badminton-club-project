@@ -19,6 +19,7 @@
 	import ChevronDownIcon from '@repo/ui/icons/ChevronDownIcon.svelte';
 	import MatchSummaryModal from '@repo/ui/components/MatchSummaryModal.svelte';
 	import MatchHistoryCard from '@repo/ui/components/MatchHistoryCard.svelte';
+	import Pagination from '@repo/ui/components/Pagination.svelte';
 	import PlayerMatchHistoryCard from '@repo/ui/components/PlayerMatchHistoryCard.svelte';
 	import { formatDateTime, formatUptime } from '@repo/ui/datetime';
 	import { subscribePostgresChangesWithPollFallback } from '@repo/ui/realtimeSubscribe';
@@ -1194,29 +1195,14 @@
 							</li>
 						{/each}
 					</ul>
-					{#if historyPageCount > 1}
-						<div class="flex items-center justify-between gap-3 text-sm">
-							<button
-								type="button"
-								class="font-medium text-brand-700 disabled:text-slate-400"
-								disabled={historyPage <= 1}
-								onclick={() => (historyPage -= 1)}
-							>
-								Previous
-							</button>
-							<span class="text-slate-500">
-								Page {historyPage} of {historyPageCount}
-							</span>
-							<button
-								type="button"
-								class="font-medium text-brand-700 disabled:text-slate-400"
-								disabled={historyPage >= historyPageCount}
-								onclick={() => (historyPage += 1)}
-							>
-								Next
-							</button>
-						</div>
-					{/if}
+					<Pagination
+						page={historyPage}
+						totalPages={historyPageCount}
+						hasPrev={historyPage > 1}
+						hasNext={historyPage < historyPageCount}
+						onprev={() => (historyPage -= 1)}
+						onnext={() => (historyPage += 1)}
+					/>
 				</div>
 			{/if}
 		</div>
