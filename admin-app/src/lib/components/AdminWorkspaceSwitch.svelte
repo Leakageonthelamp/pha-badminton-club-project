@@ -5,8 +5,8 @@
 		type AdminWorkspaceId,
 		type AdminWorkspaceOption
 	} from '$lib/adminWorkspace';
-	import BuildingIcon from '@repo/ui/icons/BuildingIcon.svelte';
-	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
+	import UserGroupIcon from '@repo/ui/icons/UserGroupIcon.svelte';
+	import Squares2x2Icon from '@repo/ui/icons/Squares2x2Icon.svelte';
 	import MenuSelectedMark from '@repo/ui/components/MenuSelectedMark.svelte';
 	import SettingsIcon from '@repo/ui/icons/SettingsIcon.svelte';
 	import type { Component } from 'svelte';
@@ -23,7 +23,7 @@
 
 	const WORKSPACE_ICONS: Record<AdminWorkspaceId, Component<{ class?: string }>> = {
 		super: SettingsIcon,
-		club: BuildingIcon
+		club: UserGroupIcon
 	};
 
 	let open = $state(false);
@@ -114,7 +114,7 @@
 					aria-hidden="true"
 				></span>
 			{:else}
-				<LayersIcon class="h-5 w-5 text-brand-700" />
+				<Squares2x2Icon class="h-5 w-5 text-brand-700" />
 			{/if}
 		</button>
 

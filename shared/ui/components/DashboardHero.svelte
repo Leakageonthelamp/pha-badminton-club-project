@@ -1,5 +1,5 @@
 <script lang="ts">
-	import BuildingIcon from '../icons/BuildingIcon.svelte';
+	import UserGroupIcon from '../icons/UserGroupIcon.svelte';
 	import type { Snippet } from 'svelte';
 
 	let {
@@ -54,7 +54,7 @@
 		{#if managingClub}
 			<div class="app-hero-managing-club">
 				<span class="app-hero-managing-icon" aria-hidden="true">
-					<BuildingIcon class="h-5 w-5" />
+					<UserGroupIcon class="h-5 w-5" />
 				</span>
 				<div class="min-w-0 flex-1">
 					<p class="app-hero-managing-label">Currently managing</p>

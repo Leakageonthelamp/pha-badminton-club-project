@@ -4,7 +4,7 @@
 	import DashboardIcon from '@repo/ui/components/DashboardIcon.svelte';
 	import DatePicker from '@repo/ui/components/DatePicker.svelte';
 	import SelectMenu from '@repo/ui/components/SelectMenu.svelte';
-	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
+	import BanknotesIcon from '@repo/ui/icons/BanknotesIcon.svelte';
 	import SearchIcon from '@repo/ui/icons/SearchIcon.svelte';
 	import { formatDate } from '@repo/ui/datetime';
 	import { formatThb } from '@repo/ui/payments';
@@ -162,7 +162,7 @@
 		<div
 			class="rounded-xl border border-dashed border-slate-200 bg-gradient-to-b from-slate-50/90 to-white px-4 py-8 text-center"
 		>
-			<DashboardIcon icon={isFilteredEmpty ? SearchIcon : LayersIcon} accent="indigo" class="mx-auto" />
+			<DashboardIcon icon={isFilteredEmpty ? SearchIcon : BanknotesIcon} accent="indigo" class="mx-auto" />
 			{#if isFilteredEmpty}
 				<p class="mt-3 text-sm font-medium text-slate-900">No transactions match your filters</p>
 				<p class="mx-auto mt-1 max-w-xs text-sm text-slate-500">

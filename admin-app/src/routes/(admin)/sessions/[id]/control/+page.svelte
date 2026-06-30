@@ -15,7 +15,7 @@
 	import SlipPreviewModal from '@repo/ui/components/SlipPreviewModal.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
-	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
+	import Squares2x2Icon from '@repo/ui/icons/Squares2x2Icon.svelte';
 	import ChevronDownIcon from '@repo/ui/icons/ChevronDownIcon.svelte';
 	import MatchSummaryModal from '@repo/ui/components/MatchSummaryModal.svelte';
 	import MatchHistoryCard from '@repo/ui/components/MatchHistoryCard.svelte';
@@ -1043,7 +1043,7 @@
 		<div class="app-detail-section-body space-y-4">
 			<div class="app-detail-section-header">
 				<span class="app-detail-section-icon" aria-hidden="true">
-					<LayersIcon class="h-5 w-5" />
+					<Squares2x2Icon class="h-5 w-5" />
 				</span>
 				<div>
 					<h2 class="text-lg font-semibold text-slate-900">Courts & matches</h2>

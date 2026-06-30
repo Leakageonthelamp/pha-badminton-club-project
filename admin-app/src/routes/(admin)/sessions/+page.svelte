@@ -4,7 +4,7 @@
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
 	import SectionHeading from '@repo/ui/components/SectionHeading.svelte';
 	import SessionListLink from '$lib/components/SessionListLink.svelte';
-	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
+	import ClockIcon from '@repo/ui/icons/ClockIcon.svelte';
 	import PlusIcon from '@repo/ui/icons/PlusIcon.svelte';
 	import { clubWorkspaceState } from '$lib/clubWorkspace.svelte';
 	import { adminRoleHeroBadgeClass } from '$lib/adminRoleHero';
@@ -57,7 +57,7 @@
 				href="/sessions/history"
 				title="Session history"
 				description="Closed and cancelled sessions"
-				icon={LayersIcon}
+				icon={ClockIcon}
 				accent="indigo"
 			/>
 		</div>

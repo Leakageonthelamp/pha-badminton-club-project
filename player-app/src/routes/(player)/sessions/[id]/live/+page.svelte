@@ -16,8 +16,9 @@
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
 	import BuildingIcon from '@repo/ui/icons/BuildingIcon.svelte';
+	import CheckIcon from '@repo/ui/icons/CheckIcon.svelte';
 	import HomeIcon from '@repo/ui/icons/HomeIcon.svelte';
-	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
+	import ClipboardDocumentListIcon from '@repo/ui/icons/ClipboardDocumentListIcon.svelte';
 	import { formatDateTime, formatUptime } from '@repo/ui/datetime';
 	import MatchSummarySheet from '$lib/components/MatchSummarySheet.svelte';
 	import PlayerMatchHistoryCard from '@repo/ui/components/PlayerMatchHistoryCard.svelte';
@@ -148,15 +149,14 @@
 	});
 
 	const shuttlePriceLabel = $derived(formatThb(session.shuttle_price_per_each));
+	const shuttleSharedEachLabel = $derived(
+		formatThb(computePlayerShuttleShare(1, session.shuttle_price_per_each))
+	);
 
 	const shuttleDetailLabel = $derived.by(() => {
 		if (!session.shuttle) return shuttlePriceLabel;
 
-		const parts = [session.shuttle.name, `Speed ${session.shuttle.speed}`, shuttlePriceLabel];
-		if (session.shuttle.number_per_box > 0) {
-			parts.push(`${session.shuttle.number_per_box} per box`);
-		}
-		return parts.join(' · ');
+		return `${session.shuttle.name} · Speed ${session.shuttle.speed} · ${shuttlePriceLabel} each · ${shuttleSharedEachLabel} after shared`;
 	});
 
 	const summaryPaymentStatus = $derived(data.myPayment?.status ?? null);
@@ -559,15 +559,7 @@
 					class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 shadow-sm ring-4 ring-white"
 					aria-hidden="true"
 				>
-					<svg
-						class="h-8 w-8 text-emerald-600"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2.5"
-					>
-						<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-					</svg>
+					<CheckIcon class="h-8 w-8 text-emerald-600" />
 				</div>
 				<h2 class="mt-4 text-xl font-bold tracking-tight text-slate-900">{summaryHeadline}</h2>
 				<p class="mt-2 text-sm leading-relaxed text-slate-600">
@@ -736,7 +728,7 @@
 			<div class="app-detail-section-body space-y-5">
 				<div class="app-detail-section-header">
 					<span class="app-detail-section-icon" aria-hidden="true">
-						<LayersIcon class="h-5 w-5" />
+						<ClipboardDocumentListIcon class="h-5 w-5" />
 					</span>
 					<div>
 						<h2 class="text-lg font-semibold text-slate-900">Session details</h2>
@@ -789,10 +781,8 @@
 							{#if session.shuttle}
 								<p class="text-base font-semibold text-slate-900">{session.shuttle.name}</p>
 								<p class="mt-1 text-sm text-slate-600">
-									Speed {session.shuttle.speed} · {shuttlePriceLabel} each
-									{#if session.shuttle.number_per_box > 0}
-										· {session.shuttle.number_per_box} per box
-									{/if}
+									Speed {session.shuttle.speed} · {shuttlePriceLabel} each · {shuttleSharedEachLabel}
+									after shared
 								</p>
 								<p class="mt-2 text-xs text-slate-500">
 									{#if myShuttlesUsed > 0}

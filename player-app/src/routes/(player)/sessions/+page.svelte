@@ -11,7 +11,7 @@
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import DashboardTile from '@repo/ui/components/DashboardTile.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
-	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
+	import CalendarDaysIcon from '@repo/ui/icons/CalendarDaysIcon.svelte';
 	import RefreshIcon from '@repo/ui/icons/RefreshIcon.svelte';
 	import { formatDateTime, formatSessionDuration } from '@repo/ui/datetime';
 	import {
@@ -156,7 +156,7 @@
 					<DashboardTile
 						title={session.name}
 						description={sessionDescription(session)}
-						icon={LayersIcon}
+						icon={CalendarDaysIcon}
 						badge={session.distanceKm !== null ? formatDistanceKm(session.distanceKm) : undefined}
 						durationBadge={sessionDurationBadge(session)}
 						secondaryBadge={sessionStatusLabel(session.status)}

@@ -16,7 +16,7 @@
 	import DatePicker from '@repo/ui/components/DatePicker.svelte';
 	import SelectMenu from '@repo/ui/components/SelectMenu.svelte';
 	import { formatDateTime } from '@repo/ui/datetime';
-	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
+	import ClockIcon from '@repo/ui/icons/ClockIcon.svelte';
 	import SearchIcon from '@repo/ui/icons/SearchIcon.svelte';
 	import type { PageData } from './$types';
 
@@ -196,7 +196,7 @@
 			<div
 				class="rounded-xl border border-dashed border-slate-200 bg-gradient-to-b from-slate-50/90 to-white px-4 py-8 text-center"
 			>
-				<DashboardIcon icon={isFilteredEmpty ? SearchIcon : LayersIcon} accent="indigo" class="mx-auto" />
+				<DashboardIcon icon={isFilteredEmpty ? SearchIcon : ClockIcon} accent="indigo" class="mx-auto" />
 				{#if isFilteredEmpty}
 					<p class="mt-3 text-sm font-medium text-slate-900">No sessions match your filters</p>
 					<p class="mx-auto mt-1 max-w-xs text-sm text-slate-500">

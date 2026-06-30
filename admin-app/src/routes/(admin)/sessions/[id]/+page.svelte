@@ -11,9 +11,10 @@
 	import SessionLiveTimers from '@repo/ui/components/SessionLiveTimers.svelte';
 	import SessionStartCountdown from '@repo/ui/components/SessionStartCountdown.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
-	import BuildingIcon from '@repo/ui/icons/BuildingIcon.svelte';
-	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
-	import SettingsIcon from '@repo/ui/icons/SettingsIcon.svelte';
+	import UserGroupIcon from '@repo/ui/icons/UserGroupIcon.svelte';
+	import ClipboardDocumentListIcon from '@repo/ui/icons/ClipboardDocumentListIcon.svelte';
+	import TagIcon from '@repo/ui/icons/TagIcon.svelte';
+	import TrophyIcon from '@repo/ui/icons/TrophyIcon.svelte';
 	import UserIcon from '@repo/ui/icons/UserIcon.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
@@ -536,7 +537,7 @@
 			<div class="app-detail-section-body space-y-6">
 				<div class="app-detail-section-header">
 					<span class="app-detail-section-icon" aria-hidden="true">
-						<LayersIcon class="h-5 w-5" />
+						<ClipboardDocumentListIcon class="h-5 w-5" />
 					</span>
 					<div>
 						<h2 class="text-lg font-semibold text-slate-900">Session details</h2>
@@ -550,7 +551,7 @@
 						<div class="app-detail-contact-item">
 							<dt class="app-detail-contact-label">
 								<span class="inline-flex items-center gap-1.5">
-									<BuildingIcon class="h-4 w-4 text-brand-500" />
+									<UserGroupIcon class="h-4 w-4 text-brand-500" />
 									Club
 								</span>
 							</dt>
@@ -679,7 +680,7 @@
 						<div class="app-detail-contact-item">
 							<dt class="app-detail-contact-label">
 								<span class="inline-flex items-center gap-1.5">
-									<SettingsIcon class="h-4 w-4 text-brand-500" />
+									<TrophyIcon class="h-4 w-4 text-brand-500" />
 									Match score
 								</span>
 							</dt>
@@ -688,7 +689,7 @@
 						<div class="app-detail-contact-item">
 							<dt class="app-detail-contact-label">
 								<span class="inline-flex items-center gap-1.5">
-									<SettingsIcon class="h-4 w-4 text-brand-500" />
+									<TagIcon class="h-4 w-4 text-brand-500" />
 									Match type
 								</span>
 							</dt>

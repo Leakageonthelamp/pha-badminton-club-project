@@ -6,7 +6,7 @@
 		selectClub,
 		type ClubWorkspaceOption
 	} from '$lib/clubWorkspace.svelte';
-	import BuildingIcon from '@repo/ui/icons/BuildingIcon.svelte';
+	import UserGroupIcon from '@repo/ui/icons/UserGroupIcon.svelte';
 	import MenuSelectedMark from '@repo/ui/components/MenuSelectedMark.svelte';
 
 	let { clubs }: { clubs: ClubWorkspaceOption[] } = $props();
@@ -100,7 +100,7 @@
 					aria-hidden="true"
 				></span>
 			{:else}
-				<BuildingIcon class="h-5 w-5 text-brand-700" />
+				<UserGroupIcon class="h-5 w-5 text-brand-700" />
 			{/if}
 		</button>
 
@@ -141,7 +141,7 @@
 							<span
 								class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-sm"
 							>
-								<BuildingIcon class="h-4 w-4" />
+								<UserGroupIcon class="h-4 w-4" />
 							</span>
 							<span class="min-w-0">
 								<span class="block truncate font-semibold">{club.name}</span>

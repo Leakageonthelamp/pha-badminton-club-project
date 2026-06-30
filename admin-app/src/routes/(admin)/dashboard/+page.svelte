@@ -5,9 +5,10 @@
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
 	import SectionHeading from '@repo/ui/components/SectionHeading.svelte';
 	import UpcomingSessionsPanel from '$lib/components/UpcomingSessionsPanel.svelte';
-	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
+	import ClockIcon from '@repo/ui/icons/ClockIcon.svelte';
+	import CalendarDaysIcon from '@repo/ui/icons/CalendarDaysIcon.svelte';
+	import BanknotesIcon from '@repo/ui/icons/BanknotesIcon.svelte';
 	import PlusIcon from '@repo/ui/icons/PlusIcon.svelte';
-	import SearchIcon from '@repo/ui/icons/SearchIcon.svelte';
 	import SettingsIcon from '@repo/ui/icons/SettingsIcon.svelte';
 	import { adminRoleHeroBadgeClass } from '$lib/adminRoleHero';
 	import { clubWorkspaceState } from '$lib/clubWorkspace.svelte';
@@ -75,14 +76,14 @@
 					href="/sessions/history"
 					title="Session history"
 					description="Closed and cancelled sessions"
-					icon={LayersIcon}
+					icon={ClockIcon}
 					accent="indigo"
 				/>
 				<DashboardTile
 					href="/transactions"
 					title="Payments"
 					description="Session and cancellation fees"
-					icon={SearchIcon}
+					icon={BanknotesIcon}
 					accent="indigo"
 				/>
 			</div>
@@ -135,14 +136,14 @@
 					href="/sessions"
 					title="Sessions"
 					description="Manage upcoming sessions and history"
-					icon={LayersIcon}
+					icon={CalendarDaysIcon}
 					accent="violet"
 				/>
 				<ActionRowLink
 					href="/transactions"
 					title="Payment transactions"
 					description="Session fees and late-cancellation fees"
-					icon={SearchIcon}
+					icon={BanknotesIcon}
 					accent="indigo"
 				/>
 			</div>

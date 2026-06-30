@@ -10,10 +10,10 @@
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
-	import BuildingIcon from '@repo/ui/icons/BuildingIcon.svelte';
+	import UserGroupIcon from '@repo/ui/icons/UserGroupIcon.svelte';
 	import FacebookIcon from '@repo/ui/icons/FacebookIcon.svelte';
 	import GoogleIcon from '@repo/ui/icons/GoogleIcon.svelte';
-	import RefreshIcon from '@repo/ui/icons/RefreshIcon.svelte';
+	import ClockIcon from '@repo/ui/icons/ClockIcon.svelte';
 	import SettingsIcon from '@repo/ui/icons/SettingsIcon.svelte';
 	import UserIcon from '@repo/ui/icons/UserIcon.svelte';
 	import { adminRoleBadgeClass, adminRoleHeroBadgeClass } from '$lib/adminRoleHero';
@@ -189,7 +189,7 @@
 		<div class="app-detail-section-body">
 			<div class="app-detail-section-header">
 				<span class="app-detail-section-icon" aria-hidden="true">
-					<BuildingIcon class="h-5 w-5" />
+					<UserGroupIcon class="h-5 w-5" />
 				</span>
 				<div>
 					<h2 class="text-lg font-semibold text-slate-900">Role & clubs</h2>
@@ -211,7 +211,7 @@
 								href="/clubs/{club.id}"
 								title={club.name}
 								description="Club admin access"
-								icon={BuildingIcon}
+								icon={UserGroupIcon}
 								accent="indigo"
 							/>
 						{/each}
@@ -239,7 +239,7 @@
 		<div class="app-detail-section-body">
 			<div class="app-detail-section-header">
 				<span class="app-detail-section-icon" aria-hidden="true">
-					<RefreshIcon class="h-5 w-5" />
+					<ClockIcon class="h-5 w-5" />
 				</span>
 				<div>
 					<h2 class="text-lg font-semibold text-slate-900">Account activity</h2>

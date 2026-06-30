@@ -15,7 +15,7 @@
 	import PlayerMatchHistoryCard from '@repo/ui/components/PlayerMatchHistoryCard.svelte';
 	import SelectMenu from '@repo/ui/components/SelectMenu.svelte';
 	import { formatDateTime, formatUptime } from '@repo/ui/datetime';
-	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
+	import TrophyIcon from '@repo/ui/icons/TrophyIcon.svelte';
 	import SearchIcon from '@repo/ui/icons/SearchIcon.svelte';
 	import type { PageData } from './$types';
 
@@ -240,7 +240,7 @@
 				<div
 					class="rounded-xl border border-dashed border-slate-200 bg-gradient-to-b from-slate-50/90 to-white px-4 py-8 text-center"
 				>
-					<DashboardIcon icon={isFilteredEmpty ? SearchIcon : LayersIcon} accent="violet" class="mx-auto" />
+					<DashboardIcon icon={isFilteredEmpty ? SearchIcon : TrophyIcon} accent="violet" class="mx-auto" />
 					{#if isFilteredEmpty}
 						<p class="mt-3 text-sm font-medium text-slate-900">No matches match your filters</p>
 						<p class="mx-auto mt-1 max-w-xs text-sm text-slate-500">

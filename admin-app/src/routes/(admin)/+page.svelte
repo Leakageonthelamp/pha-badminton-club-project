@@ -5,11 +5,12 @@
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
 	import SectionHeading from '@repo/ui/components/SectionHeading.svelte';
 	import SelectMenu from '@repo/ui/components/SelectMenu.svelte';
-	import BuildingIcon from '@repo/ui/icons/BuildingIcon.svelte';
+	import UserGroupIcon from '@repo/ui/icons/UserGroupIcon.svelte';
+	import BanknotesIcon from '@repo/ui/icons/BanknotesIcon.svelte';
 	import PlusIcon from '@repo/ui/icons/PlusIcon.svelte';
 	import SearchIcon from '@repo/ui/icons/SearchIcon.svelte';
 	import UserIcon from '@repo/ui/icons/UserIcon.svelte';
-	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
+	import CalendarDaysIcon from '@repo/ui/icons/CalendarDaysIcon.svelte';
 	import { isRichTextEmpty, richTextExcerpt, richTextPlainText } from '@repo/ui/richText';
 	import { adminRoleHeroBadgeClass } from '$lib/adminRoleHero';
 	import { appRoleLabel, type AppRole } from '$lib/types/auth';
@@ -116,14 +117,14 @@
 				href="/sessions"
 				title="Sessions"
 				description="View all club sessions"
-				icon={LayersIcon}
+				icon={CalendarDaysIcon}
 				accent="violet"
 			/>
 			<DashboardTile
 				href="/transactions"
 				title="Payment transactions"
 				description="Session fees and cancellation fees"
-				icon={SearchIcon}
+				icon={BanknotesIcon}
 				accent="indigo"
 			/>
 		</div>
@@ -215,7 +216,7 @@
 									class="group flex items-center gap-3 px-4 py-3.5 transition hover:bg-slate-50"
 								>
 									<DashboardIcon
-										icon={BuildingIcon}
+										icon={UserGroupIcon}
 										accent={club.is_active ? 'indigo' : 'brand'}
 										class={club.is_active ? '' : 'opacity-70'}
 									/>

@@ -21,6 +21,44 @@ import UserIcon from '@repo/ui/icons/UserIcon.svelte';
 import { toast } from '@repo/ui/toast/toast.svelte';
 ```
 
+## Icons
+
+**All UI icons are [Heroicons](https://heroicons.com/) v2 outline** (`viewBox="0 0 24 24"`,
+`stroke-width="1.5"`, `stroke="currentColor"`, `fill="none"`). Each lives as a thin Svelte
+wrapper in `shared/ui/icons/` and is imported via `@repo/ui/icons/<Name>Icon.svelte`. Do not add
+non-Heroicon glyphs or inline ad-hoc SVGs when a shared icon component exists.
+
+**Exceptions (not Heroicons):** `GoogleIcon`, `FacebookIcon` (OAuth brand marks); per-app `AppLogo`
+(branding). `RichTextEditor` toolbar uses small inline SVGs for bold/italic/lists/link — leave those.
+
+**Pick an icon by meaning, not by visual similarity.** Reuse an existing `*Icon.svelte` before
+adding a new one. When adding a new icon, copy the outline path from heroicons.com into a wrapper
+matching the existing pattern (e.g. `UserIcon.svelte`).
+
+| Meaning | Heroicon | Component |
+| --- | --- | --- |
+| Sessions / a session | `calendar-days` | `CalendarDaysIcon` |
+| Session history / account activity / timestamps | `clock` | `ClockIcon` |
+| Match history / match score / wins | `trophy` | `TrophyIcon` |
+| Match type | `tag` | `TagIcon` |
+| Payments / transactions | `banknotes` | `BanknotesIcon` |
+| Courts & matches grid / super-admin workspace | `squares-2x2` | `Squares2x2Icon` |
+| Session details / overview | `clipboard-document-list` | `ClipboardDocumentListIcon` |
+| User / profile | `user` | `UserIcon` |
+| Clubs / community | `user-group` | `UserGroupIcon` |
+| Venue / physical location | `building-office` | `BuildingIcon` |
+| Home | `home` | `HomeIcon` |
+| Create / add | `plus` | `PlusIcon` |
+| Upload | `arrow-up-tray` | `UploadIcon` |
+| Search (inputs + "no results" empty states) | `magnifying-glass` | `SearchIcon` |
+| Refresh (reload buttons) | `arrow-path` | `RefreshIcon` |
+| Expand / collapse / select chevron | `chevron-down` | `ChevronDownIcon` |
+| Back navigation | `arrow-left` | `ArrowLeftIcon` |
+| Show / hide password | `eye` / `eye-slash` | `EyeIcon` / `EyeOffIcon` |
+| Log out | `arrow-right-start-on-rectangle` | `LogOutIcon` |
+| Success / confirmation | `check` | `CheckIcon` |
+| Settings / actions (admin config) | `cog-6-tooth` | `SettingsIcon` |
+
 ## Before writing a component, function, icon, or style — check this order
 
 1. **Does it already exist in `shared/`?** Reuse it via `@repo/ui`. Do not
