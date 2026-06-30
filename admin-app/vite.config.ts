@@ -45,7 +45,7 @@ export default defineConfig(({ mode }) => {
 					dir: 'ltr',
 					theme_color: '#f8fafc',
 					background_color: '#f8fafc',
-					display: 'standalone',
+					display: 'fullscreen',
 					display_override: ['window-controls-overlay', 'standalone'],
 					orientation: 'portrait',
 					scope: '/',
