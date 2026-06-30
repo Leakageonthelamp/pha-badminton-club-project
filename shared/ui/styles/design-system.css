@@ -22,7 +22,6 @@
 }
 
 :root {
-	color-scheme: light;
 	--app-bg: #f8fafc;
 	--app-accent: #964ac0;
 	--motion-page-duration: 420ms;
@@ -31,6 +30,7 @@
 }
 
 html {
+	color-scheme: light only;
 	background-color: var(--app-bg);
 	font-family: var(--font-sans);
 	height: 100%;
