@@ -604,7 +604,7 @@
 				<div class="h-1 w-10 rounded-full bg-slate-300" aria-hidden="true"></div>
 			</div>
 
-			<div class="flex shrink-0 items-start justify-between gap-3 px-4 pb-3">
+			<div class="flex shrink-0 items-start justify-between gap-3 pb-3">
 				<div class="min-w-0">
 					<h2 id="session-sheet-title" class="text-xl font-semibold text-slate-900">{title}</h2>
 					{#if activeSession?.club?.name}
@@ -646,13 +646,13 @@
 			</div>
 
 			{#if activeSession?.start_at && activeSession.status === 'open'}
-				<div class="px-4 pb-3">
+				<div class="pb-3">
 					<SessionStartCountdown startAt={activeSession.start_at} showUntilStart />
 				</div>
 			{/if}
 
 			{#if activeSession?.start_at && activeSession.status === 'in_progress'}
-				<div class="space-y-3 px-4 pb-3">
+				<div class="space-y-3 pb-3">
 					<SessionLiveTimers
 						startAt={activeSession.start_at}
 						endAt={activeSession.end_at}
@@ -668,7 +668,7 @@
 				</div>
 			{/if}
 
-			<div class="min-h-0 flex-1 overflow-y-auto px-4 pb-6" aria-busy={loading}>
+			<div class="min-h-0 flex-1 overflow-y-auto pb-6" aria-busy={loading}>
 				{#if loadError && !activeSession}
 					<p class="mt-3 text-sm text-red-600">{loadError}</p>
 				{:else}

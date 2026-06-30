@@ -43,7 +43,7 @@ export default defineConfig(({ mode }) => {
 					description: 'Clubhouse — organize 2v2 badminton club sessions, matches, and payments.',
 					lang: 'en',
 					dir: 'ltr',
-					theme_color: '#964ac0',
+					theme_color: '#f8fafc',
 					background_color: '#f8fafc',
 					display: 'standalone',
 					display_override: ['standalone', 'browser'],
@@ -51,6 +51,7 @@ export default defineConfig(({ mode }) => {
 					scope: '/',
 					start_url: '/',
 					categories: ['sports', 'social'],
+					prefer_related_applications: false,
 					icons: [
 						{
 							src: '/icon-192.png',
@@ -65,8 +66,20 @@ export default defineConfig(({ mode }) => {
 							purpose: 'any'
 						},
 						{
+							src: '/icon-1024.png',
+							sizes: '1024x1024',
+							type: 'image/png',
+							purpose: 'any'
+						},
+						{
 							src: '/icon-maskable-512.png',
 							sizes: '512x512',
+							type: 'image/png',
+							purpose: 'maskable'
+						},
+						{
+							src: '/icon-maskable-1024.png',
+							sizes: '1024x1024',
 							type: 'image/png',
 							purpose: 'maskable'
 						}

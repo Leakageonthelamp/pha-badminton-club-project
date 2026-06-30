@@ -16,8 +16,6 @@
 
 	let { data, children }: { data: LayoutData; children: import('svelte').Snippet } = $props();
 
-	const year = new Date().getFullYear();
-
 	// Show a loading spinner on the exact link the user tapped while its page loads.
 	let pendingLink: HTMLElement | null = null;
 	let pendingTimer: ReturnType<typeof setTimeout> | null = null;
@@ -62,7 +60,7 @@
 </svelte:head>
 
 <div class="app-shell relative mx-auto flex h-full w-full max-w-lg flex-col">
-	<div class="app-scroll min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-2 pt-6">
+	<div class="app-scroll min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-2">
 		{#if data.serviceUnavailable}
 			<ServiceUnavailable />
 		{:else}
@@ -72,10 +70,6 @@
 			{@render children()}
 		{/if}
 	</div>
-
-	<footer class="app-footer shrink-0 px-2 text-center text-[10px] leading-tight text-slate-400">
-		<p>© {year} {appConfig.name}</p>
-	</footer>
 </div>
 
 <ToastContainer />

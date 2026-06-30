@@ -11,6 +11,12 @@ declare global {
 
 	interface WindowEventMap {
 		beforeinstallprompt: BeforeInstallPromptEvent;
+		'pwa-deferred-prompt': Event;
+		'pwa-installed': Event;
+	}
+
+	interface Window {
+		__pwaDeferredPrompt?: BeforeInstallPromptEvent | null;
 	}
 
 	namespace App {

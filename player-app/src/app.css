@@ -23,7 +23,7 @@
 }
 
 .bottom-sheet-panel {
-	@apply absolute right-0 bottom-0 left-0 mx-auto flex w-full max-w-lg flex-col rounded-t-2xl bg-white shadow-2xl;
+	@apply absolute right-0 bottom-0 left-0 mx-auto flex w-full max-w-lg flex-col rounded-t-2xl bg-white px-2 shadow-2xl;
 	height: 90dvh;
 	max-height: 90dvh;
 	transform: translateY(100%);

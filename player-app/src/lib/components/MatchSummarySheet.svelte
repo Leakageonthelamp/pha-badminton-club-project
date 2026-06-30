@@ -216,7 +216,7 @@
 				<div class="h-1 w-10 rounded-full bg-slate-300" aria-hidden="true"></div>
 			</div>
 
-			<div class="flex shrink-0 items-start justify-between gap-3 border-b border-slate-100 bg-gradient-to-br from-slate-50 via-white to-brand-50/40 px-4 pb-4">
+			<div class="flex shrink-0 items-start justify-between gap-3 border-b border-slate-100 bg-gradient-to-br from-slate-50 via-white to-brand-50/40 pb-4">
 				<div class="min-w-0">
 					<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Match summary</p>
 					<h2 id="match-summary-title" class="mt-1 text-xl font-semibold text-slate-900">
@@ -263,7 +263,7 @@
 				</div>
 			</div>
 
-			<div class="min-h-0 flex-1 overflow-y-auto px-4 pb-6">
+			<div class="min-h-0 flex-1 overflow-y-auto pb-6">
 				{#if match.games.length}
 					<div class="border-b border-slate-100 py-4">
 						<MatchScoreDisplay

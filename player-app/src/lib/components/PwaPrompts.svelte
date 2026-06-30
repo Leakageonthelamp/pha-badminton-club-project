@@ -4,6 +4,13 @@
 	import AppLogo from '$lib/components/AppLogo.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import {
+		manualInstallHint,
+		manualInstallVariant,
+		readDeferredInstallPrompt,
+		isStandaloneMode,
+		type ManualInstallVariant
+	} from '$lib/pwa/installPrompt';
+	import {
 		bottomBannerTransition,
 		bottomBannerTransitionReduced,
 		prefersReducedMotion
@@ -29,42 +36,41 @@
 	let deferredPrompt = $state<BeforeInstallPromptEvent | null>(null);
 	let showInstall = $state(false);
 	let isStandalone = $state(false);
-	let isIos = $state(false);
-	let iosInstallDismissed = $state(false);
+	let manualVariant = $state<ManualInstallVariant | null>(null);
+	let manualInstallDismissed = $state(false);
 	let installing = $state(false);
 	let reloading = $state(false);
 
-	const showIosInstall = $derived(isIos && !isStandalone && !iosInstallDismissed && !showInstall);
+	const showManualInstall = $derived(
+		manualVariant !== null && !isStandalone && !manualInstallDismissed && !showInstall
+	);
+	const manualHint = $derived(manualVariant ? manualInstallHint[manualVariant] : '');
+
+	const syncDeferredPrompt = () => {
+		const prompt = readDeferredInstallPrompt();
+		if (!prompt) return;
+		deferredPrompt = prompt;
+		showInstall = true;
+	};
 
 	onMount(() => {
 		reduceMotion = prefersReducedMotion();
+		isStandalone = isStandaloneMode();
+		manualVariant = manualInstallVariant();
+		syncDeferredPrompt();
 
-		isStandalone =
-			window.matchMedia('(display-mode: standalone)').matches ||
-			('standalone' in navigator &&
-				(navigator as Navigator & { standalone?: boolean }).standalone === true);
-
-		isIos =
-			/iPad|iPhone|iPod/.test(navigator.userAgent) ||
-			(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-
-		const onBeforeInstallPrompt = (event: Event) => {
-			event.preventDefault();
-			deferredPrompt = event as BeforeInstallPromptEvent;
-			showInstall = true;
-		};
-
-		const onAppInstalled = () => {
+		const onDeferredPrompt = () => syncDeferredPrompt();
+		const onInstalled = () => {
 			deferredPrompt = null;
 			showInstall = false;
 		};
 
-		window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
-		window.addEventListener('appinstalled', onAppInstalled);
+		window.addEventListener('pwa-deferred-prompt', onDeferredPrompt);
+		window.addEventListener('pwa-installed', onInstalled);
 
 		return () => {
-			window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt);
-			window.removeEventListener('appinstalled', onAppInstalled);
+			window.removeEventListener('pwa-deferred-prompt', onDeferredPrompt);
+			window.removeEventListener('pwa-installed', onInstalled);
 		};
 	});
 
@@ -86,8 +92,8 @@
 		showInstall = false;
 	};
 
-	const dismissIosInstall = () => {
-		iosInstallDismissed = true;
+	const dismissManualInstall = () => {
+		manualInstallDismissed = true;
 	};
 
 	const dismissOfflineReady = () => {
@@ -112,7 +118,7 @@
 
 {#if $offlineReady}
 	<div
-		class="fixed inset-x-4 bottom-4 z-50 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg"
+		class="app-fixed-bottom fixed z-50 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg"
 		role="status"
 		in:fly={bannerTransition}
 		out:fly={bannerTransition}
@@ -132,7 +138,7 @@
 
 {#if $needRefresh}
 	<div
-		class="fixed inset-x-4 bottom-4 z-50 rounded-2xl border border-brand-200 bg-brand-50 p-4 shadow-lg"
+		class="app-fixed-bottom fixed z-50 rounded-2xl border border-brand-200 bg-brand-50 p-4 shadow-lg"
 		role="alert"
 		in:fly={bannerTransition}
 		out:fly={bannerTransition}
@@ -141,26 +147,26 @@
 			<AppLogo size={36} />
 			<div>
 				<p class="text-sm font-medium text-brand-900">A new version is available.</p>
-		<div class="mt-3 flex gap-2">
-			<SubmitButton
-				type="button"
-				variant="primary"
-				class="w-auto! rounded-lg px-3 py-2 text-sm font-medium"
-				loading={reloading}
-				loadingLabel="Reloading…"
-				onclick={reloadForUpdate}
-			>
-				Reload
-			</SubmitButton>
-			<SubmitButton
-				type="button"
-				variant="ghost"
-				class="w-auto! rounded-lg px-3 py-2 text-sm font-medium text-brand-800"
-				onclick={dismissUpdate}
-			>
-				Later
-			</SubmitButton>
-		</div>
+				<div class="mt-3 flex gap-2">
+					<SubmitButton
+						type="button"
+						variant="primary"
+						class="w-auto! rounded-lg px-3 py-2 text-sm font-medium"
+						loading={reloading}
+						loadingLabel="Reloading…"
+						onclick={reloadForUpdate}
+					>
+						Reload
+					</SubmitButton>
+					<SubmitButton
+						type="button"
+						variant="ghost"
+						class="w-auto! rounded-lg px-3 py-2 text-sm font-medium text-brand-800"
+						onclick={dismissUpdate}
+					>
+						Later
+					</SubmitButton>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -168,7 +174,7 @@
 
 {#if showInstall && !isStandalone}
 	<div
-		class="fixed inset-x-4 bottom-4 z-50 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg"
+		class="app-fixed-bottom fixed z-50 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg"
 		role="dialog"
 		aria-label="Install app"
 		in:fly={bannerTransition}
@@ -206,11 +212,11 @@
 	</div>
 {/if}
 
-{#if showIosInstall}
+{#if showManualInstall}
 	<div
-		class="fixed inset-x-4 bottom-4 z-50 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg"
+		class="app-fixed-bottom fixed z-50 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg"
 		role="dialog"
-		aria-label="Add to Home Screen"
+		aria-label="Install app"
 		in:fly={bannerTransition}
 		out:fly={bannerTransition}
 	>
@@ -218,9 +224,7 @@
 			<AppLogo size={40} />
 			<div>
 				<p class="text-sm font-medium text-slate-900">Install {appName}</p>
-				<p class="mt-1 text-sm text-slate-600">
-					Tap the Share button, then choose <strong>Add to Home Screen</strong>.
-				</p>
+				<p class="mt-1 text-sm text-slate-600">{manualHint}</p>
 			</div>
 		</div>
 		<div class="mt-3 flex gap-2">
@@ -228,7 +232,7 @@
 				type="button"
 				variant="ghost"
 				class="w-auto! rounded-lg px-3 py-2 text-sm font-medium text-slate-600"
-				onclick={dismissIosInstall}
+				onclick={dismissManualInstall}
 			>
 				Not now
 			</SubmitButton>

@@ -310,7 +310,7 @@
 				<div class="h-1 w-10 rounded-full bg-slate-300" aria-hidden="true"></div>
 			</div>
 
-			<div class="flex shrink-0 items-start justify-between gap-3 px-4 pb-3">
+			<div class="flex shrink-0 items-start justify-between gap-3 pb-3">
 				<div class="min-w-0">
 					<h2 id="club-sheet-title" class="text-xl font-semibold text-slate-900">{title}</h2>
 					{#if distanceLabel}
@@ -326,7 +326,7 @@
 				</button>
 			</div>
 
-			<div class="min-h-0 flex-1 overflow-y-auto px-4 pb-6">
+			<div class="min-h-0 flex-1 overflow-y-auto pb-6">
 				{#if loading && !description}
 					<div class="mt-3 app-skeleton h-16 w-full" aria-hidden="true"></div>
 				{:else}
