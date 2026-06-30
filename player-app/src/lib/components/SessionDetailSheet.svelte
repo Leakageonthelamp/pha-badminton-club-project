@@ -29,7 +29,7 @@
 	} from '@repo/ui/payments';
 	import type { SessionDetail, SessionListItem, SessionPlayerStatus, SessionStatus } from '$lib/types/session';
 	import { liveSessionHref, shouldOpenLiveSession } from '$lib/sessions/navigation';
-	import { isLiveSessionEnded } from '$lib/sessions/liveState';
+	import { isLiveSessionEnded, isPlayerEarlyLeave } from '$lib/sessions/liveState';
 	import { joinConflictMembershipPhrase } from '$lib/sessions/joinConflict';
 	import { SESSION_CANCEL_LOCK_LEAD_MINUTES, SESSION_JOIN_CLOSE_LEAD_MINUTES, LIVE_SESSION_JOIN_BUFFER_HOURS } from '$lib/config/session';
 	import {
@@ -163,6 +163,19 @@
 					endAtMs: Date.parse(activeSession.end_at),
 					nowMs
 				})
+			: false
+	);
+	const playerEarlyLeave = $derived(
+		activeSession
+			? isPlayerEarlyLeave(
+					session?.my_membership?.status ?? preview?.my_membership?.status ?? null,
+					activeSession.status,
+					session?.my_pending_leave
+						? 'pending'
+						: session?.my_membership?.status === 'left'
+							? 'approved'
+							: null
+				)
 			: false
 	);
 	const title = $derived(activeSession?.name ?? 'Session');
@@ -604,7 +617,13 @@
 							>
 								{sessionStatusLabel(activeSession.status)}
 							</span>
-							{#if sessionEnded}
+							{#if playerEarlyLeave}
+								<span
+									class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold bg-rose-100 text-rose-800 ring-1 ring-rose-200"
+								>
+									Early leaved
+								</span>
+							{:else if sessionEnded}
 								<span
 									class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold bg-rose-100 text-rose-800 ring-1 ring-rose-200"
 								>
@@ -641,7 +660,7 @@
 						showOverdue={sessionEnded}
 						variant="banner"
 					/>
-					{#if sessionEnded}
+					{#if sessionEnded && !playerEarlyLeave}
 						<p class="rounded-xl border border-rose-200 bg-rose-50/70 px-3 py-2.5 text-sm text-rose-900">
 							<strong>Session ended.</strong> Waiting for the host to start settlement.
 						</p>

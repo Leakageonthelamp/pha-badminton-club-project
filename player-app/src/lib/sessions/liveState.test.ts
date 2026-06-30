@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
 	canRequestEarlyLeave,
 	deriveLiveSessionUiState,
+	hasPendingEarlyLeave,
 	isLiveSessionEnded,
+	isPlayerEarlyLeave,
 	shouldShowPaymentModal
 } from './liveState';
 
@@ -100,6 +102,31 @@ describe('isLiveSessionEnded', () => {
 				endedEarly: true
 			})
 		).toBe(true);
+	});
+});
+
+describe('hasPendingEarlyLeave', () => {
+	it('is true when leave is pending and membership is still confirmed', () => {
+		expect(hasPendingEarlyLeave('pending', 'confirmed')).toBe(true);
+	});
+
+	it('is false after leave is approved or membership is no longer confirmed', () => {
+		expect(hasPendingEarlyLeave('approved', 'confirmed')).toBe(false);
+		expect(hasPendingEarlyLeave('pending', 'left')).toBe(false);
+		expect(hasPendingEarlyLeave(null, 'confirmed')).toBe(false);
+	});
+});
+
+describe('isPlayerEarlyLeave', () => {
+	it('is true while waiting to leave or after leaving during an in-progress session', () => {
+		expect(isPlayerEarlyLeave('confirmed', 'in_progress', 'pending')).toBe(true);
+		expect(isPlayerEarlyLeave('left', 'in_progress', 'approved')).toBe(true);
+	});
+
+	it('is false once the session closes or the player is still active', () => {
+		expect(isPlayerEarlyLeave('confirmed', 'in_progress', null)).toBe(false);
+		expect(isPlayerEarlyLeave('left', 'closed', 'approved')).toBe(false);
+		expect(isPlayerEarlyLeave('confirmed', 'closed', 'pending')).toBe(false);
 	});
 });
 

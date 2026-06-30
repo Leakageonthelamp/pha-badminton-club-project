@@ -14,11 +14,16 @@ const isJoinableSessionStatus = (status: SessionListItem['status']): boolean =>
 export const isJoinableFeaturedSession = (session: SessionListItem): boolean =>
 	isJoinableSessionStatus(session.status) &&
 	isSessionJoinWindowOpen(session.end_at) &&
-	(!session.my_membership || !activeMembershipStatuses.has(session.my_membership.status));
+	(!session.my_membership || !activeMembershipStatuses.has(session.my_membership.status)) &&
+	session.my_membership?.status !== 'left';
+
+export const isEarlyLeftSession = (session: SessionListItem): boolean =>
+	session.status === 'in_progress' && session.my_membership?.status === 'left';
 
 export const shouldShowInProgressJoinRemark = (session: SessionListItem): boolean =>
 	session.status === 'in_progress' &&
-	(!session.my_membership || !activeMembershipStatuses.has(session.my_membership.status));
+	(!session.my_membership || !activeMembershipStatuses.has(session.my_membership.status)) &&
+	session.my_membership?.status !== 'left';
 
 export const sessionsWithDistance = (
 	sessions: SessionListItem[],

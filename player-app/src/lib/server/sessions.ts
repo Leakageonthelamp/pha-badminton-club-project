@@ -174,6 +174,27 @@ const loadMyMemberships = async (
 	return map;
 };
 
+const loadMyPendingLeave = async (
+	supabase: SupabaseClient,
+	userId: string,
+	sessionId: string
+): Promise<boolean> => {
+	const { data, error } = await supabase
+		.from('session_leave_requests')
+		.select('id')
+		.eq('session_id', sessionId)
+		.eq('user_id', userId)
+		.eq('status', 'pending')
+		.maybeSingle();
+
+	if (error) {
+		console.error('Failed to load pending leave request', error);
+		return false;
+	}
+
+	return data !== null;
+};
+
 const rosterSelect = `
 	id,
 	user_id,
@@ -289,12 +310,17 @@ export const loadUpcomingSessionsForPlayer = async (
 	const sessionIds = rows.map((row) => row.id as string);
 
 	const authReady = await ensureSupabaseAuth(supabase);
-	const [counts, memberships] = authReady
+	const [counts, memberships, leftMemberships] = authReady
 		? await Promise.all([
 				loadMembershipCounts(supabase, sessionIds),
-				loadMyMemberships(supabase, userId, sessionIds)
+				loadMyMemberships(supabase, userId, sessionIds),
+				loadMyMemberships(supabase, userId, sessionIds, ['left'])
 			])
-		: [new Map<string, { waiting: number; queued: number; confirmed: number }>(), new Map<string, SessionPlayerMembership>()];
+		: [
+				new Map<string, { waiting: number; queued: number; confirmed: number }>(),
+				new Map<string, SessionPlayerMembership>(),
+				new Map<string, SessionPlayerMembership>()
+			];
 
 	return rows.map((row) => {
 		const sessionId = row.id as string;
@@ -305,7 +331,7 @@ export const loadUpcomingSessionsForPlayer = async (
 			club: normalizeRelation(row.club as SessionListItem['club'] | SessionListItem['club'][]),
 			waiting_count: count.waiting + count.confirmed,
 			queued_count: count.queued,
-			my_membership: memberships.get(sessionId) ?? null
+			my_membership: memberships.get(sessionId) ?? leftMemberships.get(sessionId) ?? null
 		};
 	});
 };
@@ -404,6 +430,10 @@ export const loadSessionDetailForPlayer = async (
 					end_at: data.end_at as string
 				})
 			: null;
+	const myPendingLeave =
+		authReady && myMembership?.status === 'confirmed'
+			? await loadMyPendingLeave(supabase, userId, sessionId)
+			: false;
 
 	return {
 		...(data as Omit<
@@ -422,6 +452,7 @@ export const loadSessionDetailForPlayer = async (
 			| 'estimated_join_court_share'
 			| 'billing_active_player_count'
 			| 'join_conflict'
+			| 'my_pending_leave'
 		>),
 		club: normalizeRelation(data.club as SessionDetail['club'] | SessionDetail['club'][]),
 		host: normalizeRelation(data.host as SessionDetail['host'] | SessionDetail['host'][]),
@@ -436,7 +467,8 @@ export const loadSessionDetailForPlayer = async (
 		confirmed_players: roster.confirmed,
 		estimated_join_court_share: joinEstimate?.share ?? null,
 		billing_active_player_count: joinEstimate?.active_players ?? null,
-		join_conflict: joinConflict
+		join_conflict: joinConflict,
+		my_pending_leave: myPendingLeave
 	};
 };
 

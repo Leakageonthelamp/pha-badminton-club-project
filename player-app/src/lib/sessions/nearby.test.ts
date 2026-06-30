@@ -1,6 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { featuredSessions, myJoinedSessions, sessionsWithDistance, shouldShowInProgressJoinRemark, FEATURED_SESSIONS_LIMIT } from './nearby';
+import {
+	featuredSessions,
+	isEarlyLeftSession,
+	isJoinableFeaturedSession,
+	myJoinedSessions,
+	sessionsWithDistance,
+	shouldShowInProgressJoinRemark,
+	FEATURED_SESSIONS_LIMIT
+} from './nearby';
 import type { SessionListItem } from '$lib/types/session';
+
+const leftMembership = {
+	id: 'm-left',
+	status: 'left' as const,
+	fee_owed: 0,
+	fee_status: 'none' as const,
+	joined_at: '2026-06-01T00:00:00.000Z',
+	left_at: '2026-06-01T02:00:00.000Z',
+	activity: 'billing' as const,
+	idle_since: null
+};
 
 const sessions: SessionListItem[] = [
 	{
@@ -173,6 +192,20 @@ describe('featuredSessions', () => {
 
 		expect(featured.map((session) => session.id)).toEqual(['a', 'b', 'c']);
 	});
+
+	it('excludes in-progress sessions the player left early', () => {
+		const pool = [
+			{
+				...sessions[0]!,
+				id: 'early-left',
+				status: 'in_progress' as const,
+				my_membership: leftMembership
+			},
+			sessions[2]!
+		];
+
+		expect(featuredSessions(pool, null).map((session) => session.id)).toEqual(['c']);
+	});
 });
 
 describe('shouldShowInProgressJoinRemark', () => {
@@ -196,6 +229,48 @@ describe('shouldShowInProgressJoinRemark', () => {
 			})
 		).toBe(false);
 		expect(shouldShowInProgressJoinRemark(sessions[0]!)).toBe(false);
+	});
+
+	it('hides join remark for early-left in-progress sessions', () => {
+		expect(
+			shouldShowInProgressJoinRemark({
+				...sessions[0]!,
+				status: 'in_progress',
+				my_membership: leftMembership
+			})
+		).toBe(false);
+	});
+});
+
+describe('isJoinableFeaturedSession', () => {
+	it('rejects in-progress sessions the player left early', () => {
+		expect(
+			isJoinableFeaturedSession({
+				...sessions[0]!,
+				status: 'in_progress',
+				my_membership: leftMembership
+			})
+		).toBe(false);
+	});
+});
+
+describe('isEarlyLeftSession', () => {
+	it('is true only for in-progress sessions with left membership', () => {
+		expect(
+			isEarlyLeftSession({
+				...sessions[0]!,
+				status: 'in_progress',
+				my_membership: leftMembership
+			})
+		).toBe(true);
+		expect(
+			isEarlyLeftSession({
+				...sessions[0]!,
+				status: 'open',
+				my_membership: leftMembership
+			})
+		).toBe(false);
+		expect(isEarlyLeftSession(sessions[0]!)).toBe(false);
 	});
 });
 

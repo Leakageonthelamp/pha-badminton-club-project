@@ -4,8 +4,8 @@
 	import { goto } from '$app/navigation';
 	import SessionDetailSheet from '$lib/components/SessionDetailSheet.svelte';
 	import { SESSION_IN_PROGRESS_JOIN_REMARK } from '$lib/config/session';
-	import { sessionsWithDistance, shouldShowInProgressJoinRemark } from '$lib/sessions/nearby';
-	import { liveSessionHref, shouldOpenLiveSession } from '$lib/sessions/navigation';
+	import { isEarlyLeftSession, sessionsWithDistance, shouldShowInProgressJoinRemark } from '$lib/sessions/nearby';
+	import { liveSessionHref, shouldOpenLiveSession, shouldViewSessionLivePage } from '$lib/sessions/navigation';
 	import SessionLiveTimers from '@repo/ui/components/SessionLiveTimers.svelte';
 	import SessionStartCountdown from '@repo/ui/components/SessionStartCountdown.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
@@ -45,7 +45,7 @@
 	let navigatingSessionId = $state<string | null>(null);
 
 	const openSession = (session: SessionListItem) => {
-		if (shouldOpenLiveSession(session)) {
+		if (shouldOpenLiveSession(session) || shouldViewSessionLivePage(session)) {
 			if (navigatingSessionId) return;
 			navigatingSessionId = session.id;
 			void goto(liveSessionHref(session.id)).finally(() => {
@@ -80,7 +80,9 @@
 
 	const sessionDescription = (session: SessionListItem) => {
 		const parts = [session.club?.name, formatDateTime(session.start_at)].filter(Boolean);
-		if (shouldShowInProgressJoinRemark(session)) {
+		if (isEarlyLeftSession(session)) {
+			parts.push('You left early — cannot rejoin');
+		} else if (shouldShowInProgressJoinRemark(session)) {
 			parts.push(SESSION_IN_PROGRESS_JOIN_REMARK);
 		} else if (session.my_membership) {
 			parts.push(sessionPlayerStatusLabel(session.my_membership.status));
@@ -167,7 +169,9 @@
 						{#snippet extra()}
 							{#if session.status === 'in_progress'}
 								<SessionLiveTimers startAt={session.start_at} endAt={session.end_at} class="mb-1" />
-								{#if shouldShowInProgressJoinRemark(session)}
+								{#if isEarlyLeftSession(session)}
+									<p class="text-xs text-slate-600">You left early — cannot rejoin this session.</p>
+								{:else if shouldShowInProgressJoinRemark(session)}
 									<p class="text-xs text-sky-700">{SESSION_IN_PROGRESS_JOIN_REMARK}</p>
 								{/if}
 							{:else if session.status === 'open'}

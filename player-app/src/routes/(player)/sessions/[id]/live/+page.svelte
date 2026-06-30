@@ -19,7 +19,7 @@
 	import CheckIcon from '@repo/ui/icons/CheckIcon.svelte';
 	import HomeIcon from '@repo/ui/icons/HomeIcon.svelte';
 	import ClipboardDocumentListIcon from '@repo/ui/icons/ClipboardDocumentListIcon.svelte';
-	import { formatDateTime, formatDurationMs, formatUptime } from '@repo/ui/datetime';
+	import { formatDate, formatDateTime, formatDurationMs, formatTime, formatUptime } from '@repo/ui/datetime';
 	import MatchSummarySheet from '$lib/components/MatchSummarySheet.svelte';
 	import PlayerMatchHistoryCard from '@repo/ui/components/PlayerMatchHistoryCard.svelte';
 	import { playerMatchResult, formatMatchRecord } from '@repo/ui/matches';
@@ -34,6 +34,7 @@
 	import {
 		canRequestEarlyLeave,
 		deriveLiveSessionUiState,
+		isPlayerEarlyLeave,
 		isLiveSessionEnded,
 		shouldShowPaymentModal
 	} from '$lib/sessions/liveState';
@@ -80,6 +81,16 @@
 			paymentStatus: data.myPayment?.status ?? null,
 			sessionClosed: session.status === 'closed'
 		})
+	);
+	const playerEarlyLeave = $derived(
+		isPlayerEarlyLeave(
+			session.my_membership?.status ?? null,
+			session.status,
+			data.myLeaveRequest?.status ?? null
+		)
+	);
+	const playerEarlyLeaveInProgress = $derived(
+		playerEarlyLeave && uiState !== 'summary'
 	);
 	const myShuttlesUsed = $derived(
 		data.myMatchHistory.reduce((sum, match) => sum + match.shuttles_used, 0)
@@ -172,11 +183,13 @@
 				return 'bg-slate-100 text-slate-700 ring-slate-200';
 		}
 	});
-	const summaryHeadline = $derived(
-		session.my_membership?.status === 'left' && data.myLeaveRequest?.status === 'approved'
-			? 'You left early — all settled'
-			: 'Session complete'
-	);
+	const summaryHeadline = $derived.by(() => {
+		if (playerEarlyLeave) {
+			if (summaryPaymentStatus === 'approved') return 'You left early — all settled';
+			return 'You left early';
+		}
+		return 'Session complete';
+	});
 	const inviteExpiredLocally = $derived.by(() => {
 		const invite = data.myInviteMatch;
 		if (!invite?.invite_expires_at) return false;
@@ -472,7 +485,7 @@
 
 <section class="space-y-6">
 	<DashboardHero
-		eyebrow={uiState === 'summary' ? 'Wrap-up' : 'Live session'}
+		eyebrow={uiState === 'summary' ? 'Wrap-up' : playerEarlyLeaveInProgress ? 'Early leave' : 'Live session'}
 		title={session.name}
 		subtitle={session.club?.name ?? 'Session'}
 	>
@@ -480,7 +493,9 @@
 			<span class="rounded-full px-2 py-0.5 text-xs font-medium {sessionStatusBadgeClass(session.status)}">
 				{sessionStatusLabel(session.status)}
 			</span>
-			{#if sessionEnded}
+			{#if playerEarlyLeave}
+				<span class="app-hero-stat app-hero-stat--warn">Early leaved</span>
+			{:else if sessionEnded}
 				<span class="app-hero-stat app-hero-stat--warn">Session ended</span>
 			{/if}
 			{#if uiState === 'summary'}
@@ -498,10 +513,26 @@
 			variant="banner"
 		/>
 
-		{#if sessionEnded}
+		{#if sessionEnded && !playerEarlyLeave}
 			<div class="rounded-xl border border-rose-200 bg-rose-50/70 px-4 py-3 text-sm text-rose-900">
 				<strong>Session ended.</strong> Wait for the host to start settlement. You cannot take a break
 				or request to leave until then.
+			</div>
+		{:else if playerEarlyLeaveInProgress}
+			<div class="rounded-xl border border-sky-200 bg-sky-50/70 px-4 py-3 text-sm text-sky-900">
+				<strong>You left early.</strong>
+				{#if uiState === 'payment_due'}
+					Complete your payment below. The session continues for other players until the host closes
+					it.
+				{:else if uiState === 'payment_submitted'}
+					Payment submitted — waiting for admin confirmation. The session continues for other
+					players.
+				{:else if uiState === 'awaiting_leave'}
+					Payment confirmed — waiting for admin to approve your leave. The session continues for
+					other players.
+				{:else}
+					Your leave is being processed. The session continues for other players.
+				{/if}
 			</div>
 		{/if}
 
@@ -535,6 +566,25 @@
 						Open match live
 					</SubmitButton>
 				{/if}
+			</div>
+		{:else if playerEarlyLeaveInProgress}
+			<div class="app-session-countdown flex flex-col gap-3 border-sky-200 bg-sky-50/80">
+				<div class="flex items-center justify-between gap-3">
+					<span class="app-session-countdown-label text-sky-800">Your status</span>
+					<PlayerStatusBadge status={myLiveStatus} />
+				</div>
+				<p class="text-sm leading-relaxed text-sky-900">
+					{#if uiState === 'payment_due'}
+						Waiting for your PromptPay transfer. You cannot join matches or take a break while
+						leaving.
+					{:else if uiState === 'payment_submitted'}
+						Waiting for admin to confirm your payment.
+					{:else if uiState === 'awaiting_leave'}
+						Payment confirmed — waiting for admin to approve your leave.
+					{:else}
+						Early leave in progress — waiting for admin.
+					{/if}
+				</p>
 			</div>
 		{:else if myLiveStatus === 'idle' || myLiveStatus === 'break'}
 			<div class="app-session-countdown flex flex-col gap-3 border-slate-200 bg-slate-50/80">
@@ -608,30 +658,36 @@
 			</div>
 
 			<div
-				class="grid gap-4 border-y border-emerald-100/80 bg-white/70 px-4 py-5 sm:grid-cols-[1fr_auto_1fr_auto_1fr]"
+				class="flex flex-col items-stretch gap-4 border-y border-emerald-100/80 bg-white/70 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6 lg:px-8"
 			>
-				<div>
+				<div class="min-w-0 sm:flex-1">
 					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600">Start</p>
-					<p class="mt-1 text-sm font-semibold text-slate-900 sm:text-base">
-						{formatDateTime(session.start_at)}
+					<p class="mt-1 text-sm font-semibold leading-snug text-slate-900 sm:text-base">
+						{formatDate(session.start_at)}
+					</p>
+					<p class="mt-0.5 text-sm font-medium tabular-nums text-slate-600">
+						{formatTime(session.start_at)}
 					</p>
 				</div>
-				<div class="hidden self-center sm:block" aria-hidden="true">
-					<div class="h-10 w-px bg-emerald-200"></div>
+				<div class="hidden h-10 w-px shrink-0 self-center bg-emerald-200 sm:block" aria-hidden="true">
 				</div>
 				<div
-					class="rounded-2xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 shadow-sm ring-1 ring-emerald-100/80"
+					class="rounded-2xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 shadow-sm ring-1 ring-emerald-100/80 sm:shrink-0 sm:min-w-[8.5rem] sm:self-center sm:px-5 sm:text-center"
 				>
 					<p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Duration</p>
-					<p class="mt-1 text-lg font-semibold text-emerald-900">{sessionDurationLabel}</p>
+					<p class="mt-1 whitespace-nowrap text-lg font-semibold text-emerald-900">
+						{sessionDurationLabel}
+					</p>
 				</div>
-				<div class="hidden self-center sm:block" aria-hidden="true">
-					<div class="h-10 w-px bg-emerald-200"></div>
+				<div class="hidden h-10 w-px shrink-0 self-center bg-emerald-200 sm:block" aria-hidden="true">
 				</div>
-				<div class="sm:text-right">
+				<div class="min-w-0 sm:flex-1 sm:text-right">
 					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600">End</p>
-					<p class="mt-1 text-sm font-semibold text-slate-900 sm:text-base">
-						{formatDateTime(session.end_at)}
+					<p class="mt-1 text-sm font-semibold leading-snug text-slate-900 sm:text-base">
+						{formatDate(session.end_at)}
+					</p>
+					<p class="mt-0.5 text-sm font-medium tabular-nums text-slate-600">
+						{formatTime(session.end_at)}
 					</p>
 				</div>
 			</div>
@@ -660,9 +716,11 @@
 				<div class="app-history-stat">
 					<p class="app-history-stat-label">Courts</p>
 					<p class="app-history-stat-value">{session.court_count}</p>
-					<p class="app-history-stat-hint">
-						{formatThb(session.court_fee_per_hour)}/hr
-					</p>
+					{#if session.fixed_court_fee_per_player === null}
+						<p class="app-history-stat-hint">
+							{formatThb(session.court_fee_per_hour)}/hr
+						</p>
+					{/if}
 				</div>
 
 				<div class="app-history-stat">
@@ -764,30 +822,36 @@
 
 		<section class="app-detail-section">
 			<div
-				class="grid gap-4 border-b border-brand-100 bg-gradient-to-br from-brand-50 via-white to-brand-50/50 px-4 py-5 sm:grid-cols-[1fr_auto_1fr_auto_1fr]"
+				class="flex flex-col items-stretch gap-4 border-b border-brand-100 bg-gradient-to-br from-brand-50 via-white to-brand-50/50 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6 lg:px-8"
 			>
-				<div>
+				<div class="min-w-0 sm:flex-1">
 					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600">Start</p>
-					<p class="mt-1 text-base font-semibold text-slate-900">
-						{formatDateTime(session.start_at)}
+					<p class="mt-1 text-base font-semibold leading-snug text-slate-900">
+						{formatDate(session.start_at)}
+					</p>
+					<p class="mt-0.5 text-sm font-medium tabular-nums text-slate-600">
+						{formatTime(session.start_at)}
 					</p>
 				</div>
-				<div class="hidden self-center sm:block" aria-hidden="true">
-					<div class="h-10 w-px bg-brand-200"></div>
+				<div class="hidden h-10 w-px shrink-0 self-center bg-brand-200 sm:block" aria-hidden="true">
 				</div>
 				<div
-					class="rounded-2xl border border-brand-100 bg-white/80 px-4 py-3 shadow-sm ring-1 ring-brand-100/80"
+					class="rounded-2xl border border-brand-100 bg-white/80 px-4 py-3 shadow-sm ring-1 ring-brand-100/80 sm:shrink-0 sm:min-w-[8.5rem] sm:self-center sm:px-5 sm:text-center"
 				>
 					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600">Duration</p>
-					<p class="mt-1 text-lg font-semibold text-brand-800">{sessionDurationLabel}</p>
+					<p class="mt-1 whitespace-nowrap text-lg font-semibold text-brand-800">
+						{sessionDurationLabel}
+					</p>
 				</div>
-				<div class="hidden self-center sm:block" aria-hidden="true">
-					<div class="h-10 w-px bg-brand-200"></div>
+				<div class="hidden h-10 w-px shrink-0 self-center bg-brand-200 sm:block" aria-hidden="true">
 				</div>
-				<div class="sm:text-right">
+				<div class="min-w-0 sm:flex-1 sm:text-right">
 					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600">End</p>
-					<p class="mt-1 text-base font-semibold text-slate-900">
-						{formatDateTime(session.end_at)}
+					<p class="mt-1 text-base font-semibold leading-snug text-slate-900">
+						{formatDate(session.end_at)}
+					</p>
+					<p class="mt-0.5 text-sm font-medium tabular-nums text-slate-600">
+						{formatTime(session.end_at)}
 					</p>
 				</div>
 			</div>
@@ -955,16 +1019,16 @@
 				<SubmitButton type="button" onclick={() => (leaveConfirmOpen = true)}>
 					Request to leave
 				</SubmitButton>
-			{:else if sessionEnded}
-				<p class="text-sm text-slate-600">
-					Session ended — wait for the host to start settlement and bill everyone.
-				</p>
 			{:else if uiState === 'awaiting_leave'}
 				<p class="text-sm text-slate-600">
 					Payment confirmed. Waiting for admin to approve your leave request.
 				</p>
 			{:else if uiState === 'payment_submitted'}
 				<p class="text-sm text-slate-600">Payment submitted. Waiting for admin confirmation.</p>
+			{:else if sessionEnded}
+				<p class="text-sm text-slate-600">
+					Session ended — wait for the host to start settlement and bill everyone.
+				</p>
 			{:else}
 				<p class="text-sm text-slate-600">
 					Stay in the session or request to leave when you are ready.
@@ -977,7 +1041,8 @@
 <AppModal
 	open={showPaymentModal}
 	labelledBy="payment-modal-title"
-	onClose={() => {}}
+	closeOnBackdrop={false}
+	closeOnEscape={false}
 >
 	<div class="app-card-padded space-y-4">
 		<h2 id="payment-modal-title" class="text-lg font-semibold text-slate-900">Pay session fee</h2>

@@ -127,6 +127,8 @@ export type SessionDetail = SessionPublic & {
 	billing_active_player_count: number | null;
 	/** Another membership blocks join_session (overlap or live session). */
 	join_conflict: SessionJoinConflict | null;
+	/** True when the viewer has a pending early-leave request for this session. */
+	my_pending_leave: boolean;
 };
 
 export type SessionHistoryItem = {

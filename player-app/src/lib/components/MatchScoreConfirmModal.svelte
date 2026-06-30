@@ -57,7 +57,6 @@
 		labelledBy="score-confirm-title"
 		closeOnBackdrop={false}
 		closeOnEscape={false}
-		onClose={() => {}}
 	>
 		<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
 			<div class="border-b border-sky-200 bg-gradient-to-br from-sky-50 via-white to-brand-50 px-4 py-5">

@@ -83,3 +83,20 @@ export const canRequestEarlyLeave = (
 	membership?.status === 'confirmed' &&
 	leaveRequestStatus !== 'pending' &&
 	leaveRequestStatus !== 'approved';
+
+/** Player requested early leave and is still confirmed — session may continue for others. */
+export const hasPendingEarlyLeave = (
+	leaveRequestStatus: LeaveRequestStatus | null,
+	membershipStatus: SessionPlayerStatus | null
+): boolean => leaveRequestStatus === 'pending' && membershipStatus === 'confirmed';
+
+/** Player is in the early-leave flow while the session is still in progress for others. */
+export const isPlayerEarlyLeave = (
+	membershipStatus: SessionPlayerStatus | null,
+	sessionStatus: string,
+	leaveRequestStatus: LeaveRequestStatus | null = null
+): boolean => {
+	if (sessionStatus !== 'in_progress') return false;
+	if (membershipStatus === 'left') return true;
+	return hasPendingEarlyLeave(leaveRequestStatus, membershipStatus);
+};
