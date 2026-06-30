@@ -5,6 +5,7 @@
 	import MatchHistoryCard from '@repo/ui/components/MatchHistoryCard.svelte';
 	import MatchSummaryModal from '@repo/ui/components/MatchSummaryModal.svelte';
 	import RichTextDisplay from '@repo/ui/components/RichTextDisplay.svelte';
+	import SlipPreviewButton from '@repo/ui/components/SlipPreviewButton.svelte';
 	import SlipPreviewModal from '@repo/ui/components/SlipPreviewModal.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
@@ -310,41 +311,41 @@
 			{:else}
 				<ul class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
 					{#each cancellationFeePlayers as player (player.id)}
-						<li class="flex items-center justify-between gap-3 bg-white px-4 py-3">
-							<div class="min-w-0 flex-1">
-								<p class="truncate font-medium text-slate-900">
-									{player.profile?.display_name ?? 'Unknown player'}
-								</p>
-								<p class="text-xs text-slate-500">
-									{sessionPlayerStatusLabel(player.status)} · late cancel
-								</p>
-							</div>
-							<div class="flex shrink-0 flex-col items-end gap-1">
-								<p class="text-sm font-semibold tabular-nums text-slate-900">
-									{formatThb(player.fee_owed)}
-								</p>
-								<span
-									class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {isOutstandingCancellationFee(
-										player.fee_owed,
-										player.fee_status
-									)
-										? 'bg-amber-50 text-amber-800 ring-amber-100'
-										: player.fee_status === 'paid'
-											? 'bg-emerald-50 text-emerald-700 ring-emerald-100'
-											: 'bg-slate-100 text-slate-600 ring-slate-200'}"
-								>
-									{cancellationFeeStatusLabel(player.fee_status)}
-								</span>
-								{#if player.fee_slip_path}
-									<button
-										type="button"
-										class="text-xs font-medium text-brand-700 hover:text-brand-800"
-										onclick={() => (slipPreviewPath = player.fee_slip_path)}
+						<li class="bg-white px-4 py-3">
+							<div class="flex items-start justify-between gap-3">
+								<div class="min-w-0 flex-1">
+									<p class="truncate font-medium text-slate-900">
+										{player.profile?.display_name ?? 'Unknown player'}
+									</p>
+									<p class="text-xs text-slate-500">
+										{sessionPlayerStatusLabel(player.status)} · late cancel
+									</p>
+								</div>
+								<div class="flex shrink-0 flex-col items-end gap-1">
+									<p class="text-sm font-semibold tabular-nums text-slate-900">
+										{formatThb(player.fee_owed)}
+									</p>
+									<span
+										class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {isOutstandingCancellationFee(
+											player.fee_owed,
+											player.fee_status
+										)
+											? 'bg-amber-50 text-amber-800 ring-amber-100'
+											: player.fee_status === 'paid'
+												? 'bg-emerald-50 text-emerald-700 ring-emerald-100'
+												: 'bg-slate-100 text-slate-600 ring-slate-200'}"
 									>
-										Preview slip
-									</button>
-								{/if}
+										{cancellationFeeStatusLabel(player.fee_status)}
+									</span>
+								</div>
 							</div>
+							{#if player.fee_slip_path}
+								<div class="mt-2.5">
+									<SlipPreviewButton
+										onclick={() => (slipPreviewPath = player.fee_slip_path)}
+									/>
+								</div>
+							{/if}
 						</li>
 					{/each}
 				</ul>
@@ -368,39 +369,39 @@
 		{:else}
 			<ul class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
 				{#each payments as payment (payment.id)}
-					<li class="flex items-center justify-between gap-3 bg-white px-4 py-3">
-						<div class="min-w-0 flex-1">
-							<p class="truncate font-medium text-slate-900">
-								{payment.profile?.display_name ?? 'Unknown player'}
-							</p>
-							<p class="text-xs text-slate-500">
-								Court {formatThb(payment.court_share)}
-								{#if payment.shuttle_share > 0}
-									· Shuttle {formatThb(payment.shuttle_share)}
-								{/if}
-							</p>
-						</div>
-						<div class="flex shrink-0 flex-col items-end gap-1">
-							<p class="text-sm font-semibold tabular-nums text-slate-900">
-								{formatThb(payment.total_amount)}
-							</p>
-							<span
-								class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {paymentBadgeClass(
-									payment.status
-								)}"
-							>
-								{paymentStatusLabel(payment.status)}
-							</span>
-							{#if payment.slip_path}
-								<button
-									type="button"
-									class="text-xs font-medium text-brand-700 hover:text-brand-800"
-									onclick={() => (slipPreviewPath = payment.slip_path)}
+					<li class="bg-white px-4 py-3">
+						<div class="flex items-start justify-between gap-3">
+							<div class="min-w-0 flex-1">
+								<p class="truncate font-medium text-slate-900">
+									{payment.profile?.display_name ?? 'Unknown player'}
+								</p>
+								<p class="text-xs text-slate-500">
+									Court {formatThb(payment.court_share)}
+									{#if payment.shuttle_share > 0}
+										· Shuttle {formatThb(payment.shuttle_share)}
+									{/if}
+								</p>
+							</div>
+							<div class="flex shrink-0 flex-col items-end gap-1">
+								<p class="text-sm font-semibold tabular-nums text-slate-900">
+									{formatThb(payment.total_amount)}
+								</p>
+								<span
+									class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {paymentBadgeClass(
+										payment.status
+									)}"
 								>
-									Preview slip
-								</button>
-							{/if}
+									{paymentStatusLabel(payment.status)}
+								</span>
+							</div>
 						</div>
+						{#if payment.slip_path}
+							<div class="mt-2.5">
+								<SlipPreviewButton
+									onclick={() => (slipPreviewPath = payment.slip_path)}
+								/>
+							</div>
+						{/if}
 					</li>
 				{/each}
 			</ul>

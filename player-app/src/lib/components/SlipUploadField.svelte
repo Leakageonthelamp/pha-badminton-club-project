@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SlipPreviewButton from '@repo/ui/components/SlipPreviewButton.svelte';
 	import SlipPreviewModal from '@repo/ui/components/SlipPreviewModal.svelte';
 	import {
 		compressSlipToFile,
@@ -87,13 +88,7 @@
 		</button>
 		{#if file}
 			<span class="text-xs text-slate-500">Ready to upload</span>
-			<button
-				type="button"
-				class="text-sm font-medium text-brand-700 hover:underline"
-				onclick={() => (previewOpen = true)}
-			>
-				Preview
-			</button>
+			<SlipPreviewButton label="Preview" onclick={() => (previewOpen = true)} />
 		{/if}
 	</div>
 	{#if errorMessage}

@@ -111,6 +111,7 @@ keep it per-app. App-specific branding stays per-app too.
 - `CourtDetailModal` (`@repo/ui/components/CourtDetailModal.svelte`) — court detail modal (Team A/B rosters, status, optional action snippet)
 - `MatchGameScoreFields` (`@repo/ui/components/MatchGameScoreFields.svelte`) — Team A vs B score entry with inline validation
 - `SlipPreviewModal` (`@repo/ui/components/SlipPreviewModal.svelte`) — bank transfer slip image preview with missing-file fallback
+- `SlipPreviewButton` (`@repo/ui/components/SlipPreviewButton.svelte`) — compact eye-icon chip to open `SlipPreviewModal`
 - `MatchScoreDisplay`, `MatchHistoryCard`, `PlayerMatchHistoryCard`, `MatchSummaryModal` — score display and match history cards
 
 ## Styles

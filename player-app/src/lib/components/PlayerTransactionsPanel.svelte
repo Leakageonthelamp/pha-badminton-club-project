@@ -8,6 +8,7 @@
 	import SearchIcon from '@repo/ui/icons/SearchIcon.svelte';
 	import { formatDate } from '@repo/ui/datetime';
 	import { formatThb } from '@repo/ui/payments';
+	import SlipPreviewButton from '@repo/ui/components/SlipPreviewButton.svelte';
 	import SlipPreviewModal from '@repo/ui/components/SlipPreviewModal.svelte';
 	import type { PlayerTransaction, PlayerTransactionPage } from '$lib/types/transaction';
 	import { slipPreviewUrl } from '$lib/slips';
@@ -68,30 +69,29 @@
 </script>
 
 {#snippet transactionRow(transaction: PlayerTransaction)}
-	<div class="flex min-w-0 items-center gap-3">
-		<div class="min-w-0 flex-1">
-			<p class="truncate text-sm font-medium text-slate-900">{transaction.session_name}</p>
-			<p class="truncate text-xs text-slate-500">{metaLine(transaction)}</p>
-		</div>
-		<div class="flex shrink-0 items-center gap-2">
-			<p class="text-sm font-semibold tabular-nums text-slate-900">{formatThb(transaction.amount)}</p>
-			<span
-				class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 {transactionStatusBadgeClass(
-					transaction.filter_status
-				)}"
-			>
-				{transactionStatusLabel(transaction)}
-			</span>
-			{#if canPreviewSlip(transaction)}
-				<button
-					type="button"
-					class="text-[10px] font-medium text-brand-700 hover:text-brand-800"
-					onclick={() => (slipPreviewPath = transaction.slip_path)}
+	<div class="space-y-2">
+		<div class="flex min-w-0 items-start gap-3">
+			<div class="min-w-0 flex-1">
+				<p class="truncate text-sm font-medium text-slate-900">{transaction.session_name}</p>
+				<p class="truncate text-xs text-slate-500">{metaLine(transaction)}</p>
+			</div>
+			<div class="flex shrink-0 flex-col items-end gap-1">
+				<p class="text-sm font-semibold tabular-nums text-slate-900">{formatThb(transaction.amount)}</p>
+				<span
+					class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 {transactionStatusBadgeClass(
+						transaction.filter_status
+					)}"
 				>
-					Slip
-				</button>
-			{/if}
+					{transactionStatusLabel(transaction)}
+				</span>
+			</div>
 		</div>
+		{#if canPreviewSlip(transaction)}
+			<SlipPreviewButton
+				label="Slip"
+				onclick={() => (slipPreviewPath = transaction.slip_path)}
+			/>
+		{/if}
 	</div>
 {/snippet}
 
@@ -187,7 +187,7 @@
 	{:else}
 		<ul class="divide-y divide-slate-100 rounded-lg border border-slate-200">
 			{#each transactions.items as transaction (transaction.id)}
-				<li class="px-3 py-2.5">
+				<li class="px-3 py-3">
 					{#if canOpenCancellationFee(transaction) && onOpenCancellationFee}
 						<button
 							type="button"

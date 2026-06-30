@@ -7,6 +7,7 @@
 	import ChevronDownIcon from '@repo/ui/icons/ChevronDownIcon.svelte';
 	import { formatDateTime } from '@repo/ui/datetime';
 	import { formatThb } from '@repo/ui/payments';
+	import SlipPreviewButton from '@repo/ui/components/SlipPreviewButton.svelte';
 	import SlipPreviewModal from '@repo/ui/components/SlipPreviewModal.svelte';
 	import {
 		transactionKindBadgeClass,
@@ -303,13 +304,11 @@
 							</p>
 						</div>
 						{#if transaction.slip_path}
-							<button
-								type="button"
-								class="mt-2 text-xs font-medium text-brand-700 hover:text-brand-800"
-								onclick={() => (slipPreviewPath = transaction.slip_path)}
-							>
-								Preview slip
-							</button>
+							<div class="mt-2">
+								<SlipPreviewButton
+									onclick={() => (slipPreviewPath = transaction.slip_path)}
+								/>
+							</div>
 						{/if}
 					</li>
 				{/each}
