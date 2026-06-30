@@ -8,7 +8,11 @@
 	import ServiceUnavailable from '$lib/components/ServiceUnavailable.svelte';
 	import LocationPermissionPrompt from '@repo/ui/components/LocationPermissionPrompt.svelte';
 	import ToastContainer from '@repo/ui/components/ToastContainer.svelte';
+	import { dev } from '$app/environment';
+	import { injectAnalytics } from '@vercel/analytics/sveltekit';
 	import type { LayoutData } from './$types';
+
+	injectAnalytics({ mode: dev ? 'development' : 'production' });
 
 	let { data, children }: { data: LayoutData; children: import('svelte').Snippet } = $props();
 
