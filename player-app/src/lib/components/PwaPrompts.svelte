@@ -29,8 +29,12 @@
 	let deferredPrompt = $state<BeforeInstallPromptEvent | null>(null);
 	let showInstall = $state(false);
 	let isStandalone = $state(false);
+	let isIos = $state(false);
+	let iosInstallDismissed = $state(false);
 	let installing = $state(false);
 	let reloading = $state(false);
+
+	const showIosInstall = $derived(isIos && !isStandalone && !iosInstallDismissed && !showInstall);
 
 	onMount(() => {
 		reduceMotion = prefersReducedMotion();
@@ -39,6 +43,10 @@
 			window.matchMedia('(display-mode: standalone)').matches ||
 			('standalone' in navigator &&
 				(navigator as Navigator & { standalone?: boolean }).standalone === true);
+
+		isIos =
+			/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+			(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
 		const onBeforeInstallPrompt = (event: Event) => {
 			event.preventDefault();
@@ -76,6 +84,10 @@
 
 	const dismissInstall = () => {
 		showInstall = false;
+	};
+
+	const dismissIosInstall = () => {
+		iosInstallDismissed = true;
 	};
 
 	const dismissOfflineReady = () => {
@@ -187,6 +199,36 @@
 				variant="ghost"
 				class="w-auto! rounded-lg px-3 py-2 text-sm font-medium text-slate-600"
 				onclick={dismissInstall}
+			>
+				Not now
+			</SubmitButton>
+		</div>
+	</div>
+{/if}
+
+{#if showIosInstall}
+	<div
+		class="fixed inset-x-4 bottom-4 z-50 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg"
+		role="dialog"
+		aria-label="Add to Home Screen"
+		in:fly={bannerTransition}
+		out:fly={bannerTransition}
+	>
+		<div class="flex items-start gap-3">
+			<AppLogo size={40} />
+			<div>
+				<p class="text-sm font-medium text-slate-900">Install {appName}</p>
+				<p class="mt-1 text-sm text-slate-600">
+					Tap the Share button, then choose <strong>Add to Home Screen</strong>.
+				</p>
+			</div>
+		</div>
+		<div class="mt-3 flex gap-2">
+			<SubmitButton
+				type="button"
+				variant="ghost"
+				class="w-auto! rounded-lg px-3 py-2 text-sm font-medium text-slate-600"
+				onclick={dismissIosInstall}
 			>
 				Not now
 			</SubmitButton>

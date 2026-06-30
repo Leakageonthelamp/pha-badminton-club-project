@@ -73,12 +73,8 @@ export default defineConfig(({ mode }) => {
 					]
 				},
 				workbox: {
-					modifyURLPrefix: {},
-					globPatterns: [
-						'client/**/*.{js,css,ico,png,svg,webp,webmanifest}',
-						'client/*.webmanifest'
-					],
-					globIgnores: ['server/**']
+					// ponytail: SSR on Vercel has no prerendered shell; default navigateFallback '/' breaks SW.
+					navigateFallback: null
 				}
 			})
 		],
