@@ -46,7 +46,7 @@ export default defineConfig(({ mode }) => {
 					theme_color: '#f8fafc',
 					background_color: '#f8fafc',
 					display: 'standalone',
-					display_override: ['window-controls-overlay', 'standalone', 'browser'],
+					display_override: ['window-controls-overlay', 'standalone'],
 					orientation: 'portrait',
 					scope: '/',
 					start_url: '/',
