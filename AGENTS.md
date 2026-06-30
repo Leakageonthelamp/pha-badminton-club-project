@@ -12,6 +12,8 @@ player-app/     player-facing app
 admin-app/      club-admin-facing app
 ```
 
+**Production:** Player `https://player.antonsmash.app/` · Admin `https://admin.antonsmash.app/`
+
 Both apps import shared UI via the `@repo/ui` alias (configured in each
 `svelte.config.js`, pointing at `../shared/ui`). Example:
 

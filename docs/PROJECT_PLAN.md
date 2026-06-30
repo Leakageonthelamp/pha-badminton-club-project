@@ -354,7 +354,7 @@ Same Supabase keys as player-app, plus:
 
 ### Supabase dashboard (manual)
 
-- Auth > URL configuration: add redirect `http://localhost:5174/auth/callback` (and production admin URL when deployed).
+- Auth > URL configuration: add redirects `http://localhost:5174/auth/callback` (dev) and `https://admin.antonsmash.app/auth/callback` (production).
 - Auth > Sessions: set time-box to **720 hours (30 days)** so admin refresh tokens outlive the player-app 7-day default if both apps share one project (use the longer value project-wide).
 - Run `yarn db:push` after pulling migration `0003_clubs_admin.sql`.
 

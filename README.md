@@ -4,6 +4,8 @@ A mobile-first monorepo for organizing 2v2 badminton club sessions: player auth 
 
 > **Living plan:** [docs/PROJECT_PLAN.md](docs/PROJECT_PLAN.md) — architecture, data model, flows, and phased roadmap.
 
+**Production:** [player.antonsmash.app](https://player.antonsmash.app/) (player) · [admin.antonsmash.app](https://admin.antonsmash.app/) (admin)
+
 ## Current status
 
 | Phase | Scope                                   | Status        |
@@ -117,9 +119,13 @@ The Supabase CLI is a root dev dependency — use `yarn db:*` / `yarn supabase:*
      yarn db:push
      ```
    - **Dashboard:** paste `supabase/migrations/0001_init.sql` into the SQL editor.
-3. **Auth → Providers:** enable Google and Facebook; set redirect URL to `http://localhost:{PORT}/auth/callback` (and your production URL later).
-4. **Auth → Sessions:** set time-box to **168 hours** (7 days) to match app cookies.
-5. Paste URL, publishable key, and secret key into **both** `player-app/.env` and `admin-app/.env`. Add `http://localhost:5174/auth/callback` to the redirect allowlist for the admin app, and set the session time-box to **720 h (30 days)** so admin cookies outlive the player 7-day default.
+3. **Auth → Providers:** enable Google and Facebook; add redirect URLs to the allowlist:
+   - `http://localhost:5173/auth/callback` (player dev)
+   - `http://localhost:5174/auth/callback` (admin dev)
+   - `https://player.antonsmash.app/auth/callback` (player production)
+   - `https://admin.antonsmash.app/auth/callback` (admin production)
+4. **Auth → Sessions:** set time-box to **720 hours (30 days)** so admin refresh tokens outlive the player 7-day cookie default.
+5. Paste URL, publishable key, and secret key into **both** `player-app/.env` and `admin-app/.env`.
 
 ### 4. Generate PWA icons (optional)
 

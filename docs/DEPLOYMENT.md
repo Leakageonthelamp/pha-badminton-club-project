@@ -19,19 +19,19 @@ How to deploy the PH Badminton Club monorepo to production on **free tiers**. Th
     ┌─────────▼─────────┐                     ┌───────────▼──────────┐
     │  player-app       │                     │  admin-app           │
     │  (public PWA)     │                     │  (staff / super)     │
-    │  app.example.com  │                     │  admin.example.com   │
+    │  player.antonsmash.app │                │  admin.antonsmash.app │
     └───────────────────┘                     └──────────────────────┘
          Vercel / Cloudflare Pages                 Vercel / Cloudflare Pages
 ```
 
 Both apps share the **same Supabase project** (same `PUBLIC_SUPABASE_URL` and keys). They are separate origins with separate OAuth redirect URLs and cookies.
 
-## Recommended URLs
+## Production URLs
 
-| App | Example domain | Dev port |
-| --- | -------------- | -------- |
-| Player | `https://app.example.com` | `5173` |
-| Admin | `https://admin.example.com` | `5174` |
+| App | Domain | Dev port |
+| --- | ------ | -------- |
+| Player | `https://player.antonsmash.app` | `5173` |
+| Admin | `https://admin.antonsmash.app` | `5174` |
 
 Use HTTPS everywhere (required for PWA install and OAuth).
 
@@ -63,9 +63,9 @@ Local-only reset (destroys data): `yarn db:reset` — **never** on production.
 
 | Setting | Value |
 | ------- | ----- |
-| Site URL | `https://app.example.com` (player is primary) |
-| Redirect URLs | `https://app.example.com/auth/callback` |
-| | `https://admin.example.com/auth/callback` |
+| Site URL | `https://player.antonsmash.app` (player is primary) |
+| Redirect URLs | `https://player.antonsmash.app/auth/callback` |
+| | `https://admin.antonsmash.app/auth/callback` |
 | | Preview URLs if using Vercel previews, e.g. `https://*.vercel.app/auth/callback` |
 
 **Authentication → Providers**
@@ -93,7 +93,7 @@ Migrations `0023` / `0024` add `sessions`, `session_players`, `payments`, and `s
 
 ## 2. Front-end hosting
 
-Both apps use `@sveltejs/adapter-auto` (works on Vercel out of the box). Pick **one** provider and deploy **two** sites.
+Both apps use `@sveltejs/adapter-vercel` with `regions: ['sin1']` (see each app's `svelte.config.js`). Pick **one** provider and deploy **two** sites.
 
 ### Option A — Vercel (recommended)
 
@@ -146,8 +146,8 @@ Store only the **hash** in Vercel. Keep the raw secret offline for the one-time 
 
 #### Custom domains
 
-- Player project → `app.example.com`
-- Admin project → `admin.example.com`
+- Player project → `player.antonsmash.app`
+- Admin project → `admin.antonsmash.app`
 
 Then update Supabase Auth redirect URLs to match.
 
@@ -173,13 +173,13 @@ Use the same env vars as Vercel. Bind secrets in Cloudflare dashboard (not commi
 3. One-time POST to admin app (replace URL, secret, and UUID):
 
 ```bash
-curl -X POST https://admin.example.com/api/internal/promote-superadmin \
+curl -X POST https://admin.antonsmash.app/api/internal/promote-superadmin \
   -H "Content-Type: application/json" \
   -H "x-master-key: YOUR_RAW_SECRET" \
   -d '{"userId":"USER_UUID_HERE"}'
 ```
 
-4. Sign in at `https://admin.example.com`.
+4. Sign in at `https://admin.antonsmash.app`.
 
 **Security:** This endpoint is not linked from the UI. After bootstrap, consider removing `MASTER_KEY_SHA256` from production or rotating the secret so the endpoint cannot be abused. Rate limiting is not implemented yet (see Phase 2a notes in PROJECT_PLAN).
 
