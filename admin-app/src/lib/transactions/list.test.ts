@@ -3,7 +3,8 @@ import {
 	countAdvancedFilters,
 	emptyAdminTransactionFilters,
 	filterAdminTransactions,
-	filterAdminTransactionsByClub
+	filterAdminTransactionsByClub,
+	summarizeAdminTransactions
 } from './list';
 import type { AdminTransaction } from '$lib/types/transaction';
 
@@ -141,5 +142,46 @@ describe('filterAdminTransactionsByClub', () => {
 		];
 
 		expect(filterAdminTransactionsByClub(rows, 'c1')).toEqual([rows[0]]);
+	});
+});
+
+describe('summarizeAdminTransactions', () => {
+	it('sums paid income by kind and counts unpaid only', () => {
+		const rows = [
+			baseTransaction({
+				id: 'a',
+				kind: 'session_fee',
+				amount: 200,
+				filter_status: 'completed',
+				status: 'approved'
+			}),
+			baseTransaction({
+				id: 'b',
+				kind: 'cancellation_fee',
+				amount: 50,
+				filter_status: 'completed',
+				status: 'paid'
+			}),
+			baseTransaction({ id: 'c', filter_status: 'pending', status: 'pending' }),
+			baseTransaction({
+				id: 'd',
+				filter_status: 'submitted',
+				status: 'submitted'
+			}),
+			baseTransaction({
+				id: 'e',
+				kind: 'session_fee',
+				amount: 999,
+				filter_status: 'waived',
+				status: 'waived'
+			})
+		];
+
+		expect(summarizeAdminTransactions(rows)).toEqual({
+			totalIncome: 250,
+			sessionFeeIncome: 200,
+			lateCancelIncome: 50,
+			unpaidCount: 2
+		});
 	});
 });

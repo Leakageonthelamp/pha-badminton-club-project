@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { goto, invalidateAll } from '$app/navigation';
-	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
+	import { getWorkspaceHomePath } from '$lib/adminWorkspace';
 	import {
 		clubWorkspaceState,
 		selectClub,
@@ -51,15 +51,7 @@
 		closeMenu();
 
 		try {
-			const clubMatch = page.url.pathname.match(/^\/clubs\/([^/]+)/);
-			if (clubMatch) {
-				await goto(`/clubs/${clubId}`, { invalidateAll: true, replaceState: true });
-				return;
-			}
-
-			if (page.url.pathname === '/dashboard') {
-				await invalidateAll();
-			}
+			await goto(getWorkspaceHomePath('club'), { invalidateAll: true, replaceState: true });
 		} finally {
 			switching = false;
 		}

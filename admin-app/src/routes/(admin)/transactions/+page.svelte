@@ -26,6 +26,7 @@
 		filterAdminTransactions,
 		filterAdminTransactionsByClub,
 		playerFilterOptions,
+		summarizeAdminTransactions,
 		type AdminTransactionFilters
 	} from '$lib/transactions/list';
 	import { appRoleLabel, type AppRole } from '$lib/types/auth';
@@ -64,6 +65,7 @@
 	const clubOptions = $derived(clubFilterOptions(data.transactions));
 	const playerOptions = $derived(playerFilterOptions(scopedTransactions));
 	const filteredTransactions = $derived(filterAdminTransactions(scopedTransactions, filters));
+	const summary = $derived(summarizeAdminTransactions(filteredTransactions));
 	const pagedTransactions = $derived(paginate(filteredTransactions, listPage));
 	const advancedFilterCount = $derived(countAdvancedFilters(filters));
 
@@ -126,6 +128,33 @@
 	</DashboardHero>
 
 	<div class="space-y-4">
+		{#if scopedTransactions.length > 0}
+			<dl class="grid grid-cols-2 gap-3">
+				<div class="app-history-stat">
+					<dt class="app-history-stat-label">Total income</dt>
+					<dd class="app-history-stat-value app-history-stat-value--money">
+						{formatThb(summary.totalIncome)}
+					</dd>
+				</div>
+				<div class="app-history-stat">
+					<dt class="app-history-stat-label">Session fees</dt>
+					<dd class="app-history-stat-value app-history-stat-value--money">
+						{formatThb(summary.sessionFeeIncome)}
+					</dd>
+				</div>
+				<div class="app-history-stat">
+					<dt class="app-history-stat-label">Late-cancel fees</dt>
+					<dd class="app-history-stat-value app-history-stat-value--money">
+						{formatThb(summary.lateCancelIncome)}
+					</dd>
+				</div>
+				<div class="app-history-stat">
+					<dt class="app-history-stat-label">Unpaid transactions</dt>
+					<dd class="app-history-stat-value">{summary.unpaidCount}</dd>
+				</div>
+			</dl>
+		{/if}
+
 		<div class="space-y-3">
 			<label for="tx-search" class="sr-only">Search session or player</label>
 			<input

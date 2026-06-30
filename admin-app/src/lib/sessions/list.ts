@@ -73,3 +73,62 @@ export const filterSessionsByClub = (
 	clubId: string | null | undefined
 ): SessionListItem[] =>
 	clubId ? sessions.filter((session) => session.club_id === clubId) : sessions;
+
+export type AdminSessionSummary = {
+	total: number;
+	open: number;
+	inProgress: number;
+	draft: number;
+};
+
+export const summarizeAdminSessions = (
+	sessions: SessionListItem[]
+): AdminSessionSummary => {
+	let open = 0;
+	let inProgress = 0;
+	let draft = 0;
+
+	for (const session of sessions) {
+		if (session.status === 'open') {
+			open += 1;
+		} else if (session.status === 'in_progress') {
+			inProgress += 1;
+		} else if (session.status === 'draft') {
+			draft += 1;
+		}
+	}
+
+	return {
+		total: sessions.length,
+		open,
+		inProgress,
+		draft
+	};
+};
+
+export type AdminSessionHistorySummary = {
+	total: number;
+	closed: number;
+	cancelled: number;
+};
+
+export const summarizeAdminSessionHistory = (
+	sessions: SessionListItem[]
+): AdminSessionHistorySummary => {
+	let closed = 0;
+	let cancelled = 0;
+
+	for (const session of sessions) {
+		if (session.status === 'closed') {
+			closed += 1;
+		} else if (session.status === 'cancelled') {
+			cancelled += 1;
+		}
+	}
+
+	return {
+		total: sessions.length,
+		closed,
+		cancelled
+	};
+};

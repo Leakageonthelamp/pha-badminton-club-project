@@ -141,3 +141,40 @@ export const filterAdminTransactionsByClub = (
 	if (!clubId) return transactions;
 	return transactions.filter((transaction) => transaction.club_id === clubId);
 };
+
+export type AdminTransactionSummary = {
+	totalIncome: number;
+	sessionFeeIncome: number;
+	lateCancelIncome: number;
+	unpaidCount: number;
+};
+
+export const summarizeAdminTransactions = (
+	transactions: AdminTransaction[]
+): AdminTransactionSummary => {
+	let sessionFeeIncome = 0;
+	let lateCancelIncome = 0;
+	let unpaidCount = 0;
+
+	for (const transaction of transactions) {
+		if (transaction.filter_status === 'completed') {
+			if (transaction.kind === 'session_fee') {
+				sessionFeeIncome += transaction.amount;
+			} else {
+				lateCancelIncome += transaction.amount;
+			}
+		} else if (
+			transaction.filter_status === 'pending' ||
+			transaction.filter_status === 'submitted'
+		) {
+			unpaidCount += 1;
+		}
+	}
+
+	return {
+		sessionFeeIncome,
+		lateCancelIncome,
+		totalIncome: sessionFeeIncome + lateCancelIncome,
+		unpaidCount
+	};
+};

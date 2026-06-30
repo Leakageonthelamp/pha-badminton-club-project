@@ -6,7 +6,7 @@
 	import SessionListLink from '$lib/components/SessionListLink.svelte';
 	import { clubWorkspaceState } from '$lib/clubWorkspace.svelte';
 	import { adminRoleHeroBadgeClass } from '$lib/adminRoleHero';
-	import { filterSessionsByClub } from '$lib/sessions/list';
+	import { filterSessionsByClub, summarizeAdminSessionHistory } from '$lib/sessions/list';
 	import { appRoleLabel, type AppRole } from '$lib/types/auth';
 	import { paginate } from '@repo/ui/pagination';
 	import type { LayoutData } from '../../$types';
@@ -27,6 +27,13 @@
 			? data.historySessions
 			: filterSessionsByClub(data.historySessions, selectedClubId)
 	);
+	const summary = $derived(summarizeAdminSessionHistory(filteredHistory));
+	const outstandingFees = $derived(
+		filteredHistory.reduce(
+			(sum, session) => sum + (data.outstandingCancellationFeesBySession[session.id] ?? 0),
+			0
+		)
+	);
 	const pagedHistory = $derived(paginate(filteredHistory, listPage));
 
 	$effect(() => {
@@ -45,6 +52,27 @@
 		roleBadgeClass={roleBadgeClass}
 		subtitle="Closed and cancelled sessions for your club."
 	/>
+
+	{#if filteredHistory.length > 0}
+		<dl class="grid grid-cols-2 gap-3">
+			<div class="app-history-stat">
+				<dt class="app-history-stat-label">Past sessions</dt>
+				<dd class="app-history-stat-value">{summary.total}</dd>
+			</div>
+			<div class="app-history-stat">
+				<dt class="app-history-stat-label">Closed</dt>
+				<dd class="app-history-stat-value">{summary.closed}</dd>
+			</div>
+			<div class="app-history-stat">
+				<dt class="app-history-stat-label">Cancelled</dt>
+				<dd class="app-history-stat-value">{summary.cancelled}</dd>
+			</div>
+			<div class="app-history-stat">
+				<dt class="app-history-stat-label">Outstanding fees</dt>
+				<dd class="app-history-stat-value">{outstandingFees}</dd>
+			</div>
+		</dl>
+	{/if}
 
 	<div class="space-y-4">
 		<SectionHeading title="Past sessions" />

@@ -9,7 +9,7 @@
 	import PlusIcon from '@repo/ui/icons/PlusIcon.svelte';
 	import { clubWorkspaceState } from '$lib/clubWorkspace.svelte';
 	import { adminRoleHeroBadgeClass } from '$lib/adminRoleHero';
-	import { filterSessionsByClub } from '$lib/sessions/list';
+	import { filterSessionsByClub, summarizeAdminSessions } from '$lib/sessions/list';
 	import { paginate } from '@repo/ui/pagination';
 	import { appRoleLabel, type AppRole } from '$lib/types/auth';
 	import type { LayoutData } from '../$types';
@@ -31,6 +31,7 @@
 			? data.sessions
 			: filterSessionsByClub(data.sessions, selectedClubId)
 	);
+	const summary = $derived(summarizeAdminSessions(filteredSessions));
 	const pagedSessions = $derived(paginate(filteredSessions, listPage));
 
 	$effect(() => {
@@ -73,6 +74,27 @@
 			/>
 		</div>
 	</div>
+
+	{#if filteredSessions.length > 0}
+		<dl class="grid grid-cols-2 gap-3">
+			<div class="app-history-stat">
+				<dt class="app-history-stat-label">Active sessions</dt>
+				<dd class="app-history-stat-value">{summary.total}</dd>
+			</div>
+			<div class="app-history-stat">
+				<dt class="app-history-stat-label">Open</dt>
+				<dd class="app-history-stat-value">{summary.open}</dd>
+			</div>
+			<div class="app-history-stat">
+				<dt class="app-history-stat-label">In progress</dt>
+				<dd class="app-history-stat-value">{summary.inProgress}</dd>
+			</div>
+			<div class="app-history-stat">
+				<dt class="app-history-stat-label">Draft</dt>
+				<dd class="app-history-stat-value">{summary.draft}</dd>
+			</div>
+		</dl>
+	{/if}
 
 	<div class="space-y-4">
 		<SectionHeading title="All sessions" />

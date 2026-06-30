@@ -8,7 +8,9 @@ import {
 	isDraftOpenWindowOpen,
 	isHistorySession,
 	isSessionMutable,
-	isUpcomingSession
+	isUpcomingSession,
+	summarizeAdminSessions,
+	summarizeAdminSessionHistory
 } from './list';
 import type { SessionListItem } from '$lib/types/session';
 
@@ -144,5 +146,39 @@ describe('session list filters', () => {
 
 		expect(isSessionMutable(startAt, atStartMinus30)).toBe(true);
 		expect(isSessionMutable(startAt, atStartMinus10)).toBe(false);
+	});
+});
+
+describe('summarizeAdminSessions', () => {
+	it('counts sessions by status and total', () => {
+		const sessions = [
+			baseSession({ id: '1', status: 'open' }),
+			baseSession({ id: '2', status: 'open' }),
+			baseSession({ id: '3', status: 'in_progress' }),
+			baseSession({ id: '4', status: 'draft' })
+		];
+
+		expect(summarizeAdminSessions(sessions)).toEqual({
+			total: 4,
+			open: 2,
+			inProgress: 1,
+			draft: 1
+		});
+	});
+});
+
+describe('summarizeAdminSessionHistory', () => {
+	it('counts sessions by status and total', () => {
+		const sessions = [
+			baseSession({ id: '1', status: 'closed' }),
+			baseSession({ id: '2', status: 'closed' }),
+			baseSession({ id: '3', status: 'cancelled' })
+		];
+
+		expect(summarizeAdminSessionHistory(sessions)).toEqual({
+			total: 3,
+			closed: 2,
+			cancelled: 1
+		});
 	});
 });
