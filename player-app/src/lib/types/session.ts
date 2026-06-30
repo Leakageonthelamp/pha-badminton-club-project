@@ -70,6 +70,7 @@ export type SessionPlayerMembership = {
 	fee_owed: number;
 	fee_status: CancellationFeeStatus;
 	joined_at: string;
+	left_at: string | null;
 	activity: PlayerActivity;
 	idle_since: string | null;
 };

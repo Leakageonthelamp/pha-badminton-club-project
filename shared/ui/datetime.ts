@@ -138,6 +138,19 @@ export const formatUptime = (startAtUtc: string, nowMs: number = Date.now()): st
 	return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 };
 
+/** Fixed-length span as HH:mm:ss (e.g. total match time). */
+export const formatDurationMs = (durationMs: number): string => {
+	if (!Number.isFinite(durationMs) || durationMs <= 0) return '00:00:00';
+
+	const totalSeconds = Math.floor(durationMs / 1000);
+	const hours = Math.floor(totalSeconds / 3600);
+	const minutes = Math.floor((totalSeconds % 3600) / 60);
+	const seconds = totalSeconds % 60;
+	const pad = (value: number) => String(value).padStart(2, '0');
+
+	return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+};
+
 /** Minutes before `start_at` when the pre-start window opens (confirm/reject, cancel lock). */
 export const SESSION_PRE_START_LEAD_MINUTES = 15;
 

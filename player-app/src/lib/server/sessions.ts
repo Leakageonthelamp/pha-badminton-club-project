@@ -148,7 +148,7 @@ const loadMyMemberships = async (
 
 	const { data, error } = await supabase
 		.from('session_players')
-		.select('id, session_id, status, fee_owed, fee_status, joined_at, activity, idle_since')
+		.select('id, session_id, status, fee_owed, fee_status, joined_at, left_at, activity, idle_since')
 		.eq('user_id', userId)
 		.in('session_id', sessionIds)
 		.in('status', statuses);
@@ -165,6 +165,7 @@ const loadMyMemberships = async (
 			fee_owed: Number(row.fee_owed),
 			fee_status: row.fee_status as CancellationFeeStatus,
 			joined_at: row.joined_at,
+			left_at: (row.left_at as string | null) ?? null,
 			activity: row.activity as SessionPlayerMembership['activity'],
 			idle_since: row.idle_since as string | null
 		});

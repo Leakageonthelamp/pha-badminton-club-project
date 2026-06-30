@@ -169,6 +169,9 @@ export const playerMatchResult = (
 	return team === winner ? 'win' : 'lose';
 };
 
+export const formatMatchRecord = (wins: number, losses: number, draws: number): string =>
+	`${wins}W · ${losses}L · ${draws}D`;
+
 export const formatMatchScoreForTeam = (games: MatchGameLike[], team: MatchTeam): string =>
 	[...games]
 		.sort((a, b) => a.game_no - b.game_no)

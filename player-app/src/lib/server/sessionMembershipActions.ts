@@ -5,6 +5,7 @@ import {
 	submitCancellationFee
 } from '$lib/server/sessions';
 import { readSlipFromForm, uploadSlip } from '$lib/server/slips';
+import { ensureSupabaseAuth } from '$lib/server/supabaseAuth';
 import { fail, type Actions } from '@sveltejs/kit';
 
 export const sessionMembershipActions = {
@@ -93,15 +94,13 @@ export const sessionMembershipActions = {
 			return fail(400, { message: slipInput.message });
 		}
 
-		const upload = await uploadSlip(
-			supabase,
-			user.id,
-			'cancellation_fee',
-			playerId,
-			slipInput.file
-		);
+		const upload = await uploadSlip(user.id, 'cancellation_fee', playerId, slipInput.file);
 		if (!upload.ok) {
 			return fail(400, { message: upload.message });
+		}
+
+		if (!(await ensureSupabaseAuth(supabase))) {
+			return fail(401, { message: 'Sign in required' });
 		}
 
 		const result = await submitCancellationFee(supabase, playerId, upload.path);

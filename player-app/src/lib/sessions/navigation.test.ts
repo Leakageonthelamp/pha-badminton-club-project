@@ -34,6 +34,7 @@ describe('shouldOpenLiveSession', () => {
 						fee_owed: 0,
 						fee_status: 'none',
 						joined_at: '2026-06-01T00:00:00.000Z',
+		left_at: null,
 						activity: 'idle',
 						idle_since: '2026-06-01T00:00:00.000Z'
 					}
@@ -65,6 +66,7 @@ describe('shouldOpenLiveSession', () => {
 						fee_owed: 0,
 						fee_status: 'none',
 						joined_at: '2026-06-01T00:00:00.000Z',
+		left_at: null,
 						activity: 'idle',
 						idle_since: null
 					}
@@ -81,6 +83,7 @@ describe('shouldOpenLiveSession', () => {
 						fee_owed: 0,
 						fee_status: 'none',
 						joined_at: '2026-06-01T00:00:00.000Z',
+		left_at: null,
 						activity: 'idle',
 						idle_since: null
 					}
@@ -129,6 +132,7 @@ describe('shouldViewSessionLivePage', () => {
 		fee_owed: 0,
 		fee_status: 'none' as const,
 		joined_at: '2026-06-01T00:00:00.000Z',
+		left_at: null,
 		activity: 'idle' as const,
 		idle_since: '2026-06-01T00:00:00.000Z'
 	};
@@ -212,6 +216,7 @@ describe('findLiveSession', () => {
 					fee_owed: 0,
 					fee_status: 'none',
 					joined_at: '2026-06-01T00:00:00.000Z',
+		left_at: null,
 					activity: 'idle',
 					idle_since: '2026-06-01T00:00:00.000Z'
 				}
@@ -226,6 +231,7 @@ describe('findLiveSession', () => {
 					fee_owed: 0,
 					fee_status: 'none',
 					joined_at: '2026-06-01T00:00:00.000Z',
+		left_at: null,
 					activity: 'idle',
 					idle_since: '2026-06-01T00:00:00.000Z'
 				}

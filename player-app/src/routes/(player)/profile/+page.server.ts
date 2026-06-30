@@ -9,6 +9,7 @@ import {
 import { authLoadDepends } from '$lib/navigation/authCache';
 import { loadOutstandingFees, submitCancellationFee } from '$lib/server/sessions';
 import { readSlipFromForm, uploadSlip } from '$lib/server/slips';
+import { ensureSupabaseAuth } from '$lib/server/supabaseAuth';
 import { loadPlayerTransactions } from '$lib/server/transactions';
 import {
 	parseTransactionDateFilter,
@@ -227,15 +228,13 @@ export const actions: Actions = {
 			return fail(400, { error: slipInput.message });
 		}
 
-		const upload = await uploadSlip(
-			supabase,
-			user.id,
-			'cancellation_fee',
-			playerId,
-			slipInput.file
-		);
+		const upload = await uploadSlip(user.id, 'cancellation_fee', playerId, slipInput.file);
 		if (!upload.ok) {
 			return fail(400, { error: upload.message });
+		}
+
+		if (!(await ensureSupabaseAuth(supabase))) {
+			return fail(401, { error: 'Sign in required' });
 		}
 
 		const result = await submitCancellationFee(supabase, playerId, upload.path);

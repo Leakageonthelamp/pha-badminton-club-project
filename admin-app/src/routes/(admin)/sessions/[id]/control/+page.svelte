@@ -188,6 +188,7 @@
 	const pendingLeaveRequests = $derived(
 		data.leaveRequests.filter((request) => request.status === 'pending')
 	);
+	const pendingLeaveUserIds = $derived(new Set(pendingLeaveRequests.map((request) => request.user_id)));
 	const toastMessage = $derived(form?.message ?? null);
 	const toastVariant = $derived(form?.success ? 'success' : 'error');
 
@@ -447,6 +448,99 @@
 			</ul>
 		</div>
 	{/if}
+{/snippet}
+
+{#snippet paymentActionButtons(payment: SessionPaymentWithProfile, stacked = false)}
+	{@const btnClass = stacked
+		? '!w-full !px-4 !py-2.5 !text-sm'
+		: '!w-auto !px-3 !py-1.5 !text-xs'}
+	{#if stacked}
+		<div class="grid gap-2">
+			{#if payment.slip_path}
+				<SubmitButton
+					type="button"
+					variant="secondary"
+					class={btnClass}
+					onclick={() => (slipPreviewPath = payment.slip_path)}
+				>
+					Preview slip
+				</SubmitButton>
+			{/if}
+			<form
+				class="min-w-0"
+				bind:this={approvePaymentForms[payment.id]}
+				method="POST"
+				action="?/approvePayment"
+				use:enhance={handleAction(`pay-${payment.id}`)}
+			>
+				<input type="hidden" name="payment_id" value={payment.id} />
+				<SubmitButton
+					type="button"
+					loading={actionLoading === `pay-${payment.id}`}
+					loadingLabel="…"
+					class={btnClass}
+					onclick={() => requestApprovePayment(payment)}
+				>
+					Confirm paid
+				</SubmitButton>
+			</form>
+		</div>
+	{:else}
+		<div class="flex flex-wrap items-center gap-2">
+			{#if payment.slip_path}
+				<SubmitButton
+					type="button"
+					variant="secondary"
+					class={btnClass}
+					onclick={() => (slipPreviewPath = payment.slip_path)}
+				>
+					Preview slip
+				</SubmitButton>
+			{/if}
+			<form
+				bind:this={approvePaymentForms[payment.id]}
+				method="POST"
+				action="?/approvePayment"
+				use:enhance={handleAction(`pay-${payment.id}`)}
+			>
+				<input type="hidden" name="payment_id" value={payment.id} />
+				<SubmitButton
+					type="button"
+					loading={actionLoading === `pay-${payment.id}`}
+					loadingLabel="…"
+					class={btnClass}
+					onclick={() => requestApprovePayment(payment)}
+				>
+					Confirm paid
+				</SubmitButton>
+			</form>
+		</div>
+	{/if}
+{/snippet}
+
+{#snippet playerPaymentFooter(payment: SessionPaymentWithProfile | null)}
+	{@const status = payment?.status ?? null}
+	<div class="border-t border-slate-100/80 px-4 py-3">
+		<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+			<div class="flex flex-wrap items-center gap-2">
+				<span class="text-sm font-semibold text-slate-800">
+					{payment ? formatThb(payment.total_amount) : formatThb(data.perPlayerCost)}
+				</span>
+				<span
+					class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 {paymentBadgeClass(
+						status
+					)}"
+				>
+					{payment ? paymentStatusLabel(payment.status) : 'Not billed'}
+				</span>
+			</div>
+			{#if payment && payment.status !== 'approved'}
+				<div class="shrink-0 sm:ml-auto">
+					{@render paymentActionButtons(payment)}
+				</div>
+			{/if}
+		</div>
+	</div>
 {/snippet}
 
 {#snippet playerRosterToggleRow(
@@ -847,46 +941,92 @@
 								</div>
 							</div>
 
-							<span
-								class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 {paymentBadgeClass(
-									payment?.status ?? null
-								)}"
-							>
-								{payment
-									? paymentStatusLabel(payment.status)
-									: `Owes ${formatThb(data.perPlayerCost)}`}
-							</span>
+							{#if payment}
+								<div class="text-right">
+									<p class="text-sm font-semibold tabular-nums text-slate-900">
+										{formatThb(payment.total_amount)}
+									</p>
+									<span
+										class="mt-1 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 {paymentBadgeClass(
+											payment.status
+										)}"
+									>
+										{paymentStatusLabel(payment.status)}
+									</span>
+								</div>
+							{:else}
+								<span
+									class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 {paymentBadgeClass(
+										null
+									)}"
+								>
+									Owes {formatThb(data.perPlayerCost)}
+								</span>
+							{/if}
 						</div>
 
-						{#if !payment || payment.status !== 'approved'}
-							<p class="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">
-								Approve their payment in the roster below before you can approve leave.
-							</p>
-						{/if}
+						<div class="mt-4 grid gap-4 border-t border-slate-100 pt-4 sm:grid-cols-2 sm:items-start">
+							<div class="space-y-2">
+								<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+									1 · Confirm payment
+								</p>
+								{#if !payment}
+									<p class="text-sm text-amber-900">
+										Waiting for the player to pay via PromptPay.
+									</p>
+								{:else if payment.status === 'approved'}
+									<p class="text-sm font-medium text-emerald-700">Payment confirmed</p>
+								{:else if payment.status === 'pending'}
+									<p class="text-sm text-amber-900">
+										Player has not tapped “I've paid” yet.
+									</p>
+								{:else}
+									{@render paymentActionButtons(payment, true)}
+								{/if}
+							</div>
 
-						<div class="mt-3 flex flex-wrap gap-2">
-							<form method="POST" action="?/approveLeave" use:enhance={handleAction(`leave-${request.id}`)}>
-								<input type="hidden" name="request_id" value={request.id} />
-								<SubmitButton
-									loading={actionLoading === `leave-${request.id}`}
-									disabled={!payment || payment.status !== 'approved'}
-									class="!w-auto !px-4 !py-2 !text-sm"
-									loadingLabel="…"
-								>
-									Approve leave
-								</SubmitButton>
-							</form>
-							<form method="POST" action="?/rejectLeave" use:enhance={handleAction(`reject-${request.id}`)}>
-								<input type="hidden" name="request_id" value={request.id} />
-								<SubmitButton
-									variant="secondary"
-									loading={actionLoading === `reject-${request.id}`}
-									class="!w-auto !px-4 !py-2 !text-sm"
-									loadingLabel="…"
-								>
-									Reject
-								</SubmitButton>
-							</form>
+							<div class="space-y-2">
+								<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+									2 · Approve leave
+								</p>
+								<div class="grid gap-2">
+									<form
+										class="min-w-0"
+										method="POST"
+										action="?/approveLeave"
+										use:enhance={handleAction(`leave-${request.id}`)}
+									>
+										<input type="hidden" name="request_id" value={request.id} />
+										<SubmitButton
+											loading={actionLoading === `leave-${request.id}`}
+											disabled={!payment || payment.status !== 'approved'}
+											class="!w-full !px-4 !py-2.5 !text-sm"
+											loadingLabel="…"
+										>
+											Approve leave
+										</SubmitButton>
+									</form>
+									<form
+										class="min-w-0"
+										method="POST"
+										action="?/rejectLeave"
+										use:enhance={handleAction(`reject-${request.id}`)}
+									>
+										<input type="hidden" name="request_id" value={request.id} />
+										<SubmitButton
+											variant="secondary"
+											loading={actionLoading === `reject-${request.id}`}
+											class="!w-full !px-4 !py-2.5 !text-sm"
+											loadingLabel="…"
+										>
+											Reject
+										</SubmitButton>
+									</form>
+								</div>
+								{#if !payment || payment.status !== 'approved'}
+									<p class="text-xs text-slate-500">Complete step 1 first.</p>
+								{/if}
+							</div>
 						</div>
 					</li>
 				{/each}
@@ -923,27 +1063,43 @@
 		{:else if !data.settlementStarted}
 			<div class="app-muted-panel">
 				Live player status and idle time below — assign matches to those idle longest first.
-				Payments appear after you tap <strong>Start settlement</strong> at session end. Early leavers
-				get a bill as soon as they request to leave.
+				Payments for remaining players appear after you tap <strong>Start settlement</strong> at
+				session end. Early leavers are handled in <strong>Early leave requests</strong> above.
 			</div>
 			<ul class="space-y-3">
 				{#each checklistPlayers as player (player.id)}
+					{@const payment = paymentForPlayer(player.user_id)}
 					{@const liveStatus = derivePlayerLiveStatus({
 						membershipStatus: player.status,
 						activity: player.activity
 					})}
 					{@const idleLabel = playerIdleLabel(player.idle_since)}
-					<li class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+					<li
+						class="overflow-hidden rounded-2xl border {payment?.status === 'submitted'
+							? 'border-sky-200 bg-sky-50/40'
+							: payment?.status === 'approved'
+								? 'border-emerald-200 bg-emerald-50/30'
+								: 'border-slate-200 bg-white'} shadow-sm"
+					>
 						{#snippet statusMeta()}
 							{#if liveStatus === 'break'}
 								<p class="mt-1 text-xs text-amber-700">On break — not available for assignment</p>
 							{:else if liveStatus === 'billing'}
 								<p class="mt-1 text-xs text-sky-700">Waiting for payment confirmation</p>
+							{:else if pendingLeaveUserIds.has(player.user_id)}
+								<p class="mt-1 text-xs text-slate-500">
+									Pending leave — confirm payment in Early leave requests above
+								</p>
 							{:else if liveStatus === 'leave'}
 								<p class="mt-1 text-xs text-slate-500">Left the session</p>
+							{:else if payment}
+								<p class="mt-1 text-xs text-slate-500">{paymentRowHint(payment.status)}</p>
 							{/if}
 						{/snippet}
 						{@render playerRosterToggleRow(player, liveStatus, idleLabel, statusMeta)}
+						{#if payment && !pendingLeaveUserIds.has(player.user_id)}
+							{@render playerPaymentFooter(payment)}
+						{/if}
 						{@render playerMatchHistoryPanel(player)}
 					</li>
 				{/each}
@@ -970,49 +1126,7 @@
 						{/snippet}
 						{@render playerRosterToggleRow(player, liveStatus, idleLabel, settlementMeta)}
 
-						<div
-							class="flex flex-wrap items-center justify-end gap-2 border-t border-slate-100/80 px-4 py-3"
-						>
-							<span class="text-sm font-semibold text-slate-800">
-								{payment ? formatThb(payment.total_amount) : formatThb(data.perPlayerCost)}
-							</span>
-							<span
-								class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 {paymentBadgeClass(
-									status
-								)}"
-							>
-								{payment ? paymentStatusLabel(payment.status) : 'Not billed'}
-							</span>
-							{#if payment && payment.status !== 'approved'}
-								{#if payment.slip_path}
-									<SubmitButton
-										type="button"
-										variant="secondary"
-										class="!w-auto !px-3 !py-1.5 !text-xs"
-										onclick={() => (slipPreviewPath = payment.slip_path)}
-									>
-										Preview slip
-									</SubmitButton>
-								{/if}
-								<form
-									bind:this={approvePaymentForms[payment.id]}
-									method="POST"
-									action="?/approvePayment"
-									use:enhance={handleAction(`pay-${payment.id}`)}
-								>
-									<input type="hidden" name="payment_id" value={payment.id} />
-									<SubmitButton
-										type="button"
-										loading={actionLoading === `pay-${payment.id}`}
-										loadingLabel="…"
-										class="!w-auto !px-3 !py-1.5 !text-xs"
-										onclick={() => requestApprovePayment(payment)}
-									>
-										Confirm paid
-									</SubmitButton>
-								</form>
-							{/if}
-						</div>
+						{@render playerPaymentFooter(payment)}
 						{@render playerMatchHistoryPanel(player)}
 					</li>
 				{/each}

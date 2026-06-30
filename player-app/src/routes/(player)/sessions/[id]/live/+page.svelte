@@ -19,10 +19,10 @@
 	import CheckIcon from '@repo/ui/icons/CheckIcon.svelte';
 	import HomeIcon from '@repo/ui/icons/HomeIcon.svelte';
 	import ClipboardDocumentListIcon from '@repo/ui/icons/ClipboardDocumentListIcon.svelte';
-	import { formatDateTime, formatUptime } from '@repo/ui/datetime';
+	import { formatDateTime, formatDurationMs, formatUptime } from '@repo/ui/datetime';
 	import MatchSummarySheet from '$lib/components/MatchSummarySheet.svelte';
 	import PlayerMatchHistoryCard from '@repo/ui/components/PlayerMatchHistoryCard.svelte';
-	import { playerMatchResult } from '@repo/ui/matches';
+	import { playerMatchResult, formatMatchRecord } from '@repo/ui/matches';
 	import { formatThb, paymentStatusLabel, computePlayerShuttleShare, deriveShuttlesFromShare, courtFeePerPlayerModeHint, courtFeePerPlayerModeLabel } from '@repo/ui/payments';
 	import { subscribePostgresChangesWithPollFallback } from '@repo/ui/realtimeSubscribe';
 	import { clampIdleSince, derivePlayerLiveStatus } from '@repo/ui/sessionStatus';
@@ -205,14 +205,50 @@
 	const myMatchRecord = $derived.by(() => {
 		let wins = 0;
 		let losses = 0;
+		let draws = 0;
 
 		for (const match of data.myMatchHistory) {
 			const result = playerMatchResult(data.userId, match.players, match.games);
 			if (result === 'win') wins += 1;
 			else if (result === 'lose') losses += 1;
+			else if (result === 'draw') draws += 1;
 		}
 
-		return { wins, losses, played: data.myMatchHistory.length };
+		return { wins, losses, draws, played: data.myMatchHistory.length };
+	});
+	const mySessionDuration = $derived.by(() => {
+		const membership = session.my_membership;
+		if (!membership) return null;
+
+		const startMs = Math.max(
+			Date.parse(session.start_at),
+			Date.parse(membership.joined_at)
+		);
+		const endMs = membership.left_at
+			? Date.parse(membership.left_at)
+			: Date.parse(session.end_at);
+
+		if (Number.isNaN(startMs) || Number.isNaN(endMs) || endMs <= startMs) return null;
+
+		return {
+			label: formatDurationMs(endMs - startMs),
+			leftEarly: Boolean(membership.left_at)
+		};
+	});
+	const myTotalMatchDuration = $derived.by(() => {
+		let totalMs = 0;
+
+		for (const match of data.myMatchHistory) {
+			if (!match.started_at || !match.ended_at) continue;
+
+			const startedMs = Date.parse(match.started_at);
+			const endedMs = Date.parse(match.ended_at);
+			if (Number.isNaN(startedMs) || Number.isNaN(endedMs) || endedMs < startedMs) continue;
+
+			totalMs += endedMs - startedMs;
+		}
+
+		return totalMs > 0 ? formatDurationMs(totalMs) : null;
 	});
 	const showScoreConfirmModal = $derived.by(() => {
 		if (!myScorePendingMatch) return false;
@@ -291,11 +327,14 @@
 		formData.set('slip', paymentSlipFile);
 		actionLoading = 'submitPayment';
 		return async ({ result, update }) => {
-			await update({ reset: false });
-			if (result.type === 'success') {
-				paymentSlipFile = null;
+			try {
+				await update({ reset: false });
+				if (result.type === 'success') {
+					paymentSlipFile = null;
+				}
+			} finally {
+				actionLoading = null;
 			}
-			actionLoading = null;
 		};
 	};
 
@@ -633,7 +672,7 @@
 						{#if myMatchRecord.played === 0}
 							No matches
 						{:else}
-							{myMatchRecord.wins}W · {myMatchRecord.losses}L
+							{formatMatchRecord(myMatchRecord.wins, myMatchRecord.losses, myMatchRecord.draws)}
 						{/if}
 					</p>
 				</div>
@@ -642,6 +681,34 @@
 					<p class="app-history-stat-label">Your shuttles</p>
 					<p class="app-history-stat-value">{myShuttlesUsedDisplay}</p>
 					<p class="app-history-stat-hint">From your matches</p>
+				</div>
+
+				<div class="app-history-stat">
+					<p class="app-history-stat-label">Time in session</p>
+					<p class="app-history-stat-value font-mono tabular-nums">
+						{mySessionDuration?.label ?? '—'}
+					</p>
+					<p class="app-history-stat-hint">
+						{#if mySessionDuration?.leftEarly}
+							Until you left early
+						{:else}
+							Joined through session end
+						{/if}
+					</p>
+				</div>
+
+				<div class="app-history-stat">
+					<p class="app-history-stat-label">Match time</p>
+					<p class="app-history-stat-value font-mono tabular-nums">
+						{myTotalMatchDuration ?? '—'}
+					</p>
+					<p class="app-history-stat-hint">
+						{#if myMatchRecord.played === 0}
+							No matches played
+						{:else}
+							Total on court
+						{/if}
+					</p>
 				</div>
 			</div>
 
@@ -652,7 +719,7 @@
 						<span
 							class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800"
 						>
-							{myMatchRecord.wins}W · {myMatchRecord.losses}L
+							{formatMatchRecord(myMatchRecord.wins, myMatchRecord.losses, myMatchRecord.draws)}
 						</span>
 					{/if}
 				</div>

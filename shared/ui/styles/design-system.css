@@ -920,7 +920,7 @@ body {
 	}
 
 	.app-toast-host {
-		@apply pointer-events-none fixed left-1/2 top-0 z-50 flex w-full max-w-lg -translate-x-1/2 flex-col items-center px-4;
+		@apply pointer-events-none fixed left-1/2 top-0 z-[60] flex w-full max-w-lg -translate-x-1/2 flex-col items-center px-4;
 		padding-top: max(0.5rem, env(safe-area-inset-top));
 	}
 

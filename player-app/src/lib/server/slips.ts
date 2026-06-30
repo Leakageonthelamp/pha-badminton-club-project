@@ -4,10 +4,9 @@ import {
 	type SlipKind,
 	validateSlipFile
 } from '$lib/images/compressSlip';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { createSupabaseAdminClient } from '$lib/supabase/server';
 
 export const uploadSlip = async (
-	supabase: SupabaseClient,
 	userId: string,
 	kind: SlipKind,
 	key: string,
@@ -19,7 +18,7 @@ export const uploadSlip = async (
 	}
 
 	const path = buildSlipStoragePath(userId, kind, key);
-	const { error } = await supabase.storage.from('payment-slips').upload(path, file, {
+	const { error } = await createSupabaseAdminClient().storage.from('payment-slips').upload(path, file, {
 		upsert: true,
 		contentType: SLIP_OUTPUT_TYPE
 	});

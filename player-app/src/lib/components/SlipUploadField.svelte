@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SlipPreviewModal from '@repo/ui/components/SlipPreviewModal.svelte';
 	import {
 		compressSlipToFile,
 		validateSlipFile,
@@ -14,6 +15,7 @@
 	} = $props();
 
 	let previewUrl = $state<string | null>(null);
+	let previewOpen = $state(false);
 	let errorMessage = $state<string | null>(null);
 	let processing = $state(false);
 	let inputEl = $state<HTMLInputElement | null>(null);
@@ -85,12 +87,22 @@
 		</button>
 		{#if file}
 			<span class="text-xs text-slate-500">Ready to upload</span>
+			<button
+				type="button"
+				class="text-sm font-medium text-brand-700 hover:underline"
+				onclick={() => (previewOpen = true)}
+			>
+				Preview
+			</button>
 		{/if}
 	</div>
-	{#if previewUrl}
-		<img src={previewUrl} alt="" class="max-h-40 w-full rounded-lg border border-slate-200 object-contain" />
-	{/if}
 	{#if errorMessage}
 		<p class="text-sm text-red-600">{errorMessage}</p>
 	{/if}
 </div>
+
+<SlipPreviewModal
+	open={previewOpen}
+	imageUrl={previewUrl ?? ''}
+	onClose={() => (previewOpen = false)}
+/>

@@ -15,6 +15,7 @@
 	import PlayerMatchHistoryCard from '@repo/ui/components/PlayerMatchHistoryCard.svelte';
 	import SelectMenu from '@repo/ui/components/SelectMenu.svelte';
 	import { formatDateTime, formatUptime } from '@repo/ui/datetime';
+	import { formatMatchRecord } from '@repo/ui/matches';
 	import TrophyIcon from '@repo/ui/icons/TrophyIcon.svelte';
 	import SearchIcon from '@repo/ui/icons/SearchIcon.svelte';
 	import type { PageData } from './$types';
@@ -124,7 +125,7 @@
 						Record
 					</dt>
 					<dd class="mt-1 text-lg font-semibold tabular-nums text-slate-900">
-						{history.summary.wins}W · {history.summary.losses}L · {history.summary.draws}D
+						{formatMatchRecord(history.summary.wins, history.summary.losses, history.summary.draws)}
 					</dd>
 				</div>
 				<div class="rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2.5">

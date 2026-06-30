@@ -16,6 +16,7 @@ import {
 	submitPayment
 } from '$lib/server/sessions';
 import { readSlipFromForm, uploadSlip } from '$lib/server/slips';
+import { ensureSupabaseAuth } from '$lib/server/supabaseAuth';
 import { shouldViewSessionLivePage } from '$lib/sessions/navigation';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
@@ -100,15 +101,13 @@ export const actions = {
 			return fail(400, { message: slipInput.message });
 		}
 
-		const upload = await uploadSlip(
-			supabase,
-			user.id,
-			'session_payment',
-			params.id,
-			slipInput.file
-		);
+		const upload = await uploadSlip(user.id, 'session_payment', params.id, slipInput.file);
 		if (!upload.ok) {
 			return fail(400, { message: upload.message });
+		}
+
+		if (!(await ensureSupabaseAuth(supabase))) {
+			return fail(401, { message: 'Sign in required' });
 		}
 
 		const result = await submitPayment(supabase, params.id, upload.path);

@@ -59,12 +59,14 @@
 		formData.set('slip', slipFile);
 		submitLoading = true;
 		return async ({ result, update }) => {
-			await update({ reset: false });
-			submitLoading = false;
-
-			if (result.type === 'success') {
-				slipFile = null;
-				onSubmitted?.();
+			try {
+				await update({ reset: false });
+				if (result.type === 'success') {
+					slipFile = null;
+					onSubmitted?.();
+				}
+			} finally {
+				submitLoading = false;
 			}
 		};
 	};
