@@ -24,6 +24,7 @@ const baseTransaction = (
 	status: 'pending',
 	filter_status: 'pending',
 	occurred_at: '2026-06-29T12:00:00.000Z',
+	slip_path: null,
 	...overrides
 });
 

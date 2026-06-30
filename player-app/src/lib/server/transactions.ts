@@ -59,7 +59,8 @@ const mapPaymentRow = (row: Record<string, unknown>): PlayerTransaction | null =
 		amount: Number(row.total_amount),
 		status,
 		filter_status: paymentFilterStatus(status),
-		occurred_at: (row.updated_at as string) ?? (row.created_at as string)
+		occurred_at: (row.updated_at as string) ?? (row.created_at as string),
+		slip_path: (row.slip_path as string | null) ?? null
 	};
 };
 
@@ -85,7 +86,8 @@ const mapCancellationRow = (row: Record<string, unknown>): PlayerTransaction | n
 		occurred_at:
 			(row.fee_paid_at as string | null) ??
 			(row.updated_at as string) ??
-			(row.created_at as string)
+			(row.created_at as string),
+		slip_path: (row.fee_slip_path as string | null) ?? null
 	};
 };
 
@@ -110,6 +112,7 @@ export const loadPlayerTransactions = async (
 			session_id,
 			total_amount,
 			status,
+			slip_path,
 			created_at,
 			updated_at,
 			session:sessions ( name, start_at, club:clubs ( name ) )
@@ -126,6 +129,7 @@ export const loadPlayerTransactions = async (
 			session_id,
 			fee_owed,
 			fee_status,
+			fee_slip_path,
 			created_at,
 			updated_at,
 			fee_paid_at,

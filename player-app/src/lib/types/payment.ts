@@ -8,6 +8,7 @@ export type SessionPayment = {
 	shuttle_share: number;
 	total_amount: number;
 	status: PaymentStatus;
+	slip_path: string | null;
 	decided_by: string | null;
 	decided_at: string | null;
 	created_at: string;

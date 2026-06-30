@@ -505,12 +505,15 @@ body {
 	.flatpickr-day.endRange,
 	.flatpickr-day.selected:hover,
 	.flatpickr-day.startRange:hover,
-	.flatpickr-day.endRange:hover {
-		background: var(--color-brand-600);
-		border-color: var(--color-brand-600);
+	.flatpickr-day.endRange:hover,
+	.flatpickr-day.today.selected,
+	.flatpickr-day.today.selected:hover {
+		background: var(--color-brand-600) !important;
+		border-color: var(--color-brand-600) !important;
+		color: white !important;
 	}
 
-	.flatpickr-day.today {
+	.flatpickr-day.today:not(.selected) {
 		border-color: var(--color-brand-600);
 	}
 
@@ -523,6 +526,53 @@ body {
 	.flatpickr-time input:hover,
 	.flatpickr-time input:focus {
 		background: rgb(244 236 249);
+	}
+
+	.flatpickr-time-select-row {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		width: 100%;
+		padding: 0.25rem 0;
+	}
+
+	.flatpickr-time-select {
+		min-width: 4.5rem;
+		cursor: pointer;
+		appearance: none;
+		border-radius: 0.75rem;
+		border: 1px solid rgb(226 232 240);
+		background: white
+			url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")
+			no-repeat right 0.5rem center / 1rem 1rem;
+		padding: 0.5rem 2rem 0.5rem 0.75rem;
+		font-size: 0.875rem;
+		font-weight: 600;
+		line-height: 1.25rem;
+		color: rgb(15 23 42);
+	}
+
+	.flatpickr-time-select:hover,
+	.flatpickr-time-select:focus {
+		border-color: var(--color-brand-600);
+		outline: none;
+		box-shadow: 0 0 0 2px rgb(124 58 237 / 0.15);
+	}
+
+	.flatpickr-time-select:disabled {
+		cursor: not-allowed;
+		opacity: 0.5;
+	}
+
+	.flatpickr-time-select option:disabled {
+		color: rgb(148 163 184);
+	}
+
+	.flatpickr-time-separator {
+		font-size: 1rem;
+		font-weight: 600;
+		color: rgb(71 85 105);
 	}
 
 	.flatpickr-months .flatpickr-prev-month:hover svg,

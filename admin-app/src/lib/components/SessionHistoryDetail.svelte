@@ -5,6 +5,7 @@
 	import MatchHistoryCard from '@repo/ui/components/MatchHistoryCard.svelte';
 	import MatchSummaryModal from '@repo/ui/components/MatchSummaryModal.svelte';
 	import RichTextDisplay from '@repo/ui/components/RichTextDisplay.svelte';
+	import SlipPreviewModal from '@repo/ui/components/SlipPreviewModal.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
 	import { formatDateTime } from '@repo/ui/datetime';
@@ -24,6 +25,7 @@
 		type SessionPlayerWithProfile
 	} from '$lib/types/session';
 	import { sessionCancelDetail } from '$lib/sessions/sessionCancel';
+	import { slipPreviewUrl } from '$lib/slips';
 	import SessionCancellationFees from '$lib/components/SessionCancellationFees.svelte';
 
 	let {
@@ -47,6 +49,7 @@
 	} = $props();
 
 	let selectedHistoryMatch = $state<MatchWithDetails | null>(null);
+	let slipPreviewPath = $state<string | null>(null);
 
 	const summary = $derived(buildSessionHistorySummary(session, players, payments, matches));
 	const completedMatches = $derived(
@@ -332,6 +335,15 @@
 								>
 									{cancellationFeeStatusLabel(player.fee_status)}
 								</span>
+								{#if player.fee_slip_path}
+									<button
+										type="button"
+										class="text-xs font-medium text-brand-700 hover:text-brand-800"
+										onclick={() => (slipPreviewPath = player.fee_slip_path)}
+									>
+										Preview slip
+									</button>
+								{/if}
 							</div>
 						</li>
 					{/each}
@@ -379,6 +391,15 @@
 							>
 								{paymentStatusLabel(payment.status)}
 							</span>
+							{#if payment.slip_path}
+								<button
+									type="button"
+									class="text-xs font-medium text-brand-700 hover:text-brand-800"
+									onclick={() => (slipPreviewPath = payment.slip_path)}
+								>
+									Preview slip
+								</button>
+							{/if}
 						</div>
 					</li>
 				{/each}
@@ -504,4 +525,10 @@
 	open={selectedHistoryMatch !== null}
 	match={selectedHistoryMatch}
 	onClose={() => (selectedHistoryMatch = null)}
+/>
+
+<SlipPreviewModal
+	open={slipPreviewPath !== null}
+	imageUrl={slipPreviewPath ? slipPreviewUrl(slipPreviewPath) : ''}
+	onClose={() => (slipPreviewPath = null)}
 />

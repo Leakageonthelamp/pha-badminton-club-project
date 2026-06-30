@@ -17,4 +17,5 @@ export type AdminTransaction = {
 	status: PaymentStatus | CancellationFeeStatus;
 	filter_status: Exclude<TransactionFilterStatus, ''>;
 	occurred_at: string;
+	slip_path: string | null;
 };

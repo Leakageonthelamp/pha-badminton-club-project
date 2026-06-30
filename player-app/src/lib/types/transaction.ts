@@ -17,6 +17,7 @@ export type PlayerTransaction = {
 	filter_status: Exclude<PlayerTransactionFilterStatus, ''>;
 	occurred_at: string;
 	session_start_at: string;
+	slip_path: string | null;
 };
 
 export type PlayerTransactionPage = {

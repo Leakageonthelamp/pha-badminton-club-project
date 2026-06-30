@@ -7,6 +7,7 @@
 	import ChevronDownIcon from '@repo/ui/icons/ChevronDownIcon.svelte';
 	import { formatDateTime } from '@repo/ui/datetime';
 	import { formatThb } from '@repo/ui/payments';
+	import SlipPreviewModal from '@repo/ui/components/SlipPreviewModal.svelte';
 	import {
 		transactionKindBadgeClass,
 		transactionStatusBadgeClass,
@@ -26,6 +27,7 @@
 		type AdminTransactionFilters
 	} from '$lib/transactions/list';
 	import { appRoleLabel, type AppRole } from '$lib/types/auth';
+	import { slipPreviewUrl } from '$lib/slips';
 	import type { AdminTransaction } from '$lib/types/transaction';
 	import type { LayoutData } from '../$types';
 	import type { PageData } from './$types';
@@ -34,6 +36,7 @@
 
 	let filters = $state<AdminTransactionFilters>(emptyAdminTransactionFilters());
 	let showAdvanced = $state(false);
+	let slipPreviewPath = $state<string | null>(null);
 
 	const typeChipOptions: { value: '' | TransactionKind; label: string }[] = [
 		{ value: '', label: 'All' },
@@ -299,9 +302,24 @@
 								{formatThb(transaction.amount)}
 							</p>
 						</div>
+						{#if transaction.slip_path}
+							<button
+								type="button"
+								class="mt-2 text-xs font-medium text-brand-700 hover:text-brand-800"
+								onclick={() => (slipPreviewPath = transaction.slip_path)}
+							>
+								Preview slip
+							</button>
+						{/if}
 					</li>
 				{/each}
 			</ul>
 		{/if}
 	</div>
 </section>
+
+<SlipPreviewModal
+	open={slipPreviewPath !== null}
+	imageUrl={slipPreviewPath ? slipPreviewUrl(slipPreviewPath) : ''}
+	onClose={() => (slipPreviewPath = null)}
+/>

@@ -531,6 +531,7 @@ const mapPaymentRow = (row: Record<string, unknown>): SessionPayment => ({
 	shuttle_share: Number(row.shuttle_share),
 	total_amount: Number(row.total_amount),
 	status: row.status as SessionPayment['status'],
+	slip_path: (row.slip_path as string | null) ?? null,
 	decided_by: (row.decided_by as string | null) ?? null,
 	decided_at: (row.decided_at as string | null) ?? null,
 	created_at: row.created_at as string,
@@ -736,9 +737,13 @@ export const cancelSessionLeave = async (
 
 export const submitPayment = async (
 	supabase: SupabaseClient,
-	sessionId: string
+	sessionId: string,
+	slipPath: string
 ): Promise<{ ok: true } | { ok: false; message: string }> => {
-	const { error } = await supabase.rpc('submit_payment', { p_session_id: sessionId });
+	const { error } = await supabase.rpc('submit_payment', {
+		p_session_id: sessionId,
+		p_slip_path: slipPath
+	});
 
 	if (error) {
 		return { ok: false, message: error.message };
@@ -821,9 +826,13 @@ export const loadOutstandingFees = async (
 
 export const submitCancellationFee = async (
 	supabase: SupabaseClient,
-	playerId: string
+	playerId: string,
+	slipPath: string
 ): Promise<{ ok: true } | { ok: false; message: string }> => {
-	const { error } = await supabase.rpc('submit_cancellation_fee', { p_player_id: playerId });
+	const { error } = await supabase.rpc('submit_cancellation_fee', {
+		p_player_id: playerId,
+		p_slip_path: slipPath
+	});
 
 	if (error) {
 		return { ok: false, message: error.message };

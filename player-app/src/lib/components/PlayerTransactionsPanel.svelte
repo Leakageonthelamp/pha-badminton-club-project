@@ -8,7 +8,9 @@
 	import SearchIcon from '@repo/ui/icons/SearchIcon.svelte';
 	import { formatDate } from '@repo/ui/datetime';
 	import { formatThb } from '@repo/ui/payments';
+	import SlipPreviewModal from '@repo/ui/components/SlipPreviewModal.svelte';
 	import type { PlayerTransaction, PlayerTransactionPage } from '$lib/types/transaction';
+	import { slipPreviewUrl } from '$lib/slips';
 	import {
 		transactionStatusBadgeClass,
 		transactionStatusFilterOptions,
@@ -25,6 +27,7 @@
 
 	let statusFilter = $state('');
 	let dateFilter = $state('');
+	let slipPreviewPath = $state<string | null>(null);
 
 	const isFetching = $derived(
 		navigating.to !== null && navigating.to.url.pathname === '/profile'
@@ -49,6 +52,9 @@
 		const query = params.toString();
 		return query ? `/profile?${query}` : '/profile';
 	};
+
+	const canPreviewSlip = (transaction: PlayerTransaction): boolean =>
+		Boolean(transaction.slip_path);
 
 	const canOpenCancellationFee = (transaction: PlayerTransaction): boolean =>
 		transaction.kind === 'cancellation_fee' &&
@@ -76,6 +82,15 @@
 			>
 				{transactionStatusLabel(transaction)}
 			</span>
+			{#if canPreviewSlip(transaction)}
+				<button
+					type="button"
+					class="text-[10px] font-medium text-brand-700 hover:text-brand-800"
+					onclick={() => (slipPreviewPath = transaction.slip_path)}
+				>
+					Slip
+				</button>
+			{/if}
 		</div>
 	</div>
 {/snippet}
@@ -201,3 +216,9 @@
 		{/if}
 	{/if}
 </AppCard>
+
+<SlipPreviewModal
+	open={slipPreviewPath !== null}
+	imageUrl={slipPreviewPath ? slipPreviewUrl(slipPreviewPath) : ''}
+	onClose={() => (slipPreviewPath = null)}
+/>

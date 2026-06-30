@@ -8,6 +8,7 @@ const playerSelect = `
 	status,
 	fee_owed,
 	fee_status,
+	fee_slip_path,
 	fee_paid_at,
 	joined_at,
 	decided_at,

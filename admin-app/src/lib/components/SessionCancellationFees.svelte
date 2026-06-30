@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import AppModal from '@repo/ui/components/AppModal.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
+	import SlipPreviewModal from '@repo/ui/components/SlipPreviewModal.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
@@ -10,6 +12,7 @@
 		isOutstandingCancellationFee,
 		type CancellationFeeStatus
 	} from '@repo/ui/payments';
+	import { slipPreviewUrl } from '$lib/slips';
 	import { sessionPlayerStatusLabel, type SessionPlayerWithProfile } from '$lib/types/session';
 	import type { SubmitFunction } from '@sveltejs/kit';
 
@@ -22,6 +25,10 @@
 		sessionId: string;
 		feeActionLoading?: string | null;
 	} = $props();
+
+	let slipPreviewPath = $state<string | null>(null);
+	let confirmWithoutSlipPlayerId = $state<string | null>(null);
+	let confirmForms = $state<Record<string, HTMLFormElement | undefined>>({});
 
 	const outstandingCount = $derived(
 		fees.filter((fee) => isOutstandingCancellationFee(fee.fee_owed, fee.fee_status)).length
@@ -36,6 +43,21 @@
 				feeActionLoading = null;
 			};
 		};
+
+	const requestConfirmFee = (fee: SessionPlayerWithProfile) => {
+		if (fee.fee_slip_path) {
+			confirmForms[fee.id]?.requestSubmit();
+			return;
+		}
+
+		confirmWithoutSlipPlayerId = fee.id;
+	};
+
+	const confirmWithoutSlip = () => {
+		if (!confirmWithoutSlipPlayerId) return;
+		confirmForms[confirmWithoutSlipPlayerId]?.requestSubmit();
+		confirmWithoutSlipPlayerId = null;
+	};
 
 	const feeCardClass = (feeStatus: CancellationFeeStatus, outstanding: boolean): string => {
 		if (!outstanding) {
@@ -110,7 +132,18 @@
 					<div
 						class="mt-4 grid grid-cols-1 gap-2 border-t border-slate-200/70 pt-4 sm:grid-cols-[1fr_auto]"
 					>
+						{#if fee.fee_slip_path}
+							<SubmitButton
+								type="button"
+								variant="secondary"
+								class="{compactButtonClass} sm:col-span-2"
+								onclick={() => (slipPreviewPath = fee.fee_slip_path)}
+							>
+								Preview slip
+							</SubmitButton>
+						{/if}
 						<form
+							bind:this={confirmForms[fee.id]}
 							method="POST"
 							action="?/confirmFee"
 							class="min-w-0"
@@ -119,10 +152,12 @@
 							<input type="hidden" name="session_id" value={sessionId} />
 							<input type="hidden" name="player_id" value={fee.id} />
 							<SubmitButton
+								type="button"
 								class="{compactButtonClass} sm:!w-full"
 								loading={feeActionLoading === `confirm-${fee.id}`}
 								loadingLabel="Confirming…"
 								disabled={!!feeActionLoading}
+								onclick={() => requestConfirmFee(fee)}
 							>
 								Confirm paid
 							</SubmitButton>
@@ -151,3 +186,33 @@
 		{/each}
 	</ul>
 {/if}
+
+<SlipPreviewModal
+	open={slipPreviewPath !== null}
+	imageUrl={slipPreviewPath ? slipPreviewUrl(slipPreviewPath) : ''}
+	onClose={() => (slipPreviewPath = null)}
+/>
+
+<AppModal
+	open={confirmWithoutSlipPlayerId !== null}
+	labelledBy="confirm-fee-without-slip-title"
+	onClose={() => (confirmWithoutSlipPlayerId = null)}
+>
+	<div class="app-card-padded space-y-4">
+		<h2 id="confirm-fee-without-slip-title" class="text-lg font-semibold text-red-800">
+			Confirm without bank slip?
+		</h2>
+		<p class="text-sm text-slate-600">
+			This player has not attached a bank transfer slip. Only confirm if you have verified payment
+			through another channel.
+		</p>
+		<div class="flex flex-wrap gap-2">
+			<SubmitButton type="button" variant="secondary" class="!w-auto" onclick={() => (confirmWithoutSlipPlayerId = null)}>
+				Cancel
+			</SubmitButton>
+			<SubmitButton type="button" class="!w-auto !bg-red-700 hover:!bg-red-800" onclick={confirmWithoutSlip}>
+				Confirm anyway
+			</SubmitButton>
+		</div>
+	</div>
+</AppModal>

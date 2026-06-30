@@ -153,6 +153,7 @@ export type SessionPlayer = {
 	status: SessionPlayerStatus;
 	fee_owed: number;
 	fee_status: CancellationFeeStatus;
+	fee_slip_path: string | null;
 	fee_paid_at: string | null;
 	joined_at: string;
 	decided_at: string | null;

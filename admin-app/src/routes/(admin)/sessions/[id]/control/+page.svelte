@@ -12,6 +12,7 @@
 	import PlayerStatusBadge from '@repo/ui/components/PlayerStatusBadge.svelte';
 	import SessionLiveTimers from '@repo/ui/components/SessionLiveTimers.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
+	import SlipPreviewModal from '@repo/ui/components/SlipPreviewModal.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
 	import LayersIcon from '@repo/ui/icons/LayersIcon.svelte';
@@ -33,6 +34,8 @@
 	import { sessionStatusBadgeClass, sessionStatusLabel } from '$lib/types/session';
 	import type { SessionPlayerWithProfile } from '$lib/types/session';
 	import SessionCancellationFees from '$lib/components/SessionCancellationFees.svelte';
+	import { slipPreviewUrl } from '$lib/slips';
+	import type { SessionPaymentWithProfile } from '$lib/types/payment';
 	import MatchmakingModal from '$lib/components/MatchmakingModal.svelte';
 	import type { CourtGridMatch, MatchWithDetails } from '$lib/types/match';
 	import type { SubmitFunction } from '@sveltejs/kit';
@@ -55,6 +58,9 @@
 	let selectedHistoryMatch = $state<MatchWithDetails | null>(null);
 	let expandedPlayerIds = $state<Set<string>>(new Set());
 	let historyPage = $state(1);
+	let slipPreviewPath = $state<string | null>(null);
+	let confirmWithoutSlipPayment = $state<SessionPaymentWithProfile | null>(null);
+	let approvePaymentForms = $state<Record<string, HTMLFormElement | undefined>>({});
 
 	const MATCH_HISTORY_PAGE_SIZE = 5;
 
@@ -338,6 +344,21 @@
 				}
 			};
 		};
+
+	const requestApprovePayment = (payment: SessionPaymentWithProfile) => {
+		if (payment.slip_path) {
+			approvePaymentForms[payment.id]?.requestSubmit();
+			return;
+		}
+
+		confirmWithoutSlipPayment = payment;
+	};
+
+	const confirmPaymentWithoutSlip = () => {
+		if (!confirmWithoutSlipPayment) return;
+		approvePaymentForms[confirmWithoutSlipPayment.id]?.requestSubmit();
+		confirmWithoutSlipPayment = null;
+	};
 
 	const handleCourtClick = (courtNumber: number) => {
 		if (courtLoadingNumber !== null) return;
@@ -963,16 +984,29 @@
 								{payment ? paymentStatusLabel(payment.status) : 'Not billed'}
 							</span>
 							{#if payment && payment.status !== 'approved'}
+								{#if payment.slip_path}
+									<SubmitButton
+										type="button"
+										variant="secondary"
+										class="!w-auto !px-3 !py-1.5 !text-xs"
+										onclick={() => (slipPreviewPath = payment.slip_path)}
+									>
+										Preview slip
+									</SubmitButton>
+								{/if}
 								<form
+									bind:this={approvePaymentForms[payment.id]}
 									method="POST"
 									action="?/approvePayment"
 									use:enhance={handleAction(`pay-${payment.id}`)}
 								>
 									<input type="hidden" name="payment_id" value={payment.id} />
 									<SubmitButton
+										type="button"
 										loading={actionLoading === `pay-${payment.id}`}
 										loadingLabel="…"
 										class="!w-auto !px-3 !py-1.5 !text-xs"
+										onclick={() => requestApprovePayment(payment)}
 									>
 										Confirm paid
 									</SubmitButton>
@@ -1335,3 +1369,42 @@
 	match={selectedHistoryMatch}
 	onClose={() => (selectedHistoryMatch = null)}
 />
+
+<SlipPreviewModal
+	open={slipPreviewPath !== null}
+	imageUrl={slipPreviewPath ? slipPreviewUrl(slipPreviewPath) : ''}
+	onClose={() => (slipPreviewPath = null)}
+/>
+
+<AppModal
+	open={confirmWithoutSlipPayment !== null}
+	labelledBy="confirm-payment-without-slip-title"
+	onClose={() => (confirmWithoutSlipPayment = null)}
+>
+	<div class="app-card-padded space-y-4">
+		<h2 id="confirm-payment-without-slip-title" class="text-lg font-semibold text-red-800">
+			Confirm without bank slip?
+		</h2>
+		<p class="text-sm text-slate-600">
+			This player has not attached a bank transfer slip. Only confirm if you have verified payment
+			through another channel.
+		</p>
+		<div class="flex flex-wrap gap-2">
+			<SubmitButton
+				type="button"
+				variant="secondary"
+				class="!w-auto"
+				onclick={() => (confirmWithoutSlipPayment = null)}
+			>
+				Cancel
+			</SubmitButton>
+			<SubmitButton
+				type="button"
+				class="!w-auto !bg-red-700 hover:!bg-red-800"
+				onclick={confirmPaymentWithoutSlip}
+			>
+				Confirm anyway
+			</SubmitButton>
+		</div>
+	</div>
+</AppModal>

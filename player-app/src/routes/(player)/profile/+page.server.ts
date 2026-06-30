@@ -8,6 +8,7 @@ import {
 } from '$lib/server/profileCredentials';
 import { authLoadDepends } from '$lib/navigation/authCache';
 import { loadOutstandingFees, submitCancellationFee } from '$lib/server/sessions';
+import { readSlipFromForm, uploadSlip } from '$lib/server/slips';
 import { loadPlayerTransactions } from '$lib/server/transactions';
 import {
 	parseTransactionDateFilter,
@@ -215,12 +216,29 @@ export const actions: Actions = {
 			return fail(401, { error: 'Sign in required' });
 		}
 
-		const playerId = String((await request.formData()).get('player_id') ?? '');
+		const formData = await request.formData();
+		const playerId = String(formData.get('player_id') ?? '');
 		if (!playerId) {
 			return fail(400, { error: 'Fee record is required' });
 		}
 
-		const result = await submitCancellationFee(supabase, playerId);
+		const slipInput = readSlipFromForm(formData);
+		if (!slipInput.ok) {
+			return fail(400, { error: slipInput.message });
+		}
+
+		const upload = await uploadSlip(
+			supabase,
+			user.id,
+			'cancellation_fee',
+			playerId,
+			slipInput.file
+		);
+		if (!upload.ok) {
+			return fail(400, { error: upload.message });
+		}
+
+		const result = await submitCancellationFee(supabase, playerId, upload.path);
 		if (!result.ok) {
 			return fail(400, { error: result.message });
 		}

@@ -72,6 +72,7 @@ keep it per-app. App-specific branding stays per-app too.
 - `CourtGrid` (`@repo/ui/components/CourtGrid.svelte`) — court tile grid (court name + status); pair with `CourtDetailModal` for rosters and actions
 - `CourtDetailModal` (`@repo/ui/components/CourtDetailModal.svelte`) — court detail modal (Team A/B rosters, status, optional action snippet)
 - `MatchGameScoreFields` (`@repo/ui/components/MatchGameScoreFields.svelte`) — Team A vs B score entry with inline validation
+- `SlipPreviewModal` (`@repo/ui/components/SlipPreviewModal.svelte`) — bank transfer slip image preview with missing-file fallback
 - `MatchScoreDisplay`, `MatchHistoryCard`, `PlayerMatchHistoryCard`, `MatchSummaryModal` — score display and match history cards
 
 ## Styles
@@ -212,10 +213,15 @@ The `/live` (player) and `/control` (admin) pages are **real**, including match/
 - **Settlement:** court share via `compute_session_court_share`; shuttle share via
   `compute_session_player_shuttle_share` (even 4-way split per match × `shuttles_used`, summed at settlement).
 - **Fixed court fee + profit (`0047`):** optional `sessions.fixed_court_fee_per_player` makes every player pay one
-  flat court fee (any matches, leave anytime; shuttles still per-use); null = even cost-share (zero court profit).
-  `sessions.shuttle_cost_per_each` snapshots the club's real per-shuttle cost at create/edit. Admin-only session
-  profit (court + shuttle markup) via `computeSessionProfit`; projected for live sessions, actual once closed.
-  Shown on admin session detail config, `/control` profit tile, and `SessionHistoryDetail`.
+ flat court fee (any matches, leave anytime; shuttles still per-use); null = even cost-share (zero court profit).
+ `sessions.shuttle_cost_per_each` snapshots the club's real per-shuttle cost at create/edit. Admin-only session
+ profit (court + shuttle markup) via `computeSessionProfit`; projected for live sessions, actual once closed.
+ Shown on admin session detail config, `/control` profit tile, and `SessionHistoryDetail`.
+- **Payment slips (`0048`):** players must attach a bank transfer slip image when submitting session payment
+ (`submit_payment`) or cancellation fee (`submit_cancellation_fee`). Slips are compressed client-side
+ (`player-app/src/lib/images/compressSlip.ts`), stored in private Supabase bucket `payment-slips`, and served
+ via short-lived signed URLs (`/slips?path=` endpoints). Admin preview via `SlipPreviewModal`; confirming
+ without a slip shows a danger warning but is allowed.
 - **Roster RLS:** `0019`/`0020`/`0039` — members (and browse-before-join for open sessions) see roster via
   `is_active_session_member()` / open-session policies; player loads must call `ensureSupabaseAuth()` before RLS queries.
 - **Transactions:** player `PlayerTransactionsPanel` (profile), admin `(admin)/transactions/`; `@repo/ui/transactions`.

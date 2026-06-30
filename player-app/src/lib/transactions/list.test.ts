@@ -20,6 +20,7 @@ const baseTransaction = (
 	status: 'pending',
 	occurred_at: '2026-06-29T12:00:00.000Z',
 	session_start_at: '2026-06-29T10:00:00.000Z',
+	slip_path: null,
 	...overrides
 });
 

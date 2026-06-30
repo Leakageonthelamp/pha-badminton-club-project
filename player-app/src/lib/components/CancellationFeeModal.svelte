@@ -6,6 +6,7 @@
 	import { cancellationFeeStatusLabel, formatThb } from '@repo/ui/payments';
 	import type { CancellationFeeStatus } from '@repo/ui/payments';
 	import PaymentQr from '$lib/components/PaymentQr.svelte';
+	import SlipUploadField from '$lib/components/SlipUploadField.svelte';
 	import type { SubmitFunction } from '@sveltejs/kit';
 
 	let {
@@ -32,8 +33,8 @@
 
 	let closeWarningOpen = $state(false);
 	let submitLoading = $state(false);
+	let slipFile = $state<File | null>(null);
 
-	const canSubmit = $derived(feeStatus === 'owed');
 	const target = $derived(promptpayTarget?.trim() ?? '');
 
 	const requestClose = () => {
@@ -49,13 +50,20 @@
 		onClose();
 	};
 
-	const handleSubmit: SubmitFunction = () => {
+	const handleSubmit: SubmitFunction = ({ formData, cancel }) => {
+		if (!slipFile) {
+			cancel();
+			return;
+		}
+
+		formData.set('slip', slipFile);
 		submitLoading = true;
 		return async ({ result, update }) => {
 			await update({ reset: false });
 			submitLoading = false;
 
 			if (result.type === 'success') {
+				slipFile = null;
 				onSubmitted?.();
 			}
 		};
@@ -71,7 +79,7 @@
 			<p class="text-sm text-slate-600">{sessionLabel}</p>
 		{/if}
 		<p class="text-sm text-slate-600">
-			Transfer exactly {formatThb(amount)} using PromptPay, then tap “I've paid”.
+			Transfer exactly {formatThb(amount)} using PromptPay, attach your bank slip, then tap “I've paid”.
 		</p>
 
 		{#if target}
@@ -80,10 +88,19 @@
 			<EmptyState message="Club PromptPay is not configured. Contact the admin." />
 		{/if}
 
-		{#if canSubmit}
-			<form method="POST" action={submitAction} use:enhance={handleSubmit}>
+		{#if feeStatus === 'owed'}
+			<SlipUploadField bind:file={slipFile} disabled={submitLoading} />
+		{/if}
+
+		{#if feeStatus === 'owed'}
+			<form
+				method="POST"
+				action={submitAction}
+				enctype="multipart/form-data"
+				use:enhance={handleSubmit}
+			>
 				<input type="hidden" name="player_id" value={playerId} />
-				<SubmitButton loading={submitLoading}>I've paid</SubmitButton>
+				<SubmitButton loading={submitLoading} disabled={!slipFile}>I've paid</SubmitButton>
 			</form>
 		{:else}
 			<p class="text-center text-sm text-slate-600">{cancellationFeeStatusLabel(feeStatus)}</p>

@@ -15,6 +15,7 @@ import {
 	setSessionBreak,
 	submitPayment
 } from '$lib/server/sessions';
+import { readSlipFromForm, uploadSlip } from '$lib/server/slips';
 import { shouldViewSessionLivePage } from '$lib/sessions/navigation';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
@@ -88,12 +89,29 @@ export const actions = {
 		return { success: true, message: 'Leave request cancelled.' };
 	},
 
-	submitPayment: async ({ params, locals: { supabase, user } }) => {
+	submitPayment: async ({ params, request, locals: { supabase, user } }) => {
 		if (!user) {
 			return fail(401, { message: 'Sign in required' });
 		}
 
-		const result = await submitPayment(supabase, params.id);
+		const formData = await request.formData();
+		const slipInput = readSlipFromForm(formData);
+		if (!slipInput.ok) {
+			return fail(400, { message: slipInput.message });
+		}
+
+		const upload = await uploadSlip(
+			supabase,
+			user.id,
+			'session_payment',
+			params.id,
+			slipInput.file
+		);
+		if (!upload.ok) {
+			return fail(400, { message: upload.message });
+		}
+
+		const result = await submitPayment(supabase, params.id, upload.path);
 		if (!result.ok) {
 			return fail(400, { message: result.message });
 		}

@@ -74,7 +74,8 @@ const mapPaymentRow = (row: Record<string, unknown>): AdminTransaction | null =>
 		amount: Number(row.total_amount),
 		status,
 		filter_status: paymentFilterStatus(status),
-		occurred_at: (row.updated_at as string) ?? (row.created_at as string)
+		occurred_at: (row.updated_at as string) ?? (row.created_at as string),
+		slip_path: (row.slip_path as string | null) ?? null
 	};
 };
 
@@ -104,7 +105,8 @@ const mapCancellationRow = (row: Record<string, unknown>): AdminTransaction | nu
 		occurred_at:
 			(row.fee_paid_at as string | null) ??
 			(row.updated_at as string) ??
-			(row.created_at as string)
+			(row.created_at as string),
+		slip_path: (row.fee_slip_path as string | null) ?? null
 	};
 };
 
@@ -114,6 +116,7 @@ const paymentSelect = `
 	user_id,
 	total_amount,
 	status,
+	slip_path,
 	created_at,
 	updated_at,
 	profile:profiles!payments_user_id_fkey ( id, display_name, tag ),
@@ -126,6 +129,7 @@ const cancellationSelect = `
 	user_id,
 	fee_owed,
 	fee_status,
+	fee_slip_path,
 	created_at,
 	updated_at,
 	fee_paid_at,

@@ -21,6 +21,7 @@ const paymentSelect = `
 	shuttle_share,
 	total_amount,
 	status,
+	slip_path,
 	decided_by,
 	decided_at,
 	created_at,

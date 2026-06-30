@@ -4,6 +4,7 @@ import {
 	leaveSession,
 	submitCancellationFee
 } from '$lib/server/sessions';
+import { readSlipFromForm, uploadSlip } from '$lib/server/slips';
 import { fail, type Actions } from '@sveltejs/kit';
 
 export const sessionMembershipActions = {
@@ -81,12 +82,29 @@ export const sessionMembershipActions = {
 			return fail(401, { message: 'Sign in required' });
 		}
 
-		const playerId = (await request.formData()).get('player_id');
+		const formData = await request.formData();
+		const playerId = formData.get('player_id');
 		if (typeof playerId !== 'string' || !playerId) {
 			return fail(400, { message: 'Fee record is required' });
 		}
 
-		const result = await submitCancellationFee(supabase, playerId);
+		const slipInput = readSlipFromForm(formData);
+		if (!slipInput.ok) {
+			return fail(400, { message: slipInput.message });
+		}
+
+		const upload = await uploadSlip(
+			supabase,
+			user.id,
+			'cancellation_fee',
+			playerId,
+			slipInput.file
+		);
+		if (!upload.ok) {
+			return fail(400, { message: upload.message });
+		}
+
+		const result = await submitCancellationFee(supabase, playerId, upload.path);
 		if (!result.ok) {
 			return fail(400, { message: result.message });
 		}

@@ -26,6 +26,7 @@
 	import { subscribePostgresChangesWithPollFallback } from '@repo/ui/realtimeSubscribe';
 	import { clampIdleSince, derivePlayerLiveStatus } from '@repo/ui/sessionStatus';
 	import PaymentQr from '$lib/components/PaymentQr.svelte';
+	import SlipUploadField from '$lib/components/SlipUploadField.svelte';
 	import MatchInviteModal from '$lib/components/MatchInviteModal.svelte';
 	import MatchScoreConfirmModal from '$lib/components/MatchScoreConfirmModal.svelte';
 	import type { CourtGridMatch, MatchWithDetails } from '$lib/types/match';
@@ -53,6 +54,7 @@
 
 	let nowMs = $state(Date.now());
 	let actionLoading = $state<string | null>(null);
+	let paymentSlipFile = $state<File | null>(null);
 	let matchNavLoading = $state(false);
 	let autoNavigatedMatchId = $state<string | null>(null);
 	let selectedHistoryMatch = $state<MatchWithDetails | null>(null);
@@ -279,6 +281,23 @@
 			() => void invalidate('app:live-session')
 		);
 	});
+
+	const handleSubmitPayment: SubmitFunction = ({ formData, cancel }) => {
+		if (!paymentSlipFile) {
+			cancel();
+			return;
+		}
+
+		formData.set('slip', paymentSlipFile);
+		actionLoading = 'submitPayment';
+		return async ({ result, update }) => {
+			await update({ reset: false });
+			if (result.type === 'success') {
+				paymentSlipFile = null;
+			}
+			actionLoading = null;
+		};
+	};
 
 	const handleAction =
 		(key: string): SubmitFunction =>
@@ -906,7 +925,7 @@
 	<div class="app-card-padded space-y-4">
 		<h2 id="payment-modal-title" class="text-lg font-semibold text-slate-900">Pay session fee</h2>
 		<p class="text-sm text-slate-600">
-			Transfer exactly {formatThb(myTotalCost)} using PromptPay, then tap “I've paid”.
+			Transfer exactly {formatThb(myTotalCost)} using PromptPay, attach your bank slip, then tap “I've paid”.
 		</p>
 
 		{@render playerCostPanel(false, !isBilled, data.myPayment?.status ?? null)}
@@ -918,8 +937,19 @@
 		{/if}
 
 		{#if uiState === 'payment_due'}
-			<form method="POST" action="?/submitPayment" use:enhance={handleAction('submitPayment')}>
-				<SubmitButton loading={actionLoading === 'submitPayment'}>I've paid</SubmitButton>
+			<SlipUploadField bind:file={paymentSlipFile} disabled={actionLoading === 'submitPayment'} />
+			<form
+				method="POST"
+				action="?/submitPayment"
+				enctype="multipart/form-data"
+				use:enhance={handleSubmitPayment}
+			>
+				<SubmitButton
+					loading={actionLoading === 'submitPayment'}
+					disabled={!paymentSlipFile}
+				>
+					I've paid
+				</SubmitButton>
 			</form>
 		{:else}
 			<p class="text-center text-sm text-slate-600">

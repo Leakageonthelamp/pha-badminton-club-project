@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import type { Instance } from 'flatpickr/dist/types/instance';
 	import { dateToLocalDate, localDateToDate } from '../datetime';
+	import { readFlatpickrPendingDate } from '../flatpickrSelection';
 
 	let {
 		id,
@@ -73,6 +74,22 @@
 		return null;
 	};
 
+	const commitSelection = (instance: Instance, committedThisOpen: { current: boolean }) => {
+		const selected = readFlatpickrPendingDate(instance);
+		const error = validateSelected(selected);
+		if (error) {
+			validationError = error;
+			return;
+		}
+
+		validationError = '';
+		value = selected ? dateToLocalDate(selected) : '';
+		committedThisOpen.current = true;
+		if (selected) instance.setDate(selected, false);
+		else instance.clear(false);
+		instance.close();
+	};
+
 	const attachPickerActions = (instance: Instance, committedThisOpen: { current: boolean }) => {
 		const footer = document.createElement('div');
 		footer.className = 'flatpickr-picker-actions';
@@ -102,17 +119,7 @@
 		});
 
 		selectBtn.addEventListener('click', () => {
-			const selected = instance.selectedDates[0];
-			const error = validateSelected(selected);
-			if (error) {
-				validationError = error;
-				return;
-			}
-
-			validationError = '';
-			value = selected ? dateToLocalDate(selected) : '';
-			committedThisOpen.current = true;
-			instance.close();
+			commitSelection(instance, committedThisOpen);
 		});
 
 		footer.append(clearBtn, selectBtn);
@@ -158,6 +165,12 @@
 				if (!committedThisOpen.current) revertToCommitted(fp);
 				committedThisOpen.current = false;
 			},
+			onKeyDown: (_dates, _str, fp, event) => {
+				if (event.key === 'Enter') {
+					event.preventDefault();
+					commitSelection(fp, committedThisOpen);
+				}
+			},
 			onReady: (_dates, _str, fp) => {
 				syncAltInput(fp);
 				attachPickerActions(fp, committedThisOpen);
@@ -168,6 +181,12 @@
 				alt.addEventListener('focus', () => {
 					isEditing = true;
 					if (!alt.disabled) fp.open();
+				});
+				alt.addEventListener('keydown', (event) => {
+					if (event.key === 'Enter' && fp.isOpen) {
+						event.preventDefault();
+						commitSelection(fp, committedThisOpen);
+					}
 				});
 				alt.addEventListener('blur', () => {
 					if (fp.isOpen) return;

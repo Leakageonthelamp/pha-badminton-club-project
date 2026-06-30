@@ -2,6 +2,8 @@
 	import { onMount } from 'svelte';
 	import type { Instance } from 'flatpickr/dist/types/instance';
 	import { dateToLocalInput, localInputToDate } from '../datetime';
+	import { readFlatpickrPendingDate } from '../flatpickrSelection';
+	import { attachFlatpickrTimeSelects, syncFlatpickrTimeSelects } from '../flatpickrTimeSelects';
 
 	let {
 		id,
@@ -104,6 +106,22 @@
 		return null;
 	};
 
+	const commitSelection = (instance: Instance, committedThisOpen: { current: boolean }) => {
+		const selected = readFlatpickrPendingDate(instance, { withTime: true });
+		const error = validateSelected(selected, instance);
+		if (error) {
+			validationError = error;
+			return;
+		}
+
+		validationError = '';
+		value = selected ? dateToLocalInput(selected) : '';
+		committedThisOpen.current = true;
+		if (selected) instance.setDate(selected, false);
+		else instance.clear(false);
+		instance.close();
+	};
+
 	const attachPickerActions = (instance: Instance, committedThisOpen: { current: boolean }) => {
 		const footer = document.createElement('div');
 		footer.className = 'flatpickr-picker-actions';
@@ -133,17 +151,7 @@
 		});
 
 		selectBtn.addEventListener('click', () => {
-			const selected = instance.selectedDates[0];
-			const error = validateSelected(selected, instance);
-			if (error) {
-				validationError = error;
-				return;
-			}
-
-			validationError = '';
-			value = selected ? dateToLocalInput(selected) : '';
-			committedThisOpen.current = true;
-			instance.close();
+			commitSelection(instance, committedThisOpen);
 		});
 
 		footer.append(clearBtn, selectBtn);
@@ -183,17 +191,28 @@
 			onOpen: (_dates, _str, fp) => {
 				committedThisOpen.current = false;
 				validationError = '';
-				refreshMinDate(fp);
+				const minDate = refreshMinDate(fp);
 				revertToCommitted(fp);
+				syncFlatpickrTimeSelects(fp, minDate);
 			},
 			onClose: (_dates, _str, fp) => {
 				isEditing = false;
 				if (!committedThisOpen.current) revertToCommitted(fp);
 				committedThisOpen.current = false;
 			},
+			onKeyDown: (_dates, _str, fp, event) => {
+				if (event.key === 'Enter') {
+					event.preventDefault();
+					commitSelection(fp, committedThisOpen);
+				}
+			},
+			onChange: (_dates, _str, fp) => {
+				syncFlatpickrTimeSelects(fp, resolveMinDate());
+			},
 			onReady: (_dates, _str, fp) => {
 				syncAltInput(fp);
 				attachPickerActions(fp, committedThisOpen);
+				attachFlatpickrTimeSelects(fp, resolveMinDate);
 
 				const alt = fp.altInput;
 				if (!alt) return;
@@ -201,6 +220,12 @@
 				alt.addEventListener('focus', () => {
 					isEditing = true;
 					if (!alt.disabled) fp.open();
+				});
+				alt.addEventListener('keydown', (event) => {
+					if (event.key === 'Enter' && fp.isOpen) {
+						event.preventDefault();
+						commitSelection(fp, committedThisOpen);
+					}
 				});
 				alt.addEventListener('blur', () => {
 					if (fp.isOpen) return;
@@ -226,8 +251,12 @@
 	$effect(() => {
 		if (!picker || isEditing) return;
 
-		refreshMinDate(picker);
+		const minDate = refreshMinDate(picker);
 		syncAltInput(picker);
+
+		if (picker.isOpen) {
+			syncFlatpickrTimeSelects(picker, minDate);
+		}
 
 		if (!value) {
 			picker.clear(false);
