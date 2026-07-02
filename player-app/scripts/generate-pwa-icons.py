@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rasterize logo.svg into PWA PNG icons for Clubhouse."""
+"""Rasterize logo.svg into PWA PNG icons for Antonsmash."""
 
 from __future__ import annotations
 

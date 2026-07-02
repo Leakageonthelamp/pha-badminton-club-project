@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rasterize logo.svg into admin PNG icons for Clubhouse Admin."""
+"""Rasterize logo.svg into admin PNG icons for Antonsmash Admin."""
 
 from __future__ import annotations
 

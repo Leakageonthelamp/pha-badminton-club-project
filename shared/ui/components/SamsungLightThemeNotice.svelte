@@ -1,5 +1,5 @@
 <script lang="ts">
-	const STORAGE_KEY = 'clubhouse-samsung-light-notice-dismissed';
+	const STORAGE_KEY = 'antonsmash-samsung-light-notice-dismissed';
 
 	let visible = $state(false);
 
@@ -25,8 +25,8 @@
 		<div class="min-w-0 flex-1">
 			<p class="font-medium text-amber-900">Samsung Internet dark mode</p>
 			<p class="mt-1 text-sm text-amber-800">
-				This app uses a light theme. If colors look inverted, open Samsung Internet settings and turn
-				off <strong>Force dark mode for web content</strong>.
+				This app uses a light theme. If colors look inverted, open Samsung Internet settings and
+				turn off <strong>Force dark mode for web content</strong>.
 			</p>
 		</div>
 		<button
