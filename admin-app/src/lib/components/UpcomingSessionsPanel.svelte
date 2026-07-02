@@ -40,7 +40,7 @@
 					section:
 						'border-brand-200 from-brand-50 via-white to-violet-50 dark:border-brand-800/80 dark:from-slate-900 dark:via-slate-900 dark:to-violet-950/30',
 					header:
-						'border-brand-100/80 bg-brand-500/10 dark:border-brand-900/50 dark:bg-brand-950/30',
+						'border-brand-100/80 bg-brand-500/10 dark:border-brand-900/50 dark:bg-slate-900/30',
 					eyebrow: 'text-brand-700 dark:text-brand-300'
 				}
 	);
