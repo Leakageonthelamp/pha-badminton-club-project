@@ -28,19 +28,23 @@
 		userId,
 		showClub = false,
 		compact = false,
-		pendingCancellationFees = 0
+		pendingCancellationFees = 0,
+		active = false
 	}: {
 		session: SessionListItem;
 		userId?: string;
 		showClub?: boolean;
 		compact?: boolean;
 		pendingCancellationFees?: number;
+		active?: boolean;
 	} = $props();
 </script>
 
 <a
 	href="/sessions/{session.id}"
-	class="group block rounded-2xl border bg-white/90 px-4 py-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-900/90 {pendingCancellationFees > 0
+	class="group block rounded-2xl border bg-white/90 px-4 py-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-900/90 {active
+		? 'border-brand-300 bg-brand-50/70 ring-1 ring-brand-200/80 dark:border-brand-700 dark:bg-brand-950/30 dark:ring-brand-800/80'
+		: pendingCancellationFees > 0
 		? 'border-amber-300 bg-amber-50/50 hover:border-amber-400 dark:border-amber-700 dark:bg-amber-950/30 dark:hover:border-amber-600'
 		: 'border-slate-200/80 hover:border-brand-200 dark:border-slate-700 dark:hover:border-brand-600'} {compact ? '' : 'sm:px-5 sm:py-4'}"
 >

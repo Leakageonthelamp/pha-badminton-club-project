@@ -4,9 +4,9 @@ import { loadManagedClubs } from '$lib/server/clubAccess';
 import { loadSessionsForAdmin, sweepOverdueDraftSessions, sweepStartedSessions } from '$lib/server/sessions';
 import { filterActiveSessions } from '$lib/sessions/list';
 import { error } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
+import type { LayoutServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({
+export const load: LayoutServerLoad = async ({
 	cookies,
 	locals: { supabase, user, appRole, locale }
 }) => {

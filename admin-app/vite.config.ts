@@ -47,7 +47,7 @@ export default defineConfig(({ mode }) => {
 					background_color: '#f8fafc',
 					display: 'standalone',
 					display_override: ['window-controls-overlay', 'standalone'],
-					orientation: 'portrait',
+					orientation: 'any',
 					scope: '/',
 					start_url: '/',
 					categories: ['sports', 'business'],

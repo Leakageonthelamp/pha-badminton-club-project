@@ -62,7 +62,7 @@
 	<meta name="apple-mobile-web-app-title" content={appConfig.shortName} />
 </svelte:head>
 
-<div class="app-shell relative mx-auto flex h-full w-full max-w-lg flex-col">
+<div class="app-shell relative flex h-full w-full flex-col">
 	<div class="app-scroll min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-2">
 		{#if data.serviceUnavailable}
 			<ServiceUnavailable />

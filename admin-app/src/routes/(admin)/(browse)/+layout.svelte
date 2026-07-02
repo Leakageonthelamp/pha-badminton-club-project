@@ -1,41 +1,30 @@
 <script lang="ts">
 	import { t } from '$lib/i18n';
-	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
+	import { page } from '$app/state';
 	import DashboardIcon from '@repo/ui/components/DashboardIcon.svelte';
-	import DashboardTile from '@repo/ui/components/DashboardTile.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
 	import Pagination from '@repo/ui/components/Pagination.svelte';
 	import SectionHeading from '@repo/ui/components/SectionHeading.svelte';
 	import SelectMenu from '@repo/ui/components/SelectMenu.svelte';
 	import UserGroupIcon from '@repo/ui/icons/UserGroupIcon.svelte';
-	import BanknotesIcon from '@repo/ui/icons/BanknotesIcon.svelte';
 	import PlusIcon from '@repo/ui/icons/PlusIcon.svelte';
 	import SearchIcon from '@repo/ui/icons/SearchIcon.svelte';
-	import UserIcon from '@repo/ui/icons/UserIcon.svelte';
-	import CalendarDaysIcon from '@repo/ui/icons/CalendarDaysIcon.svelte';
 	import { isRichTextEmpty, richTextExcerpt, richTextPlainText } from '@repo/ui/richText';
 	import { paginate } from '@repo/ui/pagination';
-	import { adminRoleHeroBadgeClass } from '$lib/adminRoleHero';
-	import { appRoleLabel, type AppRole } from '$lib/types/auth';
 	import type { Club } from '$lib/types/club';
-	import type { LayoutData } from '../$types';
-	import type { PageData } from './$types';
+	import type { LayoutData } from './$types';
 
-	let { data }: { data: PageData & LayoutData } = $props();
+	let { data, children }: { data: LayoutData; children: import('svelte').Snippet } = $props();
 
 	let searchQuery = $state('');
 	let statusFilter = $state<'all' | 'active' | 'inactive'>('all');
 	let listPage = $state(1);
 
-	const profileName = $derived(data.profile?.display_name ?? t('role.superAdmin'));
+	const hasDetail = $derived(/^\/clubs\/[^/]+$/.test(page.url.pathname));
 	const clubCount = $derived(data.clubs.length);
 	const activeClubCount = $derived(data.clubs.filter((club) => club.is_active).length);
 	const inactiveClubCount = $derived(clubCount - activeClubCount);
-	const effectiveAppRole = $derived(data.effectiveAppRole ?? null);
-	const roleLabel = $derived(
-		effectiveAppRole ? appRoleLabel(effectiveAppRole as AppRole) : ''
-	);
-	const roleBadgeClass = $derived(adminRoleHeroBadgeClass(effectiveAppRole));
+	const showClubList = $derived(data.clubs.length > 0);
 
 	const statusFilterOptions = [
 		{ value: 'all', label: t('dashboard.super.statusAll') },
@@ -82,74 +71,13 @@
 	}
 </script>
 
-<section class="space-y-8">
-	<DashboardHero
-		eyebrow={t('dashboard.super.eyebrow')}
-		title={profileName}
-		tag={data.profile?.tag}
-		roleLabel={roleLabel}
-		roleBadgeClass={roleBadgeClass}
-		subtitle={t('dashboard.super.subtitle')}
-	>
-		{#if clubCount > 0}
-			<span class="app-hero-stat app-hero-stat--accent">
-				{clubCount} club{clubCount === 1 ? '' : 's'}
-			</span>
-			{#if activeClubCount > 0}
-				<span class="app-hero-stat app-hero-stat--success">
-					{activeClubCount} active
-				</span>
-			{/if}
-			{#if inactiveClubCount > 0}
-				<span class="app-hero-stat app-hero-stat--warn">
-					{inactiveClubCount} inactive
-				</span>
-			{/if}
-		{/if}
-	</DashboardHero>
-
-	<div class="space-y-3">
-		<SectionHeading title={t('dashboard.super.quickActions')} />
-		<div class="app-quick-actions-grid">
-			<DashboardTile
-				href="/clubs/new"
-				title={t('dashboard.super.createClub.title')}
-				description={t('dashboard.super.createClub.description')}
-				icon={PlusIcon}
-				accent="brand"
-			/>
-			<DashboardTile
-				href="/users"
-				title={t('dashboard.super.users.title')}
-				description={t('dashboard.super.users.description')}
-				icon={UserIcon}
-				accent="secondary"
-			/>
-			<DashboardTile
-				href="/sessions"
-				title={t('dashboard.super.sessions.title')}
-				description={t('dashboard.super.sessions.description')}
-				icon={CalendarDaysIcon}
-				accent="violet"
-			/>
-			<DashboardTile
-				href="/transactions"
-				title={t('dashboard.super.transactions.title')}
-				description={t('dashboard.super.transactions.description')}
-				icon={BanknotesIcon}
-				accent="indigo"
-			/>
-		</div>
-	</div>
-
-	{#if data.clubs.length === 0}
-		<EmptyState message={t('dashboard.super.noClubs')}>
-			<a href="/clubs/new" class="text-sm font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800">
-				Create your first club
-			</a>
-		</EmptyState>
-	{:else}
-		<div class="space-y-4">
+{#if showClubList}
+	<div class="flex flex-col gap-6 lg:flex-row lg:items-start">
+		<section
+			class="order-2 min-w-0 space-y-4 lg:order-1 {hasDetail
+				? 'hidden lg:block lg:w-80 lg:shrink-0'
+				: 'w-full lg:w-80 lg:shrink-0'}"
+		>
 			<div class="app-section-header px-1">
 				<div class="min-w-0">
 					<h2 class="app-section-title">{t('dashboard.super.allClubs')}</h2>
@@ -162,7 +90,7 @@
 				</div>
 				<a href="/clubs/new" class="app-section-action">
 					<PlusIcon class="h-4 w-4" />
-					New club
+					{t('dashboard.super.newClub')}
 				</a>
 			</div>
 
@@ -208,7 +136,7 @@
 							statusFilter = 'all';
 						}}
 					>
-						Clear filters
+						{t('dashboard.super.clearFilters')}
 					</button>
 				</EmptyState>
 			{:else}
@@ -217,15 +145,21 @@
 						title="{filteredClubs.length} club{filteredClubs.length === 1 ? '' : 's'}"
 					/>
 					{#if normalizedSearch}
-						<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Results for “{searchQuery.trim()}”</p>
+						<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
+							{t('dashboard.super.resultsFor', { query: searchQuery.trim() })}
+						</p>
 					{/if}
 
 					<ul class="divide-y divide-slate-200 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
 						{#each pagedClubs.items as club (club.id)}
+							{@const isActive = page.url.pathname === `/clubs/${club.id}`}
 							<li>
 								<a
 									href="/clubs/{club.id}"
-									class="group flex items-center gap-3 px-4 py-3.5 transition hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-950"
+									class="group flex items-center gap-3 px-4 py-3.5 transition hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-950 {isActive
+										? 'bg-brand-50/70 dark:bg-brand-950/30'
+										: ''}"
+									aria-current={isActive ? 'page' : undefined}
 								>
 									<DashboardIcon
 										icon={UserGroupIcon}
@@ -239,15 +173,17 @@
 												<span
 													class="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200/80"
 												>
-													Active
+													{t('dashboard.super.active')}
 												</span>
 											{:else}
 												<span class="app-role-badge bg-amber-50 text-amber-900 ring-1 ring-amber-200/80">
-													Inactive
+													{t('dashboard.super.inactive')}
 												</span>
 											{/if}
 										</div>
-										<p class="mt-0.5 truncate text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{clubSubtitle(club)}</p>
+										<p class="mt-0.5 truncate text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
+											{clubSubtitle(club)}
+										</p>
 										<p class="mt-1 text-xs text-slate-400 dark:text-slate-500">{clubLimits(club)}</p>
 									</div>
 									<span class="app-action-row-arrow shrink-0" aria-hidden="true">→</span>
@@ -265,6 +201,12 @@
 					/>
 				</div>
 			{/if}
+		</section>
+
+		<div class="order-1 min-w-0 flex-1 lg:order-2 {!hasDetail ? 'lg:block' : ''}">
+			{@render children()}
 		</div>
-	{/if}
-</section>
+	</div>
+{:else}
+	{@render children()}
+{/if}

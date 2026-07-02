@@ -54,7 +54,7 @@
 	</div>
 {/snippet}
 
-<div class="grid items-stretch gap-3 sm:grid-cols-2">
+<div class="grid items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3">
 	{#each courts as court (court.courtNumber)}
 		{@const clickable = Boolean(onCourtClick)}
 		{@const isLoading = loadingCourtNumber === court.courtNumber}

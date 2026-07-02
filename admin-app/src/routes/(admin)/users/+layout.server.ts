@@ -3,7 +3,7 @@ import { buildProfileSearchOrFilter } from '$lib/server/profileSearch';
 import { loadUsersBannedStatus } from '$lib/server/userManagement';
 import type { AppRole, Profile } from '$lib/types/auth';
 import { appRoleLabel } from '$lib/types/auth';
-import type { PageServerLoad } from './$types';
+import type { LayoutServerLoad } from './$types';
 
 const PAGE_SIZE = 10;
 
@@ -18,7 +18,7 @@ export type UserListItem = Pick<
 	isBanned: boolean;
 };
 
-export const load: PageServerLoad = async ({ url, locals: { supabase, appRole } }) => {
+export const load: LayoutServerLoad = async ({ url, locals: { supabase, appRole } }) => {
 	assertSuperAdmin(appRole);
 
 	const searchQuery = url.searchParams.get('q')?.trim() ?? '';

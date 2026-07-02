@@ -106,7 +106,7 @@
 		{/if}
 
 		<div
-			class="relative z-10 max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto overscroll-contain"
+			class="relative z-10 max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto overscroll-contain md:max-w-2xl"
 			in:fly={panelTransition}
 			out:fly={panelTransition}
 			onoutroend={onPanelOutroEnd}

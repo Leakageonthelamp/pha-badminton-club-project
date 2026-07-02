@@ -721,8 +721,8 @@
 		</ol>
 	</AppCard>
 
-	<!-- Quick stats (2 cols — admin shell is max-w-lg) -->
-	<div class="grid grid-cols-2 gap-3">
+	<!-- Quick stats -->
+	<div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
 		<div class="app-card-padded flex min-h-24 flex-col items-center justify-center gap-1 text-center">
 			<p class="text-2xl font-extrabold tabular-nums text-secondary-900">{data.activePlayerCount}</p>
 			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('sessions.detail.players')}</p>

@@ -4,5 +4,5 @@
 </script>
 
 <section class="app-card-padded flex min-h-48 items-center justify-center">
-	<EmptyState message={t('masterDetail.selectUser')} />
+	<EmptyState message={t('masterDetail.selectSession')} />
 </section>

@@ -2,6 +2,7 @@
 	import { browser } from '$app/environment';
 	import { page } from '$app/state';
 	import { invalidateAll } from '$app/navigation';
+	import AdminSidebar from '$lib/components/AdminSidebar.svelte';
 	import AdminWorkspaceSwitch from '$lib/components/AdminWorkspaceSwitch.svelte';
 	import ClubWorkspaceSwitch from '$lib/components/ClubWorkspaceSwitch.svelte';
 	import AppLogo from '$lib/components/AppLogo.svelte';
@@ -73,39 +74,49 @@
 	});
 </script>
 
-<header class="app-topbar relative z-30 mb-6 overflow-visible">
-	<div class="flex min-w-0 items-center gap-0.5">
-		{#if showBack}
-			<BackLink href={backHref} />
-			<HomeLink href={homeHref} />
-		{:else}
-			<a href={homeHref} class="app-topbar-brand">
-				<span class="app-topbar-mark">
-					<AppLogo size={32} title={appConfig.name} />
-				</span>
-				<span class="app-topbar-title">{appConfig.name}</span>
-			</a>
-		{/if}
-	</div>
+<div class="mx-auto flex w-full max-w-lg flex-col md:max-w-none md:flex-row md:items-stretch">
+	<AdminSidebar {appRole} {dashboardMode} {hasClubMembership} />
 
-	<div class="flex shrink-0 items-center gap-2">
-		{#if clubWorkspaceOptions.length > 0}
-			<ClubWorkspaceSwitch clubs={clubWorkspaceOptions} />
-		{/if}
-		<AdminWorkspaceSwitch
-			options={data.workspaceOptions ?? []}
-			currentWorkspace={data.dashboardMode ?? 'super'}
-			canSwitch={data.canSwitchWorkspace ?? false}
-		/>
-		<LocalePicker />
-		<ProfileMenu profile={data.profile} />
-	</div>
-</header>
+	<div
+		class="flex min-w-0 flex-1 flex-col md:mx-auto md:w-full md:max-w-3xl md:px-2 lg:max-w-5xl lg:px-4"
+	>
+		<header class="app-topbar relative z-30 mb-6 overflow-visible">
+			<div class="flex min-w-0 items-center gap-0.5 md:hidden">
+				{#if showBack}
+					<BackLink href={backHref} />
+					<HomeLink href={homeHref} />
+				{:else}
+					<a href={homeHref} class="app-topbar-brand">
+						<span class="app-topbar-mark">
+							<AppLogo size={32} title={appConfig.name} />
+						</span>
+						<span class="app-topbar-title">{appConfig.name}</span>
+					</a>
+				{/if}
+			</div>
 
-<PageTransition
-	appRole={data.effectiveAppRole ?? appRole}
-	dashboardMode={dashboardMode}
-	hasClubMembership={hasClubMembership}
->
-	{@render children()}
-</PageTransition>
+			<div class="hidden min-w-0 flex-1 md:block" aria-hidden="true"></div>
+
+			<div class="flex shrink-0 items-center gap-2 md:ml-auto">
+				{#if clubWorkspaceOptions.length > 0}
+					<ClubWorkspaceSwitch clubs={clubWorkspaceOptions} />
+				{/if}
+				<AdminWorkspaceSwitch
+					options={data.workspaceOptions ?? []}
+					currentWorkspace={data.dashboardMode ?? 'super'}
+					canSwitch={data.canSwitchWorkspace ?? false}
+				/>
+				<LocalePicker />
+				<ProfileMenu profile={data.profile} />
+			</div>
+		</header>
+
+		<PageTransition
+			appRole={data.effectiveAppRole ?? appRole}
+			dashboardMode={dashboardMode}
+			hasClubMembership={hasClubMembership}
+		>
+			{@render children()}
+		</PageTransition>
+	</div>
+</div>
