@@ -8,8 +8,8 @@ import { defineConfig, loadEnv } from 'vite';
 export default defineConfig(({ mode }) => {
 	const env = loadEnv(mode, process.cwd(), '');
 	const port = Number(env.PORT) || 5174;
-	const appName = env.PUBLIC_APP_NAME || 'Clubhouse Admin';
-	const appShortName = env.PUBLIC_APP_SHORT_NAME || 'Club Admin';
+	const appName = env.PUBLIC_APP_NAME || 'Antonsmash Admin';
+	const appShortName = env.PUBLIC_APP_SHORT_NAME || 'Antonsmash Admin';
 	const analyze = env.ANALYZE === 'true';
 
 	return {
@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => {
 					id: '/',
 					name: appName,
 					short_name: appShortName,
-					description: 'Clubhouse admin panel — manage clubs, sessions, payments, and live control.',
+					description: 'Antonsmash admin panel — manage clubs, sessions, payments, and live control.',
 					lang: 'en',
 					dir: 'ltr',
 					theme_color: '#f8fafc',

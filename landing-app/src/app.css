@@ -1,0 +1,93 @@
+@import 'tailwindcss';
+
+@theme {
+	--color-brand-50: #f7f0fc;
+	--color-brand-100: #efdcf8;
+	--color-brand-200: #dfc0f0;
+	--color-brand-300: #c893e0;
+	--color-brand-400: #b06ed4;
+	--color-brand-500: #964ac0;
+	--color-brand-600: #964ac0;
+	--color-brand-700: #964ac0;
+	--color-brand-800: #7d3ca3;
+	--color-brand-900: #652f85;
+	--font-sans:
+		-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', system-ui, 'Segoe UI',
+		'Inter', sans-serif;
+}
+
+:root {
+	color-scheme: light only;
+	--landing-accent: #964ac0;
+	--landing-bg: #f8fafc;
+}
+
+html {
+	color-scheme: light only;
+	background-color: var(--landing-bg);
+	font-family: var(--font-sans);
+	scroll-behavior: smooth;
+}
+
+body {
+	@apply min-h-dvh bg-slate-50 font-sans text-slate-900 antialiased;
+	color-scheme: light only;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+}
+
+@layer components {
+	.landing-container {
+		@apply mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8;
+	}
+
+	.landing-nav {
+		@apply sticky top-0 z-50 border-b border-white/20 bg-white/80 backdrop-blur-md;
+	}
+
+	.landing-btn-primary {
+		@apply inline-flex items-center justify-center rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-600/25 transition hover:-translate-y-0.5 hover:bg-brand-800 hover:shadow-brand-800/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2;
+	}
+
+	.landing-btn-secondary {
+		@apply inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-200 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2;
+	}
+
+	.landing-section-title {
+		@apply text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl;
+	}
+
+	.landing-section-lead {
+		@apply mt-3 max-w-2xl text-lg leading-relaxed text-slate-600;
+	}
+
+	.landing-gradient-hero {
+		background:
+			radial-gradient(ellipse 80% 60% at 50% -10%, rgb(150 74 192 / 0.18), transparent),
+			radial-gradient(ellipse 50% 40% at 100% 0%, rgb(192 147 224 / 0.12), transparent),
+			linear-gradient(to bottom, #f8fafc, #f1f5f9);
+	}
+
+	.landing-feature-grid {
+		@apply grid gap-5 sm:grid-cols-2 lg:grid-cols-3;
+	}
+
+	.landing-step-grid {
+		@apply grid gap-8 md:grid-cols-3;
+	}
+
+	.landing-qr-card {
+		@apply rounded-3xl border border-slate-200/80 bg-white p-8 shadow-xl shadow-slate-200/50;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.landing-btn-primary,
+	.landing-btn-secondary {
+		transition: none;
+	}
+}

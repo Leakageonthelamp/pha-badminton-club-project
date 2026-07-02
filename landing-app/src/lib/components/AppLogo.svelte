@@ -14,7 +14,7 @@
 		tone?: 'brand' | 'white';
 	} = $props();
 
-	const fill = $derived(tone === 'white' ? '#ffffff' : 'var(--app-accent, #964ac0)');
+	const fill = $derived(tone === 'white' ? '#ffffff' : 'var(--landing-accent, #964ac0)');
 </script>
 
 <svg width={size} height={size} viewBox="0 0 48 48" class={className} role="img" aria-label={title}>
