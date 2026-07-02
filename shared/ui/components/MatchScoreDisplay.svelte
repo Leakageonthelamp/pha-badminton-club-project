@@ -34,59 +34,62 @@
 	const teamPanelClass = (team: 'A' | 'B', gameWinner: 'A' | 'B' | null) => {
 		if (gameWinner === team) {
 			return viewerTeam === team
-				? 'bg-emerald-50 ring-2 ring-emerald-300'
-				: 'bg-emerald-50 ring-1 ring-emerald-200';
+				? 'bg-emerald-50 ring-2 ring-emerald-300 dark:bg-emerald-950/40 dark:ring-emerald-700'
+				: 'bg-emerald-50 ring-1 ring-emerald-200 dark:bg-emerald-950/40 dark:ring-emerald-800';
 		}
 		if (viewerTeam === team) {
-			return 'bg-brand-50/90 ring-2 ring-brand-400';
+			return 'bg-brand-50/90 ring-2 ring-brand-400 dark:bg-brand-900/30 dark:ring-brand-600';
 		}
-		return 'bg-white ring-1 ring-slate-200';
+		return 'bg-white ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700';
 	};
+
+	const scoreClass = (team: 'A' | 'B', gameWinner: 'A' | 'B' | null) =>
+		gameWinner === team
+			? 'text-emerald-700 dark:text-emerald-400'
+			: 'text-slate-900 dark:text-slate-100';
 </script>
 
 {#snippet scoreBody()}
 	<div class="space-y-3" class:p-4={!embedded}>
 		{#each sortedGames as game (game.game_no)}
 			{@const gameWinner = deriveGameWinner(game)}
-			<div class="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+			<div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/50 p-4">
 				{#if sortedGames.length > 1}
-					<p class="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+					<p class="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
 						Game {game.game_no}
 					</p>
 				{/if}
 				<div class="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-stretch gap-3">
 					<div class="rounded-lg px-2 py-3 text-center {teamPanelClass('A', gameWinner)}">
-						<p class="text-xs font-semibold text-slate-700">Team A</p>
+						<p class="text-xs font-semibold text-slate-700 dark:text-slate-300 dark:text-slate-600">Team A</p>
 						{#if viewerTeam === 'A'}
 							<p class="text-xs font-bold text-brand-700">Your team</p>
 						{:else if viewerTeam}
 							<p class="text-xs invisible" aria-hidden="true">Your team</p>
 						{/if}
-						<TeamRosterList players={teamA} />
-						<p
-							class="mt-2 font-mono text-3xl font-bold tabular-nums {gameWinner === 'A'
-								? 'text-emerald-700'
-								: 'text-slate-900'}"
-						>
+						<TeamRosterList
+							players={teamA}
+							itemClass="text-xs text-slate-500 dark:text-slate-400"
+						/>
+						<p class="mt-2 font-mono text-3xl font-bold tabular-nums {scoreClass('A', gameWinner)}">
 							{game.team_a_score}
 						</p>
 					</div>
 
-					<span class="self-center text-sm font-semibold text-slate-400">vs</span>
+					<span class="self-center text-sm font-semibold text-slate-400 dark:text-slate-500">vs</span>
 
 					<div class="rounded-lg px-2 py-3 text-center {teamPanelClass('B', gameWinner)}">
-						<p class="text-xs font-semibold text-slate-700">Team B</p>
+						<p class="text-xs font-semibold text-slate-700 dark:text-slate-300 dark:text-slate-600">Team B</p>
 						{#if viewerTeam === 'B'}
 							<p class="text-xs font-bold text-brand-700">Your team</p>
 						{:else if viewerTeam}
 							<p class="text-xs invisible" aria-hidden="true">Your team</p>
 						{/if}
-						<TeamRosterList players={teamB} />
-						<p
-							class="mt-2 font-mono text-3xl font-bold tabular-nums {gameWinner === 'B'
-								? 'text-emerald-700'
-								: 'text-slate-900'}"
-						>
+						<TeamRosterList
+							players={teamB}
+							itemClass="text-xs text-slate-500 dark:text-slate-400"
+						/>
+						<p class="mt-2 font-mono text-3xl font-bold tabular-nums {scoreClass('B', gameWinner)}">
 							{game.team_b_score}
 						</p>
 					</div>
@@ -96,7 +99,7 @@
 
 		{#if matchWinner}
 			<div
-				class="flex items-center justify-center gap-2 rounded-xl bg-emerald-50 px-3 py-2.5 text-sm font-medium text-emerald-800 ring-1 ring-emerald-200"
+				class="flex items-center justify-center gap-2 rounded-xl bg-emerald-50 px-3 py-2.5 text-sm font-medium text-emerald-800 ring-1 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800"
 			>
 				<span
 					class="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white"
@@ -114,7 +117,7 @@
 			</div>
 		{:else if matchDraw}
 			<div
-				class="flex items-center justify-center gap-2 rounded-xl bg-slate-100 px-3 py-2.5 text-sm font-medium text-slate-700 ring-1 ring-slate-200"
+				class="flex items-center justify-center gap-2 rounded-xl bg-slate-100 px-3 py-2.5 text-sm font-medium text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700"
 			>
 				Match drawn
 			</div>
@@ -128,13 +131,13 @@
 	<AppCard padded={false} class="overflow-hidden">
 		{#if heading}
 			<div
-				class="border-b border-slate-100 bg-gradient-to-br from-slate-50 via-white to-brand-50/50 px-4 py-3.5"
+				class="border-b border-slate-100 dark:border-slate-800 bg-gradient-to-br from-slate-50 via-white to-brand-50/50 px-4 py-3.5 dark:from-slate-900 dark:via-slate-900 dark:to-brand-900/30"
 			>
-				<h2 class="text-sm font-semibold text-slate-900">{heading}</h2>
+				<h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">{heading}</h2>
 				{#if matchWinner}
-					<p class="mt-0.5 text-xs text-slate-600">Team {matchWinner} leads the match</p>
+					<p class="mt-0.5 text-xs text-slate-600 dark:text-slate-400 dark:text-slate-500">Team {matchWinner} leads the match</p>
 				{:else if matchDraw}
-					<p class="mt-0.5 text-xs text-slate-600">Match drawn</p>
+					<p class="mt-0.5 text-xs text-slate-600 dark:text-slate-400 dark:text-slate-500">Match drawn</p>
 				{/if}
 			</div>
 		{/if}

@@ -53,9 +53,9 @@
 	] as const;
 
 	const toolbarBtnClass =
-		'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-600 transition hover:bg-white hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-40 aria-pressed:bg-white aria-pressed:text-brand-700 aria-pressed:shadow-sm';
+		'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-600 dark:text-slate-400 dark:text-slate-500 transition hover:bg-white dark:bg-slate-900 hover:text-slate-900 dark:text-slate-100 disabled:cursor-not-allowed disabled:opacity-40 aria-pressed:bg-white dark:bg-slate-900 aria-pressed:text-brand-700 dark:text-brand-300 aria-pressed:shadow-sm';
 	const toolbarGroupClass =
-		'flex items-center gap-0.5 rounded-lg border border-slate-200/80 bg-white/70 p-0.5';
+		'flex items-center gap-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/70 p-0.5';
 
 	const syncActive = (currentEditor: Editor) => {
 		active = {
@@ -241,13 +241,13 @@
 </script>
 
 <div class="space-y-2">
-	<span class="text-sm font-medium text-slate-700">{label}</span>
+	<span class="text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">{label}</span>
 
 	<div
-		class="overflow-hidden rounded-xl border border-slate-300 bg-white focus-within:border-brand-600 focus-within:ring-2 focus-within:ring-brand-600/20"
+		class="overflow-hidden rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 focus-within:border-brand-600 focus-within:ring-2 focus-within:ring-brand-600/20"
 	>
 		<div
-			class="flex flex-wrap items-center gap-2 border-b border-slate-200 bg-slate-50 px-2 py-2"
+			class="flex flex-wrap items-center gap-2 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-2 py-2"
 			role="toolbar"
 			aria-label="{label} formatting"
 		>
@@ -366,7 +366,7 @@
 					aria-expanded={textColorOpen}
 					onclick={toggleTextColorMenu}
 				>
-					<span class="text-sm font-bold leading-none text-slate-800">A</span>
+					<span class="text-sm font-bold leading-none text-slate-800 dark:text-slate-200">A</span>
 					<span class="h-1 w-4 rounded-full bg-slate-800"></span>
 				</button>
 
@@ -395,7 +395,7 @@
 
 		<div
 			bind:this={element}
-			class="min-h-32 px-4 py-3 text-base [&_.ProseMirror]:min-h-24 [&_.ProseMirror]:outline-none [&_.ProseMirror_a]:text-brand-700 [&_.ProseMirror_a]:underline [&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_ol]:pl-5 [&_.ProseMirror_p]:mb-2 [&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ul]:pl-5"
+			class="min-h-32 px-4 py-3 text-base [&_.ProseMirror]:min-h-24 [&_.ProseMirror]:outline-none [&_.ProseMirror_a]:text-brand-700 dark:text-brand-300 [&_.ProseMirror_a]:underline [&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_ol]:pl-5 [&_.ProseMirror_p]:mb-2 [&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ul]:pl-5"
 		></div>
 	</div>
 
@@ -405,13 +405,13 @@
 {#if textColorOpen}
 	<div use:portal>
 		<div
-			class="fixed z-[110] w-44 rounded-xl border border-slate-200 bg-white p-2 shadow-lg"
+			class="fixed z-[110] w-44 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 shadow-lg"
 			style:top="{menuTop}px"
 			style:left="{menuLeft}px"
 			data-rich-text-menu
 			role="menu"
 		>
-			<p class="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+			<p class="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
 				Text color
 			</p>
 			<div class="grid grid-cols-3 gap-1.5">
@@ -419,9 +419,9 @@
 					<button
 						type="button"
 						role="menuitem"
-						class="flex h-8 items-center justify-center rounded-lg border border-slate-200 text-xs transition hover:ring-2 hover:ring-brand-500/30 {swatch.value ===
+						class="flex h-8 items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 text-xs transition hover:ring-2 hover:ring-brand-500/30 {swatch.value ===
 						null
-							? 'bg-white text-slate-500'
+							? 'bg-white dark:bg-slate-900 text-slate-500'
 							: ''}"
 						style:background-color={swatch.value ?? undefined}
 						title={swatch.label}
@@ -441,13 +441,13 @@
 {#if highlightOpen}
 	<div use:portal>
 		<div
-			class="fixed z-[110] w-44 rounded-xl border border-slate-200 bg-white p-2 shadow-lg"
+			class="fixed z-[110] w-44 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 shadow-lg"
 			style:top="{menuTop}px"
 			style:left="{menuLeft}px"
 			data-rich-text-menu
 			role="menu"
 		>
-			<p class="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+			<p class="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
 				Highlight
 			</p>
 			<div class="grid grid-cols-3 gap-1.5">
@@ -455,9 +455,9 @@
 					<button
 						type="button"
 						role="menuitem"
-						class="flex h-8 items-center justify-center rounded-lg border border-slate-200 text-xs transition hover:ring-2 hover:ring-brand-500/30 {swatch.value ===
+						class="flex h-8 items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 text-xs transition hover:ring-2 hover:ring-brand-500/30 {swatch.value ===
 						null
-							? 'bg-white text-slate-500'
+							? 'bg-white dark:bg-slate-900 text-slate-500'
 							: ''}"
 						style:background-color={swatch.value ?? undefined}
 						title={swatch.label}

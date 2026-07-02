@@ -92,7 +92,7 @@
 				>
 					{#if isFetchingUsers}
 						<span
-							class="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-brand-700"
+							class="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 dark:border-slate-600 border-t-brand-700"
 							aria-hidden="true"
 						></span>
 					{:else}
@@ -106,7 +106,7 @@
 	{#if isFetchingUsers}
 		<div class="space-y-4" aria-busy="true" aria-label="Loading users">
 			<div class="app-skeleton h-5 w-24 rounded-md"></div>
-			<ul class="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
+			<ul class="divide-y divide-slate-200 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
 				{#each Array(6) as _, index (index)}
 					<li class="flex items-center gap-3 px-4 py-3">
 						<div class="app-skeleton h-10 w-10 shrink-0 rounded-full"></div>
@@ -124,15 +124,15 @@
 		<div class="space-y-4">
 			<SectionHeading title="{data.totalCount} user{data.totalCount === 1 ? '' : 's'}" />
 			{#if data.searchQuery}
-				<p class="text-sm text-slate-500">Results for “{data.searchQuery}”</p>
+				<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Results for “{data.searchQuery}”</p>
 			{/if}
 
-			<ul class="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
+			<ul class="divide-y divide-slate-200 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
 				{#each data.users as user (user.id)}
 					<li>
 						<a
 							href="/users/{user.id}"
-							class="flex items-center gap-3 px-4 py-3 transition hover:bg-slate-50"
+							class="flex items-center gap-3 px-4 py-3 transition hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-950"
 						>
 							<UserAvatar
 								displayName={user.display_name}
@@ -141,11 +141,11 @@
 							/>
 							<div class="min-w-0 flex-1">
 								<div class="flex flex-wrap items-center gap-2">
-									<span class="truncate font-medium text-slate-900">{user.display_name}</span>
+									<span class="truncate font-medium text-slate-900 dark:text-slate-100">{user.display_name}</span>
 									{#if user.tag}
 										<TagPill tag={user.tag} />
 									{/if}
-									<span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+									<span class="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">
 										{appRoleLabel(user.app_role as AppRole)}
 									</span>
 									{#if user.isBanned}
@@ -162,7 +162,7 @@
 									{/if}
 								</div>
 								{#if user.managedClubCount > 0}
-									<p class="mt-1 truncate text-sm text-slate-500">
+									<p class="mt-1 truncate text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
 										{formatClubSummary(user.managedClubNames, user.managedClubCount)}
 									</p>
 								{/if}

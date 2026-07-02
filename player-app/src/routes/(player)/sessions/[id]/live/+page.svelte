@@ -174,13 +174,13 @@
 	const summaryPaymentBadgeClass = $derived.by(() => {
 		switch (summaryPaymentStatus) {
 			case 'approved':
-				return 'bg-emerald-100 text-emerald-800 ring-emerald-200';
+				return 'bg-emerald-100 text-emerald-800 ring-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-800';
 			case 'submitted':
-				return 'bg-sky-100 text-sky-800 ring-sky-200';
+				return 'bg-sky-100 text-sky-800 ring-sky-200 dark:bg-sky-950/50 dark:text-sky-300 dark:ring-sky-800';
 			case 'pending':
-				return 'bg-amber-100 text-amber-900 ring-amber-200';
+				return 'bg-amber-100 text-amber-900 ring-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:ring-amber-800';
 			default:
-				return 'bg-slate-100 text-slate-700 ring-slate-200';
+				return 'bg-slate-100 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700';
 		}
 	});
 	const summaryHeadline = $derived.by(() => {
@@ -514,12 +514,16 @@
 		/>
 
 		{#if sessionEnded && !playerEarlyLeave}
-			<div class="rounded-xl border border-rose-200 bg-rose-50/70 px-4 py-3 text-sm text-rose-900">
+			<div
+				class="rounded-xl border border-rose-200 bg-rose-50/70 px-4 py-3 text-sm text-rose-900 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-200"
+			>
 				<strong>Session ended.</strong> Wait for the host to start settlement. You cannot take a break
 				or request to leave until then.
 			</div>
 		{:else if playerEarlyLeaveInProgress}
-			<div class="rounded-xl border border-sky-200 bg-sky-50/70 px-4 py-3 text-sm text-sky-900">
+			<div
+				class="rounded-xl border border-sky-200 bg-sky-50/70 px-4 py-3 text-sm text-sky-900 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-200"
+			>
 				<strong>You left early.</strong>
 				{#if uiState === 'payment_due'}
 					Complete your payment below. The session continues for other players until the host closes
@@ -537,20 +541,22 @@
 		{/if}
 
 		{#if breakBlocked}
-			<div class="app-session-countdown flex flex-col gap-3 border-brand-200 bg-brand-50/80">
+			<div
+				class="app-session-countdown flex flex-col gap-3 border-brand-200 bg-brand-50/80 dark:border-brand-800 dark:bg-brand-900/30"
+			>
 				<div class="flex items-center justify-between gap-3">
-					<span class="app-session-countdown-label text-brand-800">Your status</span>
+					<span class="app-session-countdown-label text-brand-800 dark:text-brand-300">Your status</span>
 					<PlayerStatusBadge
 						status={myLiveStatus === 'playing' || hasOpenCourtMatch ? 'playing' : myLiveStatus}
 					/>
 				</div>
 				{#if showInviteModal}
-					<p class="text-sm leading-relaxed text-brand-900">
+					<p class="text-sm leading-relaxed text-brand-900 dark:text-brand-200">
 						Respond to the match invite — session leave, break, and other actions are unavailable
 						until the invite is resolved.
 					</p>
 				{:else}
-					<p class="text-sm leading-relaxed text-brand-900">
+					<p class="text-sm leading-relaxed text-brand-900 dark:text-brand-200">
 						You are in a match. Leave, break, and other session actions are unavailable until the
 						match ends.
 					</p>
@@ -569,12 +575,14 @@
 				{/if}
 			</div>
 		{:else if playerEarlyLeaveInProgress}
-			<div class="app-session-countdown flex flex-col gap-3 border-sky-200 bg-sky-50/80">
+			<div
+				class="app-session-countdown flex flex-col gap-3 border-sky-200 bg-sky-50/80 dark:border-sky-800 dark:bg-sky-950/40"
+			>
 				<div class="flex items-center justify-between gap-3">
-					<span class="app-session-countdown-label text-sky-800">Your status</span>
+					<span class="app-session-countdown-label text-sky-800 dark:text-sky-300">Your status</span>
 					<PlayerStatusBadge status={myLiveStatus} />
 				</div>
-				<p class="text-sm leading-relaxed text-sky-900">
+				<p class="text-sm leading-relaxed text-sky-900 dark:text-sky-200">
 					{#if uiState === 'payment_due'}
 						Waiting for your PromptPay transfer. You cannot join matches or take a break while
 						leaving.
@@ -588,17 +596,19 @@
 				</p>
 			</div>
 		{:else if myLiveStatus === 'idle' || myLiveStatus === 'break'}
-			<div class="app-session-countdown flex flex-col gap-3 border-slate-200 bg-slate-50/80">
+			<div
+				class="app-session-countdown flex flex-col gap-3 border-slate-200 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-800/50"
+			>
 					<div class="flex items-center justify-between gap-3">
-						<span class="app-session-countdown-label text-slate-700">Your status</span>
+						<span class="app-session-countdown-label text-slate-700 dark:text-slate-300 dark:text-slate-600">Your status</span>
 						<PlayerStatusBadge status={myLiveStatus} />
 					</div>
 
 					{#if myLiveStatus === 'idle' && myIdleLabel}
 						<div>
-							<p class="text-xs font-medium text-slate-500">Idle time</p>
+							<p class="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">Idle time</p>
 							<p
-								class="font-mono text-2xl font-semibold tabular-nums text-slate-900"
+								class="font-mono text-2xl font-semibold tabular-nums text-slate-900 dark:text-slate-100"
 								aria-live="polite"
 							>
 								{myIdleLabel}
@@ -607,7 +617,7 @@
 					{/if}
 
 					{#if myLiveStatus === 'idle'}
-						<p class="text-sm leading-relaxed text-slate-600">
+						<p class="text-sm leading-relaxed text-slate-600 dark:text-slate-400 dark:text-slate-500">
 							You are available for the admin to assign to a match.
 						</p>
 						<form method="POST" action="?/toggleBreak" use:enhance={handleAction('breakOn')}>
@@ -621,7 +631,7 @@
 							</SubmitButton>
 						</form>
 					{:else}
-						<p class="text-sm leading-relaxed text-slate-600">
+						<p class="text-sm leading-relaxed text-slate-600 dark:text-slate-400 dark:text-slate-500">
 							You are on break. The admin cannot assign you until you continue.
 						</p>
 						<form method="POST" action="?/toggleBreak" use:enhance={handleAction('breakOff')}>
@@ -643,52 +653,52 @@
 
 	{#if uiState === 'summary'}
 		<section
-			class="overflow-hidden rounded-3xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50 via-white to-brand-50 shadow-sm ring-1 ring-emerald-100/80"
+			class="overflow-hidden rounded-3xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50 via-white to-brand-50 shadow-sm ring-1 ring-emerald-100/80 dark:border-emerald-800/80 dark:from-emerald-950/40 dark:via-slate-900 dark:to-brand-900/20 dark:ring-emerald-900/40"
 		>
 			<div class="relative px-4 pb-5 pt-8 text-center sm:px-6">
 				<div
-					class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 shadow-sm ring-4 ring-white"
+					class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 shadow-sm ring-4 ring-white dark:bg-emerald-900/50 dark:ring-slate-800"
 					aria-hidden="true"
 				>
-					<CheckIcon class="h-8 w-8 text-emerald-600" />
+					<CheckIcon class="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
 				</div>
-				<h2 class="mt-4 text-xl font-bold tracking-tight text-slate-900">{summaryHeadline}</h2>
-				<p class="mt-2 text-sm leading-relaxed text-slate-600">
+				<h2 class="mt-4 text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{summaryHeadline}</h2>
+				<p class="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400 dark:text-slate-500">
 					Thanks for playing{session.club?.name ? ` at ${session.club.name}` : ''}. Here is your
 					session recap.
 				</p>
 			</div>
 
 			<div
-				class="flex flex-col items-stretch gap-4 border-y border-emerald-100/80 bg-white/70 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6 lg:px-8"
+				class="flex flex-col items-stretch gap-4 border-y border-emerald-100/80 bg-white/70 px-4 py-5 dark:border-emerald-900/50 dark:bg-slate-900/50 sm:flex-row sm:items-center sm:justify-between sm:gap-6 lg:px-8"
 			>
 				<div class="min-w-0 sm:flex-1">
-					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600">Start</p>
-					<p class="mt-1 text-sm font-semibold leading-snug text-slate-900 sm:text-base">
+					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">Start</p>
+					<p class="mt-1 text-sm font-semibold leading-snug text-slate-900 dark:text-slate-100 sm:text-base">
 						{formatDate(session.start_at)}
 					</p>
-					<p class="mt-0.5 text-sm font-medium tabular-nums text-slate-600">
+					<p class="mt-0.5 text-sm font-medium tabular-nums text-slate-600 dark:text-slate-400 dark:text-slate-500">
 						{formatTime(session.start_at)}
 					</p>
 				</div>
-				<div class="hidden h-10 w-px shrink-0 self-center bg-emerald-200 sm:block" aria-hidden="true">
+				<div class="hidden h-10 w-px shrink-0 self-center bg-emerald-200 dark:bg-emerald-800 sm:block" aria-hidden="true">
 				</div>
 				<div
-					class="rounded-2xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 shadow-sm ring-1 ring-emerald-100/80 sm:shrink-0 sm:min-w-[8.5rem] sm:self-center sm:px-5 sm:text-center"
+					class="rounded-2xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 shadow-sm ring-1 ring-emerald-100/80 dark:border-emerald-800 dark:bg-emerald-950/40 dark:ring-emerald-900/50 sm:shrink-0 sm:min-w-[8.5rem] sm:self-center sm:px-5 sm:text-center"
 				>
-					<p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Duration</p>
-					<p class="mt-1 whitespace-nowrap text-lg font-semibold text-emerald-900">
+					<p class="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Duration</p>
+					<p class="mt-1 whitespace-nowrap text-lg font-semibold text-emerald-900 dark:text-emerald-200">
 						{sessionDurationLabel}
 					</p>
 				</div>
-				<div class="hidden h-10 w-px shrink-0 self-center bg-emerald-200 sm:block" aria-hidden="true">
+				<div class="hidden h-10 w-px shrink-0 self-center bg-emerald-200 dark:bg-emerald-800 sm:block" aria-hidden="true">
 				</div>
 				<div class="min-w-0 sm:flex-1 sm:text-right">
-					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600">End</p>
-					<p class="mt-1 text-sm font-semibold leading-snug text-slate-900 sm:text-base">
+					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">End</p>
+					<p class="mt-1 text-sm font-semibold leading-snug text-slate-900 dark:text-slate-100 sm:text-base">
 						{formatDate(session.end_at)}
 					</p>
-					<p class="mt-0.5 text-sm font-medium tabular-nums text-slate-600">
+					<p class="mt-0.5 text-sm font-medium tabular-nums text-slate-600 dark:text-slate-400 dark:text-slate-500">
 						{formatTime(session.end_at)}
 					</p>
 				</div>
@@ -772,19 +782,19 @@
 				</div>
 			</div>
 
-			<div class="border-t border-emerald-100/80 bg-white/70 px-4 py-5 sm:px-6">
+			<div class="border-t border-emerald-100/80 bg-white/70 px-4 py-5 dark:border-emerald-900/50 dark:bg-slate-900/40 sm:px-6">
 				<div class="flex items-center justify-between gap-2">
-					<h3 class="text-sm font-semibold uppercase tracking-wide text-brand-600">Your matches</h3>
+					<h3 class="text-sm font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">Your matches</h3>
 					{#if myMatchRecord.played > 0}
 						<span
-							class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800"
+							class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300"
 						>
 							{formatMatchRecord(myMatchRecord.wins, myMatchRecord.losses, myMatchRecord.draws)}
 						</span>
 					{/if}
 				</div>
 				{#if sortedMyMatchHistory.length === 0}
-					<p class="mt-3 text-sm text-slate-600">
+					<p class="mt-3 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 						You did not play a recorded match this session.
 					</p>
 				{:else}
@@ -804,7 +814,7 @@
 				{/if}
 			</div>
 
-			<div class="border-t border-emerald-100/80 bg-white/50 px-4 py-4 sm:px-6">
+			<div class="border-t border-emerald-100/80 bg-white/50 px-4 py-4 dark:border-emerald-900/50 dark:bg-slate-900/30 sm:px-6">
 				<SubmitButton
 					type="button"
 					loading={homeNavLoading}
@@ -824,35 +834,35 @@
 
 		<section class="app-detail-section">
 			<div
-				class="flex flex-col items-stretch gap-4 border-b border-brand-100 bg-gradient-to-br from-brand-50 via-white to-brand-50/50 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6 lg:px-8"
+				class="flex flex-col items-stretch gap-4 border-b border-brand-100 bg-gradient-to-br from-brand-50 via-white to-brand-50/50 px-4 py-5 dark:border-brand-800 dark:from-slate-900 dark:via-slate-900 dark:to-brand-900/30 sm:flex-row sm:items-center sm:justify-between sm:gap-6 lg:px-8"
 			>
 				<div class="min-w-0 sm:flex-1">
-					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600">Start</p>
-					<p class="mt-1 text-base font-semibold leading-snug text-slate-900">
+					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">Start</p>
+					<p class="mt-1 text-base font-semibold leading-snug text-slate-900 dark:text-slate-100">
 						{formatDate(session.start_at)}
 					</p>
-					<p class="mt-0.5 text-sm font-medium tabular-nums text-slate-600">
+					<p class="mt-0.5 text-sm font-medium tabular-nums text-slate-600 dark:text-slate-400 dark:text-slate-500">
 						{formatTime(session.start_at)}
 					</p>
 				</div>
-				<div class="hidden h-10 w-px shrink-0 self-center bg-brand-200 sm:block" aria-hidden="true">
+				<div class="hidden h-10 w-px shrink-0 self-center bg-brand-200 dark:bg-brand-800 sm:block" aria-hidden="true">
 				</div>
 				<div
-					class="rounded-2xl border border-brand-100 bg-white/80 px-4 py-3 shadow-sm ring-1 ring-brand-100/80 sm:shrink-0 sm:min-w-[8.5rem] sm:self-center sm:px-5 sm:text-center"
+					class="rounded-2xl border border-brand-100 bg-white/80 px-4 py-3 shadow-sm ring-1 ring-brand-100/80 dark:border-brand-800 dark:bg-slate-800/80 dark:ring-brand-900/50 sm:shrink-0 sm:min-w-[8.5rem] sm:self-center sm:px-5 sm:text-center"
 				>
-					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600">Duration</p>
-					<p class="mt-1 whitespace-nowrap text-lg font-semibold text-brand-800">
+					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">Duration</p>
+					<p class="mt-1 whitespace-nowrap text-lg font-semibold text-brand-800 dark:text-brand-200">
 						{sessionDurationLabel}
 					</p>
 				</div>
-				<div class="hidden h-10 w-px shrink-0 self-center bg-brand-200 sm:block" aria-hidden="true">
+				<div class="hidden h-10 w-px shrink-0 self-center bg-brand-200 dark:bg-brand-800 sm:block" aria-hidden="true">
 				</div>
 				<div class="min-w-0 sm:flex-1 sm:text-right">
-					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600">End</p>
-					<p class="mt-1 text-base font-semibold leading-snug text-slate-900">
+					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">End</p>
+					<p class="mt-1 text-base font-semibold leading-snug text-slate-900 dark:text-slate-100">
 						{formatDate(session.end_at)}
 					</p>
-					<p class="mt-0.5 text-sm font-medium tabular-nums text-slate-600">
+					<p class="mt-0.5 text-sm font-medium tabular-nums text-slate-600 dark:text-slate-400 dark:text-slate-500">
 						{formatTime(session.end_at)}
 					</p>
 				</div>
@@ -864,8 +874,8 @@
 						<ClipboardDocumentListIcon class="h-5 w-5" />
 					</span>
 					<div>
-						<h2 class="text-lg font-semibold text-slate-900">Session details</h2>
-						<p class="text-sm text-slate-500">Venue, courts, and shuttle for this session</p>
+						<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Session details</h2>
+						<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Venue, courts, and shuttle for this session</p>
 					</div>
 				</div>
 
@@ -898,7 +908,7 @@
 						<dt class="app-detail-meta-label">Shuttle usage</dt>
 						<dd class="app-detail-meta-value">
 							<span class="text-lg font-semibold text-brand-700">{sessionShuttlesUsed}</span>
-							<p class="mt-1 text-sm text-slate-600">
+							<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 								{#if completedSessionMatchCount === 0}
 									No completed matches yet
 								{:else}
@@ -912,12 +922,12 @@
 						<dt class="app-detail-meta-label">Shuttle</dt>
 						<dd class="app-detail-meta-value">
 							{#if session.shuttle}
-								<p class="text-base font-semibold text-slate-900">{session.shuttle.name}</p>
-								<p class="mt-1 text-sm text-slate-600">
+								<p class="text-base font-semibold text-slate-900 dark:text-slate-100">{session.shuttle.name}</p>
+								<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 									Speed {session.shuttle.speed} · {shuttlePriceLabel} each · {shuttleSharedEachLabel}
 									after shared
 								</p>
-								<p class="mt-2 text-xs text-slate-500">
+								<p class="mt-2 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 									{#if myShuttlesUsed > 0}
 										Your shuttle share is in your cost above ({myShuttlesUsed} shuttle{myShuttlesUsed === 1 ? '' : 's'} from your matches).
 									{:else}
@@ -925,7 +935,7 @@
 									{/if}
 								</p>
 							{:else}
-								<p class="text-sm text-slate-600">{shuttleDetailLabel}</p>
+								<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{shuttleDetailLabel}</p>
 							{/if}
 						</dd>
 					</div>
@@ -938,7 +948,7 @@
 			{#if data.activePlayers.length === 0}
 				<EmptyState message="No active players right now." />
 			{:else}
-				<ul class="divide-y divide-slate-100">
+				<ul class="divide-y divide-slate-100 dark:divide-slate-800">
 					{#each data.activePlayers as player (player.id)}
 						{@const liveStatus = derivePlayerLiveStatus({
 							membershipStatus: player.status,
@@ -951,10 +961,10 @@
 								size="sm"
 							/>
 							<div class="min-w-0 flex-1">
-								<p class="truncate font-medium text-slate-800">
+								<p class="truncate font-medium text-slate-800 dark:text-slate-200">
 									{player.profile?.display_name ?? 'Unknown player'}
 									{#if player.is_me}
-										<span class="text-slate-500">(you)</span>
+										<span class="text-slate-500 dark:text-slate-400 dark:text-slate-500">(you)</span>
 									{/if}
 								</p>
 								{#if player.profile?.tag}
@@ -1000,9 +1010,9 @@
 		<AppCard class="space-y-4">
 			<SectionHeading title="Early leave" />
 			{#if matchLocked}
-				<p class="text-sm text-slate-600">Finish your current match before requesting to leave.</p>
+				<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Finish your current match before requesting to leave.</p>
 			{:else if uiState === 'leave_pending'}
-				<p class="text-sm text-slate-600">
+				<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 					Your leave request is waiting for admin review. Complete payment below while you wait.
 				</p>
 				<form method="POST" action="?/cancelLeave" use:enhance={handleAction('cancelLeave')}>
@@ -1015,24 +1025,24 @@
 					</SubmitButton>
 				</form>
 			{:else if canRequestEarlyLeave(session.my_membership, data.myLeaveRequest?.status ?? null, sessionEnded)}
-				<p class="text-sm text-slate-600">
+				<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 					You can leave before the session ends. You will still owe your court and shuttle share.
 				</p>
 				<SubmitButton type="button" onclick={() => (leaveConfirmOpen = true)}>
 					Request to leave
 				</SubmitButton>
 			{:else if uiState === 'awaiting_leave'}
-				<p class="text-sm text-slate-600">
+				<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 					Payment confirmed. Waiting for admin to approve your leave request.
 				</p>
 			{:else if uiState === 'payment_submitted'}
-				<p class="text-sm text-slate-600">Payment submitted. Waiting for admin confirmation.</p>
+				<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Payment submitted. Waiting for admin confirmation.</p>
 			{:else if sessionEnded}
-				<p class="text-sm text-slate-600">
+				<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 					Session ended — wait for the host to start settlement and bill everyone.
 				</p>
 			{:else}
-				<p class="text-sm text-slate-600">
+				<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 					Stay in the session or request to leave when you are ready.
 				</p>
 			{/if}
@@ -1047,8 +1057,8 @@
 	closeOnEscape={false}
 >
 	<div class="app-card-padded space-y-4">
-		<h2 id="payment-modal-title" class="text-lg font-semibold text-slate-900">Pay session fee</h2>
-		<p class="text-sm text-slate-600">
+		<h2 id="payment-modal-title" class="text-lg font-semibold text-slate-900 dark:text-slate-100">Pay session fee</h2>
+		<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 			Transfer exactly {formatThb(myTotalCost)} using PromptPay, attach your bank slip, then tap “I've paid”.
 		</p>
 
@@ -1077,7 +1087,7 @@
 				</SubmitButton>
 			</form>
 		{:else}
-			<p class="text-center text-sm text-slate-600">
+			<p class="text-center text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 				{paymentStatusLabel(data.myPayment?.status ?? 'submitted')}
 			</p>
 		{/if}
@@ -1086,11 +1096,11 @@
 
 <AppModal open={leaveConfirmOpen} labelledBy="leave-confirm-title" onClose={closeLeaveConfirm}>
 	<div class="app-card-padded space-y-4">
-		<div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
-			<h2 id="leave-confirm-title" class="text-lg font-semibold text-amber-950">
+		<div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 dark:border-amber-800 dark:bg-amber-950/40">
+			<h2 id="leave-confirm-title" class="text-lg font-semibold text-amber-950 dark:text-amber-200">
 				Leave session early?
 			</h2>
-			<ul class="mt-3 space-y-2 text-sm leading-relaxed text-amber-950/90">
+			<ul class="mt-3 space-y-2 text-sm leading-relaxed text-amber-950/90 dark:text-amber-200/90">
 				<li>
 					You will be billed <strong>{formatThb(myTotalCost)}</strong> — your court and shuttle share
 					for this session so far.

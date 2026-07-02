@@ -62,8 +62,8 @@
 	const feeCardClass = (feeStatus: CancellationFeeStatus, outstanding: boolean): string => {
 		if (!outstanding) {
 			if (feeStatus === 'paid') return 'border-emerald-200 bg-emerald-50/30';
-			if (feeStatus === 'waived') return 'border-slate-200 bg-slate-50/80';
-			return 'border-slate-200 bg-white';
+			if (feeStatus === 'waived') return 'border-slate-200 dark:border-slate-700 bg-slate-50/80';
+			return 'border-slate-200 dark:border-slate-700 bg-white';
 		}
 		if (feeStatus === 'submitted') return 'border-sky-200 bg-sky-50/40';
 		return 'border-amber-200 bg-amber-50/40';
@@ -72,7 +72,7 @@
 	const feeBadgeClass = (feeStatus: CancellationFeeStatus, outstanding: boolean): string => {
 		if (!outstanding) {
 			if (feeStatus === 'paid') return 'bg-emerald-50 text-emerald-700 ring-emerald-100';
-			return 'bg-slate-100 text-slate-600 ring-slate-200';
+			return 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 dark:text-slate-500 ring-slate-200';
 		}
 		if (feeStatus === 'submitted') return 'bg-sky-100 text-sky-800 ring-sky-200';
 		return 'bg-amber-100 text-amber-900 ring-amber-200';
@@ -102,19 +102,19 @@
 					/>
 					<div class="min-w-0 flex-1">
 						<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-							<p class="truncate font-semibold text-slate-900">
+							<p class="truncate font-semibold text-slate-900 dark:text-slate-100">
 								{fee.profile?.display_name ?? 'Unknown player'}
 							</p>
 							{#if fee.profile?.tag}
 								<TagPill tag={fee.profile.tag} />
 							{/if}
 						</div>
-						<p class="mt-0.5 text-xs text-slate-600">
+						<p class="mt-0.5 text-xs text-slate-600 dark:text-slate-400 dark:text-slate-500">
 							{sessionPlayerStatusLabel(fee.status)} · late cancel
 						</p>
 					</div>
 					<div class="flex shrink-0 flex-col items-end gap-1.5">
-						<p class="text-base font-semibold tabular-nums text-slate-900">
+						<p class="text-base font-semibold tabular-nums text-slate-900 dark:text-slate-100">
 							{formatThb(fee.fee_owed)}
 						</p>
 						<span
@@ -202,7 +202,7 @@
 		<h2 id="confirm-fee-without-slip-title" class="text-lg font-semibold text-red-800">
 			Confirm without bank slip?
 		</h2>
-		<p class="text-sm text-slate-600">
+		<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 			This player has not attached a bank transfer slip. Only confirm if you have verified payment
 			through another channel.
 		</p>

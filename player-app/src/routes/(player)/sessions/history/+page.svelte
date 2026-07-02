@@ -154,7 +154,7 @@
 				>
 					{#if isFetching}
 						<span
-							class="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-brand-700"
+							class="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 dark:border-slate-600 border-t-brand-700"
 							aria-hidden="true"
 						></span>
 					{:else}
@@ -165,7 +165,7 @@
 		</form>
 
 		{#if hasActiveFilters && !isFetching}
-			<p class="text-xs text-slate-500">
+			<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 				Filtered
 				{#if history.date}
 					· {history.date}
@@ -186,7 +186,7 @@
 		{#if isFetching}
 			<ul class="space-y-3" aria-busy="true">
 				{#each Array(3) as _, index (index)}
-					<li class="rounded-xl border border-slate-200 bg-white p-4">
+					<li class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
 						<div class="app-skeleton mb-2 h-4 w-40 max-w-full rounded"></div>
 						<div class="app-skeleton mb-2 h-3.5 w-28 max-w-full rounded"></div>
 						<div class="app-skeleton h-3.5 w-52 max-w-full rounded"></div>
@@ -195,44 +195,44 @@
 			</ul>
 		{:else if history.items.length === 0}
 			<div
-				class="rounded-xl border border-dashed border-slate-200 bg-gradient-to-b from-slate-50/90 to-white px-4 py-8 text-center"
+				class="rounded-xl border border-dashed border-slate-200 dark:border-slate-700 bg-gradient-to-b from-slate-50/90 to-white px-4 py-8 text-center"
 			>
 				<DashboardIcon icon={isFilteredEmpty ? SearchIcon : ClockIcon} accent="indigo" class="mx-auto" />
 				{#if isFilteredEmpty}
-					<p class="mt-3 text-sm font-medium text-slate-900">No sessions match your filters</p>
-					<p class="mx-auto mt-1 max-w-xs text-sm text-slate-500">
+					<p class="mt-3 text-sm font-medium text-slate-900 dark:text-slate-100">No sessions match your filters</p>
+					<p class="mx-auto mt-1 max-w-xs text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
 						Try another date, club, or status, or reset to see your full session history.
 					</p>
 					<button
 						type="button"
-						class="mt-4 inline-flex items-center gap-2 text-sm font-medium text-brand-700 hover:text-brand-800 disabled:opacity-50"
+						class="mt-4 inline-flex items-center gap-2 text-sm font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800 dark:text-brand-300 disabled:opacity-50"
 						disabled={historyActionsBusy}
 						aria-busy={linkNav === 'clear'}
 						onclick={goClearFilters}
 					>
 						{#if linkNav === 'clear'}
 							<span
-								class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-brand-700"
+								class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 dark:border-slate-600 border-t-brand-700"
 								aria-hidden="true"
 							></span>
 						{/if}
 						Clear filters
 					</button>
 				{:else}
-					<p class="mt-3 text-sm font-medium text-slate-900">No session history yet</p>
-					<p class="mx-auto mt-1 max-w-xs text-sm text-slate-500">
+					<p class="mt-3 text-sm font-medium text-slate-900 dark:text-slate-100">No session history yet</p>
+					<p class="mx-auto mt-1 max-w-xs text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
 						Sessions you join will appear here once you have played.
 					</p>
 					<button
 						type="button"
-						class="mt-4 inline-flex items-center gap-2 text-sm font-medium text-brand-700 hover:text-brand-800 disabled:opacity-50"
+						class="mt-4 inline-flex items-center gap-2 text-sm font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800 dark:text-brand-300 disabled:opacity-50"
 						disabled={historyActionsBusy}
 						aria-busy={linkNav === 'browse'}
 						onclick={goBrowseSessions}
 					>
 						{#if linkNav === 'browse'}
 							<span
-								class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-brand-700"
+								class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 dark:border-slate-600 border-t-brand-700"
 								aria-hidden="true"
 							></span>
 						{/if}
@@ -246,7 +246,7 @@
 					<li>
 						<button
 							type="button"
-							class="history-session-row w-full rounded-xl border border-slate-200 bg-white p-4 text-left transition hover:border-brand-200 hover:bg-brand-50/40 active:bg-brand-50/60 {navigatingSessionId ===
+							class="history-session-row w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 text-left transition hover:border-brand-200 hover:bg-brand-50/40 active:bg-brand-50/60 {navigatingSessionId ===
 							item.id
 								? 'nav-loading'
 								: ''}"
@@ -256,9 +256,9 @@
 						>
 							<div class="flex items-start justify-between gap-3">
 								<div class="min-w-0 flex-1 space-y-1.5">
-									<p class="text-base font-semibold leading-snug text-slate-900">{item.name}</p>
-									<p class="text-sm font-medium text-slate-600">{item.club_name}</p>
-									<p class="text-sm leading-relaxed text-slate-500">
+									<p class="text-base font-semibold leading-snug text-slate-900 dark:text-slate-100">{item.name}</p>
+									<p class="text-sm font-medium text-slate-600 dark:text-slate-400 dark:text-slate-500">{item.club_name}</p>
+									<p class="text-sm leading-relaxed text-slate-500 dark:text-slate-400 dark:text-slate-500">
 										{formatDateTime(item.start_at)} · {sessionPlayerStatusLabel(item.membership_status)}
 									</p>
 								</div>

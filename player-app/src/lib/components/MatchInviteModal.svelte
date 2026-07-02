@@ -104,10 +104,10 @@
 			size="sm"
 		/>
 		<div class="min-w-0 flex-1">
-			<p class="truncate text-sm font-medium text-slate-900">
+			<p class="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
 				{playerName(player)}
 				{#if you}
-					<span class="text-slate-500">(you)</span>
+					<span class="text-slate-500 dark:text-slate-400 dark:text-slate-500">(you)</span>
 				{/if}
 			</p>
 			{#if player.profile?.tag}
@@ -131,7 +131,7 @@
 		closeOnBackdrop={false}
 		closeOnEscape={false}
 	>
-		<div class="overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5">
+		<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl ring-1 ring-black/5">
 			<div class="border-b border-brand-700/40 bg-brand-600 px-4 py-3 text-white sm:px-5">
 				<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-white/75">
 					{waitingForOthers ? 'Waiting for players' : "You're invited"}
@@ -168,7 +168,7 @@
 							</p>
 							<div class="mt-1.5 h-1 overflow-hidden rounded-full bg-white/25">
 								<div
-									class="h-full rounded-full bg-white transition-[width] duration-300 ease-linear"
+									class="h-full rounded-full bg-white dark:bg-slate-900 transition-[width] duration-300 ease-linear"
 									style:width="{countdownProgress * 100}%"
 								></div>
 							</div>
@@ -180,22 +180,22 @@
 			<div class="space-y-4 px-4 py-4 sm:px-5 sm:py-5">
 				{#if waitingForOthers}
 					<div
-						class="rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-center"
+						class="rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-center dark:border-brand-800 dark:bg-brand-900/30"
 						aria-live="polite"
 					>
-						<p class="text-sm font-medium text-brand-900">
+						<p class="text-sm font-medium text-brand-900 dark:text-brand-200">
 							You accepted — waiting for {4 - acceptedCount} more player{4 - acceptedCount === 1
 								? ''
 								: 's'}.
 						</p>
 						{#if inviteWindowOpen}
-							<p class="mt-1 text-sm text-brand-800">
+							<p class="mt-1 text-sm text-brand-800 dark:text-brand-300">
 								All four must accept within {countdownSeconds}s or this match is cancelled.
 							</p>
 						{/if}
 					</div>
 				{:else if awaitingResponse}
-					<p class="text-sm leading-relaxed text-slate-600">
+					<p class="text-sm leading-relaxed text-slate-600 dark:text-slate-400 dark:text-slate-500">
 						{#if inviteWindowOpen}
 							Accept to play on court {match.court_number}. Decline if you can't — the invite ends in
 							{countdownSeconds}s and the match is cancelled if not everyone accepts.
@@ -206,8 +206,8 @@
 				{/if}
 
 				<div class="grid gap-3 sm:grid-cols-2">
-					<div class="rounded-xl border border-brand-200 bg-brand-50/60 p-3">
-						<p class="text-xs font-semibold uppercase tracking-wide text-brand-700">Your team</p>
+					<div class="rounded-xl border border-brand-200 bg-brand-50/60 p-3 dark:border-brand-800 dark:bg-brand-900/30">
+						<p class="text-xs font-semibold uppercase tracking-wide text-brand-700 dark:text-brand-300">Your team</p>
 						<ul class="mt-2 space-y-2">
 							{#each teammates as player (player.id)}
 								{@render playerRow(player, player.user_id === userId)}
@@ -215,8 +215,8 @@
 						</ul>
 					</div>
 
-					<div class="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
-						<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Opponents</p>
+					<div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 p-3 dark:bg-slate-800/50">
+						<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Opponents</p>
 						<ul class="mt-2 space-y-2">
 							{#each opponents as player (player.id)}
 								{@render playerRow(player)}

@@ -335,7 +335,7 @@
 			>
 				{#if refreshing}
 					<span
-						class="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-brand-600"
+						class="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 dark:border-slate-600 border-t-brand-600"
 						aria-hidden="true"
 					></span>
 				{:else}
@@ -430,8 +430,8 @@
 				>
 					<DashboardIcon icon={UserGroupIcon} accent="indigo" />
 					<div class="min-w-0 flex-1">
-						<p class="font-semibold text-slate-900">View all clubs</p>
-						<p class="text-sm leading-snug text-slate-500">See all {clubs.length} clubs</p>
+						<p class="font-semibold text-slate-900 dark:text-slate-100">View all clubs</p>
+						<p class="text-sm leading-snug text-slate-500 dark:text-slate-400 dark:text-slate-500">See all {clubs.length} clubs</p>
 					</div>
 					<span class="app-action-row-arrow" aria-hidden="true">→</span>
 				</button>

@@ -172,7 +172,7 @@
 						class="rounded-full px-3 py-1.5 text-sm font-medium ring-1 transition {filters.kind ===
 						option.value
 							? 'bg-secondary-400 text-secondary-900 ring-secondary-400'
-							: 'bg-white text-slate-700 ring-slate-200 hover:bg-slate-50'}"
+							: 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 dark:text-slate-600 ring-slate-200 hover:bg-slate-50'}"
 						aria-pressed={filters.kind === option.value}
 						onclick={() => setKindFilter(option.value)}
 					>
@@ -196,7 +196,7 @@
 					<span class="app-filter-label invisible" aria-hidden="true">More filters</span>
 					<button
 						type="button"
-						class="flex h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+						class="flex h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600 shadow-sm transition hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-950"
 						aria-expanded={showAdvanced}
 						aria-controls="tx-advanced-filters"
 						onclick={() => {
@@ -221,7 +221,7 @@
 						<span class="app-filter-label invisible" aria-hidden="true">Clear filters</span>
 						<button
 							type="button"
-							class="flex h-11 w-full items-center justify-center px-3 text-sm font-medium text-brand-700 hover:text-brand-800"
+							class="flex h-11 w-full items-center justify-center px-3 text-sm font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800"
 							onclick={clearFilters}
 						>
 							Clear all
@@ -233,7 +233,7 @@
 			{#if showAdvanced}
 				<div
 					id="tx-advanced-filters"
-					class="app-filter-toolbar grid grid-cols-2 gap-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:items-end"
+					class="app-filter-toolbar grid grid-cols-2 gap-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 p-3 sm:items-end"
 				>
 					<div class="min-w-0">
 						<DatePicker id="tx-date" label="Date" variant="filter" bind:value={filters.date} />
@@ -291,7 +291,7 @@
 			<EmptyState message="No transactions match your filters.">
 				<button
 					type="button"
-					class="text-sm font-medium text-brand-700 hover:text-brand-800"
+					class="text-sm font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800"
 					onclick={clearFilters}
 				>
 					Clear filters
@@ -301,19 +301,19 @@
 			<ul class="space-y-2">
 				{#each pagedTransactions.items as transaction (transaction.id)}
 					<li
-						class="rounded-2xl border border-slate-200/80 bg-white px-4 py-3 shadow-sm ring-1 ring-slate-100"
+						class="rounded-2xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 px-4 py-3 shadow-sm ring-1 ring-slate-100 dark:ring-slate-800"
 					>
 						<div class="flex items-start justify-between gap-3">
 							<div class="min-w-0 flex-1">
 								<div class="flex flex-wrap items-center gap-2">
-									<p class="truncate font-medium text-slate-900">
+									<p class="truncate font-medium text-slate-900 dark:text-slate-100">
 										{playerLabel(transaction)}
 									</p>
 									{#if transaction.player_tag}
 										<TagPill tag={transaction.player_tag} />
 									{/if}
 								</div>
-								<p class="mt-0.5 truncate text-sm text-slate-600">
+								<p class="mt-0.5 truncate text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 									{transaction.session_name}
 								</p>
 								<div class="mt-2 flex flex-wrap items-center gap-2">
@@ -331,15 +331,15 @@
 									>
 										{transactionStatusLabel(transaction)}
 									</span>
-									<span class="text-xs text-slate-400">
+									<span class="text-xs text-slate-400 dark:text-slate-500">
 										{formatDateTime(transaction.occurred_at)}
 									</span>
 									{#if data.isSuperAdmin}
-										<span class="text-xs text-slate-400">{transaction.club_name}</span>
+										<span class="text-xs text-slate-400 dark:text-slate-500">{transaction.club_name}</span>
 									{/if}
 								</div>
 							</div>
-							<p class="shrink-0 text-base font-semibold tabular-nums text-slate-900">
+							<p class="shrink-0 text-base font-semibold tabular-nums text-slate-900 dark:text-slate-100">
 								{formatThb(transaction.amount)}
 							</p>
 						</div>

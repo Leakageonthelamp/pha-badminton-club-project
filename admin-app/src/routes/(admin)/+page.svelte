@@ -143,7 +143,7 @@
 
 	{#if data.clubs.length === 0}
 		<EmptyState message="No clubs yet.">
-			<a href="/clubs/new" class="text-sm font-medium text-brand-700 hover:text-brand-800">
+			<a href="/clubs/new" class="text-sm font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800">
 				Create your first club
 			</a>
 		</EmptyState>
@@ -201,7 +201,7 @@
 				<EmptyState message="No clubs match your filters.">
 					<button
 						type="button"
-						class="text-sm font-medium text-brand-700 hover:text-brand-800"
+						class="text-sm font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800"
 						onclick={() => {
 							searchQuery = '';
 							statusFilter = 'all';
@@ -216,15 +216,15 @@
 						title="{filteredClubs.length} club{filteredClubs.length === 1 ? '' : 's'}"
 					/>
 					{#if normalizedSearch}
-						<p class="text-sm text-slate-500">Results for “{searchQuery.trim()}”</p>
+						<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Results for “{searchQuery.trim()}”</p>
 					{/if}
 
-					<ul class="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
+					<ul class="divide-y divide-slate-200 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
 						{#each pagedClubs.items as club (club.id)}
 							<li>
 								<a
 									href="/clubs/{club.id}"
-									class="group flex items-center gap-3 px-4 py-3.5 transition hover:bg-slate-50"
+									class="group flex items-center gap-3 px-4 py-3.5 transition hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-950"
 								>
 									<DashboardIcon
 										icon={UserGroupIcon}
@@ -233,7 +233,7 @@
 									/>
 									<div class="min-w-0 flex-1">
 										<div class="flex flex-wrap items-center gap-2">
-											<span class="truncate font-medium text-slate-900">{club.name}</span>
+											<span class="truncate font-medium text-slate-900 dark:text-slate-100">{club.name}</span>
 											{#if club.is_active}
 												<span
 													class="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200/80"
@@ -246,8 +246,8 @@
 												</span>
 											{/if}
 										</div>
-										<p class="mt-0.5 truncate text-sm text-slate-600">{clubSubtitle(club)}</p>
-										<p class="mt-1 text-xs text-slate-400">{clubLimits(club)}</p>
+										<p class="mt-0.5 truncate text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{clubSubtitle(club)}</p>
+										<p class="mt-1 text-xs text-slate-400 dark:text-slate-500">{clubLimits(club)}</p>
 									</div>
 									<span class="app-action-row-arrow shrink-0" aria-hidden="true">→</span>
 								</a>

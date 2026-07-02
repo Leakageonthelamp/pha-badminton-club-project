@@ -218,8 +218,8 @@
 	{#if data.canManage && session.status !== 'draft'}
 		<AppCard class="space-y-6">
 			<div>
-				<h2 class="text-lg font-semibold text-slate-900">Participants</h2>
-				<p class="mt-1 text-sm text-slate-600">
+				<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Participants</h2>
+				<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 					Confirm or reject waiting players from 15 minutes before start until session end.
 				</p>
 				{#if !data.adminActionWindowOpen}
@@ -234,11 +234,11 @@
 					Waiting list ({waitingPlayers.length})
 				</h3>
 				{#if waitingPlayers.length === 0}
-					<p class="text-sm text-slate-500">No players waiting.</p>
+					<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">No players waiting.</p>
 				{:else}
-					<ul class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
+					<ul class="divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
 						{#each waitingPlayers as player (player.id)}
-							<li class="bg-white px-4 py-3">
+							<li class="bg-white dark:bg-slate-900 px-4 py-3">
 								<div class="flex flex-wrap items-center justify-between gap-3">
 									<div class="flex min-w-0 items-center gap-3">
 										<UserAvatar
@@ -248,14 +248,14 @@
 										/>
 										<div class="min-w-0">
 											<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-												<p class="truncate font-medium text-slate-900">
+												<p class="truncate font-medium text-slate-900 dark:text-slate-100">
 													{player.profile?.display_name ?? 'Unknown'}
 												</p>
 												{#if player.profile?.tag}
 													<TagPill tag={player.profile.tag} />
 												{/if}
 											</div>
-											<p class="text-xs text-slate-500">
+											<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 												{sessionPlayerStatusLabel(player.status)} · joined
 												{formatDateTime(player.joined_at)}
 											</p>
@@ -312,11 +312,11 @@
 					Buffer queue ({queuedPlayers.length}/{session.max_buffer})
 				</h3>
 				{#if queuedPlayers.length === 0}
-					<p class="text-sm text-slate-500">No players in the buffer queue.</p>
+					<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">No players in the buffer queue.</p>
 				{:else}
-					<ul class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
+					<ul class="divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
 						{#each queuedPlayers as player (player.id)}
-							<li class="flex items-center gap-3 bg-white px-4 py-3">
+							<li class="flex items-center gap-3 bg-white dark:bg-slate-900 px-4 py-3">
 								<UserAvatar
 									displayName={player.profile?.display_name ?? 'Player'}
 									avatarUrl={player.profile?.avatar_url ?? null}
@@ -324,14 +324,14 @@
 								/>
 								<div class="min-w-0 flex-1">
 									<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-										<p class="truncate font-medium text-slate-900">
+										<p class="truncate font-medium text-slate-900 dark:text-slate-100">
 											{player.profile?.display_name ?? 'Unknown'}
 										</p>
 										{#if player.profile?.tag}
 											<TagPill tag={player.profile.tag} />
 										{/if}
 									</div>
-									<p class="text-xs text-slate-500">
+									<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 										{sessionPlayerStatusLabel(player.status)} · joined
 										{formatDateTime(player.joined_at)}
 									</p>
@@ -345,11 +345,11 @@
 			<div class="space-y-3">
 				<h3 class="app-section-heading">Confirmed ({confirmedPlayers.length})</h3>
 				{#if confirmedPlayers.length === 0}
-					<p class="text-sm text-slate-500">No confirmed players yet.</p>
+					<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">No confirmed players yet.</p>
 				{:else}
-					<ul class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
+					<ul class="divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
 						{#each confirmedPlayers as player (player.id)}
-							<li class="flex items-center gap-3 bg-white px-4 py-3">
+							<li class="flex items-center gap-3 bg-white dark:bg-slate-900 px-4 py-3">
 								<UserAvatar
 									displayName={player.profile?.display_name ?? 'Player'}
 									avatarUrl={player.profile?.avatar_url ?? null}
@@ -357,14 +357,14 @@
 								/>
 								<div class="min-w-0 flex-1">
 									<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-										<p class="truncate font-medium text-slate-900">
+										<p class="truncate font-medium text-slate-900 dark:text-slate-100">
 											{player.profile?.display_name ?? 'Unknown'}
 										</p>
 										{#if player.profile?.tag}
 											<TagPill tag={player.profile.tag} />
 										{/if}
 									</div>
-									<p class="text-xs text-slate-500">
+									<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 										Confirmed {player.decided_at ? formatDateTime(player.decided_at) : '—'}
 									</p>
 								</div>
@@ -481,8 +481,8 @@
 		{#if data.canManage && data.cancellationFees.length > 0}
 			<AppCard class="space-y-4">
 				<div>
-					<h2 class="text-lg font-semibold text-slate-900">Cancellation fees</h2>
-					<p class="mt-1 text-sm text-slate-600">
+					<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Cancellation fees</h2>
+					<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 						Late cancellations waiting for payment or admin confirmation.
 					</p>
 				</div>
@@ -516,8 +516,8 @@
 		{#if data.canModify}
 			<AppCard class="space-y-4">
 				<div>
-					<h2 class="text-lg font-semibold text-slate-900">Manage session</h2>
-					<p class="mt-1 text-sm text-slate-600">
+					<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Manage session</h2>
+					<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 						Edit or cancel until 15 minutes before start. After that, changes are locked.
 					</p>
 				</div>
@@ -543,13 +543,13 @@
 		{/if}
 
 		<AppCard class="space-y-4">
-			<h2 class="text-lg font-semibold text-slate-900">Description</h2>
+			<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Description</h2>
 			<RichTextDisplay html={session.description} />
 		</AppCard>
 
 		<section class="app-detail-section">
 			<div
-				class="border-b border-brand-100 bg-gradient-to-br from-brand-50 via-white to-brand-50/50 px-4 py-4 sm:px-6"
+				class="border-b border-brand-100 bg-gradient-to-br from-brand-50 dark:from-slate-900 via-white to-brand-50/50 px-4 py-4 sm:px-6"
 			>
 				<div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
 					<div class="app-history-stat">
@@ -580,8 +580,8 @@
 						<ClipboardDocumentListIcon class="h-5 w-5" />
 					</span>
 					<div>
-						<h2 class="text-lg font-semibold text-slate-900">Session details</h2>
-						<p class="text-sm text-slate-500">Overview, venue, capacity, and match settings</p>
+						<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Session details</h2>
+						<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Overview, venue, capacity, and match settings</p>
 					</div>
 				</div>
 
@@ -636,13 +636,13 @@
 										href={mapsUrl}
 										target="_blank"
 										rel="noopener noreferrer"
-										class="font-mono text-sm text-brand-700 underline decoration-brand-200 underline-offset-2 hover:text-brand-800"
+										class="font-mono text-sm text-brand-700 dark:text-brand-300 underline decoration-brand-200 underline-offset-2 hover:text-brand-800"
 									>
 										{locationLabel}
 									</a>
-									<span class="text-xs text-slate-500">Open in Maps</span>
+									<span class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">Open in Maps</span>
 								{:else}
-									<span class="text-slate-500">—</span>
+									<span class="text-slate-500 dark:text-slate-400 dark:text-slate-500">—</span>
 								{/if}
 							</dd>
 						</div>
@@ -656,9 +656,9 @@
 							<dt class="app-detail-meta-label">Players</dt>
 							<dd class="app-detail-meta-value">
 								<span class="text-lg font-semibold text-brand-700">{session.min_players}</span>
-								<span class="text-slate-400"> – </span>
+								<span class="text-slate-400 dark:text-slate-500"> – </span>
 								<span class="text-lg font-semibold text-brand-700">{session.max_players}</span>
-								<span class="ml-1 text-xs font-normal text-slate-500">min – max</span>
+								<span class="ml-1 text-xs font-normal text-slate-500 dark:text-slate-400 dark:text-slate-500">min – max</span>
 							</dd>
 						</div>
 						<div class="app-detail-meta-item">
@@ -690,7 +690,7 @@
 										)} @ {confirmedPlayers.length} confirmed
 									</span>
 								{:else}
-									<span class="text-slate-500">Split evenly (cost-share)</span>
+									<span class="text-slate-500 dark:text-slate-400 dark:text-slate-500">Split evenly (cost-share)</span>
 								{/if}
 							</dd>
 						</div>
@@ -702,7 +702,7 @@
 							<dt class="app-detail-meta-label">Buffer queue</dt>
 							<dd class="app-detail-meta-value">
 								<span class="text-lg font-semibold text-brand-700">{session.max_buffer}</span>
-								<span class="ml-1 text-xs font-normal text-slate-500">max overflow</span>
+								<span class="ml-1 text-xs font-normal text-slate-500 dark:text-slate-400 dark:text-slate-500">max overflow</span>
 							</dd>
 						</div>
 						<div class="app-detail-meta-item">
@@ -767,7 +767,7 @@
 		labelledBy="force-end-session-title"
 		onClose={() => (forceEndModalOpen = false)}
 	>
-		<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
+		<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
 			<div class="border-b border-red-100 bg-red-50 px-4 py-4">
 				<h2 id="force-end-session-title" class="text-lg font-semibold text-red-900">
 					Force end session?
@@ -805,7 +805,7 @@
 		labelledBy="open-session-title"
 		onClose={() => (openModalOpen = false)}
 	>
-		<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
+		<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
 			<div class="border-b border-brand-100 bg-brand-50 px-4 py-4">
 				<h2 id="open-session-title" class="text-lg font-semibold text-brand-900">Open session?</h2>
 				<p class="mt-2 text-sm text-brand-800">
@@ -841,7 +841,7 @@
 		labelledBy="cancel-session-title"
 		onClose={() => (cancelModalOpen = false)}
 	>
-		<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
+		<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
 			<div class="border-b border-red-100 bg-red-50 px-4 py-4">
 				<h2 id="cancel-session-title" class="text-lg font-semibold text-red-900">
 					Cancel session?

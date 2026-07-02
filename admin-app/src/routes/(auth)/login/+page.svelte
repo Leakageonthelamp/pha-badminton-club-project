@@ -46,8 +46,8 @@
 			<SubmitButton loading={loginLoading} loadingLabel="Signing in…" variant="accent">Sign in</SubmitButton>
 		</form>
 
-		<div class="space-y-3 border-t border-slate-100 pt-4">
-			<p class="text-center text-sm text-slate-500">Or continue with</p>
+		<div class="space-y-3 border-t border-slate-100 dark:border-slate-800 pt-4">
+			<p class="text-center text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Or continue with</p>
 			<form method="POST" action="?/oauth" onsubmit={() => (googleLoading = true)}>
 				<input type="hidden" name="provider" value="google" />
 				<SubmitButton

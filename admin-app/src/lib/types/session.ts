@@ -100,15 +100,15 @@ export const matchTypeLabel = (matchType: MatchType): string =>
 export const sessionStatusBadgeClass = (status: SessionStatus): string => {
 	switch (status) {
 		case 'draft':
-			return 'bg-amber-50 text-amber-800';
+			return 'bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300';
 		case 'open':
-			return 'bg-emerald-50 text-emerald-700';
+			return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300';
 		case 'in_progress':
-			return 'bg-sky-50 text-sky-700';
+			return 'bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300';
 		case 'closed':
-			return 'bg-slate-100 text-slate-700';
+			return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
 		case 'cancelled':
-			return 'bg-red-50 text-red-700';
+			return 'bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300';
 	}
 };
 

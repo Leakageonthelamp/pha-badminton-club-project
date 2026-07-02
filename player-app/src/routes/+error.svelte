@@ -21,11 +21,11 @@
 	<section class="flex flex-1 flex-col justify-center py-8">
 		<AppLogo size={72} class="mb-6" />
 		<p class="text-sm font-medium text-brand-700">{status}</p>
-		<h1 class="mt-2 text-2xl font-semibold text-slate-900">{copy.title}</h1>
-		<p class="mt-3 text-base leading-relaxed text-slate-600">{copy.hint}</p>
+		<h1 class="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-100">{copy.title}</h1>
+		<p class="mt-3 text-base leading-relaxed text-slate-600 dark:text-slate-400 dark:text-slate-500">{copy.hint}</p>
 
 		{#if dev && detail !== copy.hint}
-			<p class="mt-4 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+			<p class="mt-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 dark:text-slate-600">
 				{detail}
 			</p>
 		{/if}

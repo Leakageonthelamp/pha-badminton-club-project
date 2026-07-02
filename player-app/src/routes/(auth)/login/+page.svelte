@@ -46,8 +46,8 @@
 			<SubmitButton loading={loginLoading} loadingLabel="Logging in…" variant="accent">Log in</SubmitButton>
 		</form>
 
-		<div class="space-y-3 border-t border-slate-100 pt-4">
-			<p class="text-center text-sm text-slate-500">Or continue with</p>
+		<div class="space-y-3 border-t border-slate-100 dark:border-slate-800 pt-4">
+			<p class="text-center text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Or continue with</p>
 			<form method="POST" action="/login?/oauth" onsubmit={() => (googleLoading = true)}>
 				<input type="hidden" name="provider" value="google" />
 				<SubmitButton
@@ -70,8 +70,8 @@
 		</div>
 	</AppCard>
 
-	<p class="text-center text-sm text-slate-600">
+	<p class="text-center text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 		No account?
-		<a href="/register" class="font-medium text-brand-700 hover:text-brand-800">Register</a>
+		<a href="/register" class="font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800">Register</a>
 	</p>
 </section>

@@ -43,11 +43,11 @@
 {#snippet courtBody(court: { courtNumber: number; match?: CourtMatch })}
 	<div class="flex flex-col items-center gap-3">
 		<CourtIcon size="md" />
-		<p class="text-base font-semibold text-slate-900">Court {court.courtNumber}</p>
+		<p class="text-base font-semibold text-slate-900 dark:text-slate-100">Court {court.courtNumber}</p>
 		<span
 			class="rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset {court.match?.status
 				? matchStatusBadgeClass(court.match.status)
-				: 'bg-slate-100 text-slate-600 ring-slate-200'}"
+				: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 dark:text-slate-500 ring-slate-200'}"
 		>
 			{courtGridStatusLabel(court.match?.status)}
 		</span>

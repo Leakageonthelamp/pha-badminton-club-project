@@ -213,21 +213,21 @@
 				onpointerup={onDragEnd}
 				onpointercancel={onDragEnd}
 			>
-				<div class="h-1 w-10 rounded-full bg-slate-300" aria-hidden="true"></div>
+				<div class="h-1 w-10 rounded-full bg-slate-300 dark:bg-slate-600" aria-hidden="true"></div>
 			</div>
 
-			<div class="flex shrink-0 items-start justify-between gap-3 border-b border-slate-100 bg-gradient-to-br from-slate-50 via-white to-brand-50/40 pb-4">
+			<div class="app-surface-header flex shrink-0 items-start justify-between gap-3 pb-4">
 				<div class="min-w-0">
-					<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Match summary</p>
-					<h2 id="match-summary-title" class="mt-1 text-xl font-semibold text-slate-900">
+					<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Match summary</p>
+					<h2 id="match-summary-title" class="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-100">
 						Court {match.court_number}
 					</h2>
 					{#if matchWinner}
 						<p class="mt-1 text-sm text-emerald-700">Team {matchWinner} won</p>
 					{:else if matchDraw}
-						<p class="mt-1 text-sm text-slate-600">Match drawn</p>
+						<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Match drawn</p>
 					{/if}
-					<div class="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-600">
+					<div class="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 						{#if durationLabel}
 							<span class="font-mono tabular-nums">{durationLabel}</span>
 						{/if}
@@ -237,7 +237,7 @@
 						{#if sessionName && sessionHref}
 							<a
 								href={sessionHref}
-								class="font-medium text-brand-700 hover:text-brand-800"
+								class="font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800"
 								onclick={close}
 							>
 								{sessionName} →
@@ -255,7 +255,7 @@
 					</span>
 					<button
 						type="button"
-						class="rounded-lg px-2 py-1 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+						class="rounded-lg px-2 py-1 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
 						onclick={close}
 					>
 						Close
@@ -265,7 +265,7 @@
 
 			<div class="min-h-0 flex-1 overflow-y-auto pb-6">
 				{#if match.games.length}
-					<div class="border-b border-slate-100 py-4">
+					<div class="border-b border-slate-100 dark:border-slate-800 py-4">
 						<MatchScoreDisplay
 							games={match.games}
 							teamA={teamAForScore}
@@ -278,20 +278,20 @@
 
 				<div class="space-y-4 py-4">
 					<div class="space-y-2">
-						<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Team A</p>
+						<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Team A</p>
 						<ul class="space-y-2">
 							{#each teams.teamA as player (player.user_id ?? player.profile?.display_name)}
-								<li class="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50/60 p-3">
+								<li class="app-list-row flex items-center gap-3 p-3">
 									<UserAvatar
 										displayName={player.profile?.display_name ?? 'Player'}
 										avatarUrl={player.profile?.avatar_url ?? null}
 										size="sm"
 									/>
 									<div class="min-w-0 flex-1">
-										<p class="truncate font-medium text-slate-800">
+										<p class="truncate font-medium text-slate-800 dark:text-slate-200">
 											{player.profile?.display_name ?? 'Player'}
 											{#if highlightUserId && player.user_id === highlightUserId}
-												<span class="text-slate-500">(you)</span>
+												<span class="text-slate-500 dark:text-slate-400 dark:text-slate-500">(you)</span>
 											{/if}
 										</p>
 										{#if player.profile?.tag}
@@ -303,20 +303,20 @@
 						</ul>
 					</div>
 					<div class="space-y-2">
-						<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Team B</p>
+						<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Team B</p>
 						<ul class="space-y-2">
 							{#each teams.teamB as player (player.user_id ?? player.profile?.display_name)}
-								<li class="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50/60 p-3">
+								<li class="app-list-row flex items-center gap-3 p-3">
 									<UserAvatar
 										displayName={player.profile?.display_name ?? 'Player'}
 										avatarUrl={player.profile?.avatar_url ?? null}
 										size="sm"
 									/>
 									<div class="min-w-0 flex-1">
-										<p class="truncate font-medium text-slate-800">
+										<p class="truncate font-medium text-slate-800 dark:text-slate-200">
 											{player.profile?.display_name ?? 'Player'}
 											{#if highlightUserId && player.user_id === highlightUserId}
-												<span class="text-slate-500">(you)</span>
+												<span class="text-slate-500 dark:text-slate-400 dark:text-slate-500">(you)</span>
 											{/if}
 										</p>
 										{#if player.profile?.tag}

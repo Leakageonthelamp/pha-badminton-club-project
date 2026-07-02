@@ -6,8 +6,8 @@
 	import PwaPrompts from '$lib/components/PwaPrompts.svelte';
 	import ServiceUnavailable from '$lib/components/ServiceUnavailable.svelte';
 	import LocationPermissionPrompt from '@repo/ui/components/LocationPermissionPrompt.svelte';
-	import SamsungLightThemeNotice from '@repo/ui/components/SamsungLightThemeNotice.svelte';
 	import ToastContainer from '@repo/ui/components/ToastContainer.svelte';
+	import { initTheme } from '@repo/ui/theme.svelte';
 	import { dev } from '$app/environment';
 	import { injectAnalytics } from '@vercel/analytics/sveltekit';
 	import type { LayoutData } from './$types';
@@ -19,6 +19,10 @@
 	// Show a loading spinner on the exact link the user tapped while its page loads.
 	let pendingLink: HTMLElement | null = null;
 	let pendingTimer: ReturnType<typeof setTimeout> | null = null;
+
+	$effect(() => {
+		initTheme();
+	});
 
 	$effect(() => {
 		const onClick = (event: MouseEvent) => {
@@ -65,7 +69,6 @@
 			<LocationPermissionPrompt
 				description="Allow location access so you can set club venues on the map and manage nearby clubs."
 			/>
-			<SamsungLightThemeNotice />
 			{@render children()}
 		{/if}
 	</div>

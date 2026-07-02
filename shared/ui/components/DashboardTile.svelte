@@ -40,10 +40,10 @@
 		`app-tile h-full ${large ? 'min-h-36 justify-center py-5' : 'justify-start'} ${loading ? 'nav-loading' : ''} ${!href && !onclick ? 'pointer-events-none opacity-60' : ''}`
 	);
 	const titleClass = $derived(
-		`line-clamp-2 w-full font-semibold leading-snug text-slate-900 ${large ? 'text-lg' : 'min-h-[2.25rem] text-sm'}`
+		`line-clamp-2 w-full font-semibold leading-snug text-slate-900 dark:text-slate-100 ${large ? 'text-lg' : 'min-h-[2.25rem] text-sm'}`
 	);
 	const descriptionClass = $derived(
-		`mt-0.5 line-clamp-2 w-full text-xs leading-snug text-slate-500 ${large ? '' : 'min-h-8'}`
+		`mt-0.5 line-clamp-2 w-full text-xs leading-snug text-slate-500 dark:text-slate-400 dark:text-slate-500 ${large ? '' : 'min-h-8'}`
 	);
 	const iconSize = $derived(large ? 'lg' : 'md');
 	const hasBadges = $derived(

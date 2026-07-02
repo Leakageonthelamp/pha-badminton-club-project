@@ -47,10 +47,10 @@
 		if (viewerTeam && viewerTeam !== team) {
 			const edge =
 				row === 'head'
-					? 'rounded-t-xl border border-b-0 border-slate-200 bg-slate-50/50'
+					? 'rounded-t-xl border border-b-0 border-slate-200 dark:border-slate-700 bg-slate-50/50'
 					: row === 'body'
-						? 'border-x border-slate-200 bg-slate-50/50'
-						: 'rounded-b-xl border border-t-0 border-slate-200 bg-slate-50/50';
+						? 'border-x border-slate-200 dark:border-slate-700 bg-slate-50/50'
+						: 'rounded-b-xl border border-t-0 border-slate-200 dark:border-slate-700 bg-slate-50/50';
 			return `${col} ${rowClass} px-3 opacity-80 ${edge}`;
 		}
 
@@ -75,7 +75,7 @@
 	);
 </script>
 
-<p class="text-sm text-slate-600">{rallyScoreHint(scoreType)}</p>
+<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{rallyScoreHint(scoreType)}</p>
 {#if viewerTeam}
 	<p class="text-sm font-medium text-brand-800">
 		Your team is highlighted — enter <strong>your team's score</strong> on that side.
@@ -84,9 +84,9 @@
 
 <div class="space-y-4">
 	{#each gameScores as game, index (index)}
-		<div class="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+		<div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 p-4">
 			{#if gameScores.length > 1}
-				<p class="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+				<p class="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
 					Game {index + 1}
 				</p>
 			{/if}
@@ -104,7 +104,7 @@
 				</div>
 
 				<span
-					class="col-start-2 row-span-3 row-start-1 self-center px-1 text-sm font-semibold text-slate-400"
+					class="col-start-2 row-span-3 row-start-1 self-center px-1 text-sm font-semibold text-slate-400 dark:text-slate-500"
 					>vs</span
 				>
 

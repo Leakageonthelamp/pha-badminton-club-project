@@ -65,7 +65,7 @@
 </script>
 
 <div class="space-y-2">
-	<label class="block text-sm font-medium text-slate-700" for="slip-upload-input">
+	<label class="block text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600" for="slip-upload-input">
 		Bank transfer slip <span class="text-red-600">*</span>
 	</label>
 	<input
@@ -80,14 +80,14 @@
 	<div class="flex flex-wrap items-center gap-2">
 		<button
 			type="button"
-			class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+			class="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-950 disabled:opacity-50"
 			disabled={disabled || processing}
 			onclick={() => inputEl?.click()}
 		>
 			{processing ? 'Processing…' : file ? 'Change slip' : 'Attach slip'}
 		</button>
 		{#if file}
-			<span class="text-xs text-slate-500">Ready to upload</span>
+			<span class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">Ready to upload</span>
 			<SlipPreviewButton label="Preview" onclick={() => (previewOpen = true)} />
 		{/if}
 	</div>

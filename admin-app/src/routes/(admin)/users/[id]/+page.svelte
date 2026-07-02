@@ -28,7 +28,7 @@
 	import type { ActionData, PageData } from './$types';
 
 	const inputClass =
-		'w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base text-slate-900 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20';
+		'w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2.5 text-base text-slate-900 dark:text-slate-100 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -121,7 +121,7 @@
 					size="lg"
 				/>
 				<div class="min-w-0">
-					<p class="truncate text-lg font-semibold text-slate-900">{data.profile.display_name}</p>
+					<p class="truncate text-lg font-semibold text-slate-900 dark:text-slate-100">{data.profile.display_name}</p>
 					<div class="mt-1 flex flex-wrap items-center gap-2">
 						{#if data.profile.tag}
 							<TagPill tag={data.profile.tag} />
@@ -131,7 +131,7 @@
 							<span class="app-role-badge bg-red-50 text-red-800 ring-1 ring-red-200/80">Banned</span>
 						{/if}
 					</div>
-					<p class="mt-1 text-sm text-slate-600">
+					<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 						{formatSignInMethodLabel(data.profile.sign_in_method)} sign-in
 					</p>
 				</div>
@@ -143,8 +143,8 @@
 					<UserIcon class="h-5 w-5" />
 				</span>
 				<div>
-					<h2 class="text-lg font-semibold text-slate-900">Contact</h2>
-					<p class="text-sm text-slate-500">How this user signs in and can be reached</p>
+					<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Contact</h2>
+					<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">How this user signs in and can be reached</p>
 				</div>
 			</div>
 			<div class="app-detail-contact-grid">
@@ -192,17 +192,17 @@
 					<UserGroupIcon class="h-5 w-5" />
 				</span>
 				<div>
-					<h2 class="text-lg font-semibold text-slate-900">Role & clubs</h2>
-					<p class="text-sm text-slate-500">Platform role and club assignments</p>
+					<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Role & clubs</h2>
+					<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Platform role and club assignments</p>
 				</div>
 			</div>
 			<div class="flex flex-wrap items-center gap-2">
-				<span class="text-sm text-slate-600">App role</span>
+				<span class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">App role</span>
 				<span class="app-role-badge {roleBadgeClass}">{roleLabel}</span>
 			</div>
 			{#if data.managedClubs.length}
 				<div class="space-y-2">
-					<p class="text-sm font-medium text-slate-700">
+					<p class="text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">
 						Club admin for {data.managedClubs.length} club{data.managedClubs.length === 1 ? '' : 's'}
 					</p>
 					<div class="space-y-2">
@@ -218,7 +218,7 @@
 					</div>
 				</div>
 			{:else}
-				<p class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+				<p class="rounded-xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-4 py-3 text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
 					Not assigned as club admin for any club.
 				</p>
 			{/if}
@@ -242,8 +242,8 @@
 					<ClockIcon class="h-5 w-5" />
 				</span>
 				<div>
-					<h2 class="text-lg font-semibold text-slate-900">Account activity</h2>
-					<p class="text-sm text-slate-500">Timestamps and auth providers</p>
+					<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Account activity</h2>
+					<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Timestamps and auth providers</p>
 				</div>
 			</div>
 			<dl class="app-detail-meta-grid">
@@ -269,7 +269,7 @@
 						{#if data.authSummary?.providers.length}
 							<span class="flex flex-wrap gap-2">
 								{#each data.authSummary.providers as provider (provider)}
-									<span class="app-role-badge bg-slate-100 text-slate-700 ring-1 ring-slate-200/80">
+									<span class="app-role-badge bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 dark:text-slate-600 ring-1 ring-slate-200/80">
 										{provider}
 									</span>
 								{/each}
@@ -290,21 +290,21 @@
 					<SettingsIcon class="h-5 w-5" />
 				</span>
 				<div>
-					<h2 class="text-lg font-semibold text-slate-900">Actions</h2>
-					<p class="text-sm text-slate-500">Set password, ban, and access controls</p>
+					<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Actions</h2>
+					<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Set password, ban, and access controls</p>
 				</div>
 			</div>
 			<div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
 			{#if canResetPassword}
 				<button
 					type="button"
-					class="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+					class="inline-flex items-center justify-center rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 dark:text-slate-600 shadow-sm transition hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-950"
 					onclick={() => (passwordModalOpen = true)}
 				>
 					Set password
 				</button>
 			{:else}
-				<p class="text-sm text-slate-500">
+				<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
 					Setting a password is not available for OAuth-only accounts.
 				</p>
 			{/if}
@@ -318,7 +318,7 @@
 			{:else}
 				<button
 					type="button"
-					class="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+					class="inline-flex items-center justify-center rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 dark:text-slate-600 shadow-sm transition hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-950"
 					onclick={() => (banModalOpen = true)}
 				>
 					Ban user
@@ -354,12 +354,12 @@
 
 {#if passwordModalOpen}
 	<AppModal open={passwordModalOpen} labelledBy="reset-password-title" onClose={() => (passwordModalOpen = false)}>
-		<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
-			<div class="border-b border-slate-100 px-4 py-4">
-				<h2 id="reset-password-title" class="text-lg font-semibold text-slate-900">
+		<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
+			<div class="border-b border-slate-100 dark:border-slate-800 px-4 py-4">
+				<h2 id="reset-password-title" class="text-lg font-semibold text-slate-900 dark:text-slate-100">
 					Set password
 				</h2>
-				<p class="mt-2 text-sm text-slate-600">
+				<p class="mt-2 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 					Users cannot change their password on their own. Set a new password here and share it
 					with them through a secure channel.
 				</p>
@@ -399,7 +399,7 @@
 
 {#if banModalOpen}
 	<AppModal open={banModalOpen} labelledBy="ban-user-title" onClose={() => (banModalOpen = false)}>
-		<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
+		<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
 			<div class="border-b border-red-100 bg-red-50 px-4 py-4">
 				<h2 id="ban-user-title" class="text-lg font-semibold text-red-900">Ban this user?</h2>
 				<p class="mt-2 text-sm text-red-800">
@@ -432,7 +432,7 @@
 
 {#if deleteModalOpen && canDelete}
 	<AppModal open={deleteModalOpen} labelledBy="delete-user-title" onClose={() => (deleteModalOpen = false)}>
-		<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
+		<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
 			<div class="border-b border-red-100 bg-red-50 px-4 py-4">
 				<h2 id="delete-user-title" class="text-lg font-semibold text-red-900">Delete this user?</h2>
 				<p class="mt-2 text-sm text-red-800">
@@ -441,7 +441,7 @@
 			</div>
 			<form method="POST" action="?/delete" class="space-y-4 p-4" use:enhance={handleDelete}>
 				<div>
-					<label for="deleteConfirmText" class="mb-2 block text-sm font-medium text-slate-700">
+					<label for="deleteConfirmText" class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">
 						Type <span class="font-mono text-red-700">{USER_DELETE_CONFIRM_PHRASE}</span> to confirm
 					</label>
 					<input

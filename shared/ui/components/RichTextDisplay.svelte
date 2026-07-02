@@ -11,7 +11,7 @@
 {#if html.trim()}
 	<div class={className}>{@html html}</div>
 {:else}
-	<p class="text-sm text-slate-500">No description.</p>
+	<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">No description.</p>
 {/if}
 
 <style>

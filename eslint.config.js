@@ -2,6 +2,7 @@ import js from '@eslint/js';
 import eslintConfigPrettier from 'eslint-config-prettier';
 import svelte from 'eslint-plugin-svelte';
 import globals from 'globals';
+import svelteParser from 'svelte-eslint-parser';
 import tseslint from 'typescript-eslint';
 import svelteConfig from './player-app/svelte.config.js';
 import adminSvelteConfig from './admin-app/svelte.config.js';
@@ -150,6 +151,58 @@ export default tseslint.config(
 			'svelte/prefer-writable-derived': 'off',
 			'svelte/no-navigation-without-resolve': 'off',
 			'svelte/valid-prop-names-in-kit-pages': 'off'
+		}
+	},
+	{
+		files: ['player-app/**/*.svelte.{ts,js}'],
+		languageOptions: {
+			parser: svelteParser,
+			parserOptions: {
+				parser: tseslint.parser,
+				projectService: true,
+				tsconfigRootDir: `${import.meta.dirname}/player-app`,
+				extraFileExtensions: ['.svelte'],
+				svelteFeatures: { runes: true },
+				svelteConfig
+			}
+		}
+	},
+	{
+		files: ['admin-app/**/*.svelte.{ts,js}'],
+		languageOptions: {
+			parser: svelteParser,
+			parserOptions: {
+				parser: tseslint.parser,
+				projectService: true,
+				tsconfigRootDir: `${import.meta.dirname}/admin-app`,
+				extraFileExtensions: ['.svelte'],
+				svelteFeatures: { runes: true },
+				svelteConfig: adminSvelteConfig
+			}
+		}
+	},
+	{
+		files: ['landing-app/**/*.svelte.{ts,js}'],
+		languageOptions: {
+			parser: svelteParser,
+			parserOptions: {
+				parser: tseslint.parser,
+				projectService: true,
+				tsconfigRootDir: `${import.meta.dirname}/landing-app`,
+				extraFileExtensions: ['.svelte'],
+				svelteFeatures: { runes: true },
+				svelteConfig: landingSvelteConfig
+			}
+		}
+	},
+	{
+		files: ['shared/**/*.svelte.{ts,js}'],
+		languageOptions: {
+			parser: svelteParser,
+			parserOptions: {
+				parser: tseslint.parser,
+				svelteFeatures: { runes: true }
+			}
 		}
 	}
 );

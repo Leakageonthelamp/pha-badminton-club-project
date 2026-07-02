@@ -1,18 +1,34 @@
 <!doctype html>
-<html lang="en" style="color-scheme: light only; background-color: #f8fafc">
+<html lang="en">
 	<head>
 		<meta charset="utf-8" />
 		<script>
-			document.documentElement.style.setProperty('color-scheme', 'light only');
-			document.documentElement.style.backgroundColor = '#f8fafc';
+			(function () {
+				var KEY = 'ph:theme';
+				var DARK_BG = '#0b1120';
+				var LIGHT_BG = '#f8fafc';
+				var pref = 'system';
+				try {
+					var v = localStorage.getItem(KEY);
+					if (v === 'light' || v === 'dark' || v === 'system') pref = v;
+				} catch (e) {}
+				var dark =
+					pref === 'dark' ||
+					(pref === 'system' &&
+						window.matchMedia('(prefers-color-scheme: dark)').matches);
+				var root = document.documentElement;
+				if (dark) root.classList.add('dark');
+				root.style.colorScheme = dark ? 'dark' : 'light';
+				root.style.backgroundColor = dark ? DARK_BG : LIGHT_BG;
+				root.style.setProperty('--app-bg', dark ? DARK_BG : LIGHT_BG);
+			})();
 		</script>
-		<meta name="color-scheme" content="light" />
+		<meta name="color-scheme" content="light dark" />
 		<link rel="icon" href="%sveltekit.assets%/favicon.png" />
 		<link rel="icon" href="%sveltekit.assets%/logo.svg" type="image/svg+xml" />
 		<link rel="apple-touch-icon" sizes="512x512" href="%sveltekit.assets%/apple-touch-icon.png" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)" />
-		<meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: dark)" />
+		<meta name="theme-color" content="#f8fafc" />
 		<meta name="description" content="Antonsmash admin panel." />
 		<meta name="mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-capable" content="yes" />

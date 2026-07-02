@@ -111,7 +111,7 @@
 			{#if showCloseButton}
 				<button
 					type="button"
-					class="absolute right-3 top-3 z-20 rounded-lg bg-white/90 p-1.5 text-slate-500 shadow-sm ring-1 ring-slate-200 hover:bg-slate-100 hover:text-slate-700"
+					class="absolute right-3 top-3 z-20 rounded-lg bg-white/90 p-1.5 text-slate-500 shadow-sm ring-1 ring-slate-200 hover:bg-slate-100 hover:text-slate-700 dark:bg-slate-800/90 dark:text-slate-400 dark:ring-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200"
 					aria-label={closeLabel}
 					onclick={() => onClose?.()}
 				>

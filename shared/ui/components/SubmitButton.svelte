@@ -25,13 +25,13 @@
 
 	const variantClasses: Record<Variant, string> = {
 		primary:
-			'w-full rounded-full bg-brand-600 px-4 py-3 text-base font-semibold text-white shadow-md shadow-brand-600/25 transition hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 disabled:opacity-70 disabled:hover:bg-brand-600',
+			'w-full rounded-full bg-brand-600 px-4 py-3 text-base font-semibold text-white shadow-md shadow-brand-600/25 transition hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950 disabled:opacity-70 disabled:hover:bg-brand-600',
 		secondary:
-			'flex w-full items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 disabled:opacity-70 disabled:hover:bg-white',
+			'flex w-full items-center justify-center gap-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600 transition hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:focus-visible:ring-offset-slate-950 disabled:opacity-70 disabled:hover:bg-white dark:bg-slate-900 dark:disabled:hover:bg-slate-900',
 		accent:
-			'w-full rounded-full bg-secondary-400 px-4 py-3 text-base font-bold text-secondary-900 shadow-md shadow-secondary-500/30 transition hover:bg-secondary-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary-500 focus-visible:ring-offset-2 disabled:opacity-70 disabled:hover:bg-secondary-400',
+			'w-full rounded-full bg-secondary-400 px-4 py-3 text-base font-bold text-secondary-900 shadow-md shadow-secondary-500/30 transition hover:bg-secondary-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950 disabled:opacity-70 disabled:hover:bg-secondary-400',
 		ghost:
-			'rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 disabled:opacity-70'
+			'rounded-lg px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 dark:text-slate-500 transition hover:bg-slate-100 dark:hover:bg-slate-800 dark:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-slate-400 dark:text-slate-500 dark:hover:bg-slate-800 dark:focus-visible:ring-offset-slate-950 disabled:opacity-70'
 	};
 </script>
 

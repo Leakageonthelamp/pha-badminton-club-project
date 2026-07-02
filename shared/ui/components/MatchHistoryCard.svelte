@@ -38,12 +38,12 @@
 
 <button
 	type="button"
-	class="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition-colors hover:border-brand-200 hover:bg-brand-50/40"
+	class="flex w-full items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-3 text-left transition-colors hover:border-brand-200 hover:bg-brand-50/40"
 	onclick={onClick}
 >
 	<div class="min-w-0 flex-1 space-y-2">
 		<div class="flex flex-wrap items-center gap-2">
-			<p class="font-medium text-slate-900">Court {match.court_number}</p>
+			<p class="font-medium text-slate-900 dark:text-slate-100">Court {match.court_number}</p>
 			<span
 				class="rounded-full px-2 py-0.5 text-xs font-semibold {matchStatusBadgeClass(match.status)}"
 			>
@@ -52,23 +52,23 @@
 			{#if winner}
 				<span class="text-xs font-medium text-emerald-700">Team {winner} won</span>
 			{:else if matchDraw}
-				<span class="text-xs font-medium text-slate-600">Draw</span>
+				<span class="text-xs font-medium text-slate-600 dark:text-slate-400 dark:text-slate-500">Draw</span>
 			{/if}
 		</div>
 		{#if match.games.length}
-			<div class="rounded-lg bg-slate-50 px-3 py-2 ring-1 ring-slate-100">
+			<div class="rounded-lg bg-slate-50 dark:bg-slate-950 px-3 py-2 ring-1 ring-slate-100 dark:ring-slate-800">
 				<p
-					class="font-mono text-xl font-bold leading-none tabular-nums tracking-tight text-slate-900 sm:text-2xl"
+					class="font-mono text-xl font-bold leading-none tabular-nums tracking-tight text-slate-900 dark:text-slate-100 sm:text-2xl"
 				>
 					{formatMatchScore(match.games)}
 				</p>
 			</div>
 		{/if}
-		<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+		<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 			{#if durationLabel}
 				<span>
 					Duration
-					<span class="font-mono font-semibold tabular-nums text-slate-700">{durationLabel}</span>
+					<span class="font-mono font-semibold tabular-nums text-slate-700 dark:text-slate-300 dark:text-slate-600">{durationLabel}</span>
 				</span>
 			{/if}
 			<span>{match.shuttles_used} shuttle{match.shuttles_used === 1 ? '' : 's'}</span>
@@ -77,5 +77,5 @@
 			{/if}
 		</div>
 	</div>
-	<ChevronDownIcon class="h-5 w-5 shrink-0 -rotate-90 text-slate-400" />
+	<ChevronDownIcon class="h-5 w-5 shrink-0 -rotate-90 text-slate-400 dark:text-slate-500" />
 </button>

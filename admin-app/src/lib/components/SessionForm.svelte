@@ -172,7 +172,7 @@
 	);
 
 	const inputClass =
-		'w-full rounded-xl border border-slate-300 px-4 py-3 text-base focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20';
+		'w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3 text-base focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20';
 	const labelClass = 'mb-2 block text-sm font-medium text-slate-700';
 	const formSectionClass = 'space-y-4 py-6 first:pt-0 last:pb-0';
 
@@ -303,10 +303,10 @@
 					value={activeClub.name}
 					disabled
 					aria-label="Club"
-					class="{inputClass} disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-700"
+					class="{inputClass} disabled:cursor-not-allowed disabled:bg-slate-50 dark:bg-slate-950 disabled:text-slate-700 dark:text-slate-300 dark:text-slate-600"
 				/>
 				{#if mode === 'create'}
-					<p class="mt-2 text-xs text-slate-500">
+					<p class="mt-2 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 						Use the club switcher in the navbar to create a session for a different club.
 					</p>
 				{/if}
@@ -360,7 +360,7 @@
 				<input type="hidden" name="end_at" value={endAtUtc} />
 			</div>
 		</div>
-		<p class="text-xs text-slate-500">
+		<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 			Times use your device's timezone. Start must be at least 1 hour from now. Minimum session
 			length is 1 hour.
 		</p>
@@ -376,9 +376,9 @@
 
 		{#if hasClubVenueDefaults}
 			<div
-				class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
+				class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-4 py-3"
 			>
-				<p class="text-sm text-slate-600">
+				<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 					{#if venueLocked}
 						Using your club's default venue ({activeClub?.venue_name}). Edit to set a different
 						venue for this session.
@@ -414,7 +414,7 @@
 					This club has no default venue in settings. Enter the venue for this session below, or
 					<a
 						href="/clubs/{activeClub.id}"
-						class="font-medium text-brand-700 underline decoration-brand-300 underline-offset-2 hover:text-brand-800"
+						class="font-medium text-brand-700 dark:text-brand-300 underline decoration-brand-300 underline-offset-2 hover:text-brand-800"
 					>
 						set a club default
 					</a>
@@ -433,7 +433,7 @@
 				bind:value={venueName}
 				disabled={venueLocked || loading}
 				placeholder={hasClubVenueDefaults ? undefined : 'e.g. Rama IX Sports Center'}
-				class="{inputClass} disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-700"
+				class="{inputClass} disabled:cursor-not-allowed disabled:bg-slate-50 dark:bg-slate-950 disabled:text-slate-700 dark:text-slate-300 dark:text-slate-600"
 			/>
 		</div>
 
@@ -509,20 +509,20 @@
 			</div>
 		</div>
 
-		<div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-			<p class="text-sm font-medium text-slate-700">Estimated actual court cost per player</p>
+		<div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-4 py-3">
+			<p class="text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">Estimated actual court cost per player</p>
 			{#if estimatedCourtCostPerPlayer !== null}
-				<p class="mt-1 text-lg font-semibold text-slate-900">
+				<p class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
 					{formatThb(estimatedCourtCostPerPlayer)}
 				</p>
-				<p class="mt-1 text-xs text-slate-500">
+				<p class="mt-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 					{courtCount} court{Number(courtCount) === 1 ? '' : 's'} × {formatThb(
 						Number(courtFeePerHour || 0)
 					)}/hr × session length ÷ {maxPlayers} max players. Your cost per player — set a fixed fee
 					above it to profit.
 				</p>
 			{:else}
-				<p class="mt-1 text-xs text-slate-500">
+				<p class="mt-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 					Set the schedule, court count, court fee, and max players to see your estimated cost per
 					player.
 				</p>
@@ -543,7 +543,7 @@
 				placeholder="Leave blank to split the cost evenly"
 				class={inputClass}
 			/>
-			<p class="mt-1 text-xs text-slate-500">
+			<p class="mt-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 				When set, every player pays this flat court fee no matter how many matches they play or when
 				they leave (shuttles still bill per use). Leave blank to split the actual court cost evenly
 				among players.
@@ -582,7 +582,7 @@
 						class={inputClass}
 					/>
 					{#if selectedShuttle}
-						<p class="mt-2 text-xs text-slate-500">
+						<p class="mt-2 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 							Club default: {formatThb(shuttlePricePerEach(selectedShuttle))} each
 						</p>
 					{/if}
@@ -598,16 +598,16 @@
 				<NotSetBadge />
 			{/if}
 		</div>
-		<p class="text-sm text-slate-600">
+		<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 			PromptPay details for player payment QR codes. Required — sessions cannot be created without
 			this.
 		</p>
 
 		{#if hasClubPromptPayDefaults}
 			<div
-				class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
+				class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-4 py-3"
 			>
-				<p class="text-sm text-slate-600">
+				<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 					{#if promptPayLocked}
 						Using your club's default PromptPay ({promptPayType === 'national_id'
 							? 'National ID'
@@ -644,7 +644,7 @@
 					This club has no default PromptPay in settings. Enter payment details below, or
 					<a
 						href="/clubs/{activeClub.id}"
-						class="font-medium text-brand-700 underline decoration-brand-300 underline-offset-2 hover:text-brand-800"
+						class="font-medium text-brand-700 dark:text-brand-300 underline decoration-brand-300 underline-offset-2 hover:text-brand-800"
 					>
 						set a club default
 					</a>
@@ -660,27 +660,27 @@
 
 		<fieldset class="space-y-3" disabled={promptPayLocked || loading}>
 			<legend class="sr-only">PromptPay type</legend>
-			<label class="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3">
+			<label class="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3">
 				<input
 					type="radio"
 					name={promptPayLocked ? undefined : 'promptpay_type'}
 					value="phone"
 					bind:group={promptPayType}
 					required={!promptPayLocked}
-					class="h-4 w-4 border-slate-300 text-brand-600 focus:ring-brand-600"
+					class="h-4 w-4 border-slate-300 dark:border-slate-600 text-brand-600 focus:ring-brand-600"
 				/>
-				<span class="text-sm font-medium text-slate-900">Mobile phone</span>
+				<span class="text-sm font-medium text-slate-900 dark:text-slate-100">Mobile phone</span>
 			</label>
-			<label class="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3">
+			<label class="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3">
 				<input
 					type="radio"
 					name={promptPayLocked ? undefined : 'promptpay_type'}
 					value="national_id"
 					bind:group={promptPayType}
 					required={!promptPayLocked}
-					class="h-4 w-4 border-slate-300 text-brand-600 focus:ring-brand-600"
+					class="h-4 w-4 border-slate-300 dark:border-slate-600 text-brand-600 focus:ring-brand-600"
 				/>
-				<span class="text-sm font-medium text-slate-900">National ID card</span>
+				<span class="text-sm font-medium text-slate-900 dark:text-slate-100">National ID card</span>
 			</label>
 		</fieldset>
 
@@ -698,7 +698,7 @@
 				bind:value={promptPayTarget}
 				disabled={promptPayLocked || loading}
 				placeholder={promptPayType === 'national_id' ? '1234567890123' : '0812345678'}
-				class="{inputClass} disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-700"
+				class="{inputClass} disabled:cursor-not-allowed disabled:bg-slate-50 dark:bg-slate-950 disabled:text-slate-700 dark:text-slate-300 dark:text-slate-600"
 			/>
 		</div>
 	</div>
@@ -718,7 +718,7 @@
 					placeholder="0"
 					class={inputClass}
 				/>
-				<p class="mt-1 text-xs text-slate-500">
+				<p class="mt-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 					Overflow slots when the waiting list is full. Queue players can cancel anytime without
 					fee.
 				</p>
@@ -736,7 +736,7 @@
 					placeholder="0"
 					class={inputClass}
 				/>
-				<p class="mt-1 text-xs text-slate-500">
+				<p class="mt-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 					Charged when a waiting player cancels within 1 hour of start (recorded, not collected
 					yet).
 				</p>

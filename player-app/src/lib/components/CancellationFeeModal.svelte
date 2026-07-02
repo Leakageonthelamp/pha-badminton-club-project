@@ -74,13 +74,13 @@
 
 <AppModal open={open && !closeWarningOpen} labelledBy="cancellation-fee-title" onClose={requestClose}>
 	<div class="app-card-padded space-y-4">
-		<h2 id="cancellation-fee-title" class="text-lg font-semibold text-slate-900">
+		<h2 id="cancellation-fee-title" class="text-lg font-semibold text-slate-900 dark:text-slate-100">
 			Pay cancellation fee
 		</h2>
 		{#if sessionLabel}
-			<p class="text-sm text-slate-600">{sessionLabel}</p>
+			<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{sessionLabel}</p>
 		{/if}
-		<p class="text-sm text-slate-600">
+		<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 			Transfer exactly {formatThb(amount)} using PromptPay, attach your bank slip, then tap “I've paid”.
 		</p>
 
@@ -105,7 +105,7 @@
 				<SubmitButton loading={submitLoading} disabled={!slipFile}>I've paid</SubmitButton>
 			</form>
 		{:else}
-			<p class="text-center text-sm text-slate-600">{cancellationFeeStatusLabel(feeStatus)}</p>
+			<p class="text-center text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{cancellationFeeStatusLabel(feeStatus)}</p>
 		{/if}
 	</div>
 </AppModal>
@@ -116,10 +116,10 @@
 	onClose={() => (closeWarningOpen = false)}
 >
 	<div class="app-card-padded space-y-4">
-		<h2 id="cancellation-fee-close-title" class="text-lg font-semibold text-slate-900">
+		<h2 id="cancellation-fee-close-title" class="text-lg font-semibold text-slate-900 dark:text-slate-100">
 			Leave without paying?
 		</h2>
-		<p class="text-sm text-slate-600">
+		<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 			You will not be able to join any session until this cancellation fee is paid and confirmed
 			by the admin.
 		</p>

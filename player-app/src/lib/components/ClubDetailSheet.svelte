@@ -312,14 +312,14 @@
 
 			<div class="flex shrink-0 items-start justify-between gap-3 pb-3">
 				<div class="min-w-0">
-					<h2 id="club-sheet-title" class="text-xl font-semibold text-slate-900">{title}</h2>
+					<h2 id="club-sheet-title" class="text-xl font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
 					{#if distanceLabel}
 						<p class="mt-1 text-sm font-medium text-brand-700">{distanceLabel} away</p>
 					{/if}
 				</div>
 				<button
 					type="button"
-					class="rounded-lg px-2 py-1 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+					class="rounded-lg px-2 py-1 text-sm font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 dark:bg-slate-800 hover:text-slate-700 dark:text-slate-300 dark:text-slate-600"
 					onclick={close}
 				>
 					Close
@@ -332,27 +332,27 @@
 				{:else}
 					<RichTextDisplay
 						html={description}
-						class="prose prose-sm mt-3 max-w-none text-sm leading-relaxed text-slate-600"
+						class="prose prose-sm mt-3 max-w-none text-sm leading-relaxed text-slate-600 dark:text-slate-400 dark:text-slate-500"
 					/>
 				{/if}
 
-				<div class="mt-6 rounded-2xl border border-slate-200 bg-white p-4">
-					<h3 class="text-base font-semibold text-slate-900">Venue</h3>
+				<div class="mt-6 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
+					<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Venue</h3>
 					{#if loading}
 						<div class="mt-3 app-skeleton h-4 w-40"></div>
 					{:else if venueName}
-						<p class="mt-2 text-sm font-medium text-slate-900">{venueName}</p>
+						<p class="mt-2 text-sm font-medium text-slate-900 dark:text-slate-100">{venueName}</p>
 					{/if}
 					{#if loading}
 						<div class="mt-3 app-skeleton h-4 w-52"></div>
 					{:else if hasLocation && googleMapsUrl && appleMapsUrl}
-						<p class="mt-2 text-sm text-slate-600">Get directions on the map.</p>
+						<p class="mt-2 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Get directions on the map.</p>
 						<div class="mt-3 flex flex-wrap gap-x-4 gap-y-2">
 							<a
 								href={googleMapsUrl}
 								target="_blank"
 								rel="noopener noreferrer"
-								class="text-sm font-medium text-brand-700 hover:text-brand-800"
+								class="text-sm font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800"
 							>
 								Open in Google Maps
 							</a>
@@ -360,27 +360,27 @@
 								href={appleMapsUrl}
 								target="_blank"
 								rel="noopener noreferrer"
-								class="text-sm font-medium text-brand-700 hover:text-brand-800"
+								class="text-sm font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800"
 							>
 								Open in Apple Maps
 							</a>
 						</div>
 					{:else if !venueName}
-						<p class="mt-2 text-sm text-slate-500">Venue location has not been set yet.</p>
+						<p class="mt-2 text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Venue location has not been set yet.</p>
 					{/if}
 				</div>
 
-				<div class="mt-4 rounded-2xl border border-slate-200 bg-white p-4" aria-busy={loading}>
-					<h3 class="text-base font-semibold text-slate-900">Sessions</h3>
-					<p class="mt-1 text-sm text-slate-600">Open and upcoming games at this club.</p>
+				<div class="mt-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4" aria-busy={loading}>
+					<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Sessions</h3>
+					<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Open and upcoming games at this club.</p>
 
 					{#if loading}
 						<ul
-							class="mt-4 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200"
+							class="mt-4 divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700"
 							aria-label="Loading sessions"
 						>
 							{#each [0, 1] as row (row)}
-								<li class="bg-white px-4 py-3">
+								<li class="bg-white dark:bg-slate-900 px-4 py-3">
 									<div class="app-skeleton h-4 w-40"></div>
 									<div class="app-skeleton mt-2 h-3 w-56"></div>
 								</li>
@@ -389,26 +389,26 @@
 					{:else if loadError}
 						<p class="mt-4 text-sm text-red-600">{loadError}</p>
 					{:else if !hasSessions}
-						<p class="mt-4 text-sm text-slate-500">No open or upcoming sessions yet.</p>
+						<p class="mt-4 text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">No open or upcoming sessions yet.</p>
 					{:else}
 						{#if openingSessions.length > 0}
-							<p class="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+							<p class="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
 								Open now
 							</p>
 							<ul
-								class="mt-2 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200"
+								class="mt-2 divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700"
 							>
 								{#each openingSessions as session (session.id)}
 									<li>
 										<button
 											type="button"
-											class="w-full bg-white px-4 py-3 text-left transition hover:bg-slate-50"
+											class="w-full bg-white dark:bg-slate-900 px-4 py-3 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-950"
 											onclick={() => selectSession(session)}
 										>
-											<p class="font-medium text-slate-900">{session.name}</p>
-											<p class="mt-1 text-sm text-slate-600">{sessionMeta(session)}</p>
+											<p class="font-medium text-slate-900 dark:text-slate-100">{session.name}</p>
+											<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{sessionMeta(session)}</p>
 											{#if session.venue_name}
-												<p class="mt-1 text-xs text-slate-500">{session.venue_name}</p>
+												<p class="mt-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">{session.venue_name}</p>
 											{/if}
 										</button>
 									</li>
@@ -417,23 +417,23 @@
 						{/if}
 
 						{#if upcomingSessions.length > 0}
-							<p class="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+							<p class="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
 								Upcoming
 							</p>
 							<ul
-								class="mt-2 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200"
+								class="mt-2 divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700"
 							>
 								{#each upcomingSessions as session (session.id)}
 									<li>
 										<button
 											type="button"
-											class="w-full bg-white px-4 py-3 text-left transition hover:bg-slate-50"
+											class="w-full bg-white dark:bg-slate-900 px-4 py-3 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-950"
 											onclick={() => selectSession(session)}
 										>
-											<p class="font-medium text-slate-900">{session.name}</p>
-											<p class="mt-1 text-sm text-slate-600">{sessionMeta(session)}</p>
+											<p class="font-medium text-slate-900 dark:text-slate-100">{session.name}</p>
+											<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{sessionMeta(session)}</p>
 											{#if session.venue_name}
-												<p class="mt-1 text-xs text-slate-500">{session.venue_name}</p>
+												<p class="mt-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">{session.venue_name}</p>
 											{/if}
 										</button>
 									</li>
@@ -443,17 +443,17 @@
 					{/if}
 				</div>
 
-				<div class="mt-4 rounded-2xl border border-slate-200 bg-white p-4" aria-busy={loading}>
-					<h3 class="text-base font-semibold text-slate-900">Shuttlecocks</h3>
-					<p class="mt-1 text-sm text-slate-600">Brands and speeds this club uses.</p>
+				<div class="mt-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4" aria-busy={loading}>
+					<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Shuttlecocks</h3>
+					<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Brands and speeds this club uses.</p>
 
 					{#if loading}
 						<ul
-							class="mt-4 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200"
+							class="mt-4 divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700"
 							aria-label="Loading shuttlecocks"
 						>
 							{#each [0, 1] as row (row)}
-								<li class="bg-white px-4 py-3">
+								<li class="bg-white dark:bg-slate-900 px-4 py-3">
 									<div class="app-skeleton h-4 w-36"></div>
 								</li>
 							{/each}
@@ -461,16 +461,16 @@
 					{:else if loadError}
 						<p class="mt-4 text-sm text-red-600">{loadError}</p>
 					{:else if shuttles.length === 0}
-						<p class="mt-4 text-sm text-slate-500">No shuttlecocks listed yet.</p>
+						<p class="mt-4 text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">No shuttlecocks listed yet.</p>
 					{:else}
 						<ul
-							class="mt-4 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200"
+							class="mt-4 divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700"
 						>
 							{#each shuttles as shuttle (shuttle.id)}
-								<li class="bg-white px-4 py-3">
-									<p class="font-medium text-slate-900">
+								<li class="bg-white dark:bg-slate-900 px-4 py-3">
+									<p class="font-medium text-slate-900 dark:text-slate-100">
 										{shuttle.name}
-										<span class="text-slate-500">· {shuttle.speed}</span>
+										<span class="text-slate-500 dark:text-slate-400 dark:text-slate-500">· {shuttle.speed}</span>
 									</p>
 								</li>
 							{/each}
@@ -478,17 +478,17 @@
 					{/if}
 				</div>
 
-				<div class="mt-4 rounded-2xl border border-slate-200 bg-white p-4" aria-busy={loading}>
-					<h3 class="text-base font-semibold text-slate-900">Club admins</h3>
-					<p class="mt-1 text-sm text-slate-600">People who manage this club.</p>
+				<div class="mt-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4" aria-busy={loading}>
+					<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Club admins</h3>
+					<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">People who manage this club.</p>
 
 					{#if loading}
 						<ul
-							class="mt-4 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200"
+							class="mt-4 divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700"
 							aria-label="Loading club admins"
 						>
 							{#each [0, 1, 2] as row (row)}
-								<li class="flex items-center gap-3 bg-white px-4 py-3">
+								<li class="flex items-center gap-3 bg-white dark:bg-slate-900 px-4 py-3">
 									<div class="app-skeleton h-9 w-9 shrink-0 rounded-full"></div>
 									<div class="min-w-0 flex-1">
 										<div class="app-skeleton h-4 w-32 max-w-[60%]"></div>
@@ -500,20 +500,20 @@
 					{:else if loadError}
 						<p class="mt-4 text-sm text-red-600">{loadError}</p>
 					{:else if admins.length === 0}
-						<p class="mt-4 text-sm text-slate-500">No admins assigned yet.</p>
+						<p class="mt-4 text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">No admins assigned yet.</p>
 					{:else}
 						<ul
-							class="mt-4 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200"
+							class="mt-4 divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700"
 						>
 							{#each admins as admin (admin.user_id)}
-								<li class="flex items-center gap-3 bg-white px-4 py-3">
+								<li class="flex items-center gap-3 bg-white dark:bg-slate-900 px-4 py-3">
 									<UserAvatar
 										displayName={admin.display_name}
 										avatarUrl={admin.avatar_url}
 										size="sm"
 									/>
 									<div class="min-w-0 flex-1">
-										<p class="truncate font-medium text-slate-900">{admin.display_name}</p>
+										<p class="truncate font-medium text-slate-900 dark:text-slate-100">{admin.display_name}</p>
 									</div>
 									{#if admin.tag}
 										<TagPill tag={admin.tag} />

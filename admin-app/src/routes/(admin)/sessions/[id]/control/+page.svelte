@@ -260,7 +260,7 @@
 			case 'pending':
 				return 'bg-amber-50 text-amber-800 ring-amber-100';
 			default:
-				return 'bg-slate-100 text-slate-600 ring-slate-200';
+				return 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 dark:text-slate-500 ring-slate-200';
 		}
 	};
 
@@ -430,7 +430,7 @@
 	{#if expandedPlayerIds.has(player.id)}
 		<div
 			id="player-match-history-{player.id}"
-			class="border-t border-slate-100 px-4 pb-3 pt-3"
+			class="border-t border-slate-100 dark:border-slate-800 px-4 pb-3 pt-3"
 		>
 			<ul class="space-y-1.5">
 				{#each completedMatchesByUser.get(player.user_id) ?? [] as match, index (match.id)}
@@ -524,7 +524,7 @@
 	<div class="border-t border-slate-100/80 px-4 py-3">
 		<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 			<div class="flex flex-wrap items-center gap-2">
-				<span class="text-sm font-semibold text-slate-800">
+				<span class="text-sm font-semibold text-slate-800 dark:text-slate-200">
 					{payment ? formatThb(payment.total_amount) : formatThb(data.perPlayerCost)}
 				</span>
 				<span
@@ -583,13 +583,13 @@
 						>
 							{idleLabel}
 						</p>
-						<p class="mt-1 text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
+						<p class="mt-1 text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
 							Idle time
 						</p>
 					</div>
 				{/if}
 				<ChevronDownIcon
-					class="h-5 w-5 shrink-0 text-slate-400 transition {expanded ? 'rotate-180' : ''}"
+					class="h-5 w-5 shrink-0 text-slate-400 dark:text-slate-500 transition {expanded ? 'rotate-180' : ''}"
 				/>
 			</div>
 		</button>
@@ -612,7 +612,7 @@
 					>
 						{idleLabel}
 					</p>
-					<p class="mt-1 text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
+					<p class="mt-1 text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
 						Idle time
 					</p>
 				</div>
@@ -625,7 +625,7 @@
 	{@const displayName = player.profile?.display_name ?? 'Unknown player'}
 	{@const matchCount = matchCountForPlayer(player.user_id)}
 	{@const playingCourt = liveStatus === 'playing' ? courtForPlayer(player.user_id) : null}
-	<p class="truncate font-semibold text-slate-900">
+	<p class="truncate font-semibold text-slate-900 dark:text-slate-100">
 		{displayName}
 	</p>
 	<div class="mt-1 flex flex-wrap items-center gap-2">
@@ -634,7 +634,7 @@
 		{/if}
 		<PlayerStatusBadge status={liveStatus} courtNumber={playingCourt} />
 		<span
-			class="inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ring-1 bg-slate-100 text-slate-700 ring-slate-200"
+			class="inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ring-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 dark:text-slate-600 ring-slate-200"
 		>
 			{matchCount} match{matchCount === 1 ? '' : 'es'}
 		</span>
@@ -686,36 +686,36 @@
 		<ol class="grid gap-3 sm:grid-cols-3">
 			<li
 				class="rounded-2xl border px-4 py-3 {workflowStep === 1
-					? 'border-secondary-400 bg-secondary-100/90 ring-2 ring-secondary-300'
+					? 'border-secondary-400 bg-secondary-100/90 ring-2 ring-secondary-300 dark:border-secondary-600 dark:bg-secondary-900/35 dark:ring-secondary-700'
 					: workflowStep > 1
 						? 'border-emerald-200 bg-emerald-50/50'
-						: 'border-slate-200 bg-slate-50/80'}"
+						: 'border-slate-200 dark:border-slate-700 bg-slate-50/80'}"
 			>
-				<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Step 1</p>
-				<p class="mt-1 font-semibold text-slate-900">Live play</p>
-				<p class="mt-1 text-sm text-slate-600">Roster, courts, early leave requests</p>
+				<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Step 1</p>
+				<p class="mt-1 font-semibold text-slate-900 dark:text-slate-100">Live play</p>
+				<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Roster, courts, early leave requests</p>
 			</li>
 			<li
 				class="rounded-2xl border px-4 py-3 {workflowStep === 2
-					? 'border-secondary-400 bg-secondary-100/90 ring-2 ring-secondary-300'
+					? 'border-secondary-400 bg-secondary-100/90 ring-2 ring-secondary-300 dark:border-secondary-600 dark:bg-secondary-900/35 dark:ring-secondary-700'
 					: workflowStep > 2
 						? 'border-emerald-200 bg-emerald-50/50'
-						: 'border-slate-200 bg-slate-50/80'}"
+						: 'border-slate-200 dark:border-slate-700 bg-slate-50/80'}"
 			>
-				<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Step 2</p>
-				<p class="mt-1 font-semibold text-slate-900">Settlement</p>
-				<p class="mt-1 text-sm text-slate-600">
+				<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Step 2</p>
+				<p class="mt-1 font-semibold text-slate-900 dark:text-slate-100">Settlement</p>
+				<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 					{data.settlementStarted ? 'Confirm each PromptPay transfer' : 'Start after scheduled end'}
 				</p>
 			</li>
 			<li
 				class="rounded-2xl border px-4 py-3 {workflowStep === 3
-					? 'border-secondary-400 bg-secondary-100/90 ring-2 ring-secondary-300'
-					: 'border-slate-200 bg-slate-50/80'}"
+					? 'border-secondary-400 bg-secondary-100/90 ring-2 ring-secondary-300 dark:border-secondary-600 dark:bg-secondary-900/35 dark:ring-secondary-700'
+					: 'border-slate-200 dark:border-slate-700 bg-slate-50/80'}"
 			>
-				<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Step 3</p>
-				<p class="mt-1 font-semibold text-slate-900">Close session</p>
-				<p class="mt-1 text-sm text-slate-600">Mark everyone left and archive the session</p>
+				<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Step 3</p>
+				<p class="mt-1 font-semibold text-slate-900 dark:text-slate-100">Close session</p>
+				<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Mark everyone left and archive the session</p>
 			</li>
 		</ol>
 	</AppCard>
@@ -724,20 +724,20 @@
 	<div class="grid grid-cols-2 gap-3">
 		<div class="app-card-padded flex min-h-24 flex-col items-center justify-center gap-1 text-center">
 			<p class="text-2xl font-extrabold tabular-nums text-secondary-900">{data.activePlayerCount}</p>
-			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">Players</p>
+			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Players</p>
 		</div>
 		<div class="app-card-padded flex min-h-24 flex-col items-center justify-center gap-1 text-center">
 			<p class="text-2xl font-extrabold tabular-nums text-secondary-900">{session.court_count}</p>
-			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">Courts</p>
+			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Courts</p>
 		</div>
 		<div class="app-card-padded flex min-h-24 flex-col items-center justify-center gap-1 text-center">
 			<p class="text-xl font-extrabold tabular-nums leading-tight text-secondary-900">
 				{formatThb(data.perPlayerCost)}
 			</p>
-			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
+			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
 				Court fee per player · {courtFeePerPlayerModeLabel(session.fixed_court_fee_per_player)}
 			</p>
-			<p class="text-[0.6rem] font-normal normal-case leading-snug text-slate-400">
+			<p class="text-[0.6rem] font-normal normal-case leading-snug text-slate-400 dark:text-slate-500">
 				{courtFeePerPlayerHint}
 			</p>
 		</div>
@@ -745,13 +745,13 @@
 			<p class="text-xl font-extrabold tabular-nums leading-tight text-secondary-900">
 				{formatThb(totalCourtFee)}
 			</p>
-			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
+			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
 				Total court fee
 			</p>
 		</div>
 		<div class="app-card-padded flex min-h-24 flex-col items-center justify-center gap-1 text-center">
 			<p class="text-2xl font-extrabold tabular-nums text-secondary-900">{shuttlesUsed}</p>
-			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
+			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
 				Shuttles usage
 			</p>
 		</div>
@@ -759,7 +759,7 @@
 			<p class="text-xl font-extrabold tabular-nums leading-tight text-secondary-900">
 				{formatThb(totalShuttleFee)}
 			</p>
-			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
+			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
 				Total shuttles fee
 			</p>
 		</div>
@@ -767,13 +767,13 @@
 			<p class="text-2xl font-extrabold tabular-nums text-secondary-900">
 				{paymentsApprovedCount}/{data.activePlayerCount || '—'}
 			</p>
-			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">Paid</p>
+			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Paid</p>
 		</div>
 		<div class="app-card-padded flex min-h-24 flex-col items-center justify-center gap-1 text-center">
 			<p class="text-xl font-extrabold tabular-nums leading-tight text-secondary-900">
 				{formatThb(totalSessionCost)}
 			</p>
-			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
+			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
 				Total session cost
 			</p>
 		</div>
@@ -785,8 +785,8 @@
 			: 'border-rose-200 bg-rose-50/40'}"
 	>
 		<div>
-			<h2 class="text-base font-semibold text-slate-900">Profit breakdown</h2>
-			<p class="mt-1 text-sm text-slate-600">
+			<h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Profit breakdown</h2>
+			<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 				Projected from {billedPlayerCount} billed player{billedPlayerCount === 1 ? '' : 's'}
 				· {shuttlesUsed} shuttle{shuttlesUsed === 1 ? '' : 's'} used so far
 			</p>
@@ -794,28 +794,28 @@
 
 		<div class="space-y-4 text-sm">
 			<div class="space-y-2">
-				<h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Court</h3>
+				<h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Court</h3>
 				<dl class="space-y-1.5">
 					<div class="flex items-baseline justify-between gap-3">
-						<dt class="text-slate-600">Your actual cost</dt>
-						<dd class="shrink-0 tabular-nums font-medium text-slate-900">
+						<dt class="text-slate-600 dark:text-slate-400 dark:text-slate-500">Your actual cost</dt>
+						<dd class="shrink-0 tabular-nums font-medium text-slate-900 dark:text-slate-100">
 							{formatThb(projectedProfit.courtCost)}
 						</dd>
 					</div>
-					<p class="text-xs text-slate-500">
+					<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 						{session.court_count} court{session.court_count === 1 ? '' : 's'} × {formatThb(
 							session.court_fee_per_hour
 						)}/hr · session length
 					</p>
 					<div class="flex items-baseline justify-between gap-3">
-						<dt class="text-slate-600">Player revenue</dt>
-						<dd class="shrink-0 tabular-nums font-medium text-slate-900">
+						<dt class="text-slate-600 dark:text-slate-400 dark:text-slate-500">Player revenue</dt>
+						<dd class="shrink-0 tabular-nums font-medium text-slate-900 dark:text-slate-100">
 							{formatThb(projectedProfit.courtRevenue)}
 						</dd>
 					</div>
-					<p class="text-xs text-slate-500">{courtRevenueLabel}</p>
-					<div class="flex items-baseline justify-between gap-3 border-t border-slate-200/80 pt-2">
-						<dt class="font-medium text-slate-700">Court profit</dt>
+					<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">{courtRevenueLabel}</p>
+					<div class="flex items-baseline justify-between gap-3 border-t border-slate-200/80 dark:border-slate-700/80 pt-2">
+						<dt class="font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">Court profit</dt>
 						<dd
 							class="shrink-0 tabular-nums font-semibold {projectedProfit.courtProfit >= 0
 								? 'text-emerald-700'
@@ -828,11 +828,11 @@
 			</div>
 
 			<div class="space-y-2">
-				<h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Shuttle</h3>
+				<h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Shuttle</h3>
 				<dl class="space-y-1.5">
 					<div class="flex items-baseline justify-between gap-3">
-						<dt class="text-slate-600">Player revenue</dt>
-						<dd class="shrink-0 tabular-nums font-medium text-slate-900">
+						<dt class="text-slate-600 dark:text-slate-400 dark:text-slate-500">Player revenue</dt>
+						<dd class="shrink-0 tabular-nums font-medium text-slate-900 dark:text-slate-100">
 							{formatThb(projectedProfit.shuttleRevenue)}
 						</dd>
 					</div>
@@ -840,16 +840,16 @@
 						{shuttlesUsed} × {formatThb(session.shuttle_price_per_each)} charged to players
 					</p>
 					<div class="flex items-baseline justify-between gap-3">
-						<dt class="text-slate-600">Your actual cost</dt>
-						<dd class="shrink-0 tabular-nums font-medium text-slate-900">
+						<dt class="text-slate-600 dark:text-slate-400 dark:text-slate-500">Your actual cost</dt>
+						<dd class="shrink-0 tabular-nums font-medium text-slate-900 dark:text-slate-100">
 							{formatThb(projectedProfit.shuttleCost)}
 						</dd>
 					</div>
-					<p class="text-xs text-slate-500">
+					<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 						{shuttlesUsed} × {formatThb(session.shuttle_cost_per_each)} club cost per shuttle
 					</p>
-					<div class="flex items-baseline justify-between gap-3 border-t border-slate-200/80 pt-2">
-						<dt class="font-medium text-slate-700">Shuttle profit</dt>
+					<div class="flex items-baseline justify-between gap-3 border-t border-slate-200/80 dark:border-slate-700/80 pt-2">
+						<dt class="font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">Shuttle profit</dt>
 						<dd
 							class="shrink-0 tabular-nums font-semibold {projectedProfit.shuttleProfit >= 0
 								? 'text-emerald-700'
@@ -866,7 +866,7 @@
 					? 'border-emerald-200 bg-white/70'
 					: 'border-rose-200 bg-white/70'}"
 			>
-				<dt class="text-base font-semibold text-slate-900">Total projected profit</dt>
+				<dt class="text-base font-semibold text-slate-900 dark:text-slate-100">Total projected profit</dt>
 				<dd
 					class="shrink-0 text-lg font-bold tabular-nums {profitPositive
 						? 'text-emerald-700'
@@ -919,7 +919,7 @@
 			<ul class="space-y-3">
 				{#each pendingLeaveRequests as request (request.id)}
 					{@const payment = paymentForPlayer(request.user_id)}
-					<li class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+					<li class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm">
 						<div class="flex flex-wrap items-start justify-between gap-3">
 							<div class="flex min-w-0 items-center gap-3">
 								<UserAvatar
@@ -928,10 +928,10 @@
 									size="md"
 								/>
 								<div>
-									<p class="font-semibold text-slate-900">
+									<p class="font-semibold text-slate-900 dark:text-slate-100">
 										{request.profile?.display_name ?? 'Unknown player'}
 									</p>
-									<p class="text-xs text-slate-500">
+									<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 										Requested {formatDateTime(request.requested_at)}
 									</p>
 									{#if request.profile?.tag}
@@ -944,7 +944,7 @@
 
 							{#if payment}
 								<div class="text-right">
-									<p class="text-sm font-semibold tabular-nums text-slate-900">
+									<p class="text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">
 										{formatThb(payment.total_amount)}
 									</p>
 									<span
@@ -966,9 +966,9 @@
 							{/if}
 						</div>
 
-						<div class="mt-4 grid gap-4 border-t border-slate-100 pt-4 sm:grid-cols-2 sm:items-start">
+						<div class="mt-4 grid gap-4 border-t border-slate-100 dark:border-slate-800 pt-4 sm:grid-cols-2 sm:items-start">
 							<div class="space-y-2">
-								<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+								<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
 									1 · Confirm payment
 								</p>
 								{#if !payment}
@@ -987,7 +987,7 @@
 							</div>
 
 							<div class="space-y-2">
-								<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+								<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
 									2 · Approve leave
 								</p>
 								<div class="grid gap-2">
@@ -1025,7 +1025,7 @@
 									</form>
 								</div>
 								{#if !payment || payment.status !== 'approved'}
-									<p class="text-xs text-slate-500">Complete step 1 first.</p>
+									<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">Complete step 1 first.</p>
 								{/if}
 							</div>
 						</div>
@@ -1046,11 +1046,11 @@
 
 		{#if data.settlementStarted && billedPlayerCount > 0}
 			<div>
-				<div class="mb-1 flex justify-between text-xs font-medium text-slate-600">
+				<div class="mb-1 flex justify-between text-xs font-medium text-slate-600 dark:text-slate-400 dark:text-slate-500">
 					<span>Progress</span>
 					<span>{paymentProgress}%</span>
 				</div>
-				<div class="h-2 overflow-hidden rounded-full bg-slate-100">
+				<div class="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
 					<div
 						class="h-full rounded-full bg-secondary-500 transition-all duration-300"
 						style="width: {paymentProgress}%"
@@ -1080,7 +1080,7 @@
 							? 'border-sky-200 bg-sky-50/40'
 							: payment?.status === 'approved'
 								? 'border-emerald-200 bg-emerald-50/30'
-								: 'border-slate-200 bg-white'} shadow-sm"
+								: 'border-slate-200 dark:border-slate-700 bg-white'} shadow-sm"
 					>
 						{#snippet statusMeta()}
 							{#if liveStatus === 'break'}
@@ -1088,13 +1088,13 @@
 							{:else if liveStatus === 'billing'}
 								<p class="mt-1 text-xs text-sky-700">Waiting for payment confirmation</p>
 							{:else if pendingLeaveUserIds.has(player.user_id)}
-								<p class="mt-1 text-xs text-slate-500">
+								<p class="mt-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 									Pending leave — confirm payment in Early leave requests above
 								</p>
 							{:else if liveStatus === 'leave'}
-								<p class="mt-1 text-xs text-slate-500">Left the session</p>
+								<p class="mt-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">Left the session</p>
 							{:else if payment}
-								<p class="mt-1 text-xs text-slate-500">{paymentRowHint(payment.status)}</p>
+								<p class="mt-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">{paymentRowHint(payment.status)}</p>
 							{/if}
 						{/snippet}
 						{@render playerRosterToggleRow(player, liveStatus, idleLabel, statusMeta)}
@@ -1120,10 +1120,10 @@
 							? 'border-sky-200 bg-sky-50/40'
 							: status === 'approved'
 								? 'border-emerald-200 bg-emerald-50/30'
-								: 'border-slate-200 bg-white'}"
+								: 'border-slate-200 dark:border-slate-700 bg-white'}"
 					>
 						{#snippet settlementMeta()}
-							<p class="mt-1 text-xs text-slate-500">{paymentRowHint(status)}</p>
+							<p class="mt-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">{paymentRowHint(status)}</p>
 						{/snippet}
 						{@render playerRosterToggleRow(player, liveStatus, idleLabel, settlementMeta)}
 
@@ -1161,8 +1161,8 @@
 					<Squares2x2Icon class="h-5 w-5" />
 				</span>
 				<div>
-					<h2 class="text-lg font-semibold text-slate-900">Courts & matches</h2>
-					<p class="text-sm text-slate-500">
+					<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Courts & matches</h2>
+					<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
 						Tap a court to view details or assign a match on idle courts.
 					</p>
 				</div>
@@ -1183,7 +1183,7 @@
 				<EmptyState message="No matches recorded yet." />
 			{:else}
 				<div class="space-y-3">
-					<p class="text-xs font-medium text-slate-500">
+					<p class="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
 						{sortedCompletedMatches.length} completed match{sortedCompletedMatches.length === 1
 							? ''
 							: 'es'}
@@ -1225,7 +1225,7 @@
 				then close when all payments are approved.
 			</div>
 		{:else if session.status === 'in_progress' && !data.endReached && !data.settlementStarted}
-			<div class="rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5 text-sm text-slate-700">
+			<div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 dark:text-slate-600">
 				<strong>End session now</strong> — use when play finishes before
 				{formatDateTime(session.end_at)}. Bills all {activePlayers.length} active player{activePlayers.length ===
 				1
@@ -1235,7 +1235,7 @@
 			</div>
 		{/if}
 
-		<ul class="space-y-2 text-sm text-slate-700">
+		<ul class="space-y-2 text-sm text-slate-700 dark:text-slate-300 dark:text-slate-600">
 			<li class="flex gap-2">
 				<span
 					class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold {data.settlementStarted
@@ -1326,7 +1326,7 @@
 		labelledBy="end-early-modal-title"
 		onClose={() => (endEarlyModalOpen = false)}
 	>
-		<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
+		<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
 			<div class="border-b border-amber-200 bg-amber-50 px-4 py-4">
 				<h2 id="end-early-modal-title" class="text-lg font-semibold text-amber-900">
 					End session now?
@@ -1367,7 +1367,7 @@
 		labelledBy="settlement-modal-title"
 		onClose={() => (settlementModalOpen = false)}
 	>
-		<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
+		<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
 			<div class="border-b border-brand-100 bg-brand-50 px-4 py-4">
 				<h2 id="settlement-modal-title" class="text-lg font-semibold text-brand-900">
 					Start settlement?
@@ -1397,7 +1397,7 @@
 
 {#if closeModalOpen}
 	<AppModal open={closeModalOpen} labelledBy="close-modal-title" onClose={() => (closeModalOpen = false)}>
-		<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
+		<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
 			<div class="border-b border-brand-100 bg-brand-50 px-4 py-4">
 				<h2 id="close-modal-title" class="text-lg font-semibold text-brand-900">Close session?</h2>
 				<p class="mt-2 text-sm text-brand-800">
@@ -1424,7 +1424,7 @@
 {#snippet adminCourtAction()}
 	<div class="space-y-2">
 		{#if selectedCourtMatch?.status === 'pending'}
-			<p class="text-center text-xs text-slate-500">
+			<p class="text-center text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 				Waiting for all players to accept — match control opens once play starts.
 			</p>
 		{/if}
@@ -1485,7 +1485,7 @@
 		<h2 id="confirm-payment-without-slip-title" class="text-lg font-semibold text-red-800">
 			Confirm without bank slip?
 		</h2>
-		<p class="text-sm text-slate-600">
+		<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 			This player has not attached a bank transfer slip. Only confirm if you have verified payment
 			through another channel.
 		</p>

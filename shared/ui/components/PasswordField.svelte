@@ -47,7 +47,7 @@
 </script>
 
 <div>
-	<label for={id} class="mb-2 block text-sm font-medium text-slate-700">{label}</label>
+	<label for={id} class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">{label}</label>
 	<div class="relative">
 		<input
 			{id}
@@ -62,11 +62,11 @@
 			aria-invalid={errorMessage ? 'true' : undefined}
 			class="w-full rounded-xl border px-4 py-3 pr-12 text-base focus:outline-none focus:ring-2 focus:ring-brand-600/20 {errorMessage
 				? 'border-red-400 focus:border-red-500'
-				: 'border-slate-300 focus:border-brand-600'}"
+				: 'border-slate-300 dark:border-slate-600 focus:border-brand-600'}"
 		/>
 		<button
 			type="button"
-			class="absolute inset-y-0 right-0 flex items-center px-4 text-slate-500 transition hover:text-slate-700 focus:outline-none focus-visible:text-brand-700"
+			class="absolute inset-y-0 right-0 flex items-center px-4 text-slate-500 dark:text-slate-400 dark:text-slate-500 transition hover:text-slate-700 dark:text-slate-300 dark:text-slate-600 focus:outline-none focus-visible:text-brand-700"
 			aria-label={visible ? 'Hide password' : 'Show password'}
 			aria-pressed={visible}
 			onclick={toggleVisibility}

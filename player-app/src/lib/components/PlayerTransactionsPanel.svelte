@@ -73,11 +73,11 @@
 	<div class="space-y-2">
 		<div class="flex min-w-0 items-start gap-3">
 			<div class="min-w-0 flex-1">
-				<p class="truncate text-sm font-medium text-slate-900">{transaction.session_name}</p>
-				<p class="truncate text-xs text-slate-500">{metaLine(transaction)}</p>
+				<p class="truncate text-sm font-medium text-slate-900 dark:text-slate-100">{transaction.session_name}</p>
+				<p class="truncate text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">{metaLine(transaction)}</p>
 			</div>
 			<div class="flex shrink-0 flex-col items-end gap-1">
-				<p class="text-sm font-semibold tabular-nums text-slate-900">{formatThb(transaction.amount)}</p>
+				<p class="text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">{formatThb(transaction.amount)}</p>
 				<span
 					class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 {transactionStatusBadgeClass(
 						transaction.filter_status
@@ -98,9 +98,9 @@
 
 <AppCard class="space-y-3">
 	<div class="flex items-baseline justify-between gap-3">
-		<h2 class="font-medium text-slate-900">Payment history</h2>
+		<h2 class="font-medium text-slate-900 dark:text-slate-100">Payment history</h2>
 		{#if !isFetching && transactions.totalCount > 0}
-			<span class="text-xs text-slate-500">{transactions.totalCount} total</span>
+			<span class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">{transactions.totalCount} total</span>
 		{/if}
 	</div>
 
@@ -128,7 +128,7 @@
 			>
 				{#if isFetching}
 					<span
-						class="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-brand-700"
+						class="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 dark:border-slate-600 border-t-brand-700"
 						aria-hidden="true"
 					></span>
 				{:else}
@@ -139,7 +139,7 @@
 	</form>
 
 	{#if hasActiveFilters && !isFetching}
-		<p class="text-xs text-slate-500">
+		<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 			Filtered
 			{#if transactions.date}
 				· {transactions.date}
@@ -152,7 +152,7 @@
 	{/if}
 
 	{#if isFetching}
-		<ul class="divide-y divide-slate-100 rounded-lg border border-slate-200" aria-busy="true">
+		<ul class="divide-y divide-slate-100 dark:divide-slate-800 rounded-lg border border-slate-200 dark:border-slate-700" aria-busy="true">
 			{#each Array(3) as _, index (index)}
 				<li class="px-3 py-2.5">
 					<div class="app-skeleton h-3.5 w-36 max-w-full rounded"></div>
@@ -161,32 +161,32 @@
 		</ul>
 	{:else if transactions.items.length === 0}
 		<div
-			class="rounded-xl border border-dashed border-slate-200 bg-gradient-to-b from-slate-50/90 to-white px-4 py-8 text-center"
+			class="rounded-xl border border-dashed border-slate-200 dark:border-slate-700 bg-gradient-to-b from-slate-50/90 to-white px-4 py-8 text-center"
 		>
 			<DashboardIcon icon={isFilteredEmpty ? SearchIcon : BanknotesIcon} accent="indigo" class="mx-auto" />
 			{#if isFilteredEmpty}
-				<p class="mt-3 text-sm font-medium text-slate-900">No transactions match your filters</p>
-				<p class="mx-auto mt-1 max-w-xs text-sm text-slate-500">
+				<p class="mt-3 text-sm font-medium text-slate-900 dark:text-slate-100">No transactions match your filters</p>
+				<p class="mx-auto mt-1 max-w-xs text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
 					Try another date or status, or reset to see your full payment history.
 				</p>
-				<a href="/profile" class="mt-4 inline-flex text-sm font-medium text-brand-700 hover:text-brand-800">
+				<a href="/profile" class="mt-4 inline-flex text-sm font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800">
 					Clear filters
 				</a>
 			{:else}
-				<p class="mt-3 text-sm font-medium text-slate-900">No payments yet</p>
-				<p class="mx-auto mt-1 max-w-xs text-sm text-slate-500">
+				<p class="mt-3 text-sm font-medium text-slate-900 dark:text-slate-100">No payments yet</p>
+				<p class="mx-auto mt-1 max-w-xs text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
 					Session fees and late-cancellation charges show up here after you join a game.
 				</p>
 				<a
 					href="/sessions"
-					class="mt-4 inline-flex text-sm font-medium text-brand-700 hover:text-brand-800"
+					class="mt-4 inline-flex text-sm font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800"
 				>
 					Browse sessions →
 				</a>
 			{/if}
 		</div>
 	{:else}
-		<ul class="divide-y divide-slate-100 rounded-lg border border-slate-200">
+		<ul class="divide-y divide-slate-100 dark:divide-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
 			{#each transactions.items as transaction (transaction.id)}
 				<li class="px-3 py-3">
 					{#if canOpenCancellationFee(transaction) && onOpenCancellationFee}

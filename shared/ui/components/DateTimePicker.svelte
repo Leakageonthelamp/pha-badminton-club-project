@@ -281,7 +281,7 @@
 
 <div>
 	<!-- svelte-ignore a11y_label_has_associated_control -->
-	<label id={labelId} class="mb-2 block text-sm font-medium text-slate-700">{label}</label>
+	<label id={labelId} class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">{label}</label>
 	<input bind:this={inputEl} {id} type="text" data-input class="hidden" autocomplete="off" />
 	{#if validationError}
 		<p class="datetime-picker-error" role="alert">{validationError}</p>

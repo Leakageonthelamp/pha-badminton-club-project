@@ -51,7 +51,7 @@
 
 <button
 	type="button"
-	class="flex w-full items-center gap-2 rounded-lg border border-slate-200 bg-white text-left transition-colors hover:border-brand-200 hover:bg-brand-50/40 disabled:pointer-events-none disabled:opacity-60 {compact
+	class="flex w-full items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white text-left transition-colors hover:border-brand-200 hover:bg-brand-50/40 disabled:pointer-events-none disabled:opacity-60 dark:bg-slate-900 dark:hover:border-brand-700 dark:hover:bg-brand-900/30 {compact
 		? 'px-2.5 py-2'
 		: 'rounded-xl px-3 py-3'}"
 	{disabled}
@@ -59,20 +59,20 @@
 >
 	<div class="min-w-0 flex-1 space-y-1.5">
 		<div class="flex flex-wrap items-center gap-1.5">
-			<p class="{compact ? 'text-sm' : 'text-base'} font-medium text-slate-900">
+			<p class="{compact ? 'text-sm' : 'text-base'} font-medium text-slate-900 dark:text-slate-100">
 				{cardTitle}
 			</p>
 			{#if subtitle}
-				<span class="text-xs text-slate-500">{subtitle}</span>
+				<span class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">{subtitle}</span>
 			{/if}
 			{#if result}
 				<span
 					class="rounded-full px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide {result ===
 					'win'
-						? 'bg-emerald-100 text-emerald-800'
+						? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300'
 						: result === 'lose'
-							? 'bg-rose-100 text-rose-800'
-							: 'bg-slate-100 text-slate-700'}"
+							? 'bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300'
+							: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'}"
 				>
 					{result === 'win' ? 'Win' : result === 'lose' ? 'Loss' : 'Draw'}
 				</span>
@@ -87,45 +87,45 @@
 					{@const opponentScore = playerTeam === 'A' ? game.team_b_score : game.team_a_score}
 					<div class="flex items-center gap-2">
 						{#if sortedGames.length > 1}
-							<span class="text-[0.6rem] font-semibold text-slate-400">G{game.game_no}</span>
+							<span class="text-[0.6rem] font-semibold text-slate-400 dark:text-slate-500">G{game.game_no}</span>
 						{/if}
 						<div
 							class="rounded-md px-2 py-1 text-center ring-1 {playerWonGame
-								? 'bg-emerald-50 ring-emerald-200'
-								: 'bg-slate-50 ring-slate-200'}"
+								? 'bg-emerald-50 ring-emerald-200 dark:bg-emerald-950/40 dark:ring-emerald-800'
+								: 'bg-slate-50 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700'}"
 						>
-							<p class="text-[0.6rem] font-semibold uppercase tracking-wide text-slate-500">You</p>
+							<p class="text-[0.6rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">You</p>
 							<p
 								class="font-mono {sortedGames.length > 1
 									? 'text-base'
 									: 'text-lg'} font-bold tabular-nums leading-none {playerWonGame
-									? 'text-emerald-700'
-									: 'text-slate-900'}"
+									? 'text-emerald-700 dark:text-emerald-400'
+									: 'text-slate-900 dark:text-slate-100'}"
 							>
 								{playerScore}
 							</p>
 						</div>
-						<span class="text-[0.65rem] font-semibold text-slate-400">vs</span>
+						<span class="text-[0.65rem] font-semibold text-slate-400 dark:text-slate-500">vs</span>
 						<div
 							class="rounded-md px-2 py-1 text-center ring-1 {gameWinner && !playerWonGame
-								? 'bg-emerald-50 ring-emerald-200'
-								: 'bg-slate-50 ring-slate-200'}"
+								? 'bg-emerald-50 ring-emerald-200 dark:bg-emerald-950/40 dark:ring-emerald-800'
+								: 'bg-slate-50 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700'}"
 						>
-							<p class="text-[0.6rem] font-semibold uppercase tracking-wide text-slate-500">Opp</p>
+							<p class="text-[0.6rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Opp</p>
 							<p
 								class="font-mono {sortedGames.length > 1
 									? 'text-base'
 									: 'text-lg'} font-bold tabular-nums leading-none {gameWinner &&
 								!playerWonGame
-									? 'text-emerald-700'
-									: 'text-slate-900'}"
+									? 'text-emerald-700 dark:text-emerald-400'
+									: 'text-slate-900 dark:text-slate-100'}"
 							>
 								{opponentScore}
 							</p>
 						</div>
 					</div>
 					{#if index < sortedGames.length - 1}
-						<span class="text-slate-300" aria-hidden="true">·</span>
+						<span class="text-slate-300 dark:text-slate-600" aria-hidden="true">·</span>
 					{/if}
 				{/each}
 			</div>
@@ -133,10 +133,10 @@
 		<div
 			class="flex flex-wrap items-center gap-x-2 gap-y-0.5 {compact
 				? 'text-[0.65rem]'
-				: 'text-xs'} text-slate-500"
+				: 'text-xs'} text-slate-500 dark:text-slate-400 dark:text-slate-500"
 		>
 			{#if durationLabel}
-				<span class="font-mono tabular-nums text-slate-600">{durationLabel}</span>
+				<span class="font-mono tabular-nums text-slate-600 dark:text-slate-400 dark:text-slate-500">{durationLabel}</span>
 			{/if}
 			<span>{match.shuttles_used} shuttle{match.shuttles_used === 1 ? '' : 's'}</span>
 			{#if match.ended_at}
@@ -145,6 +145,6 @@
 		</div>
 	</div>
 	<ChevronDownIcon
-		class="{compact ? 'h-4 w-4' : 'h-5 w-5'} shrink-0 -rotate-90 text-slate-400"
+		class="{compact ? 'h-4 w-4' : 'h-5 w-5'} shrink-0 -rotate-90 text-slate-400 dark:text-slate-500"
 	/>
 </button>

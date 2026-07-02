@@ -195,17 +195,17 @@
 </script>
 
 {#snippet playerRow(player: MatchPlayerWithProfile)}
-	<li class="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50/60 p-3">
+	<li class="flex items-center gap-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/60 p-3">
 		<UserAvatar
 			displayName={player.profile?.display_name ?? 'Player'}
 			avatarUrl={player.profile?.avatar_url ?? null}
 			size="sm"
 		/>
 		<div class="min-w-0 flex-1">
-			<p class="truncate font-medium text-slate-800">
+			<p class="truncate font-medium text-slate-800 dark:text-slate-200">
 				{player.profile?.display_name ?? 'Player'}
 				{#if player.user_id === data.userId}
-					<span class="text-slate-500">(you)</span>
+					<span class="text-slate-500 dark:text-slate-400 dark:text-slate-500">(you)</span>
 				{/if}
 			</p>
 			<div class="mt-1 flex flex-wrap items-center gap-2">
@@ -229,7 +229,7 @@
 
 <section class="app-page space-y-6">
 	<DashboardHero eyebrow="Match live" title={`Court ${match.court_number}`} subtitle={session.name}>
-		<span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+		<span class="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">
 			{matchStatusLabel(match.status)}
 		</span>
 	</DashboardHero>
@@ -238,12 +238,12 @@
 
 	<div class="grid grid-cols-2 gap-4">
 		<AppCard class="space-y-2">
-			<p class="text-sm text-slate-500">Match time</p>
-			<p class="font-mono text-2xl font-extrabold tabular-nums text-slate-900">{uptimeLabel}</p>
+			<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Match time</p>
+			<p class="font-mono text-2xl font-extrabold tabular-nums text-slate-900 dark:text-slate-100">{uptimeLabel}</p>
 		</AppCard>
 		<AppCard class="space-y-2">
-			<p class="text-sm text-slate-500">Shuttles used</p>
-			<p class="text-2xl font-extrabold tabular-nums text-slate-900">{match.shuttles_used}</p>
+			<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Shuttles used</p>
+			<p class="text-2xl font-extrabold tabular-nums text-slate-900 dark:text-slate-100">{match.shuttles_used}</p>
 		</AppCard>
 	</div>
 
@@ -261,10 +261,10 @@
 	{/if}
 
 	<AppCard class="space-y-4">
-		<h2 class="text-sm font-semibold text-slate-800">Players</h2>
+		<h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Players</h2>
 		<div class="space-y-4">
 			<div class="space-y-2">
-				<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Team A</p>
+				<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Team A</p>
 				<ul class="space-y-2">
 					{#each teams.teamA as player (player.id)}
 						{@render playerRow(player)}
@@ -272,7 +272,7 @@
 				</ul>
 			</div>
 			<div class="space-y-2">
-				<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Team B</p>
+				<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Team B</p>
 				<ul class="space-y-2">
 					{#each teams.teamB as player (player.id)}
 						{@render playerRow(player)}
@@ -284,7 +284,7 @@
 
 	{#if canSubmitScore}
 		<AppCard class="space-y-3">
-			<p class="text-sm text-slate-600">Log the match score when play finishes.</p>
+			<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Log the match score when play finishes.</p>
 			<SubmitButton type="button" variant="accent" disabled={isBusy} onclick={openScoreModal}>
 				Log score
 			</SubmitButton>
@@ -295,7 +295,7 @@
 		</AppCard>
 	{:else if match.status === 'score_pending' && myPlayer?.user_id === match.score_submitted_by}
 		<AppCard>
-			<p class="text-sm text-slate-600">Waiting for other players to confirm your submitted score.</p>
+			<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Waiting for other players to confirm your submitted score.</p>
 		</AppCard>
 	{/if}
 
@@ -320,7 +320,7 @@
 		scoreFormError = null;
 	}}
 >
-	<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
+	<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
 		<div class="border-b border-brand-100 bg-brand-50 px-4 py-4">
 			<h2 id="log-score-title" class="text-lg font-semibold text-brand-900">Log match score</h2>
 			<p class="mt-1 text-sm text-brand-800">

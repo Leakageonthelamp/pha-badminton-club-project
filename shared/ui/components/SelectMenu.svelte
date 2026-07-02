@@ -120,7 +120,7 @@
 </script>
 
 <div class="relative">
-	<label for={id} class="mb-2 block text-sm font-medium text-slate-700">{label}</label>
+	<label for={id} class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">{label}</label>
 
 	<button
 		bind:this={triggerEl}
@@ -172,7 +172,7 @@
 						>
 							<span class="min-w-0 {truncate ? 'truncate' : 'whitespace-normal'}">{option.label}</span>
 							{#if option.hint}
-								<span class="shrink-0 text-xs font-medium text-slate-400">{option.hint}</span>
+								<span class="shrink-0 text-xs font-medium text-slate-400 dark:text-slate-500">{option.hint}</span>
 							{/if}
 						</button>
 					</li>

@@ -606,9 +606,9 @@
 
 			<div class="flex shrink-0 items-start justify-between gap-3 pb-3">
 				<div class="min-w-0">
-					<h2 id="session-sheet-title" class="text-xl font-semibold text-slate-900">{title}</h2>
+					<h2 id="session-sheet-title" class="text-xl font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
 					{#if activeSession?.club?.name}
-						<p class="mt-1 text-sm text-slate-600">{activeSession.club.name}</p>
+						<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{activeSession.club.name}</p>
 					{/if}
 					{#if activeSession?.status}
 						<p class="mt-2 flex flex-wrap items-center gap-2">
@@ -638,7 +638,7 @@
 				</div>
 				<button
 					type="button"
-					class="rounded-lg px-2 py-1 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+					class="rounded-lg px-2 py-1 text-sm font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 dark:bg-slate-800 hover:text-slate-700 dark:text-slate-300 dark:text-slate-600"
 					onclick={close}
 				>
 					Close
@@ -735,39 +735,39 @@
 					{/if}
 
 					{#if loading && !activeSession?.description}
-						<div class="mt-4 rounded-2xl border border-slate-200 bg-white p-4" aria-hidden="true">
+						<div class="mt-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4" aria-hidden="true">
 							<div class="app-skeleton h-5 w-16"></div>
 							<div class="app-skeleton mt-3 h-16 w-full"></div>
 						</div>
 					{:else if activeSession?.description}
-						<div class="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
-							<h3 class="text-base font-semibold text-slate-900">About</h3>
+						<div class="mt-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
+							<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">About</h3>
 							<RichTextDisplay
 								html={activeSession.description}
-								class="prose prose-sm mt-3 max-w-none text-sm leading-relaxed text-slate-600"
+								class="prose prose-sm mt-3 max-w-none text-sm leading-relaxed text-slate-600 dark:text-slate-400 dark:text-slate-500"
 							/>
 						</div>
 					{/if}
 
 					<div class="mt-6 space-y-4">
 						{#if loading && !activeSession?.start_at}
-							<div class="rounded-2xl border border-slate-200 bg-white p-4" aria-hidden="true">
+							<div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4" aria-hidden="true">
 								<div class="app-skeleton h-5 w-24"></div>
 								<div class="app-skeleton mt-3 h-10 w-full max-w-xs"></div>
-								<div class="mt-3 space-y-2 rounded-xl border border-slate-100 p-3">
+								<div class="mt-3 space-y-2 rounded-xl border border-slate-100 dark:border-slate-800 p-3">
 									<div class="app-skeleton h-4 w-32"></div>
 									<div class="app-skeleton h-3 w-40"></div>
 								</div>
 							</div>
 						{:else if activeSession?.start_at && activeSession.end_at}
-							<div class="rounded-2xl border border-slate-200 bg-white p-4">
-								<h3 class="text-base font-semibold text-slate-900">Schedule</h3>
+							<div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
+								<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Schedule</h3>
 								<SessionDurationPill
 									startAt={activeSession.start_at}
 									endAt={activeSession.end_at}
 									class="mt-3"
 								/>
-								<div class="app-cost-lines mt-3 rounded-xl border border-slate-100">
+								<div class="app-cost-lines mt-3 rounded-xl border border-slate-100 dark:border-slate-800">
 									<div class="app-cost-line">
 										<div class="min-w-0">
 											<p class="app-cost-line-label">Start</p>
@@ -786,15 +786,15 @@
 							</div>
 						{/if}
 
-						<div class="rounded-2xl border border-slate-200 bg-white p-4" aria-busy={loading}>
-							<h3 class="text-base font-semibold text-slate-900">Venue</h3>
+						<div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4" aria-busy={loading}>
+							<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Venue</h3>
 							{#if loading && !activeSession?.venue_name && !hasLocation}
-								<div class="mt-3 space-y-2 rounded-xl border border-slate-100 p-3" aria-hidden="true">
+								<div class="mt-3 space-y-2 rounded-xl border border-slate-100 dark:border-slate-800 p-3" aria-hidden="true">
 									<div class="app-skeleton h-4 w-32"></div>
 									<div class="app-skeleton h-3 w-40"></div>
 								</div>
 							{:else}
-								<div class="app-cost-lines mt-3 rounded-xl border border-slate-100">
+								<div class="app-cost-lines mt-3 rounded-xl border border-slate-100 dark:border-slate-800">
 									<div class="app-cost-line">
 										<div class="min-w-0">
 											<p class="app-cost-line-label">Location</p>
@@ -819,7 +819,7 @@
 													href={googleMapsUrl}
 													target="_blank"
 													rel="noopener noreferrer"
-													class="text-sm font-semibold text-brand-700 hover:text-brand-800"
+													class="text-sm font-semibold text-brand-700 dark:text-brand-300 hover:text-brand-800"
 												>
 													Google Maps
 												</a>
@@ -827,7 +827,7 @@
 													href={appleMapsUrl}
 													target="_blank"
 													rel="noopener noreferrer"
-													class="text-sm font-semibold text-brand-700 hover:text-brand-800"
+													class="text-sm font-semibold text-brand-700 dark:text-brand-300 hover:text-brand-800"
 												>
 													Apple Maps
 												</a>
@@ -838,25 +838,25 @@
 							{/if}
 						</div>
 
-						<div class="rounded-2xl border border-slate-200 bg-white p-4" aria-busy={loading}>
-							<h3 class="text-base font-semibold text-slate-900">Capacity & fees</h3>
+						<div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4" aria-busy={loading}>
+							<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Capacity & fees</h3>
 							{#if loading}
 								<div class="mt-3 space-y-3" aria-hidden="true">
 									<div class="flex justify-between gap-4">
 										<div class="app-skeleton h-4 w-20"></div>
 										<div class="app-skeleton h-4 w-28"></div>
 									</div>
-									<div class="space-y-2 border-t border-slate-100 pt-3">
+									<div class="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-3">
 										<div class="app-skeleton h-4 w-32"></div>
 										<div class="app-skeleton h-3 w-48"></div>
 									</div>
-									<div class="space-y-2 border-t border-slate-100 pt-3">
+									<div class="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-3">
 										<div class="app-skeleton h-4 w-24"></div>
 										<div class="app-skeleton h-3 w-40"></div>
 									</div>
 								</div>
 							{:else if session}
-								<div class="app-cost-lines mt-3 rounded-xl border border-slate-100">
+								<div class="app-cost-lines mt-3 rounded-xl border border-slate-100 dark:border-slate-800">
 									{#if spotsLabel}
 										<div class="app-cost-line">
 											<div class="min-w-0">
@@ -920,7 +920,7 @@
 										</div>
 										<p class="app-cost-line-amount">
 											{formatThb(shuttleSharePerUse)}
-											<span class="block text-xs font-normal text-slate-500">per shuttle</span>
+											<span class="block text-xs font-normal text-slate-500 dark:text-slate-400 dark:text-slate-500">per shuttle</span>
 										</p>
 									</div>
 
@@ -948,17 +948,17 @@
 						</div>
 
 						{#if loading && !activeSession?.match_score_type}
-							<div class="rounded-2xl border border-slate-200 bg-white p-4" aria-hidden="true">
+							<div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4" aria-hidden="true">
 								<div class="app-skeleton h-5 w-32"></div>
-								<div class="mt-3 space-y-2 rounded-xl border border-slate-100 p-3">
+								<div class="mt-3 space-y-2 rounded-xl border border-slate-100 dark:border-slate-800 p-3">
 									<div class="app-skeleton h-4 w-28"></div>
 									<div class="app-skeleton h-3 w-36"></div>
 								</div>
 							</div>
 						{:else if activeSession?.match_score_type}
-							<div class="rounded-2xl border border-slate-200 bg-white p-4">
-								<h3 class="text-base font-semibold text-slate-900">Match settings</h3>
-								<div class="app-cost-lines mt-3 rounded-xl border border-slate-100">
+							<div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
+								<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Match settings</h3>
+								<div class="app-cost-lines mt-3 rounded-xl border border-slate-100 dark:border-slate-800">
 									<div class="app-cost-line">
 										<div class="min-w-0">
 											<p class="app-cost-line-label">Rally points</p>
@@ -980,17 +980,17 @@
 						{/if}
 
 						{#if loading}
-							<div class="rounded-2xl border border-slate-200 bg-white p-4" aria-busy="true">
-								<h3 class="text-base font-semibold text-slate-900">Host</h3>
-								<div class="mt-3 space-y-2 rounded-xl border border-slate-100 p-3" aria-hidden="true">
+							<div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4" aria-busy="true">
+								<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Host</h3>
+								<div class="mt-3 space-y-2 rounded-xl border border-slate-100 dark:border-slate-800 p-3" aria-hidden="true">
 									<div class="app-skeleton h-4 w-32"></div>
 									<div class="app-skeleton h-3 w-24"></div>
 								</div>
 							</div>
 						{:else if session?.host}
-							<div class="rounded-2xl border border-slate-200 bg-white p-4">
-								<h3 class="text-base font-semibold text-slate-900">Host</h3>
-								<div class="app-cost-lines mt-3 rounded-xl border border-slate-100">
+							<div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
+								<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Host</h3>
+								<div class="app-cost-lines mt-3 rounded-xl border border-slate-100 dark:border-slate-800">
 									<div class="app-cost-line">
 										<div class="min-w-0">
 											<p class="app-cost-line-label">Session host</p>
@@ -1008,17 +1008,17 @@
 						{/if}
 
 						{#if loading || !rosterReady}
-							<div class="rounded-2xl border border-slate-200 bg-white p-4" aria-busy="true">
-								<h3 class="text-base font-semibold text-slate-900">Participants</h3>
-								<p class="mt-1 text-xs text-slate-500">
+							<div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4" aria-busy="true">
+								<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Participants</h3>
+								<p class="mt-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 									Waiting list and buffer queue for this session.
 								</p>
 								<ul
-									class="mt-4 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-100"
+									class="mt-4 divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800"
 									aria-label="Loading participants"
 								>
 									{#each [0, 1, 2] as row (row)}
-										<li class="flex items-center gap-3 bg-white px-3 py-2.5">
+										<li class="flex items-center gap-3 bg-white dark:bg-slate-900 px-3 py-2.5">
 											<div class="app-skeleton h-9 w-9 shrink-0 rounded-full"></div>
 											<div class="min-w-0 flex-1 space-y-2">
 												<div class="app-skeleton h-4 w-32 max-w-full"></div>
@@ -1029,13 +1029,13 @@
 								</ul>
 							</div>
 						{:else if showParticipants && session}
-							<div class="rounded-2xl border border-slate-200 bg-white p-4">
-								<h3 class="text-base font-semibold text-slate-900">Participants</h3>
-								<p class="mt-1 text-xs text-slate-500">
+							<div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
+								<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Participants</h3>
+								<p class="mt-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 									Waiting list and buffer queue for this session.
 								</p>
 
-								<div class="app-cost-lines mt-3 rounded-xl border border-slate-100">
+								<div class="app-cost-lines mt-3 rounded-xl border border-slate-100 dark:border-slate-800">
 									<div>
 										<div class="app-cost-line">
 											<div class="min-w-0">
@@ -1045,26 +1045,26 @@
 											<p class="app-cost-line-amount">{waitingPlayers.length}</p>
 										</div>
 										{#if waitingPlayers.length === 0}
-											<p class="border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
+											<p class="border-t border-slate-100 dark:border-slate-800 px-4 py-3 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 												No players waiting.
 											</p>
 										{:else}
-											<ul class="divide-y divide-slate-100 border-t border-slate-100">
+											<ul class="divide-y divide-slate-100 dark:divide-slate-800 border-t border-slate-100 dark:border-slate-800">
 												{#each waitingPlayers as player (player.id)}
-													<li class="flex items-center gap-3 bg-white px-4 py-2.5">
+													<li class="flex items-center gap-3 bg-white dark:bg-slate-900 px-4 py-2.5">
 														<UserAvatar
 															displayName={player.profile?.display_name ?? 'Player'}
 															avatarUrl={player.profile?.avatar_url ?? null}
 															size="sm"
 														/>
 														<div class="min-w-0 flex-1">
-															<p class="truncate text-sm font-medium text-slate-900">
+															<p class="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
 																{player.profile?.display_name ?? 'Unknown'}
 																{#if player.is_me}
 																	<span class="text-brand-700"> (you)</span>
 																{/if}
 															</p>
-															<p class="text-xs text-slate-500">
+															<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 																Joined {formatDateTime(player.joined_at)}
 															</p>
 														</div>
@@ -1090,26 +1090,26 @@
 											</p>
 										</div>
 										{#if queuedPlayers.length === 0}
-											<p class="border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
+											<p class="border-t border-slate-100 dark:border-slate-800 px-4 py-3 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 												No players in the buffer queue.
 											</p>
 										{:else}
-											<ul class="divide-y divide-slate-100 border-t border-slate-100">
+											<ul class="divide-y divide-slate-100 dark:divide-slate-800 border-t border-slate-100 dark:border-slate-800">
 												{#each queuedPlayers as player (player.id)}
-													<li class="flex items-center gap-3 bg-white px-4 py-2.5">
+													<li class="flex items-center gap-3 bg-white dark:bg-slate-900 px-4 py-2.5">
 														<UserAvatar
 															displayName={player.profile?.display_name ?? 'Player'}
 															avatarUrl={player.profile?.avatar_url ?? null}
 															size="sm"
 														/>
 														<div class="min-w-0 flex-1">
-															<p class="truncate text-sm font-medium text-slate-900">
+															<p class="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
 																{player.profile?.display_name ?? 'Unknown'}
 																{#if player.is_me}
 																	<span class="text-brand-700"> (you)</span>
 																{/if}
 															</p>
-															<p class="text-xs text-slate-500">
+															<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 																Joined {formatDateTime(player.joined_at)}
 															</p>
 														</div>
@@ -1131,26 +1131,26 @@
 											<p class="app-cost-line-amount">{confirmedPlayers.length}</p>
 										</div>
 										{#if confirmedPlayers.length === 0}
-											<p class="border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
+											<p class="border-t border-slate-100 dark:border-slate-800 px-4 py-3 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 												No confirmed players yet.
 											</p>
 										{:else}
-											<ul class="divide-y divide-slate-100 border-t border-slate-100">
+											<ul class="divide-y divide-slate-100 dark:divide-slate-800 border-t border-slate-100 dark:border-slate-800">
 												{#each confirmedPlayers as player (player.id)}
-													<li class="flex items-center gap-3 bg-white px-4 py-2.5">
+													<li class="flex items-center gap-3 bg-white dark:bg-slate-900 px-4 py-2.5">
 														<UserAvatar
 															displayName={player.profile?.display_name ?? 'Player'}
 															avatarUrl={player.profile?.avatar_url ?? null}
 															size="sm"
 														/>
 														<div class="min-w-0 flex-1">
-															<p class="truncate text-sm font-medium text-slate-900">
+															<p class="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
 																{player.profile?.display_name ?? 'Unknown'}
 																{#if player.is_me}
 																	<span class="text-brand-700"> (you)</span>
 																{/if}
 															</p>
-															<p class="text-xs text-slate-500">Confirmed player</p>
+															<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">Confirmed player</p>
 														</div>
 														{#if player.profile?.tag}
 															<TagPill tag={player.profile.tag} />
@@ -1203,7 +1203,7 @@
 									<input type="hidden" name="session_id" value={session.id} />
 								</form>
 								{#if membership?.status === 'waiting' && session.cancellation_fee > 0}
-									<p class="text-xs text-slate-500">
+									<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 										Cancelling within 1 hour of start may incur a {formatThb(session.cancellation_fee)} fee.
 									</p>
 								{/if}
@@ -1213,7 +1213,7 @@
 								<SubmitButton type="button" variant="secondary" disabled>
 									Cancel join
 								</SubmitButton>
-								<p class="text-xs text-slate-500">
+								<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 									Cancellation closed within 15 minutes of start. The admin may confirm or reject you. If
 									you play and leave early, you will be billed your court fee per player ({courtFeePerPlayerModeLabel(
 										session.fixed_court_fee_per_player
@@ -1231,7 +1231,7 @@
 								>
 									Leave session
 								</SubmitButton>
-								<p class="text-xs text-slate-500">
+								<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 									Early leave bills your court-fee share, requires admin payment confirmation, then admin
 									leave approval — same as on the live session page.
 								</p>
@@ -1255,7 +1255,7 @@
 
 	{#if joinModalOpen && session}
 		<AppModal open={joinModalOpen} labelledBy="join-session-title" onClose={closeJoinModal}>
-			<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
+			<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
 				<div class="border-b border-brand-100 bg-brand-50 px-4 py-4">
 					<h2 id="join-session-title" class="text-lg font-semibold text-brand-900">
 						{isInProgressJoin ? 'Join session in progress?' : 'Before you join'}
@@ -1322,7 +1322,7 @@
 
 	{#if cancelConfirmOpen && session}
 		<AppModal open={cancelConfirmOpen} labelledBy="cancel-confirm-title" onClose={() => (cancelConfirmOpen = false)}>
-			<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
+			<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
 				<div class="border-b border-amber-100 bg-amber-50 px-4 py-4">
 					<h2 id="cancel-confirm-title" class="text-lg font-semibold text-amber-900">
 						Late cancellation fee

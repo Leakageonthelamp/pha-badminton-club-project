@@ -57,13 +57,13 @@
 
 {#if accessState === 'granted' && infoMessage}
 	<div class="app-location-prompt">
-		<p class="text-sm text-slate-700">{infoMessage}</p>
+		<p class="text-sm text-slate-700 dark:text-slate-300 dark:text-slate-600">{infoMessage}</p>
 	</div>
 {:else if accessState === 'prompt'}
 	<div class="app-location-prompt">
 		<div class="min-w-0">
-			<p class="font-medium text-slate-900">{title}</p>
-			<p class="mt-1 text-sm text-slate-600">{description}</p>
+			<p class="font-medium text-slate-900 dark:text-slate-100">{title}</p>
+			<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{description}</p>
 			{#if errorMessage}
 				<p class="mt-2 text-sm text-amber-800">{errorMessage}</p>
 			{/if}

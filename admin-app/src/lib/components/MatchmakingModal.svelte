@@ -66,13 +66,13 @@
 </script>
 
 <AppModal {open} labelledBy="matchmaking-modal-title" onClose={onClose}>
-	<div class="flex max-h-[min(92vh,800px)] flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5">
-		<div class="space-y-4 border-b border-slate-100 px-5 py-4">
+	<div class="flex max-h-[min(92vh,800px)] flex-col overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl ring-1 ring-black/5">
+		<div class="space-y-4 border-b border-slate-100 dark:border-slate-800 px-5 py-4">
 			<div>
-				<h2 id="matchmaking-modal-title" class="text-lg font-semibold text-slate-900">
+				<h2 id="matchmaking-modal-title" class="text-lg font-semibold text-slate-900 dark:text-slate-100">
 					Assign match — Court {courtNumber ?? '—'}
 				</h2>
-				<p class="mt-1 text-sm text-slate-500">
+				<p class="mt-1 text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
 					Select 4 idle players in order — first two are Team A, last two are Team B.
 				</p>
 			</div>
@@ -88,10 +88,10 @@
 				<button
 					type="button"
 					disabled
-					class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-left opacity-60"
+					class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-3 py-3 text-left opacity-60"
 				>
-					<p class="text-sm font-semibold text-slate-700">Auto (ELO)</p>
-					<p class="mt-1 text-xs text-slate-500">Coming soon — rank-based pairing.</p>
+					<p class="text-sm font-semibold text-slate-700 dark:text-slate-300 dark:text-slate-600">Auto (ELO)</p>
+					<p class="mt-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">Coming soon — rank-based pairing.</p>
 				</button>
 			</div>
 
@@ -116,13 +116,13 @@
 										size="sm"
 									/>
 									<div class="min-w-0 flex-1">
-										<p class="truncate text-sm font-medium leading-none text-slate-800">
+										<p class="truncate text-sm font-medium leading-none text-slate-800 dark:text-slate-200">
 											{playerName(player)}
 										</p>
 									</div>
 									<button
 										type="button"
-										class="shrink-0 rounded-md px-1.5 py-1 text-xs font-medium leading-none text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+										class="shrink-0 rounded-md px-1.5 py-1 text-xs font-medium leading-none text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 dark:bg-slate-800 hover:text-slate-700 dark:text-slate-300 dark:text-slate-600"
 										onclick={() => togglePlayer(player.user_id)}
 									>
 										Remove
@@ -135,18 +135,18 @@
 					</ul>
 				</div>
 
-				<div class="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
+				<div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 p-3">
 					<div class="flex items-center justify-between gap-2">
-						<p class="text-xs font-semibold uppercase tracking-wide text-slate-600">Team B</p>
-						<p class="text-xs text-slate-500">{Math.max(0, selectedIds.length - 2)}/2</p>
+						<p class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400 dark:text-slate-500">Team B</p>
+						<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">{Math.max(0, selectedIds.length - 2)}/2</p>
 					</div>
 					<ul class="mt-2 space-y-2">
 						{#each [2, 3] as slot (slot)}
 							{@const player = slotPlayer(slot)}
 							<li
 								class="flex h-12 items-center gap-2 overflow-hidden rounded-lg border px-2.5 {player
-									? 'border-slate-200 bg-white'
-									: 'border-dashed border-slate-200 bg-white/50'}"
+									? 'border-slate-200 dark:border-slate-700 bg-white'
+									: 'border-dashed border-slate-200 dark:border-slate-700 bg-white/50'}"
 							>
 								{#if player}
 									<UserAvatar
@@ -155,19 +155,19 @@
 										size="sm"
 									/>
 									<div class="min-w-0 flex-1">
-										<p class="truncate text-sm font-medium leading-none text-slate-800">
+										<p class="truncate text-sm font-medium leading-none text-slate-800 dark:text-slate-200">
 											{playerName(player)}
 										</p>
 									</div>
 									<button
 										type="button"
-										class="shrink-0 rounded-md px-1.5 py-1 text-xs font-medium leading-none text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+										class="shrink-0 rounded-md px-1.5 py-1 text-xs font-medium leading-none text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 dark:bg-slate-800 hover:text-slate-700 dark:text-slate-300 dark:text-slate-600"
 										onclick={() => togglePlayer(player.user_id)}
 									>
 										Remove
 									</button>
 								{:else}
-									<p class="text-sm leading-none text-slate-500">Player {slot - 1}</p>
+									<p class="text-sm leading-none text-slate-500 dark:text-slate-400 dark:text-slate-500">Player {slot - 1}</p>
 								{/if}
 							</li>
 						{/each}
@@ -178,12 +178,12 @@
 
 		<div class="flex min-h-[22rem] min-w-0 flex-1 flex-col px-5 py-4">
 			<div class="mb-2 flex items-center justify-between gap-2">
-				<p class="text-sm font-medium text-slate-800">Idle players</p>
-				<p class="text-xs text-slate-500">{selectedIds.length}/4 selected</p>
+				<p class="text-sm font-medium text-slate-800 dark:text-slate-200">Idle players</p>
+				<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">{selectedIds.length}/4 selected</p>
 			</div>
 
 			{#if idlePlayers.length === 0}
-				<p class="rounded-xl border border-dashed border-slate-200 px-3 py-4 text-sm text-slate-500">
+				<p class="rounded-xl border border-dashed border-slate-200 dark:border-slate-700 px-3 py-4 text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
 					No idle players available right now.
 				</p>
 			{:else}
@@ -198,10 +198,10 @@
 						<li>
 							<button
 								type="button"
-								class="flex w-full items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5 text-left transition {selected
+								class="flex w-full items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-left transition {selected
 									? team === 'A'
 										? 'bg-brand-50 shadow-[inset_0_0_0_2px_var(--color-brand-400)]'
-										: 'bg-slate-100 shadow-[inset_0_0_0_2px_var(--color-slate-400)]'
+										: 'bg-slate-100 dark:bg-slate-800 shadow-[inset_0_0_0_2px_var(--color-slate-400)]'
 									: 'hover:border-slate-300'}"
 								onclick={() => togglePlayer(player.user_id)}
 							>
@@ -211,7 +211,7 @@
 									size="sm"
 								/>
 								<div class="min-w-0 flex-1">
-									<p class="truncate font-medium text-slate-800">{playerName(player)}</p>
+									<p class="truncate font-medium text-slate-800 dark:text-slate-200">{playerName(player)}</p>
 									{#if player.profile?.tag}
 										<TagPill tag={player.profile.tag} />
 									{/if}
@@ -228,7 +228,7 @@
 										</span>
 									{/if}
 									{#if idleSince}
-										<span class="font-mono text-xs text-slate-500">
+										<span class="font-mono text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 											{formatUptime(idleSince, Date.now())}
 										</span>
 									{/if}
@@ -240,7 +240,7 @@
 			{/if}
 		</div>
 
-		<div class="flex justify-end gap-2 border-t border-slate-100 px-5 py-4">
+		<div class="flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800 px-5 py-4">
 			<SubmitButton type="button" variant="secondary" onclick={onClose}>Cancel</SubmitButton>
 			<SubmitButton
 				type="button"

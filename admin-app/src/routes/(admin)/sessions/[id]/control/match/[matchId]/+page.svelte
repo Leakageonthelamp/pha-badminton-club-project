@@ -162,7 +162,7 @@
 		title={`Court ${match.court_number}`}
 		subtitle={session.name}
 	>
-		<span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+		<span class="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">
 			{matchStatusLabel(match.status)}
 		</span>
 	</DashboardHero>
@@ -171,12 +171,12 @@
 
 	<div class="grid gap-4 sm:grid-cols-2">
 		<AppCard class="space-y-2">
-			<p class="text-sm text-slate-500">Match time</p>
-			<p class="font-mono text-2xl font-semibold text-slate-900">{uptimeLabel}</p>
+			<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Match time</p>
+			<p class="font-mono text-2xl font-semibold text-slate-900 dark:text-slate-100">{uptimeLabel}</p>
 		</AppCard>
 		<AppCard class="space-y-2">
-			<p class="text-sm text-slate-500">Shuttles used</p>
-			<p class="font-mono text-2xl font-semibold text-slate-900">{match.shuttles_used}</p>
+			<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Shuttles used</p>
+			<p class="font-mono text-2xl font-semibold text-slate-900 dark:text-slate-100">{match.shuttles_used}</p>
 		</AppCard>
 	</div>
 
@@ -185,7 +185,7 @@
 			<div class="space-y-3">
 				<div>
 					<p class="text-sm font-semibold text-brand-900">Log shuttle usage</p>
-					<p class="mt-1 text-sm text-slate-600">
+					<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 						Tap below each time a new shuttle is opened during this match.
 					</p>
 				</div>
@@ -205,7 +205,7 @@
 
 	<div class="grid gap-4 md:grid-cols-2">
 		<AppCard class="space-y-3">
-			<h2 class="text-sm font-semibold text-slate-800">Team A</h2>
+			<h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Team A</h2>
 			<ul class="space-y-2">
 				{#each teams.teamA as player (player.id)}
 					<li class="flex items-center gap-3">
@@ -215,7 +215,7 @@
 							size="sm"
 						/>
 						<div>
-							<p class="font-medium text-slate-800">{player.profile?.display_name ?? 'Player'}</p>
+							<p class="font-medium text-slate-800 dark:text-slate-200">{player.profile?.display_name ?? 'Player'}</p>
 							{#if player.profile?.tag}
 								<TagPill tag={player.profile.tag} />
 							{/if}
@@ -225,7 +225,7 @@
 			</ul>
 		</AppCard>
 		<AppCard class="space-y-3">
-			<h2 class="text-sm font-semibold text-slate-800">Team B</h2>
+			<h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Team B</h2>
 			<ul class="space-y-2">
 				{#each teams.teamB as player (player.id)}
 					<li class="flex items-center gap-3">
@@ -235,7 +235,7 @@
 							size="sm"
 						/>
 						<div>
-							<p class="font-medium text-slate-800">{player.profile?.display_name ?? 'Player'}</p>
+							<p class="font-medium text-slate-800 dark:text-slate-200">{player.profile?.display_name ?? 'Player'}</p>
 							{#if player.profile?.tag}
 								<TagPill tag={player.profile.tag} />
 							{/if}
@@ -248,12 +248,12 @@
 
 	{#if match.games.length}
 		<AppCard class="space-y-2">
-			<h2 class="text-sm font-semibold text-slate-800">Current score</h2>
-			<p class="text-lg font-medium text-slate-900">{formatMatchScore(match.games)}</p>
+			<h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Current score</h2>
+			<p class="text-lg font-medium text-slate-900 dark:text-slate-100">{formatMatchScore(match.games)}</p>
 			{#if winner}
-				<p class="text-sm text-slate-600">Winner: Team {winner}</p>
+				<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Winner: Team {winner}</p>
 			{:else if matchDraw}
-				<p class="text-sm text-slate-600">Match drawn</p>
+				<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Match drawn</p>
 			{/if}
 		</AppCard>
 	{/if}
@@ -261,8 +261,8 @@
 	{#if match.status === 'active'}
 		<AppCard class="space-y-3">
 			<div>
-				<h2 class="text-sm font-semibold text-slate-800">End match</h2>
-				<p class="mt-1 text-sm text-slate-600">
+				<h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200">End match</h2>
+				<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 					When play is finished, log the score or end without one.
 				</p>
 			</div>
@@ -321,7 +321,7 @@
 		</AppCard>
 	{:else if match.status === 'score_pending'}
 		<AppCard>
-			<p class="text-sm text-slate-600">Waiting for players to confirm the submitted score.</p>
+			<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Waiting for players to confirm the submitted score.</p>
 		</AppCard>
 	{/if}
 
@@ -346,7 +346,7 @@
 			scoreFormError = null;
 		}}
 	>
-		<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
+		<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
 			<div class="border-b border-brand-100 bg-brand-50 px-4 py-4">
 				<h2 id="end-with-score-modal-title" class="text-lg font-semibold text-brand-900">
 					End match with score
@@ -405,7 +405,7 @@
 		labelledBy="end-no-score-modal-title"
 		onClose={() => (endNoScoreModalOpen = false)}
 	>
-		<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
+		<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
 			<div class="border-b border-amber-200 bg-amber-50 px-4 py-4">
 				<h2 id="end-no-score-modal-title" class="text-lg font-semibold text-amber-900">
 					End without score?

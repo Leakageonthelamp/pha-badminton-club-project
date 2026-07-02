@@ -59,7 +59,7 @@
 		use:enhance={whileSubmitting((v) => (loading = v))}
 	>
 		<div>
-			<label for="name" class="mb-2 block text-sm font-medium text-slate-700">Club name</label>
+			<label for="name" class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">Club name</label>
 			<input
 				id="name"
 				name="name"
@@ -67,9 +67,9 @@
 				required
 				maxlength={CLUB_NAME_MAX_LENGTH}
 				value={values?.name ?? ''}
-				class="w-full rounded-xl border border-slate-300 px-4 py-3 text-base focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
+				class="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3 text-base focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
 			/>
-			<p class="mt-2 text-xs text-slate-500">
+			<p class="mt-2 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 				Required. Up to {CLUB_NAME_MAX_LENGTH} characters.
 			</p>
 			{#if fieldErrors?.name?.[0]}
@@ -83,7 +83,7 @@
 			disabled={loading}
 			label="Description"
 		/>
-		<p class="text-xs text-slate-500">
+		<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 			Optional. Up to {CLUB_DESCRIPTION_MAX_LENGTH} characters of visible text.
 		</p>
 		{#if fieldErrors?.description?.[0]}
@@ -91,7 +91,7 @@
 		{/if}
 
 		<div>
-			<label for="max_active_sessions" class="mb-2 block text-sm font-medium text-slate-700">
+			<label for="max_active_sessions" class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">
 				Max active sessions
 			</label>
 			<input
@@ -103,9 +103,9 @@
 				required
 				value={values?.max_active_sessions ?? '3'}
 				inputmode="numeric"
-				class="w-full rounded-xl border border-slate-300 px-4 py-3 text-base focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
+				class="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3 text-base focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
 			/>
-			<p class="mt-2 text-xs text-slate-500">
+			<p class="mt-2 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 				Whole number from 1 to {data.maxActiveSessionsLimit}.
 			</p>
 			{#if fieldErrors?.max_active_sessions?.[0]}
@@ -114,7 +114,7 @@
 		</div>
 
 		<div>
-			<label for="max_admins" class="mb-2 block text-sm font-medium text-slate-700">
+			<label for="max_admins" class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">
 				Max club admins
 			</label>
 			<input
@@ -126,9 +126,9 @@
 				required
 				value={values?.max_admins ?? '3'}
 				inputmode="numeric"
-				class="w-full rounded-xl border border-slate-300 px-4 py-3 text-base focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
+				class="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3 text-base focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
 			/>
-			<p class="mt-2 text-xs text-slate-500">
+			<p class="mt-2 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 				Whole number from 1 to {data.maxAdminsLimit}.
 			</p>
 			{#if fieldErrors?.max_admins?.[0]}
@@ -136,10 +136,10 @@
 			{/if}
 		</div>
 
-		<div class="flex items-center justify-between gap-4 rounded-xl border border-slate-200 px-4 py-3">
+		<div class="flex items-center justify-between gap-4 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3">
 			<div>
-				<p class="text-sm font-medium text-slate-900">Club status</p>
-				<p class="mt-1 text-xs text-slate-500">
+				<p class="text-sm font-medium text-slate-900 dark:text-slate-100">Club status</p>
+				<p class="mt-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 					{isActive
 						? 'Active clubs are available to players.'
 						: 'Inactive clubs are hidden from players until reactivated.'}
@@ -156,7 +156,7 @@
 				onclick={() => (isActive = !isActive)}
 			>
 				<span
-					class="absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow transition {isActive
+					class="absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white dark:bg-slate-900 shadow transition {isActive
 						? 'translate-x-5'
 						: ''}"
 					aria-hidden="true"

@@ -118,8 +118,8 @@
 
 	{#if history.summary.totalMatches > 0}
 		<AppCard>
-			<h2 class="text-sm font-semibold text-slate-900">Your performance</h2>
-			<p class="mt-0.5 text-xs text-slate-500">All-time stats across completed matches.</p>
+			<h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Your performance</h2>
+			<p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">All-time stats across completed matches.</p>
 			<dl class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
 				<div class="rounded-lg border border-emerald-200 bg-emerald-50/80 px-3 py-2.5">
 					<dt class="text-[0.65rem] font-semibold uppercase tracking-wide text-emerald-700">
@@ -137,27 +137,27 @@
 						{history.summary.winRate !== null ? `${history.summary.winRate}%` : '—'}
 					</dd>
 				</div>
-				<div class="rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2.5">
-					<dt class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
+				<div class="rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/60 px-3 py-2.5">
+					<dt class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
 						Avg duration
 					</dt>
-					<dd class="mt-1 font-mono text-lg font-semibold tabular-nums text-slate-900">
+					<dd class="mt-1 font-mono text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-100">
 						{avgDurationLabel}
 					</dd>
 				</div>
-				<div class="rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2.5">
-					<dt class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
+				<div class="rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/60 px-3 py-2.5">
+					<dt class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
 						Matches
 					</dt>
-					<dd class="mt-1 text-lg font-semibold tabular-nums text-slate-900">
+					<dd class="mt-1 text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-100">
 						{history.summary.totalMatches}
 					</dd>
 				</div>
-				<div class="rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2.5 sm:col-span-2">
-					<dt class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
+				<div class="rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/60 px-3 py-2.5 sm:col-span-2">
+					<dt class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
 						Shuttles used
 					</dt>
-					<dd class="mt-1 text-lg font-semibold tabular-nums text-slate-900">
+					<dd class="mt-1 text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-100">
 						{history.summary.totalShuttles}
 					</dd>
 				</div>
@@ -199,7 +199,7 @@
 					>
 						{#if isFetching}
 							<span
-								class="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-brand-700"
+								class="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 dark:border-slate-600 border-t-brand-700"
 								aria-hidden="true"
 							></span>
 						{:else}
@@ -210,7 +210,7 @@
 			</form>
 
 			{#if hasActiveFilters && !isFetching}
-				<p class="text-xs text-slate-500">
+				<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 					Filtered
 					{#if history.date}
 						· {history.date}
@@ -231,7 +231,7 @@
 			{#if isFetching}
 				<ul class="space-y-3" aria-busy="true">
 					{#each Array(3) as _, index (index)}
-						<li class="rounded-xl border border-slate-200 bg-white p-4">
+						<li class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
 							<div class="app-skeleton mb-2 h-4 w-40 max-w-full rounded"></div>
 							<div class="app-skeleton mb-2 h-3.5 w-28 max-w-full rounded"></div>
 							<div class="app-skeleton h-3.5 w-52 max-w-full rounded"></div>
@@ -240,44 +240,44 @@
 				</ul>
 			{:else if history.items.length === 0}
 				<div
-					class="rounded-xl border border-dashed border-slate-200 bg-gradient-to-b from-slate-50/90 to-white px-4 py-8 text-center"
+					class="rounded-xl border border-dashed border-slate-200 dark:border-slate-700 bg-gradient-to-b from-slate-50/90 to-white px-4 py-8 text-center"
 				>
 					<DashboardIcon icon={isFilteredEmpty ? SearchIcon : TrophyIcon} accent="violet" class="mx-auto" />
 					{#if isFilteredEmpty}
-						<p class="mt-3 text-sm font-medium text-slate-900">No matches match your filters</p>
-						<p class="mx-auto mt-1 max-w-xs text-sm text-slate-500">
+						<p class="mt-3 text-sm font-medium text-slate-900 dark:text-slate-100">No matches match your filters</p>
+						<p class="mx-auto mt-1 max-w-xs text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
 							Try another date, session, or result, or reset to see your full match history.
 						</p>
 						<button
 							type="button"
-							class="mt-4 inline-flex items-center gap-2 text-sm font-medium text-brand-700 hover:text-brand-800 disabled:opacity-50"
+							class="mt-4 inline-flex items-center gap-2 text-sm font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800 dark:text-brand-300 disabled:opacity-50"
 							disabled={historyActionsBusy}
 							aria-busy={linkNav === 'clear'}
 							onclick={goClearFilters}
 						>
 							{#if linkNav === 'clear'}
 								<span
-									class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-brand-700"
+									class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 dark:border-slate-600 border-t-brand-700"
 									aria-hidden="true"
 								></span>
 							{/if}
 							Clear filters
 						</button>
 					{:else}
-						<p class="mt-3 text-sm font-medium text-slate-900">No match history yet</p>
-						<p class="mx-auto mt-1 max-w-xs text-sm text-slate-500">
+						<p class="mt-3 text-sm font-medium text-slate-900 dark:text-slate-100">No match history yet</p>
+						<p class="mx-auto mt-1 max-w-xs text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
 							Completed matches from sessions you join will appear here.
 						</p>
 						<button
 							type="button"
-							class="mt-4 inline-flex items-center gap-2 text-sm font-medium text-brand-700 hover:text-brand-800 disabled:opacity-50"
+							class="mt-4 inline-flex items-center gap-2 text-sm font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800 dark:text-brand-300 disabled:opacity-50"
 							disabled={historyActionsBusy}
 							aria-busy={linkNav === 'browse'}
 							onclick={goBrowseSessions}
 						>
 							{#if linkNav === 'browse'}
 								<span
-									class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-brand-700"
+									class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 dark:border-slate-600 border-t-brand-700"
 									aria-hidden="true"
 								></span>
 							{/if}
@@ -298,7 +298,7 @@
 								disabled={historyActionsBusy && !summaryOpen}
 								onClick={() => openMatch(item)}
 							/>
-							<p class="mt-1 px-1 text-xs text-slate-500">
+							<p class="mt-1 px-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 								{#if item.ended_at}
 									{formatDateTime(item.ended_at)}
 								{:else}

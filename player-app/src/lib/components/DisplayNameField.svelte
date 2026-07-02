@@ -34,7 +34,7 @@
 </script>
 
 <div>
-	<label for={id} class="mb-2 block text-sm font-medium text-slate-700">Display name</label>
+	<label for={id} class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">Display name</label>
 	<input
 		{id}
 		{name}
@@ -48,7 +48,7 @@
 		aria-invalid={errorMessage ? 'true' : undefined}
 		class="w-full rounded-xl border px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-600/20 {errorMessage
 			? 'border-red-400 focus:border-red-500'
-			: 'border-slate-300 focus:border-brand-600'}"
+			: 'border-slate-300 dark:border-slate-600 focus:border-brand-600'}"
 	/>
 	{#if errorMessage}
 		<p class="mt-1 text-sm text-red-600">{errorMessage}</p>

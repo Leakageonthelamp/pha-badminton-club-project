@@ -64,10 +64,10 @@
 		closeLabel="Close crop dialog"
 		onClose={onCancel}
 	>
-		<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
-			<div class="border-b border-slate-200 px-4 py-3">
-				<h2 id="avatar-crop-title" class="text-base font-semibold text-slate-900">Crop avatar</h2>
-				<p class="mt-1 text-sm text-slate-500">
+		<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
+			<div class="border-b border-slate-200 dark:border-slate-700 px-4 py-3">
+				<h2 id="avatar-crop-title" class="text-base font-semibold text-slate-900 dark:text-slate-100">Crop avatar</h2>
+				<p class="mt-1 text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
 					Drag and pinch to fit your face. Saved as {AVATAR_OUTPUT_SIZE}×{AVATAR_OUTPUT_SIZE} px.
 				</p>
 			</div>
@@ -86,7 +86,7 @@
 			</div>
 
 			<div class="space-y-4 p-4">
-				<label class="block text-sm font-medium text-slate-700">
+				<label class="block text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">
 					Zoom
 					<input
 						type="range"
@@ -102,7 +102,7 @@
 					<SubmitButton
 						type="button"
 						variant="ghost"
-						class="w-auto! flex-1 rounded-xl border border-slate-300 py-3 text-slate-700"
+						class="w-auto! flex-1 rounded-xl border border-slate-300 dark:border-slate-600 py-3 text-slate-700 dark:text-slate-300 dark:text-slate-600"
 						disabled={processing}
 						onclick={onCancel}
 					>

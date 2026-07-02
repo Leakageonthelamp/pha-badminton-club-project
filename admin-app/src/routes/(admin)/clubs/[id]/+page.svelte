@@ -96,7 +96,7 @@
 	}));
 
 	const inputClass =
-		'w-full rounded-xl border border-slate-300 px-4 py-3 text-base focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20';
+		'w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3 text-base focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20';
 	const settingsFieldClass = $derived(`${inputClass}${updateLoading ? ' opacity-0' : ''}`);
 
 	const syncSettingsFromClub = (club: PageData['club']) => {
@@ -303,7 +303,7 @@
 		aria-busy={updateLoading}
 	>
 		<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-			<h2 class="text-lg font-semibold text-slate-900">Club settings</h2>
+			<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Club settings</h2>
 			{#if clubDescriptionNotSet}
 				<NotSetBadge />
 			{/if}
@@ -340,7 +340,7 @@
 						disabled={updateLoading}
 						label="Description"
 					/>
-					<p class="mt-2 text-xs text-slate-500">
+					<p class="mt-2 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 						Up to {CLUB_DESCRIPTION_MAX_LENGTH} characters of visible text.
 					</p>
 				</div>
@@ -367,7 +367,7 @@
 					class={settingsFieldClass}
 				/>
 			</div>
-			<p class="mt-2 text-xs text-slate-500">
+			<p class="mt-2 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 				Whole number from 1 to {data.maxActiveSessionsLimit}.
 			</p>
 		</div>
@@ -391,20 +391,20 @@
 					class={settingsFieldClass}
 				/>
 			</div>
-			<p class="mt-2 text-xs text-slate-500">
+			<p class="mt-2 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 				Whole number from 1 to {data.maxAdminsLimit}. Cannot be set below currently assigned admins.
 			</p>
 		</div>
 
 		<div
-			class="relative flex items-center justify-between gap-4 rounded-xl border border-slate-200 px-4 py-3"
+			class="relative flex items-center justify-between gap-4 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3"
 		>
 			{#if updateLoading}
 				<div class="app-skeleton absolute inset-0 z-10" aria-hidden="true"></div>
 			{/if}
 			<div class={updateLoading ? 'opacity-0' : ''}>
-				<p class="text-sm font-medium text-slate-900">Club status</p>
-				<p class="mt-1 text-xs text-slate-500">
+				<p class="text-sm font-medium text-slate-900 dark:text-slate-100">Club status</p>
+				<p class="mt-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 					{isActive
 						? 'Active clubs are available to players.'
 						: 'Inactive clubs are hidden from players until reactivated.'}
@@ -422,7 +422,7 @@
 				onclick={() => (isActive = !isActive)}
 			>
 				<span
-					class="absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow transition {isActive
+					class="absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white dark:bg-slate-900 shadow transition {isActive
 						? 'translate-x-5'
 						: ''}"
 					aria-hidden="true"
@@ -440,29 +440,29 @@
 	{#if !isSuperAdmin}
 		<section class="{cardClass} space-y-4">
 			<div>
-				<h2 class="text-lg font-semibold text-slate-900">Club admins</h2>
-				<p class="mt-2 text-sm text-slate-600">People who manage this club.</p>
+				<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Club admins</h2>
+				<p class="mt-2 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">People who manage this club.</p>
 			</div>
 
 			{#if data.admins.length === 0}
-				<p class="text-sm text-slate-500">No club admins assigned yet.</p>
+				<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">No club admins assigned yet.</p>
 			{:else}
-				<ul class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
+				<ul class="divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
 					{#each data.admins as admin (admin.user_id)}
-						<li class="flex items-center gap-3 bg-white px-4 py-3">
+						<li class="flex items-center gap-3 bg-white dark:bg-slate-900 px-4 py-3">
 							<UserAvatar
 								displayName={admin.profile?.display_name ?? 'Unknown'}
 								avatarUrl={admin.profile?.avatar_url}
 								size="sm"
 							/>
 							<div class="min-w-0 flex-1">
-								<p class="truncate font-medium text-slate-900">
+								<p class="truncate font-medium text-slate-900 dark:text-slate-100">
 									{admin.profile?.display_name ?? 'Unknown'}
 								</p>
 								{#if admin.profile?.email}
-									<p class="truncate text-sm text-slate-500">{admin.profile.email}</p>
+									<p class="truncate text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{admin.profile.email}</p>
 								{:else if admin.profile?.phone}
-									<p class="truncate text-sm text-slate-500">{admin.profile.phone}</p>
+									<p class="truncate text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{admin.profile.phone}</p>
 								{/if}
 							</div>
 							{#if admin.profile?.tag}
@@ -478,20 +478,20 @@
 	<section class="{cardClass} space-y-4">
 		<div>
 			<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-				<h2 class="text-lg font-semibold text-slate-900">Shuttlecocks</h2>
+				<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Shuttlecocks</h2>
 				{#if shuttlesNotSet}
 					<NotSetBadge />
 				{/if}
 			</div>
-			<p class="mt-2 text-sm text-slate-600">Brands and pricing your club uses.</p>
+			<p class="mt-2 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Brands and pricing your club uses.</p>
 		</div>
 
 		{#if data.shuttles.length === 0}
-			<p class="text-sm text-slate-500">No shuttlecocks yet — add the brands your club uses.</p>
+			<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">No shuttlecocks yet — add the brands your club uses.</p>
 		{:else}
 			<ul class="space-y-3">
 				{#each data.shuttles as shuttle (shuttle.id)}
-					<li class="overflow-hidden rounded-xl border border-slate-200 bg-white">
+					<li class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
 						{#if editingShuttleId === shuttle.id}
 							<form
 								method="POST"
@@ -568,16 +568,16 @@
 								<div class="flex items-start justify-between gap-4">
 									<div class="min-w-0 flex-1">
 										<div class="flex flex-wrap items-center gap-2">
-											<p class="font-semibold text-slate-900">{shuttle.name}</p>
+											<p class="font-semibold text-slate-900 dark:text-slate-100">{shuttle.name}</p>
 											<span
-												class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium tabular-nums text-slate-700"
+												class="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs font-medium tabular-nums text-slate-700 dark:text-slate-300 dark:text-slate-600"
 											>
 												Speed {shuttle.speed}
 											</span>
 										</div>
 									</div>
 									<div class="shrink-0 text-right">
-										<p class="text-xs font-medium text-slate-500">Per each</p>
+										<p class="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">Per each</p>
 										<p class="text-lg font-semibold tabular-nums text-brand-700">
 											{formatThb(shuttlePricePerEach(shuttle))}
 										</p>
@@ -585,21 +585,21 @@
 								</div>
 
 								<dl class="mt-3 grid grid-cols-2 gap-2">
-									<div class="rounded-lg bg-slate-50 px-3 py-2">
-										<dt class="text-xs text-slate-500">Tube price</dt>
-										<dd class="mt-0.5 text-sm font-medium tabular-nums text-slate-900">
+									<div class="rounded-lg bg-slate-50 dark:bg-slate-950 px-3 py-2">
+										<dt class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">Tube price</dt>
+										<dd class="mt-0.5 text-sm font-medium tabular-nums text-slate-900 dark:text-slate-100">
 											{formatThb(shuttle.price)}
 										</dd>
 									</div>
-									<div class="rounded-lg bg-slate-50 px-3 py-2">
-										<dt class="text-xs text-slate-500">In tube</dt>
-										<dd class="mt-0.5 text-sm font-medium tabular-nums text-slate-900">
+									<div class="rounded-lg bg-slate-50 dark:bg-slate-950 px-3 py-2">
+										<dt class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">In tube</dt>
+										<dd class="mt-0.5 text-sm font-medium tabular-nums text-slate-900 dark:text-slate-100">
 											{shuttle.number_per_box}
 										</dd>
 									</div>
 								</dl>
 
-								<div class="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
+								<div class="mt-4 flex flex-wrap gap-2 border-t border-slate-100 dark:border-slate-800 pt-3">
 									<SubmitButton
 										type="button"
 										variant="secondary"
@@ -636,10 +636,10 @@
 		<form
 			method="POST"
 			action="?/createShuttle"
-			class="space-y-3 border-t border-slate-100 pt-4"
+			class="space-y-3 border-t border-slate-100 dark:border-slate-800 pt-4"
 			use:enhance={whileSubmitting((v) => (shuttleCreateLoading = v))}
 		>
-			<h3 class="text-sm font-medium text-slate-700">Add shuttlecock</h3>
+			<h3 class="text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">Add shuttlecock</h3>
 			<div class="grid gap-3 sm:grid-cols-2">
 				<div class="sm:col-span-2">
 					<label class={labelClass} for="new-shuttle-name">Name</label>
@@ -703,37 +703,37 @@
 	>
 		<div>
 			<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-				<h2 class="text-lg font-semibold text-slate-900">PromptPay</h2>
+				<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">PromptPay</h2>
 				{#if promptPayNotSet}
 					<NotSetBadge />
 				{/if}
 			</div>
-			<p class="mt-2 text-sm text-slate-600">
+			<p class="mt-2 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 				Phone number or national ID for payment QR codes (coming soon).
 			</p>
 		</div>
 
 		<fieldset class="space-y-3">
 			<legend class="sr-only">PromptPay type</legend>
-			<label class="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3">
+			<label class="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3">
 				<input
 					type="radio"
 					name="promptpay_type"
 					value="phone"
 					bind:group={promptPayType}
-					class="h-4 w-4 border-slate-300 text-brand-600 focus:ring-brand-600"
+					class="h-4 w-4 border-slate-300 dark:border-slate-600 text-brand-600 focus:ring-brand-600"
 				/>
-				<span class="text-sm font-medium text-slate-900">Mobile phone</span>
+				<span class="text-sm font-medium text-slate-900 dark:text-slate-100">Mobile phone</span>
 			</label>
-			<label class="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3">
+			<label class="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3">
 				<input
 					type="radio"
 					name="promptpay_type"
 					value="national_id"
 					bind:group={promptPayType}
-					class="h-4 w-4 border-slate-300 text-brand-600 focus:ring-brand-600"
+					class="h-4 w-4 border-slate-300 dark:border-slate-600 text-brand-600 focus:ring-brand-600"
 				/>
-				<span class="text-sm font-medium text-slate-900">National ID card</span>
+				<span class="text-sm font-medium text-slate-900 dark:text-slate-100">National ID card</span>
 			</label>
 		</fieldset>
 
@@ -785,12 +785,12 @@
 	>
 		<div>
 			<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-				<h2 class="text-lg font-semibold text-slate-900">Venue & location</h2>
+				<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Venue & location</h2>
 				{#if locationNotSet}
 					<NotSetBadge />
 				{/if}
 			</div>
-			<p class="mt-2 text-sm text-slate-600">
+			<p class="mt-2 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 				{#if locationLocked}
 					Your club venue is saved. Change location only when you need to move the pin.
 				{:else}
@@ -811,7 +811,7 @@
 				placeholder="e.g. Rama IX Sports Center"
 				class={inputClass}
 			/>
-			<p class="mt-2 text-xs text-slate-500">
+			<p class="mt-2 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 				Default venue label for new sessions. Required when a map pin is set.
 			</p>
 		</div>
@@ -876,14 +876,14 @@
 	<section class="{cardClass} space-y-4">
 		<div>
 			<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-				<h2 class="text-lg font-semibold text-slate-900">Club admins</h2>
+				<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Club admins</h2>
 				{#if clubAdminsNotSet}
 					<NotSetBadge />
 				{/if}
 			</div>
-			<p class="mt-2 text-sm text-slate-600">
+			<p class="mt-2 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 				Assign players as admins for this club. The same person can admin multiple clubs.
-				<span class="font-medium text-slate-700">
+				<span class="font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">
 					{data.admins.length} / {data.club.max_admins} assigned here
 				</span>
 			</p>
@@ -917,22 +917,22 @@
 
 		{#if data.searchQuery.length >= 2}
 			{#if data.searchResults.length === 0}
-				<p class="text-sm text-slate-500">No matching users found.</p>
+				<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">No matching users found.</p>
 			{:else}
-				<ul class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
+				<ul class="divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
 					{#each data.searchResults as user (user.id)}
 						<li
-							class="flex flex-col gap-3 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+							class="flex flex-col gap-3 bg-white dark:bg-slate-900 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
 						>
 							<div class="min-w-0">
-								<p class="font-medium text-slate-900">
+								<p class="font-medium text-slate-900 dark:text-slate-100">
 									{user.display_name}
-									<span class="text-slate-400">{user.tag}</span>
+									<span class="text-slate-400 dark:text-slate-500">{user.tag}</span>
 								</p>
 								{#if user.email}
-									<p class="truncate text-sm text-slate-500">{user.email}</p>
+									<p class="truncate text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{user.email}</p>
 								{:else if user.phone}
-									<p class="truncate text-sm text-slate-500">{user.phone}</p>
+									<p class="truncate text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{user.phone}</p>
 								{/if}
 								{#if user.otherClubCount > 0}
 									<p class="mt-1 text-xs text-brand-700">
@@ -964,30 +964,30 @@
 				</ul>
 			{/if}
 		{:else if data.searchQuery.length > 0}
-			<p class="text-sm text-slate-500">Type at least 2 characters to search.</p>
+			<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Type at least 2 characters to search.</p>
 		{/if}
 
 		<div class="space-y-2">
-			<h3 class="text-sm font-medium text-slate-700">Assigned admins</h3>
+			<h3 class="text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">Assigned admins</h3>
 			{#if data.admins.length === 0}
-				<p class="text-sm text-slate-500">No club admins assigned yet.</p>
+				<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">No club admins assigned yet.</p>
 			{:else}
-				<ul class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
+				<ul class="divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
 					{#each data.admins as admin (admin.user_id)}
 						<li
-							class="flex flex-col gap-3 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+							class="flex flex-col gap-3 bg-white dark:bg-slate-900 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
 						>
 							<div class="min-w-0">
-								<p class="font-medium text-slate-900">
+								<p class="font-medium text-slate-900 dark:text-slate-100">
 									{admin.profile?.display_name ?? 'Unknown'}
 									{#if admin.profile?.tag}
-										<span class="text-slate-400">{admin.profile.tag}</span>
+										<span class="text-slate-400 dark:text-slate-500">{admin.profile.tag}</span>
 									{/if}
 								</p>
 								{#if admin.profile?.email}
-									<p class="truncate text-sm text-slate-500">{admin.profile.email}</p>
+									<p class="truncate text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{admin.profile.email}</p>
 								{:else if admin.profile?.phone}
-									<p class="truncate text-sm text-slate-500">{admin.profile.phone}</p>
+									<p class="truncate text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{admin.profile.phone}</p>
 								{/if}
 								{#if admin.otherClubCount > 0}
 									<p class="mt-1 text-xs text-brand-700">
@@ -1040,7 +1040,7 @@
 
 {#if isSuperAdmin && deleteModalOpen}
 	<AppModal open={deleteModalOpen} labelledBy="delete-club-title" onClose={closeDeleteModal}>
-		<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
+		<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
 			<div class="border-b border-red-100 bg-red-50 px-4 py-4">
 				<h2 id="delete-club-title" class="text-lg font-semibold text-red-900">Delete this club?</h2>
 				<p class="mt-2 text-sm text-red-800">
@@ -1051,7 +1051,7 @@
 
 			<form method="POST" action="?/delete" class="space-y-4 p-4" use:enhance={handleDelete}>
 				<div>
-					<label for="deleteConfirmText" class="mb-2 block text-sm font-medium text-slate-700">
+					<label for="deleteConfirmText" class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">
 						Type <span class="font-mono text-red-700">{CLUB_DELETE_CONFIRM_PHRASE}</span> to confirm
 					</label>
 					<input

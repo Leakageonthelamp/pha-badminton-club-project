@@ -58,15 +58,15 @@
 		closeOnBackdrop={false}
 		closeOnEscape={false}
 	>
-		<div class="overflow-hidden rounded-2xl bg-white shadow-xl">
-			<div class="border-b border-sky-200 bg-gradient-to-br from-sky-50 via-white to-brand-50 px-4 py-5">
+		<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
+			<div class="app-surface-header border-sky-200 px-4 py-5 dark:border-sky-800">
 				<p class="text-xs font-semibold uppercase tracking-wide text-sky-700">Score check</p>
-				<h2 id="score-confirm-title" class="mt-1 text-lg font-semibold text-slate-900">
+				<h2 id="score-confirm-title" class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
 					Confirm match result
 				</h2>
-				<p class="mt-2 text-sm leading-relaxed text-slate-600">
-					<span class="font-medium text-slate-800">{submitterName}</span> logged this score for
-					<span class="font-medium text-slate-800">court {match.court_number}</span>. Accept if it
+				<p class="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400 dark:text-slate-500">
+					<span class="font-medium text-slate-800 dark:text-slate-200">{submitterName}</span> logged this score for
+					<span class="font-medium text-slate-800 dark:text-slate-200">court {match.court_number}</span>. Accept if it
 					matches what you played — reject only if the numbers are wrong.
 				</p>
 			</div>
@@ -87,7 +87,7 @@
 				/>
 			</div>
 
-			<div class="grid gap-3 border-t border-slate-100 p-4 sm:grid-cols-2">
+			<div class="grid gap-3 border-t border-slate-100 dark:border-slate-800 p-4 sm:grid-cols-2">
 				<form method="POST" action={formAction} use:enhance={handleAction('rejectScore')}>
 					<input type="hidden" name="match_id" value={match.id} />
 					<input type="hidden" name="accept" value="false" />

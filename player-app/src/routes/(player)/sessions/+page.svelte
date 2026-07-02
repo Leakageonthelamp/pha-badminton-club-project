@@ -150,7 +150,7 @@
 				>
 					{#if refreshing}
 						<span
-							class="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-brand-600"
+							class="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 dark:border-slate-600 border-t-brand-600"
 							aria-hidden="true"
 						></span>
 					{:else}
@@ -181,7 +181,7 @@
 							{#if session.status === 'in_progress'}
 								<SessionLiveTimers startAt={session.start_at} endAt={session.end_at} class="mb-1" />
 								{#if isEarlyLeftSession(session)}
-									<p class="text-xs text-slate-600">You left early — cannot rejoin this session.</p>
+									<p class="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-500">You left early — cannot rejoin this session.</p>
 								{:else if shouldShowInProgressJoinRemark(session)}
 									<p class="text-xs text-sky-700">{SESSION_IN_PROGRESS_JOIN_REMARK}</p>
 								{/if}

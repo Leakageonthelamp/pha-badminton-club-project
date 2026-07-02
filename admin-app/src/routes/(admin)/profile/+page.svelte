@@ -335,7 +335,7 @@
 	}
 
 	const inputClass =
-		'w-full rounded-xl border border-slate-300 px-4 py-3 text-base focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20';
+		'w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3 text-base focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20';
 	const profileFieldClass = $derived(`${inputClass}${saveLoading ? ' opacity-0' : ''}`);
 	const labelClass = 'mb-2 block text-sm font-medium text-slate-700';
 </script>
@@ -370,7 +370,7 @@
 				/>
 			{/if}
 			<div>
-				<p class="font-semibold text-slate-900">{data.profile.display_name}</p>
+				<p class="font-semibold text-slate-900 dark:text-slate-100">{data.profile.display_name}</p>
 				<TagPill tag={displayedTag} size="md" class="mt-1" />
 			</div>
 		</AppCard>
@@ -414,12 +414,12 @@
 						<div class="app-skeleton absolute inset-0 z-10 h-[50px]" aria-hidden="true"></div>
 					{/if}
 					<div
-						class="flex overflow-hidden rounded-xl border border-slate-300 focus-within:border-brand-600 focus-within:ring-2 focus-within:ring-brand-600/20{saveLoading
+						class="flex overflow-hidden rounded-xl border border-slate-300 dark:border-slate-600 focus-within:border-brand-600 focus-within:ring-2 focus-within:ring-brand-600/20{saveLoading
 							? ' opacity-0'
 							: ''}"
 					>
 						<span
-							class="flex items-center bg-slate-50 px-4 font-mono text-base font-semibold text-brand-700"
+							class="flex items-center bg-slate-50 dark:bg-slate-950 px-4 font-mono text-base font-semibold text-brand-700"
 							aria-hidden="true"
 						>
 							#
@@ -437,11 +437,11 @@
 							value={tagSuffix}
 							disabled={saveLoading}
 							oninput={onTagSuffixInput}
-							class="min-w-0 flex-1 bg-white py-3 pr-4 font-mono text-base focus:outline-none"
+							class="min-w-0 flex-1 bg-white dark:bg-slate-900 py-3 pr-4 font-mono text-base focus:outline-none"
 						/>
 					</div>
 				</div>
-				<p class="mt-2 text-xs text-slate-500">
+				<p class="mt-2 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 					Unique player ID when display names match. Enter 4 letters or numbers.
 				</p>
 				{#if fieldErrors?.tag}
@@ -481,14 +481,14 @@
 					{#if processedAvatar}
 						<button
 							type="button"
-							class="text-sm font-medium text-brand-700 hover:text-brand-800"
+							class="text-sm font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800"
 							onclick={reopenCrop}
 						>
 							Edit crop
 						</button>
 						<button
 							type="button"
-							class="text-sm font-medium text-slate-500 hover:text-slate-700"
+							class="text-sm font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:text-slate-600"
 							onclick={clearAvatarSelection}
 						>
 							Remove
@@ -497,7 +497,7 @@
 					</div>
 				</div>
 
-				<p class="mt-2 text-xs text-slate-500">
+				<p class="mt-2 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 					Large phone photos are cropped and resized to {AVATAR_OUTPUT_SIZE}×{AVATAR_OUTPUT_SIZE} px
 					before upload.
 				</p>
@@ -514,8 +514,8 @@
 		</AppCard>
 
 		<AppCard class="space-y-4">
-			<h2 class="font-medium text-slate-900">Sign-in details</h2>
-			<p class="text-sm text-slate-600">
+			<h2 class="font-medium text-slate-900 dark:text-slate-100">Sign-in details</h2>
+			<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 				{#if oauthAccount}
 					You signed in with {formatSignInMethodLabel(data.profile.sign_in_method)}. Add contact
 					details below if you like — your social login stays the same.
@@ -534,7 +534,7 @@
 			>
 				<div>
 					<div class="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1">
-						<label for="credentialEmail" class="text-sm font-medium text-slate-700">
+						<label for="credentialEmail" class="text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">
 							Email address
 						</label>
 						{#if !data.profile.email}
@@ -558,7 +558,7 @@
 
 				<div>
 					<div class="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1">
-						<label for="credentialPhone" class="text-sm font-medium text-slate-700">
+						<label for="credentialPhone" class="text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">
 							Phone number
 						</label>
 						{#if !data.profile.phone}
@@ -621,25 +621,25 @@
 		</AppCard>
 
 		<div class="app-muted-panel">
-			<h2 class="mb-3 font-medium text-slate-900">Account details</h2>
+			<h2 class="mb-3 font-medium text-slate-900 dark:text-slate-100">Account details</h2>
 			<dl class="space-y-3">
 				<div>
-					<dt class="text-slate-500">Role</dt>
-					<dd class="font-medium text-slate-800">{appRoleLabel(data.profile.app_role)}</dd>
+					<dt class="text-slate-500 dark:text-slate-400 dark:text-slate-500">Role</dt>
+					<dd class="font-medium text-slate-800 dark:text-slate-200">{appRoleLabel(data.profile.app_role)}</dd>
 				</div>
 				{#if data.profile.app_role === 'club_admin'}
 					<div>
-						<dt class="text-slate-500">Clubs you admin</dt>
-						<dd class="font-medium text-slate-800">
+						<dt class="text-slate-500 dark:text-slate-400 dark:text-slate-500">Clubs you admin</dt>
+						<dd class="font-medium text-slate-800 dark:text-slate-200">
 							{#if data.managedClubs.length === 0}
-								<span class="text-slate-500">None assigned</span>
+								<span class="text-slate-500 dark:text-slate-400 dark:text-slate-500">None assigned</span>
 							{:else}
 								<ul class="mt-1 space-y-1.5">
 									{#each data.managedClubs as club (club.id)}
 										<li class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
 											<a
 												href="/clubs/{club.id}"
-												class="text-brand-700 hover:text-brand-800"
+												class="text-brand-700 dark:text-brand-300 hover:text-brand-800"
 											>
 												{club.name}
 											</a>
@@ -654,27 +654,27 @@
 					</div>
 				{/if}
 				<div>
-					<dt class="text-slate-500">Sign-in method</dt>
-					<dd class="font-medium text-slate-800">
+					<dt class="text-slate-500 dark:text-slate-400 dark:text-slate-500">Sign-in method</dt>
+					<dd class="font-medium text-slate-800 dark:text-slate-200">
 						{formatSignInMethodLabel(data.profile.sign_in_method)}
 					</dd>
 				</div>
 				{#if data.profile.email}
 					<div>
-						<dt class="text-slate-500">Email address</dt>
-						<dd class="font-medium text-slate-800">{data.profile.email}</dd>
+						<dt class="text-slate-500 dark:text-slate-400 dark:text-slate-500">Email address</dt>
+						<dd class="font-medium text-slate-800 dark:text-slate-200">{data.profile.email}</dd>
 					</div>
 				{/if}
 				{#if data.profile.phone}
 					<div>
-						<dt class="text-slate-500">Phone number</dt>
-						<dd class="font-medium text-slate-800">{phoneForInput(data.profile.phone)}</dd>
+						<dt class="text-slate-500 dark:text-slate-400 dark:text-slate-500">Phone number</dt>
+						<dd class="font-medium text-slate-800 dark:text-slate-200">{phoneForInput(data.profile.phone)}</dd>
 					</div>
 				{/if}
 				{#if oauthAccount}
 					<div>
-						<dt class="text-slate-500">Password</dt>
-						<dd class="font-medium text-slate-800">Not used</dd>
+						<dt class="text-slate-500 dark:text-slate-400 dark:text-slate-500">Password</dt>
+						<dd class="font-medium text-slate-800 dark:text-slate-200">Not used</dd>
 					</div>
 				{/if}
 			</dl>

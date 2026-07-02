@@ -69,8 +69,8 @@
 		</form>
 	</AppCard>
 
-	<p class="text-center text-sm text-slate-600">
+	<p class="text-center text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 		Already have an account?
-		<a href="/login" class="font-medium text-brand-700 hover:text-brand-800">Log in</a>
+		<a href="/login" class="font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800">Log in</a>
 	</p>
 </section>

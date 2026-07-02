@@ -78,7 +78,7 @@
 			case 'pending':
 				return 'bg-amber-50 text-amber-800 ring-amber-100';
 			default:
-				return 'bg-slate-100 text-slate-600 ring-slate-200';
+				return 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 dark:text-slate-500 ring-slate-200';
 		}
 	};
 
@@ -116,10 +116,10 @@
 		</div>
 	</DashboardHero>
 
-	<section class="overflow-hidden rounded-3xl border-2 border-brand-200 bg-gradient-to-br from-brand-50 via-white to-violet-50 shadow-sm">
+	<section class="overflow-hidden rounded-3xl border-2 border-brand-200 bg-gradient-to-br from-brand-50 dark:from-slate-900 via-white to-violet-50 shadow-sm">
 		<div class="border-b border-brand-100/80 bg-brand-500/10 px-4 py-4 sm:px-6">
-			<h2 class="text-lg font-semibold text-slate-900">Session summary</h2>
-			<p class="mt-1 text-sm text-slate-600">
+			<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Session summary</h2>
+			<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 				{formatDateTime(session.start_at)} – {formatDateTime(session.end_at)} · {summary.durationLabel}
 			</p>
 		</div>
@@ -201,18 +201,18 @@
 
 	<AppCard class="space-y-4">
 		<div>
-			<h2 class="text-lg font-semibold text-slate-900">Players who attended</h2>
-			<p class="mt-1 text-sm text-slate-600">
+			<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Players who attended</h2>
+			<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 				Confirmed or marked left when the session ended.
 			</p>
 		</div>
 		{#if attendedPlayers.length === 0}
 			<EmptyState message="No players attended this session." />
 		{:else}
-			<ul class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
+			<ul class="divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
 				{#each attendedPlayers as player (player.id)}
 					{@const payment = paymentForUser(player.user_id)}
-					<li class="flex items-center gap-3 bg-white px-4 py-3">
+					<li class="flex items-center gap-3 bg-white dark:bg-slate-900 px-4 py-3">
 						<UserAvatar
 							displayName={player.profile?.display_name ?? 'Player'}
 							avatarUrl={player.profile?.avatar_url ?? null}
@@ -220,14 +220,14 @@
 						/>
 						<div class="min-w-0 flex-1">
 							<div class="flex flex-wrap items-center gap-2">
-								<p class="truncate font-medium text-slate-900">
+								<p class="truncate font-medium text-slate-900 dark:text-slate-100">
 									{player.profile?.display_name ?? 'Unknown'}
 								</p>
 								{#if player.profile?.tag}
 									<TagPill tag={player.profile.tag} />
 								{/if}
 							</div>
-							<p class="text-xs text-slate-500">
+							<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 								{sessionPlayerStatusLabel(player.status)}
 								{#if player.left_at}
 									· left {formatDateTime(player.left_at)}
@@ -238,7 +238,7 @@
 						</div>
 						<div class="shrink-0 text-right">
 							{#if payment}
-								<p class="text-sm font-semibold tabular-nums text-slate-900">
+								<p class="text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">
 									{formatThb(payment.total_amount)}
 								</p>
 								<span
@@ -250,7 +250,7 @@
 								</span>
 							{:else}
 								<span
-									class="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600 ring-1 ring-slate-200"
+									class="inline-flex rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-xs font-semibold text-slate-600 dark:text-slate-400 dark:text-slate-500 ring-1 ring-slate-200"
 								>
 									No bill
 								</span>
@@ -265,22 +265,22 @@
 	{#if otherPlayers.length > 0}
 		<AppCard class="space-y-4">
 			<div>
-				<h2 class="text-lg font-semibold text-slate-900">Other registrations</h2>
-				<p class="mt-1 text-sm text-slate-600">Waiting, queued, cancelled, or rejected — did not play.</p>
+				<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Other registrations</h2>
+				<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Waiting, queued, cancelled, or rejected — did not play.</p>
 			</div>
-			<ul class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
+			<ul class="divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
 				{#each otherPlayers as player (player.id)}
-					<li class="flex items-center gap-3 bg-white px-4 py-3">
+					<li class="flex items-center gap-3 bg-white dark:bg-slate-900 px-4 py-3">
 						<UserAvatar
 							displayName={player.profile?.display_name ?? 'Player'}
 							avatarUrl={player.profile?.avatar_url ?? null}
 							size="sm"
 						/>
 						<div class="min-w-0 flex-1">
-							<p class="truncate font-medium text-slate-900">
+							<p class="truncate font-medium text-slate-900 dark:text-slate-100">
 								{player.profile?.display_name ?? 'Unknown'}
 							</p>
-							<p class="text-xs text-slate-500">
+							<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 								{sessionPlayerStatusLabel(player.status)} · joined {formatDateTime(player.joined_at)}
 							</p>
 						</div>
@@ -296,8 +296,8 @@
 	{#if cancellationFeePlayers.length > 0}
 		<AppCard class="space-y-4">
 			<div>
-				<h2 class="text-lg font-semibold text-slate-900">Cancellation fees</h2>
-				<p class="mt-1 text-sm text-slate-600">
+				<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Cancellation fees</h2>
+				<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 					{summary.cancellationFeesPaidCount} paid · {summary.cancellationFeesOutstandingCount} outstanding ·
 					{summary.cancellationFeesWaivedCount} waived
 				</p>
@@ -309,20 +309,20 @@
 					bind:feeActionLoading
 				/>
 			{:else}
-				<ul class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
+				<ul class="divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
 					{#each cancellationFeePlayers as player (player.id)}
-						<li class="bg-white px-4 py-3">
+						<li class="bg-white dark:bg-slate-900 px-4 py-3">
 							<div class="flex items-start justify-between gap-3">
 								<div class="min-w-0 flex-1">
-									<p class="truncate font-medium text-slate-900">
+									<p class="truncate font-medium text-slate-900 dark:text-slate-100">
 										{player.profile?.display_name ?? 'Unknown player'}
 									</p>
-									<p class="text-xs text-slate-500">
+									<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 										{sessionPlayerStatusLabel(player.status)} · late cancel
 									</p>
 								</div>
 								<div class="flex shrink-0 flex-col items-end gap-1">
-									<p class="text-sm font-semibold tabular-nums text-slate-900">
+									<p class="text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">
 										{formatThb(player.fee_owed)}
 									</p>
 									<span
@@ -333,7 +333,7 @@
 											? 'bg-amber-50 text-amber-800 ring-amber-100'
 											: player.fee_status === 'paid'
 												? 'bg-emerald-50 text-emerald-700 ring-emerald-100'
-												: 'bg-slate-100 text-slate-600 ring-slate-200'}"
+												: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 dark:text-slate-500 ring-slate-200'}"
 									>
 										{cancellationFeeStatusLabel(player.fee_status)}
 									</span>
@@ -350,7 +350,7 @@
 					{/each}
 				</ul>
 			{/if}
-			<p class="text-sm text-slate-600">
+			<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 				Cancellation fees collected {formatThb(summary.cancellationFeesCollected)}
 			</p>
 		</AppCard>
@@ -358,8 +358,8 @@
 
 	<AppCard class="space-y-4">
 		<div>
-			<h2 class="text-lg font-semibold text-slate-900">Court fee breakdown</h2>
-			<p class="mt-1 text-sm text-slate-600">
+			<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Court fee breakdown</h2>
+			<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 				{summary.paymentsApprovedCount} paid · {summary.paymentsSubmittedCount} awaiting confirmation ·
 				{summary.paymentsPendingCount} pending
 			</p>
@@ -367,15 +367,15 @@
 		{#if payments.length === 0}
 			<EmptyState message="No payment records for this session." />
 		{:else}
-			<ul class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
+			<ul class="divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
 				{#each payments as payment (payment.id)}
-					<li class="bg-white px-4 py-3">
+					<li class="bg-white dark:bg-slate-900 px-4 py-3">
 						<div class="flex items-start justify-between gap-3">
 							<div class="min-w-0 flex-1">
-								<p class="truncate font-medium text-slate-900">
+								<p class="truncate font-medium text-slate-900 dark:text-slate-100">
 									{payment.profile?.display_name ?? 'Unknown player'}
 								</p>
-								<p class="text-xs text-slate-500">
+								<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 									Court {formatThb(payment.court_share)}
 									{#if payment.shuttle_share > 0}
 										· Shuttle {formatThb(payment.shuttle_share)}
@@ -383,7 +383,7 @@
 								</p>
 							</div>
 							<div class="flex shrink-0 flex-col items-end gap-1">
-								<p class="text-sm font-semibold tabular-nums text-slate-900">
+								<p class="text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">
 									{formatThb(payment.total_amount)}
 								</p>
 								<span
@@ -405,7 +405,7 @@
 					</li>
 				{/each}
 			</ul>
-			<p class="text-sm text-slate-600">
+			<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 				Total billed {formatThb(summary.totalBilled)} · Collected {formatThb(summary.totalCollected)}
 			</p>
 		{/if}
@@ -413,13 +413,13 @@
 
 	<AppCard class="space-y-4">
 		<div>
-			<h2 class="text-lg font-semibold text-slate-900">Match history</h2>
-			<p class="mt-1 text-sm text-slate-600">Games played, scores, and court assignments.</p>
+			<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Match history</h2>
+			<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Games played, scores, and court assignments.</p>
 		</div>
 		{#if completedMatches.length === 0}
 			<EmptyState message="No matches were recorded for this session." />
 		{:else}
-			<p class="text-xs font-medium text-slate-500">
+			<p class="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
 				{completedMatches.length} completed match{completedMatches.length === 1 ? '' : 'es'}
 			</p>
 			<ul class="space-y-2">
@@ -433,9 +433,9 @@
 	</AppCard>
 
 	<section class="app-detail-section">
-		<div class="border-b border-brand-100 bg-gradient-to-br from-brand-50 via-white to-brand-50/50 px-4 py-4 sm:px-6">
-			<h2 class="text-lg font-semibold text-slate-900">Session configuration</h2>
-			<p class="mt-1 text-sm text-slate-600">Read-only snapshot of how this session was set up.</p>
+		<div class="border-b border-brand-100 bg-gradient-to-br from-brand-50 dark:from-slate-900 via-white to-brand-50/50 px-4 py-4 sm:px-6">
+			<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Session configuration</h2>
+			<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Read-only snapshot of how this session was set up.</p>
 		</div>
 		<div class="space-y-6 p-4 sm:p-6">
 			{#if session.description}

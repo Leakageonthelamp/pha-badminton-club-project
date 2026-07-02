@@ -194,7 +194,7 @@
 
 <div class="space-y-3">
 	<div
-		class="relative h-72 w-full overflow-hidden rounded-xl border border-slate-300 bg-slate-100 {disabled
+		class="relative h-72 w-full overflow-hidden rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 {disabled
 			? 'opacity-60'
 			: ''}"
 	>
@@ -230,13 +230,13 @@
 	</div>
 
 	{#if !ready}
-		<p class="text-xs text-slate-500">Loading map…</p>
+		<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">Loading map…</p>
 	{:else if locked}
 		{#if !hideLockedHint}
-			<p class="text-sm text-slate-600">Location is saved. Tap Change location to move the pin.</p>
+			<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Location is saved. Tap Change location to move the pin.</p>
 		{/if}
 	{:else if !disabled}
-		<p class="text-sm text-slate-600">
+		<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 			Drag the map so the dot sits on your club venue. That spot is what gets saved.
 		</p>
 		<SubmitButton
@@ -262,7 +262,7 @@
 	{/if}
 
 	{#if hasPin}
-		<p class="font-mono text-xs text-slate-600">
+		<p class="font-mono text-xs text-slate-600 dark:text-slate-400 dark:text-slate-500">
 			{pinLat!.toFixed(6)}, {pinLng!.toFixed(6)}
 		</p>
 	{/if}

@@ -39,7 +39,7 @@
 
 <AppModal {open} labelledBy="slip-preview-title" {onClose}>
 	<div class="app-card-padded space-y-4">
-		<h2 id="slip-preview-title" class="text-lg font-semibold text-slate-900">{title}</h2>
+		<h2 id="slip-preview-title" class="text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
 		{#if imageUrl && !imageFailed}
 			<div class="relative min-h-48 w-full">
 				{#if imageLoading}
@@ -47,7 +47,7 @@
 						class="app-skeleton flex min-h-48 w-full items-center justify-center rounded-lg"
 						aria-hidden="true"
 					>
-						<span class="text-sm text-slate-500">Loading slip…</span>
+						<span class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Loading slip…</span>
 					</div>
 				{/if}
 				<img
@@ -67,7 +67,7 @@
 				/>
 			</div>
 		{:else}
-			<p class="text-sm text-slate-600">
+			<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 				Slip image unavailable (it may have been removed from storage).
 			</p>
 		{/if}

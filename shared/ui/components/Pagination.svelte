@@ -32,7 +32,7 @@
 		totalPages !== undefined ? `Page ${page} of ${totalPages}` : `${page}`
 	);
 	const controlClass = $derived(
-		`inline-flex items-center gap-1.5 font-medium text-brand-700 hover:text-brand-800 disabled:opacity-50 ${sizeClass}`
+		`inline-flex items-center gap-1.5 font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800 dark:text-brand-300 disabled:opacity-50 ${sizeClass}`
 	);
 </script>
 
@@ -55,7 +55,7 @@
 				>
 					{#if pending === 'prev'}
 						<span
-							class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-brand-700"
+							class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 dark:border-slate-600 border-t-brand-700"
 							aria-hidden="true"
 						></span>
 					{/if}
@@ -64,7 +64,7 @@
 			{/if}
 		{/if}
 
-		<span class="text-slate-500">{pageLabel}</span>
+		<span class="text-slate-500 dark:text-slate-400 dark:text-slate-500">{pageLabel}</span>
 
 		{#if hasNext}
 			{#if nextHref}
@@ -80,7 +80,7 @@
 				>
 					{#if pending === 'next'}
 						<span
-							class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-brand-700"
+							class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 dark:border-slate-600 border-t-brand-700"
 							aria-hidden="true"
 						></span>
 					{/if}

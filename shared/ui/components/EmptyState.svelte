@@ -11,7 +11,7 @@
 </script>
 
 <div class="app-empty">
-	<p class="text-slate-600">{message}</p>
+	<p class="text-slate-600 dark:text-slate-400 dark:text-slate-500">{message}</p>
 	{#if children}
 		<div class="mt-3">
 			{@render children()}
