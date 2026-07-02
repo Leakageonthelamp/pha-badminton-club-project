@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Component } from 'svelte';
 
-	export type DashboardIconAccent = 'brand' | 'violet' | 'indigo';
+	export type DashboardIconAccent = 'brand' | 'violet' | 'indigo' | 'secondary';
 	export type DashboardIconSize = 'md' | 'lg';
 
 	let {

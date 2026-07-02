@@ -594,6 +594,7 @@
 			<SubmitButton
 				loading={saveLoading}
 				loadingLabel="Saving…"
+				variant="accent"
 				disabled={!hasChanges || !!avatarError}
 			>
 				Save changes
@@ -701,6 +702,7 @@
 				<SubmitButton
 					loading={credentialsLoading}
 					loadingLabel="Saving…"
+					variant="accent"
 					disabled={!hasCredentialChanges}
 				>
 					Save sign-in details

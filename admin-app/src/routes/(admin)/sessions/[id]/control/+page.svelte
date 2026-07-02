@@ -686,7 +686,7 @@
 		<ol class="grid gap-3 sm:grid-cols-3">
 			<li
 				class="rounded-2xl border px-4 py-3 {workflowStep === 1
-					? 'border-brand-300 bg-brand-50/80 ring-2 ring-brand-200'
+					? 'border-secondary-400 bg-secondary-100/90 ring-2 ring-secondary-300'
 					: workflowStep > 1
 						? 'border-emerald-200 bg-emerald-50/50'
 						: 'border-slate-200 bg-slate-50/80'}"
@@ -697,7 +697,7 @@
 			</li>
 			<li
 				class="rounded-2xl border px-4 py-3 {workflowStep === 2
-					? 'border-brand-300 bg-brand-50/80 ring-2 ring-brand-200'
+					? 'border-secondary-400 bg-secondary-100/90 ring-2 ring-secondary-300'
 					: workflowStep > 2
 						? 'border-emerald-200 bg-emerald-50/50'
 						: 'border-slate-200 bg-slate-50/80'}"
@@ -710,7 +710,7 @@
 			</li>
 			<li
 				class="rounded-2xl border px-4 py-3 {workflowStep === 3
-					? 'border-brand-300 bg-brand-50/80 ring-2 ring-brand-200'
+					? 'border-secondary-400 bg-secondary-100/90 ring-2 ring-secondary-300'
 					: 'border-slate-200 bg-slate-50/80'}"
 			>
 				<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Step 3</p>
@@ -723,15 +723,15 @@
 	<!-- Quick stats (2 cols — admin shell is max-w-lg) -->
 	<div class="grid grid-cols-2 gap-3">
 		<div class="app-card-padded flex min-h-24 flex-col items-center justify-center gap-1 text-center">
-			<p class="text-2xl font-bold tabular-nums text-brand-700">{data.activePlayerCount}</p>
+			<p class="text-2xl font-extrabold tabular-nums text-secondary-900">{data.activePlayerCount}</p>
 			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">Players</p>
 		</div>
 		<div class="app-card-padded flex min-h-24 flex-col items-center justify-center gap-1 text-center">
-			<p class="text-2xl font-bold tabular-nums text-brand-700">{session.court_count}</p>
+			<p class="text-2xl font-extrabold tabular-nums text-secondary-900">{session.court_count}</p>
 			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">Courts</p>
 		</div>
 		<div class="app-card-padded flex min-h-24 flex-col items-center justify-center gap-1 text-center">
-			<p class="text-xl font-bold tabular-nums leading-tight text-brand-700">
+			<p class="text-xl font-extrabold tabular-nums leading-tight text-secondary-900">
 				{formatThb(data.perPlayerCost)}
 			</p>
 			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
@@ -742,7 +742,7 @@
 			</p>
 		</div>
 		<div class="app-card-padded flex min-h-24 flex-col items-center justify-center gap-1 text-center">
-			<p class="text-xl font-bold tabular-nums leading-tight text-brand-700">
+			<p class="text-xl font-extrabold tabular-nums leading-tight text-secondary-900">
 				{formatThb(totalCourtFee)}
 			</p>
 			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
@@ -750,13 +750,13 @@
 			</p>
 		</div>
 		<div class="app-card-padded flex min-h-24 flex-col items-center justify-center gap-1 text-center">
-			<p class="text-2xl font-bold tabular-nums text-brand-700">{shuttlesUsed}</p>
+			<p class="text-2xl font-extrabold tabular-nums text-secondary-900">{shuttlesUsed}</p>
 			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
 				Shuttles usage
 			</p>
 		</div>
 		<div class="app-card-padded flex min-h-24 flex-col items-center justify-center gap-1 text-center">
-			<p class="text-xl font-bold tabular-nums leading-tight text-brand-700">
+			<p class="text-xl font-extrabold tabular-nums leading-tight text-secondary-900">
 				{formatThb(totalShuttleFee)}
 			</p>
 			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
@@ -764,13 +764,13 @@
 			</p>
 		</div>
 		<div class="app-card-padded flex min-h-24 flex-col items-center justify-center gap-1 text-center">
-			<p class="text-2xl font-bold tabular-nums text-brand-700">
+			<p class="text-2xl font-extrabold tabular-nums text-secondary-900">
 				{paymentsApprovedCount}/{data.activePlayerCount || '—'}
 			</p>
 			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">Paid</p>
 		</div>
 		<div class="app-card-padded flex min-h-24 flex-col items-center justify-center gap-1 text-center">
-			<p class="text-xl font-bold tabular-nums leading-tight text-brand-700">
+			<p class="text-xl font-extrabold tabular-nums leading-tight text-secondary-900">
 				{formatThb(totalSessionCost)}
 			</p>
 			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
@@ -836,7 +836,7 @@
 							{formatThb(projectedProfit.shuttleRevenue)}
 						</dd>
 					</div>
-					<p class="text-xs text-slate-500">
+					<p class="text-xs font-medium text-secondary-800">
 						{shuttlesUsed} × {formatThb(session.shuttle_price_per_each)} charged to players
 					</p>
 					<div class="flex items-baseline justify-between gap-3">
@@ -1052,7 +1052,7 @@
 				</div>
 				<div class="h-2 overflow-hidden rounded-full bg-slate-100">
 					<div
-						class="h-full rounded-full bg-brand-600 transition-all duration-300"
+						class="h-full rounded-full bg-secondary-500 transition-all duration-300"
 						style="width: {paymentProgress}%"
 					></div>
 				</div>

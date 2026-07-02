@@ -27,21 +27,21 @@
 			description:
 				'Reserve your spot on popular sessions. Get confirmed by the club or wait in the queue when sessions fill up.',
 			icon: CalendarIcon,
-			accent: 'violet' as const
+			accent: 'secondary' as const
 		},
 		{
 			title: 'Live session court grid',
 			description:
 				'See real-time court occupancy, player activity, and match status while you play — all from your phone.',
 			icon: Squares2x2Icon,
-			accent: 'indigo' as const
+			accent: 'violet' as const
 		},
 		{
 			title: 'Match invites & peer scoring',
 			description:
 				'Accept 2v2 match invites, submit rally scores, and confirm results with your teammates using official 15/21-point rules.',
 			icon: TrophyIcon,
-			accent: 'brand' as const
+			accent: 'secondary' as const
 		},
 		{
 			title: 'Session & match history',
@@ -55,14 +55,14 @@
 			description:
 				'Pay your share of court and shuttle fees with a generated PromptPay QR. Upload your slip and track payment status.',
 			icon: BanknotesIcon,
-			accent: 'violet' as const
+			accent: 'indigo' as const
 		},
 		{
 			title: 'Installable PWA on any device',
 			description:
 				'Add Antonsmash to your home screen on phone, tablet, or laptop for a full-screen app experience — no app store required.',
 			icon: DevicePhoneIcon,
-			accent: 'indigo' as const
+			accent: 'brand' as const
 		}
 	];
 
@@ -91,7 +91,7 @@
 			<AppLogo size={36} title={appName} />
 			<span>{appName}</span>
 		</a>
-		<a href="#download" class="landing-btn-primary shrink-0 px-5 py-2.5 text-sm">Get the app</a>
+		<a href="#download" class="landing-btn-accent shrink-0 px-5 py-2.5 text-sm">Get the app</a>
 	</div>
 </header>
 
@@ -117,7 +117,7 @@
 						and split costs — all from an installable app on your phone, tablet, or laptop.
 					</p>
 					<div class="mt-8 flex flex-wrap gap-3">
-						<a href="#download" class="landing-btn-primary">Get the app</a>
+						<a href="#download" class="landing-btn-accent">Get the app</a>
 						<a href="#features" class="landing-btn-secondary">See features</a>
 					</div>
 				</div>
@@ -162,10 +162,14 @@
 			</div>
 
 			<div class="landing-step-grid mt-14">
-				{#each steps as item (item.step)}
+				{#each steps as item, index (item.step)}
 					<div class="relative text-center">
 						<div
-							class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-linear-to-br from-brand-500 to-brand-700 text-xl font-bold text-white shadow-lg shadow-brand-600/25"
+							class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-linear-to-br text-xl font-extrabold shadow-lg {index %
+								2 ===
+							0
+								? 'from-brand-500 to-brand-700 text-white shadow-brand-600/25'
+								: 'from-secondary-400 to-secondary-600 text-secondary-900 shadow-secondary-500/30'}"
 						>
 							{item.step}
 						</div>

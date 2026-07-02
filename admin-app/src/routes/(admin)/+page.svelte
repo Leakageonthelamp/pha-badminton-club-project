@@ -91,7 +91,7 @@
 		subtitle="Create and manage clubs and their admins."
 	>
 		{#if clubCount > 0}
-			<span class="app-hero-stat">
+			<span class="app-hero-stat app-hero-stat--accent">
 				{clubCount} club{clubCount === 1 ? '' : 's'}
 			</span>
 			{#if activeClubCount > 0}
@@ -115,14 +115,14 @@
 				title="Create club"
 				description="Add a new club to the system"
 				icon={PlusIcon}
-				accent="violet"
+				accent="brand"
 			/>
 			<DashboardTile
 				href="/users"
 				title="Users"
 				description="View and manage all accounts"
 				icon={UserIcon}
-				accent="indigo"
+				accent="secondary"
 			/>
 			<DashboardTile
 				href="/sessions"

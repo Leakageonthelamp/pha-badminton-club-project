@@ -195,7 +195,7 @@
 <section class="space-y-6">
 	{#if liveSession}
 		<DashboardHero eyebrow="Live session" title={liveSession.name} subtitle={liveSessionSubtitle}>
-			<a href={liveSessionHref(liveSession.id)} class="app-hero-action"
+			<a href={liveSessionHref(liveSession.id)} class="app-hero-action app-hero-action--accent"
 				><span>Go to live session</span></a
 			>
 		</DashboardHero>
@@ -210,7 +210,7 @@
 				<span class="app-hero-stat">{mySessions.length} joined</span>
 			{/if}
 			{#if featured.length > 0}
-				<span class="app-hero-stat">{featured.length} featured</span>
+				<span class="app-hero-stat app-hero-stat--accent">{featured.length} featured</span>
 			{/if}
 			{#if clubs.length > 0}
 				<span class="app-hero-stat">{clubCountLabel}</span>
@@ -229,14 +229,14 @@
 				title="Sessions"
 				description="Browse and join games"
 				icon={CalendarDaysIcon}
-				accent="violet"
+				accent="brand"
 			/>
 			<DashboardTile
 				href="/sessions/history"
 				title="Session history"
 				description="Past sessions you joined"
 				icon={ClockIcon}
-				accent="indigo"
+				accent="secondary"
 			/>
 			<DashboardTile
 				href="/matches/history"
@@ -257,7 +257,7 @@
 				title="Clubs"
 				description="Explore nearby clubs"
 				icon={UserGroupIcon}
-				accent="brand"
+				accent="secondary"
 			/>
 		</div>
 	</div>

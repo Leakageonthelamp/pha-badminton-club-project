@@ -112,7 +112,7 @@
 		subtitle="Every completed match you played, newest first."
 	>
 		{#if !isFetching && history.summary.totalMatches > 0}
-			<span class="app-hero-stat">{history.summary.totalMatches} total</span>
+			<span class="app-hero-stat app-hero-stat--accent">{history.summary.totalMatches} total</span>
 		{/if}
 	</DashboardHero>
 
@@ -121,19 +121,19 @@
 			<h2 class="text-sm font-semibold text-slate-900">Your performance</h2>
 			<p class="mt-0.5 text-xs text-slate-500">All-time stats across completed matches.</p>
 			<dl class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-				<div class="rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2.5">
-					<dt class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
+				<div class="rounded-lg border border-emerald-200 bg-emerald-50/80 px-3 py-2.5">
+					<dt class="text-[0.65rem] font-semibold uppercase tracking-wide text-emerald-700">
 						Record
 					</dt>
-					<dd class="mt-1 text-lg font-semibold tabular-nums text-slate-900">
+					<dd class="mt-1 text-lg font-extrabold tabular-nums text-emerald-900">
 						{formatMatchRecord(history.summary.wins, history.summary.losses, history.summary.draws)}
 					</dd>
 				</div>
-				<div class="rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2.5">
-					<dt class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
+				<div class="rounded-lg border border-secondary-200 bg-secondary-50/90 px-3 py-2.5">
+					<dt class="text-[0.65rem] font-semibold uppercase tracking-wide text-secondary-800">
 						Win rate
 					</dt>
-					<dd class="mt-1 text-lg font-semibold tabular-nums text-slate-900">
+					<dd class="mt-1 text-lg font-extrabold tabular-nums text-secondary-900">
 						{history.summary.winRate !== null ? `${history.summary.winRate}%` : '—'}
 					</dd>
 				</div>

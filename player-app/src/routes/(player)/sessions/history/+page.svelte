@@ -116,7 +116,7 @@
 		subtitle="Every session you joined, newest first."
 	>
 		{#if !isFetching && history.totalCount > 0}
-			<span class="app-hero-stat">{history.totalCount} total</span>
+			<span class="app-hero-stat app-hero-stat--accent">{history.totalCount} total</span>
 		{/if}
 	</DashboardHero>
 

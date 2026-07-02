@@ -50,21 +50,21 @@
 	{#if variant === 'compact'}
 		<div class="flex w-full justify-center {className}">
 			<div class="app-session-timer-group" aria-live="polite">
-				<p class="app-session-countdown-compact">
+				<p class="app-session-countdown-compact app-session-countdown--soon">
 					<span class="app-session-countdown-compact-label">{label}</span>
 					<span class="app-session-countdown-compact-value">{countdownLabel}</span>
 				</p>
 			</div>
 		</div>
 	{:else if variant === 'inline'}
-		<p class="app-session-countdown-inline {className}" aria-live="polite">
+		<p class="app-session-countdown-inline app-session-countdown--soon {className}" aria-live="polite">
 			<span class="app-session-countdown-inline-label">{label}</span>
 			<span class="app-session-countdown-inline-value">{countdownLabel}</span>
 		</p>
 	{:else}
-		<div class="app-session-countdown {className}" aria-live="polite">
+		<div class="app-session-countdown app-session-countdown--soon {className}" aria-live="polite">
 			<span class="app-session-countdown-label">
-				<span class="h-2 w-2 animate-pulse rounded-full bg-brand-600" aria-hidden="true"></span>
+				<span class="h-2 w-2 animate-pulse rounded-full bg-secondary-500" aria-hidden="true"></span>
 				{label}
 			</span>
 			<span class="app-session-countdown-value">{countdownLabel}</span>

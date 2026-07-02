@@ -8,7 +8,7 @@
 			error: 'border-red-200 bg-red-50 text-red-800',
 			success: 'border-green-200 bg-green-50 text-green-800',
 			warning: 'border-amber-200 bg-amber-50 text-amber-900',
-			info: 'border-brand-200 bg-brand-50 text-brand-900'
+			info: 'border-secondary-300 bg-secondary-100 text-secondary-900'
 		}[item.variant]
 	);
 
@@ -17,7 +17,7 @@
 			error: 'bg-red-500',
 			success: 'bg-green-500',
 			warning: 'bg-amber-500',
-			info: 'bg-brand-600'
+			info: 'bg-secondary-500'
 		}[item.variant]
 	);
 

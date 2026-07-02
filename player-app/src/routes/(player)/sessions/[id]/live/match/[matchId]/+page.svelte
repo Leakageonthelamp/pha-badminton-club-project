@@ -71,6 +71,11 @@
 	);
 	const gameCount = $derived(match.round_type === 'two_round' ? 2 : 1);
 	const uptimeLabel = $derived(match.started_at ? formatUptime(match.started_at, nowMs) : '—');
+	const scoreHeadline = $derived(
+		match.games.length > 0
+			? match.games.map((game) => `${game.team_a_score} - ${game.team_b_score}`).join(' · ')
+			: '0 - 0'
+	);
 	const myPlayer = $derived(match.players.find((player) => player.user_id === data.userId));
 	const canSubmitScore = $derived(match.status === 'active');
 	const showScoreConfirm = $derived(
@@ -234,12 +239,21 @@
 	<div class="grid grid-cols-2 gap-4">
 		<AppCard class="space-y-2">
 			<p class="text-sm text-slate-500">Match time</p>
-			<p class="font-mono text-2xl font-semibold text-slate-900">{uptimeLabel}</p>
+			<p class="font-mono text-2xl font-extrabold tabular-nums text-slate-900">{uptimeLabel}</p>
 		</AppCard>
 		<AppCard class="space-y-2">
 			<p class="text-sm text-slate-500">Shuttles used</p>
-			<p class="text-2xl font-semibold text-slate-900">{match.shuttles_used}</p>
+			<p class="text-2xl font-extrabold tabular-nums text-slate-900">{match.shuttles_used}</p>
 		</AppCard>
+	</div>
+
+	<div
+		class="rounded-[1.75rem] border border-secondary-200 bg-secondary-50/90 px-6 py-5 text-center shadow-md shadow-secondary-200/40"
+	>
+		<p class="text-xs font-semibold uppercase tracking-wide text-secondary-800">Score</p>
+		<p class="mt-1 font-mono text-5xl font-extrabold tabular-nums tracking-tight text-secondary-900 sm:text-6xl">
+			{scoreHeadline}
+		</p>
 	</div>
 
 	{#if match.games.length}
@@ -271,7 +285,7 @@
 	{#if canSubmitScore}
 		<AppCard class="space-y-3">
 			<p class="text-sm text-slate-600">Log the match score when play finishes.</p>
-			<SubmitButton type="button" disabled={isBusy} onclick={openScoreModal}>
+			<SubmitButton type="button" variant="accent" disabled={isBusy} onclick={openScoreModal}>
 				Log score
 			</SubmitButton>
 		</AppCard>
@@ -345,6 +359,7 @@
 					Cancel
 				</SubmitButton>
 				<SubmitButton
+					variant="accent"
 					loading={actionLoading === 'submitScore'}
 					loadingLabel="Submitting…"
 					class="!w-auto"

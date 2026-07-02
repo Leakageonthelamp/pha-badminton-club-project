@@ -125,7 +125,7 @@
 		subtitle="Browse upcoming sessions and join the waiting list."
 	>
 		{#if sessions.length > 0}
-			<span class="app-hero-stat">{sessionCountLabel}</span>
+			<span class="app-hero-stat app-hero-stat--accent">{sessionCountLabel}</span>
 			{#if sortedByDistance}
 				<span class="app-hero-stat app-hero-stat--success">Sorted by distance</span>
 			{/if}

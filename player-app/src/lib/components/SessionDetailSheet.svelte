@@ -1170,7 +1170,7 @@
 							<div class="app-skeleton h-12 w-full rounded-xl" aria-hidden="true"></div>
 						{:else if session}
 							{#if canJoin}
-								<SubmitButton type="button" onclick={() => (joinModalOpen = true)}>
+								<SubmitButton type="button" variant="accent" onclick={() => (joinModalOpen = true)}>
 									Join session
 								</SubmitButton>
 							{:else if showJoinConflict}
@@ -1238,6 +1238,7 @@
 							{:else if session.status === 'in_progress' && membership?.status === 'confirmed'}
 								<SubmitButton
 									type="button"
+									variant="accent"
 									onclick={goToLiveSession}
 									loading={liveNavLoading}
 									loadingLabel="Opening…"
@@ -1302,7 +1303,7 @@
 					use:enhance={enhanceAction()}
 				>
 					<input type="hidden" name="session_id" value={session.id} />
-					<SubmitButton loading={actionLoading} loadingLabel="Joining…" class="!w-auto">
+					<SubmitButton loading={actionLoading} loadingLabel="Joining…" variant="accent" class="!w-auto">
 						Join session
 					</SubmitButton>
 					<SubmitButton

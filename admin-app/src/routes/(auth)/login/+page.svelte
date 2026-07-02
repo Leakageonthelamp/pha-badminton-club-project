@@ -43,7 +43,7 @@
 
 			<PasswordField serverError={form?.error?.password?.[0] ?? null} />
 
-			<SubmitButton loading={loginLoading} loadingLabel="Signing in…">Sign in</SubmitButton>
+			<SubmitButton loading={loginLoading} loadingLabel="Signing in…" variant="accent">Sign in</SubmitButton>
 		</form>
 
 		<div class="space-y-3 border-t border-slate-100 pt-4">

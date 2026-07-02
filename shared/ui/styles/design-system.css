@@ -5,16 +5,26 @@
  */
 
 @theme {
-	--color-brand-50: #f7f0fc;
-	--color-brand-100: #efdcf8;
-	--color-brand-200: #dfc0f0;
-	--color-brand-300: #c893e0;
-	--color-brand-400: #b06ed4;
-	--color-brand-500: #964ac0;
-	--color-brand-600: #964ac0;
-	--color-brand-700: #964ac0;
-	--color-brand-800: #7d3ca3;
-	--color-brand-900: #652f85;
+	--color-brand-50: #f4f0fd;
+	--color-brand-100: #e9e1fb;
+	--color-brand-200: #d3c3f7;
+	--color-brand-300: #b79af0;
+	--color-brand-400: #9468e8;
+	--color-brand-500: #6b38df;
+	--color-brand-600: #6b38df;
+	--color-brand-700: #5d2dc7;
+	--color-brand-800: #4f26a9;
+	--color-brand-900: #34196f;
+	--color-secondary-50: #fffceb;
+	--color-secondary-100: #fff9c7;
+	--color-secondary-200: #ffee75;
+	--color-secondary-300: #ffe847;
+	--color-secondary-400: #ffdf1b;
+	--color-secondary-500: #ffdf1b;
+	--color-secondary-600: #e6c800;
+	--color-secondary-700: #cca800;
+	--color-secondary-800: #998000;
+	--color-secondary-900: #665500;
 	--default-transition-duration: 220ms;
 	--font-sans:
 		-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', system-ui, 'Segoe UI',
@@ -24,7 +34,7 @@
 :root {
 	color-scheme: light only;
 	--app-bg: #f8fafc;
-	--app-accent: #964ac0;
+	--app-accent: #6b38df;
 	--motion-page-duration: 420ms;
 	--motion-workspace-duration: 380ms;
 	--motion-page-ease: cubic-bezier(0.25, 0.8, 0.25, 1);
@@ -199,7 +209,7 @@ body {
 	}
 
 	.app-hero {
-		@apply relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900 p-5 text-white shadow-xl shadow-brand-900/25 ring-1 ring-white/10 sm:p-6;
+		@apply relative isolate overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-brand-500 via-brand-700 to-brand-900 p-5 text-white shadow-xl shadow-brand-900/30 ring-1 ring-white/10 sm:p-6;
 	}
 
 	.app-hero-grid {
@@ -228,8 +238,12 @@ body {
 		@apply h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.85)];
 	}
 
+	.app-hero-eyebrow-dot--accent {
+		@apply bg-secondary-400 shadow-[0_0_10px_rgba(255,223,27,0.85)];
+	}
+
 	.app-hero-title {
-		@apply mt-2 text-3xl font-bold tracking-tight text-white sm:text-[2rem] sm:leading-tight;
+		@apply mt-2 text-3xl font-extrabold tracking-tight text-white sm:text-[2rem] sm:leading-tight;
 	}
 
 	.app-hero-subtitle {
@@ -272,6 +286,10 @@ body {
 		@apply border-amber-300/25 bg-amber-400/20 text-amber-50;
 	}
 
+	.app-hero-stat--accent {
+		@apply border-secondary-300/40 bg-secondary-400/90 text-secondary-900 shadow-md shadow-secondary-500/25;
+	}
+
 	.app-hero-footer {
 		@apply mt-4 flex flex-wrap gap-2;
 	}
@@ -281,7 +299,11 @@ body {
 	}
 
 	.app-hero-action {
-		@apply inline-flex w-full items-center justify-center rounded-xl border border-white/30 bg-white px-4 py-3 text-sm font-semibold text-brand-800 shadow-sm transition hover:bg-white/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50;
+		@apply inline-flex w-full items-center justify-center rounded-full border border-white/30 bg-white px-4 py-3 text-sm font-semibold text-brand-800 shadow-sm transition hover:bg-white/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50;
+	}
+
+	.app-hero-action--accent {
+		@apply border-secondary-300/80 bg-secondary-400 font-bold text-secondary-900 shadow-md shadow-secondary-500/30 hover:bg-secondary-300 focus-visible:ring-secondary-400/60;
 	}
 
 	.app-hero-managing-club {
@@ -317,7 +339,7 @@ body {
 	}
 
 	.app-hero-status-value {
-		@apply mt-0.5 text-xl font-bold tracking-tight text-white sm:text-2xl;
+		@apply mt-0.5 text-xl font-extrabold tracking-tight text-white sm:text-2xl;
 	}
 
 	.app-hero-status--draft {
@@ -381,19 +403,19 @@ body {
 	}
 
 	.app-card {
-		@apply rounded-3xl border border-slate-200/80 bg-white shadow-sm ring-1 ring-slate-100;
+		@apply rounded-[1.75rem] border border-slate-200/80 bg-white shadow-md shadow-slate-200/40 ring-1 ring-slate-100;
 	}
 
 	.app-card-padded {
-		@apply rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm ring-1 ring-slate-100;
+		@apply rounded-[1.75rem] border border-slate-200/80 bg-white p-4 shadow-md shadow-slate-200/40 ring-1 ring-slate-100;
 	}
 
 	.app-card-padded-lg {
-		@apply rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm ring-1 ring-slate-100;
+		@apply rounded-[1.75rem] border border-slate-200/80 bg-white p-6 shadow-md shadow-slate-200/40 ring-1 ring-slate-100;
 	}
 
 	.app-empty {
-		@apply rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-sm;
+		@apply rounded-[1.75rem] border border-slate-200 bg-white p-6 text-center shadow-md;
 	}
 
 	.app-muted-panel {
@@ -425,11 +447,11 @@ body {
 	}
 
 	.app-court-icon-net-h {
-		@apply absolute inset-x-3 top-1/2 h-0.5 -translate-y-1/2 rounded-full bg-brand-300/90;
+		@apply absolute inset-x-3 top-1/2 h-0.5 -translate-y-1/2 rounded-full bg-secondary-400/90;
 	}
 
 	.app-court-icon-net-v {
-		@apply absolute inset-y-3 left-1/2 w-0.5 -translate-x-1/2 rounded-full bg-brand-300/90;
+		@apply absolute inset-y-3 left-1/2 w-0.5 -translate-x-1/2 rounded-full bg-secondary-400/90;
 	}
 
 	.app-court-icon--lg .app-court-icon-net-h {
@@ -556,13 +578,13 @@ body {
 
 	.flatpickr-day:hover,
 	.flatpickr-day:focus {
-		background: rgb(244 236 249);
-		border-color: rgb(244 236 249);
+		background: rgb(244 240 253);
+		border-color: rgb(244 240 253);
 	}
 
 	.flatpickr-time input:hover,
 	.flatpickr-time input:focus {
-		background: rgb(244 236 249);
+		background: rgb(244 240 253);
 	}
 
 	.flatpickr-time-select-row {
@@ -671,7 +693,7 @@ body {
 	}
 
 	.app-history-stat-value {
-		@apply mt-1.5 text-xl font-bold leading-none tracking-tight text-slate-900 tabular-nums;
+		@apply mt-1.5 text-xl font-extrabold leading-none tracking-tight text-slate-900 tabular-nums;
 	}
 
 	.app-history-stat-value--money {
@@ -764,6 +786,34 @@ body {
 
 	.app-session-countdown-value {
 		@apply font-mono text-2xl font-semibold tabular-nums text-brand-900;
+	}
+
+	.app-session-countdown--soon {
+		@apply border-secondary-300 bg-secondary-100/90;
+	}
+
+	.app-session-countdown--soon .app-session-countdown-label {
+		@apply text-secondary-900;
+	}
+
+	.app-session-countdown--soon .app-session-countdown-value {
+		@apply font-extrabold text-secondary-900;
+	}
+
+	.app-session-countdown--soon .app-session-countdown-compact-label {
+		@apply text-secondary-800;
+	}
+
+	.app-session-countdown--soon .app-session-countdown-compact-value {
+		@apply font-extrabold text-secondary-900;
+	}
+
+	.app-session-countdown--soon .app-session-countdown-inline-label {
+		@apply text-secondary-800;
+	}
+
+	.app-session-countdown--soon .app-session-countdown-inline-value {
+		@apply font-extrabold text-secondary-900;
 	}
 
 	.app-session-countdown-compact {
@@ -891,7 +941,7 @@ body {
 	}
 
 	.app-tile {
-		@apply flex flex-col items-center rounded-2xl border border-slate-200/80 bg-white p-3.5 text-center shadow-sm ring-1 ring-slate-100 transition duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-lg hover:shadow-brand-100/50 hover:ring-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 active:translate-y-0 active:shadow-md;
+		@apply flex flex-col items-center rounded-[1.25rem] border border-slate-200/80 bg-white p-3.5 text-center shadow-md shadow-slate-200/35 ring-1 ring-slate-100 transition duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-lg hover:shadow-brand-100/50 hover:ring-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 active:translate-y-0 active:shadow-md;
 	}
 
 	.app-dashboard-icon {
@@ -918,13 +968,17 @@ body {
 		@apply from-brand-500 to-indigo-600;
 	}
 
+	.app-dashboard-icon--secondary {
+		@apply from-secondary-400 to-secondary-600 text-secondary-900;
+	}
+
 	.group:hover .app-dashboard-icon,
 	.app-tile:hover .app-dashboard-icon {
 		@apply scale-105 shadow-lg shadow-brand-400/40;
 	}
 
 	.app-action-row {
-		@apply flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm ring-1 ring-slate-100 transition duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-lg hover:shadow-brand-100/40 hover:ring-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2;
+		@apply flex items-center gap-4 rounded-[1.25rem] border border-slate-200/80 bg-white p-4 shadow-md shadow-slate-200/35 ring-1 ring-slate-100 transition duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-lg hover:shadow-brand-100/40 hover:ring-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2;
 	}
 
 	.app-action-row-arrow {
@@ -950,6 +1004,10 @@ body {
 
 	.app-tile-badge--brand {
 		@apply bg-brand-50 text-brand-700;
+	}
+
+	.app-tile-badge--secondary {
+		@apply bg-secondary-100 text-secondary-900;
 	}
 
 	.app-skeleton {

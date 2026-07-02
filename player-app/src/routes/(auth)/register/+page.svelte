@@ -63,7 +63,7 @@
 				serverError={form?.error?.confirmPassword?.[0] ?? null}
 			/>
 
-			<SubmitButton loading={registerLoading} loadingLabel="Creating account…">
+			<SubmitButton loading={registerLoading} loadingLabel="Creating account…" variant="accent">
 				Create account
 			</SubmitButton>
 		</form>

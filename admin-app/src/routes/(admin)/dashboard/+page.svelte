@@ -69,7 +69,7 @@
 						title="Create session"
 						description="Schedule a new badminton session"
 						icon={PlusIcon}
-						accent="violet"
+						accent="brand"
 					/>
 				{/if}
 				<DashboardTile
@@ -77,7 +77,7 @@
 					title="Session history"
 					description="Closed and cancelled sessions"
 					icon={ClockIcon}
-					accent="indigo"
+					accent="secondary"
 				/>
 				<DashboardTile
 					href="/transactions"

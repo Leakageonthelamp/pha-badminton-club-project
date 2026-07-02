@@ -116,7 +116,7 @@
 			: 'Session and late-cancellation fees.'}
 	>
 		{#if scopedTransactions.length > 0}
-			<span class="app-hero-stat">
+			<span class="app-hero-stat app-hero-stat--accent">
 				{scopedTransactions.length} total
 			</span>
 			{#if hasActiveFilters && filteredTransactions.length !== scopedTransactions.length}
@@ -171,7 +171,7 @@
 						type="button"
 						class="rounded-full px-3 py-1.5 text-sm font-medium ring-1 transition {filters.kind ===
 						option.value
-							? 'bg-brand-700 text-white ring-brand-700'
+							? 'bg-secondary-400 text-secondary-900 ring-secondary-400'
 							: 'bg-white text-slate-700 ring-slate-200 hover:bg-slate-50'}"
 						aria-pressed={filters.kind === option.value}
 						onclick={() => setKindFilter(option.value)}
@@ -206,7 +206,7 @@
 						More filters
 						{#if advancedFilterCount > 0}
 							<span
-								class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-100 px-1 text-xs font-semibold text-brand-800"
+								class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-secondary-200 px-1 text-xs font-semibold text-secondary-900"
 							>
 								{advancedFilterCount}
 							</span>

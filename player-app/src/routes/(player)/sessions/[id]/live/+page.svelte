@@ -558,6 +558,7 @@
 				{#if data.myOpenMatch && shouldOpenMatchLive(data.myOpenMatch)}
 					<SubmitButton
 						type="button"
+						variant="accent"
 						loading={matchNavLoading}
 						loadingLabel="Opening match…"
 						disabled={sessionActionsBusy && !matchNavLoading}
@@ -626,6 +627,7 @@
 						<form method="POST" action="?/toggleBreak" use:enhance={handleAction('breakOff')}>
 							<input type="hidden" name="on_break" value="false" />
 							<SubmitButton
+								variant="accent"
 								loading={actionLoading === 'breakOff'}
 								disabled={sessionEnded || (sessionActionsBusy && actionLoading !== 'breakOff')}
 							>
@@ -1067,6 +1069,7 @@
 				use:enhance={handleSubmitPayment}
 			>
 				<SubmitButton
+					variant="accent"
 					loading={actionLoading === 'submitPayment'}
 					disabled={!paymentSlipFile}
 				>
@@ -1144,6 +1147,7 @@
 {#snippet playerCourtAction()}
 	<SubmitButton
 		type="button"
+		variant="accent"
 		loading={matchNavLoading}
 		loadingLabel="Opening match…"
 		disabled={sessionActionsBusy && !matchNavLoading}

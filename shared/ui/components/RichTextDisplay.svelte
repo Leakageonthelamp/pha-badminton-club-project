@@ -26,7 +26,7 @@
 	}
 
 	:global(.prose a) {
-		color: rgb(124 58 237);
+		color: var(--color-brand-600);
 		text-decoration: underline;
 	}
 
