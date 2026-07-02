@@ -3,6 +3,7 @@
 	import AppLogo from '$lib/components/AppLogo.svelte';
 	import ServiceUnavailable from '$lib/components/ServiceUnavailable.svelte';
 	import { getErrorCopy } from '$lib/errors/copy';
+	import { t } from '@repo/ui/i18n';
 
 	let { error, status }: { error: App.Error; status: number } = $props();
 
@@ -12,7 +13,7 @@
 </script>
 
 <svelte:head>
-	<title>{isServiceDown ? 'Unavailable' : status} · {copy.title}</title>
+	<title>{isServiceDown ? t('errors.title.unavailable') : status} · {copy.title}</title>
 </svelte:head>
 
 {#if isServiceDown}
@@ -34,7 +35,7 @@
 			href="/"
 			class="mt-8 inline-flex w-full items-center justify-center rounded-xl bg-brand-700 px-4 py-3 text-base font-semibold text-white transition hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
 		>
-			Back to home
+			{t('errors.backToHome')}
 		</a>
 	</section>
 {/if}

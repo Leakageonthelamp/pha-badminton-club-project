@@ -1,3 +1,4 @@
+import '$lib/i18n';
 import { describe, expect, it } from 'vitest';
 import { CLUB_DESCRIPTION_MAX_LENGTH, CLUB_NAME_MAX_LENGTH } from '$lib/config/club';
 import { clubInputSchema } from './club';

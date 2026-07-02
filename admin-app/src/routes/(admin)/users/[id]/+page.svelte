@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import { enhance } from '$app/forms';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import ActionRowLink from '@repo/ui/components/ActionRowLink.svelte';
@@ -90,7 +91,7 @@
 		return async ({ result, update }) => {
 			deleteLoading = false;
 			if (result.type === 'redirect') {
-				toast.success('User deleted.');
+				toast.success(t('users.deleted'));
 			}
 			await update();
 		};
@@ -99,14 +100,14 @@
 
 <section class="space-y-6">
 	<DashboardHero
-		eyebrow="User detail"
+		eyebrow={t('users.detail.eyebrow')}
 		title={data.profile.display_name}
 		tag={data.profile.tag}
 		roleLabel={roleLabel}
 		roleBadgeClass={roleHeroBadgeClass}
 	>
 		{#if isBanned}
-			<span class="app-hero-badge app-hero-badge--danger">Banned</span>
+			<span class="app-hero-badge app-hero-badge--danger">{t('users.list.banned')}</span>
 		{/if}
 	</DashboardHero>
 
@@ -128,7 +129,7 @@
 						{/if}
 						<span class="app-role-badge {roleBadgeClass}">{roleLabel}</span>
 						{#if isBanned}
-							<span class="app-role-badge bg-red-50 text-red-800 ring-1 ring-red-200/80">Banned</span>
+							<span class="app-role-badge bg-red-50 text-red-800 ring-1 ring-red-200/80">{t('users.list.banned')}</span>
 						{/if}
 					</div>
 					<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
@@ -143,13 +144,13 @@
 					<UserIcon class="h-5 w-5" />
 				</span>
 				<div>
-					<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Contact</h2>
-					<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">How this user signs in and can be reached</p>
+					<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('users.detail.contact')}</h2>
+					<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('users.detail.contactHint')}</p>
 				</div>
 			</div>
 			<div class="app-detail-contact-grid">
 				<div class="app-detail-contact-item app-detail-contact-item--wide">
-					<p class="app-detail-contact-label">Email</p>
+					<p class="app-detail-contact-label">{t('signInMethod.email')}</p>
 					<p class="app-detail-contact-value">
 						{#if data.profile.email}
 							<span class="break-all">{data.profile.email}</span>
@@ -159,7 +160,7 @@
 					</p>
 				</div>
 				<div class="app-detail-contact-item">
-					<p class="app-detail-contact-label">Phone</p>
+					<p class="app-detail-contact-label">{t('signInMethod.phone')}</p>
 					<p class="app-detail-contact-value">
 						{#if data.profile.phone}
 							<span class="truncate">{data.profile.phone}</span>
@@ -169,7 +170,7 @@
 					</p>
 				</div>
 				<div class="app-detail-contact-item">
-					<p class="app-detail-contact-label">Sign-in method</p>
+					<p class="app-detail-contact-label">{t('users.detail.signInMethod')}</p>
 					<p class="app-detail-contact-value">
 						{#if data.profile.sign_in_method === 'google'}
 							<GoogleIcon class="h-5 w-5 shrink-0" />
@@ -192,12 +193,12 @@
 					<UserGroupIcon class="h-5 w-5" />
 				</span>
 				<div>
-					<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Role & clubs</h2>
-					<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Platform role and club assignments</p>
+					<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('users.detail.roleClubs')}</h2>
+					<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('users.detail.roleClubsHint')}</p>
 				</div>
 			</div>
 			<div class="flex flex-wrap items-center gap-2">
-				<span class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">App role</span>
+				<span class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{t('users.detail.appRole')}</span>
 				<span class="app-role-badge {roleBadgeClass}">{roleLabel}</span>
 			</div>
 			{#if data.managedClubs.length}
@@ -210,7 +211,7 @@
 							<ActionRowLink
 								href="/clubs/{club.id}"
 								title={club.name}
-								description="Club admin access"
+								description={t('users.detail.clubAdminAccess')}
 								icon={UserGroupIcon}
 								accent="indigo"
 							/>
@@ -242,29 +243,29 @@
 					<ClockIcon class="h-5 w-5" />
 				</span>
 				<div>
-					<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Account activity</h2>
-					<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Timestamps and auth providers</p>
+					<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('users.detail.accountActivity')}</h2>
+					<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('users.detail.accountActivityHint')}</p>
 				</div>
 			</div>
 			<dl class="app-detail-meta-grid">
 				<div class="app-detail-meta-item">
-					<dt class="app-detail-meta-label">Created</dt>
+					<dt class="app-detail-meta-label">{t('users.detail.created')}</dt>
 					<dd class="app-detail-meta-value">{formatDate(data.profile.created_at)}</dd>
 				</div>
 				<div class="app-detail-meta-item">
-					<dt class="app-detail-meta-label">Updated</dt>
+					<dt class="app-detail-meta-label">{t('users.detail.updated')}</dt>
 					<dd class="app-detail-meta-value">{formatDate(data.profile.updated_at)}</dd>
 				</div>
 				<div class="app-detail-meta-item">
-					<dt class="app-detail-meta-label">Last sign-in</dt>
+					<dt class="app-detail-meta-label">{t('users.detail.lastSignIn')}</dt>
 					<dd class="app-detail-meta-value">{formatDate(data.authSummary?.lastSignInAt)}</dd>
 				</div>
 				<div class="app-detail-meta-item">
-					<dt class="app-detail-meta-label">Email confirmed</dt>
+					<dt class="app-detail-meta-label">{t('users.detail.emailConfirmed')}</dt>
 					<dd class="app-detail-meta-value">{formatDate(data.authSummary?.emailConfirmedAt)}</dd>
 				</div>
 				<div class="app-detail-meta-item sm:col-span-2">
-					<dt class="app-detail-meta-label">Auth providers</dt>
+					<dt class="app-detail-meta-label">{t('users.detail.authProviders')}</dt>
 					<dd class="app-detail-meta-value">
 						{#if data.authSummary?.providers.length}
 							<span class="flex flex-wrap gap-2">
@@ -290,8 +291,8 @@
 					<SettingsIcon class="h-5 w-5" />
 				</span>
 				<div>
-					<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Actions</h2>
-					<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Set password, ban, and access controls</p>
+					<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('users.detail.actions')}</h2>
+					<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('users.detail.actionsHint')}</p>
 				</div>
 			</div>
 			<div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -311,7 +312,7 @@
 
 			{#if isBanned}
 				<form method="POST" action="?/unban" use:enhance={handleBan}>
-					<SubmitButton variant="secondary" loading={banLoading} loadingLabel="Unbanning…">
+					<SubmitButton variant="secondary" loading={banLoading} loadingLabel={t('users.detail.unbanning')}>
 						Unban user
 					</SubmitButton>
 				</form>
@@ -329,9 +330,9 @@
 	</section>
 
 	<section class="rounded-2xl border border-red-300 bg-red-50 p-4">
-		<h2 class="text-lg font-semibold text-red-900">Danger zone</h2>
+		<h2 class="text-lg font-semibold text-red-900">{t('clubs.detail.dangerZone')}</h2>
 		{#if data.profile.app_role === 'super_admin'}
-			<p class="mt-2 text-sm text-red-800">Super admin accounts cannot be deleted.</p>
+			<p class="mt-2 text-sm text-red-800">{t('users.detail.cannotDeleteSuperAdmin')}</p>
 		{:else if data.ownedClubCount > 0}
 			<p class="mt-2 text-sm text-red-800">
 				Reassign ownership for {data.ownedClubCount} club{data.ownedClubCount === 1 ? '' : 's'} before
@@ -373,7 +374,7 @@
 				<PasswordField
 					id="resetPassword"
 					name="password"
-					label="New password"
+					label={t('users.detail.newPassword')}
 					autocomplete="new-password"
 					bind:value={resetPassword}
 					minlength={PASSWORD_MIN_LENGTH}
@@ -388,7 +389,7 @@
 					>
 						Cancel
 					</SubmitButton>
-					<SubmitButton loading={resetLoading} loadingLabel="Saving…" class="sm:!w-auto">
+					<SubmitButton loading={resetLoading} loadingLabel={t('clubs.detail.saving')} class="sm:!w-auto">
 						Set password
 					</SubmitButton>
 				</div>
@@ -401,7 +402,7 @@
 	<AppModal open={banModalOpen} labelledBy="ban-user-title" onClose={() => (banModalOpen = false)}>
 		<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
 			<div class="border-b border-red-100 bg-red-50 px-4 py-4">
-				<h2 id="ban-user-title" class="text-lg font-semibold text-red-900">Ban this user?</h2>
+				<h2 id="ban-user-title" class="text-lg font-semibold text-red-900">{t('users.detail.banTitle')}</h2>
 				<p class="mt-2 text-sm text-red-800">
 					The user will not be able to sign in until unbanned.
 				</p>
@@ -419,7 +420,7 @@
 					</SubmitButton>
 					<SubmitButton
 						loading={banLoading}
-						loadingLabel="Banning…"
+						loadingLabel={t('users.detail.banning')}
 						class="!w-full border-transparent bg-red-600 text-white hover:!bg-red-700 sm:!w-auto"
 					>
 						Ban user
@@ -434,7 +435,7 @@
 	<AppModal open={deleteModalOpen} labelledBy="delete-user-title" onClose={() => (deleteModalOpen = false)}>
 		<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
 			<div class="border-b border-red-100 bg-red-50 px-4 py-4">
-				<h2 id="delete-user-title" class="text-lg font-semibold text-red-900">Delete this user?</h2>
+				<h2 id="delete-user-title" class="text-lg font-semibold text-red-900">{t('users.detail.deleteTitle')}</h2>
 				<p class="mt-2 text-sm text-red-800">
 					This permanently deletes <span class="font-semibold">{data.profile.display_name}</span>.
 				</p>
@@ -466,7 +467,7 @@
 					</SubmitButton>
 					<SubmitButton
 						loading={deleteLoading}
-						loadingLabel="Deleting…"
+						loadingLabel={t('clubs.detail.deleting')}
 						disabled={!deleteConfirmed}
 						class="!w-full border-transparent bg-red-600 text-white hover:!bg-red-700 disabled:!bg-red-300 sm:!w-auto"
 					>

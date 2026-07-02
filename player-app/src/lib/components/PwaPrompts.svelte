@@ -3,8 +3,9 @@
 	import { fly } from 'svelte/transition';
 	import AppLogo from '$lib/components/AppLogo.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
+	import { t } from '@repo/ui/i18n';
 	import {
-		manualInstallHint,
+		getManualInstallHint,
 		manualInstallVariant,
 		readDeferredInstallPrompt,
 		isStandaloneMode,
@@ -44,7 +45,7 @@
 	const showManualInstall = $derived(
 		manualVariant !== null && !isStandalone && !manualInstallDismissed && !showInstall
 	);
-	const manualHint = $derived(manualVariant ? manualInstallHint[manualVariant] : '');
+	const manualHint = $derived(manualVariant ? getManualInstallHint(manualVariant) : '');
 
 	const syncDeferredPrompt = () => {
 		const prompt = readDeferredInstallPrompt();
@@ -123,14 +124,14 @@
 		in:fly={bannerTransition}
 		out:fly={bannerTransition}
 	>
-		<p class="text-sm font-medium text-slate-900 dark:text-slate-100">App ready to work offline.</p>
+		<p class="text-sm font-medium text-slate-900 dark:text-slate-100">{t('pwa.offlineReady')}</p>
 		<div class="mt-3 flex gap-2">
 			<button
 				type="button"
 				class="rounded-lg bg-brand-700 px-3 py-2 text-sm font-medium text-white"
 				onclick={dismissOfflineReady}
 			>
-				OK
+				{t('common.ok')}
 			</button>
 		</div>
 	</div>
@@ -146,17 +147,17 @@
 		<div class="flex items-start gap-3">
 			<AppLogo size={36} />
 			<div>
-				<p class="text-sm font-medium text-brand-900">A new version is available.</p>
+				<p class="text-sm font-medium text-brand-900">{t('pwa.updateAvailable')}</p>
 				<div class="mt-3 flex gap-2">
 					<SubmitButton
 						type="button"
 						variant="primary"
 						class="w-auto! rounded-lg px-3 py-2 text-sm font-medium"
 						loading={reloading}
-						loadingLabel="Reloading…"
+						loadingLabel={t('common.reloading')}
 						onclick={reloadForUpdate}
 					>
-						Reload
+						{t('common.reload')}
 					</SubmitButton>
 					<SubmitButton
 						type="button"
@@ -164,7 +165,7 @@
 						class="w-auto! rounded-lg px-3 py-2 text-sm font-medium text-brand-800"
 						onclick={dismissUpdate}
 					>
-						Later
+						{t('common.later')}
 					</SubmitButton>
 				</div>
 			</div>
@@ -176,16 +177,18 @@
 	<div
 		class="app-fixed-bottom fixed z-50 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-lg"
 		role="dialog"
-		aria-label="Install app"
+		aria-label={t('pwa.installAria')}
 		in:fly={bannerTransition}
 		out:fly={bannerTransition}
 	>
 		<div class="flex items-start gap-3">
 			<AppLogo size={40} />
 			<div>
-				<p class="text-sm font-medium text-slate-900 dark:text-slate-100">Install {appName}</p>
+				<p class="text-sm font-medium text-slate-900 dark:text-slate-100">
+					{t('pwa.installTitle', { appName })}
+				</p>
 				<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
-					Add to your home screen for a full-screen app experience.
+					{t('pwa.installBody')}
 				</p>
 			</div>
 		</div>
@@ -195,10 +198,10 @@
 				variant="primary"
 				class="w-auto! rounded-lg px-3 py-2 text-sm font-medium"
 				loading={installing}
-				loadingLabel="Installing…"
+				loadingLabel={t('common.installing')}
 				onclick={installApp}
 			>
-				Install
+				{t('common.install')}
 			</SubmitButton>
 			<SubmitButton
 				type="button"
@@ -206,7 +209,7 @@
 				class="w-auto! rounded-lg px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 dark:text-slate-500"
 				onclick={dismissInstall}
 			>
-				Not now
+				{t('common.notNow')}
 			</SubmitButton>
 		</div>
 	</div>
@@ -216,14 +219,16 @@
 	<div
 		class="app-fixed-bottom fixed z-50 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-lg"
 		role="dialog"
-		aria-label="Install app"
+		aria-label={t('pwa.installAria')}
 		in:fly={bannerTransition}
 		out:fly={bannerTransition}
 	>
 		<div class="flex items-start gap-3">
 			<AppLogo size={40} />
 			<div>
-				<p class="text-sm font-medium text-slate-900 dark:text-slate-100">Install {appName}</p>
+				<p class="text-sm font-medium text-slate-900 dark:text-slate-100">
+					{t('pwa.installTitle', { appName })}
+				</p>
 				<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{manualHint}</p>
 			</div>
 		</div>
@@ -234,7 +239,7 @@
 				class="w-auto! rounded-lg px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 dark:text-slate-500"
 				onclick={dismissManualInstall}
 			>
-				Not now
+				{t('common.notNow')}
 			</SubmitButton>
 		</div>
 	</div>

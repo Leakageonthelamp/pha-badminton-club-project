@@ -1,3 +1,6 @@
+import type { Locale } from '@repo/ui/i18n';
+import { DEFAULT_LOCALE } from '@repo/ui/i18n';
+import { tForLocale } from '@repo/ui/i18n/i18n.svelte';
 import type { AppRole } from '$lib/types/auth';
 
 /** Extend this union when adding new admin workspaces. */
@@ -12,20 +15,26 @@ export type AdminWorkspaceOption = {
 	homePath: string;
 };
 
-export const ADMIN_WORKSPACES: Record<AdminWorkspaceId, AdminWorkspaceOption> = {
+const workspaceLabels = (locale: Locale): Record<AdminWorkspaceId, Omit<AdminWorkspaceOption, 'homePath'>> => ({
 	super: {
 		id: 'super',
-		label: 'Super admin',
-		shortLabel: 'Super',
-		homePath: '/'
+		label: tForLocale(locale, 'workspace.super.label'),
+		shortLabel: tForLocale(locale, 'workspace.super.shortLabel')
 	},
 	club: {
 		id: 'club',
-		label: 'Club admin',
-		shortLabel: 'Club',
-		homePath: '/dashboard'
+		label: tForLocale(locale, 'workspace.club.label'),
+		shortLabel: tForLocale(locale, 'workspace.club.shortLabel')
 	}
-};
+});
+
+export const getAdminWorkspace = (
+	id: AdminWorkspaceId,
+	locale: Locale = DEFAULT_LOCALE
+): AdminWorkspaceOption => ({
+	...workspaceLabels(locale)[id],
+	homePath: id === 'super' ? '/' : '/dashboard'
+});
 
 export const isAdminWorkspaceId = (value: string): value is AdminWorkspaceId =>
 	ADMIN_WORKSPACE_IDS.includes(value as AdminWorkspaceId);
@@ -47,9 +56,10 @@ export const getAvailableWorkspaceIds = (
 
 export const getWorkspaceOptions = (
 	appRole: AppRole,
-	hasClubMembership: boolean
+	hasClubMembership: boolean,
+	locale: Locale = DEFAULT_LOCALE
 ): AdminWorkspaceOption[] =>
-	getAvailableWorkspaceIds(appRole, hasClubMembership).map((id) => ADMIN_WORKSPACES[id]);
+	getAvailableWorkspaceIds(appRole, hasClubMembership).map((id) => getAdminWorkspace(id, locale));
 
 export const canSwitchWorkspace = (workspaceIds: AdminWorkspaceId[]): boolean =>
 	workspaceIds.length > 1;
@@ -66,7 +76,7 @@ export const parseWorkspaceId = (
 };
 
 export const getWorkspaceHomePath = (workspaceId: AdminWorkspaceId): string =>
-	ADMIN_WORKSPACES[workspaceId].homePath;
+	getAdminWorkspace(workspaceId).homePath;
 
 export const getEffectiveAppRoleForWorkspace = (
 	appRole: AppRole,
@@ -104,4 +114,10 @@ export const sanitizeWorkspaceId = (
 	}
 
 	return allowed[0] ?? 'super';
+};
+
+/** @deprecated use getAdminWorkspace — kept for tests importing ADMIN_WORKSPACES */
+export const ADMIN_WORKSPACES: Record<AdminWorkspaceId, AdminWorkspaceOption> = {
+	super: getAdminWorkspace('super'),
+	club: getAdminWorkspace('club')
 };

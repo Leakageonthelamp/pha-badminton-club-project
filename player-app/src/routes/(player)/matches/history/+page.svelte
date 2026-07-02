@@ -19,6 +19,7 @@
 	import { formatMatchRecord } from '@repo/ui/matches';
 	import TrophyIcon from '@repo/ui/icons/TrophyIcon.svelte';
 	import SearchIcon from '@repo/ui/icons/SearchIcon.svelte';
+	import { t } from '@repo/ui/i18n';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -49,7 +50,7 @@
 
 	const avgDurationLabel = $derived.by(() => {
 		const avgMs = history.summary.avgDurationMs;
-		if (avgMs === null || avgMs <= 0) return '—';
+		if (avgMs === null || avgMs <= 0) return t('common.dash');
 		return formatUptime(new Date(0).toISOString(), avgMs);
 	});
 
@@ -107,23 +108,23 @@
 
 <section class="space-y-6">
 	<DashboardHero
-		eyebrow="Matches"
-		title="Match history"
-		subtitle="Every completed match you played, newest first."
+		eyebrow={t('matches.history.eyebrow')}
+		title={t('matches.history.title')}
+		subtitle={t('matches.history.subtitle')}
 	>
 		{#if !isFetching && history.summary.totalMatches > 0}
-			<span class="app-hero-stat app-hero-stat--accent">{history.summary.totalMatches} total</span>
+			<span class="app-hero-stat app-hero-stat--accent">{t('common.total', { count: history.summary.totalMatches })}</span>
 		{/if}
 	</DashboardHero>
 
 	{#if history.summary.totalMatches > 0}
 		<AppCard>
-			<h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Your performance</h2>
-			<p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">All-time stats across completed matches.</p>
+			<h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">{t('matches.history.performance')}</h2>
+			<p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('matches.history.performanceHint')}</p>
 			<dl class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
 				<div class="rounded-lg border border-emerald-200 bg-emerald-50/80 px-3 py-2.5">
 					<dt class="text-[0.65rem] font-semibold uppercase tracking-wide text-emerald-700">
-						Record
+						{t('matches.history.record')}
 					</dt>
 					<dd class="mt-1 text-lg font-extrabold tabular-nums text-emerald-900">
 						{formatMatchRecord(history.summary.wins, history.summary.losses, history.summary.draws)}
@@ -131,15 +132,15 @@
 				</div>
 				<div class="rounded-lg border border-secondary-200 bg-secondary-50/90 px-3 py-2.5">
 					<dt class="text-[0.65rem] font-semibold uppercase tracking-wide text-secondary-800">
-						Win rate
+						{t('matches.history.winRate')}
 					</dt>
 					<dd class="mt-1 text-lg font-extrabold tabular-nums text-secondary-900">
-						{history.summary.winRate !== null ? `${history.summary.winRate}%` : '—'}
+						{history.summary.winRate !== null ? `${history.summary.winRate}%` : t('common.dash')}
 					</dd>
 				</div>
 				<div class="rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/60 px-3 py-2.5">
 					<dt class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-						Avg duration
+						{t('matches.history.avgDuration')}
 					</dt>
 					<dd class="mt-1 font-mono text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-100">
 						{avgDurationLabel}
@@ -147,7 +148,7 @@
 				</div>
 				<div class="rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/60 px-3 py-2.5">
 					<dt class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-						Matches
+						{t('matches.history.matches')}
 					</dt>
 					<dd class="mt-1 text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-100">
 						{history.summary.totalMatches}
@@ -155,7 +156,7 @@
 				</div>
 				<div class="rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/60 px-3 py-2.5 sm:col-span-2">
 					<dt class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-						Shuttles used
+						{t('matches.history.shuttlesUsed')}
 					</dt>
 					<dd class="mt-1 text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-100">
 						{history.summary.totalShuttles}
@@ -168,12 +169,12 @@
 	<AppCard>
 		<div class="space-y-2">
 			<form method="GET" action="/matches/history" class="history-filter-form">
-				<DatePicker id="match-history-date" label="Date" variant="filter" bind:value={dateFilter} />
+				<DatePicker id="match-history-date" label={t('common.date')} variant="filter" bind:value={dateFilter} />
 				<input type="hidden" name="mDate" value={dateFilter} />
 				<div class="min-w-0">
 					<SelectMenu
 						id="match-history-session"
-						label="Session"
+						label={t('common.session')}
 						options={sessionOptions}
 						bind:value={sessionFilter}
 					/>
@@ -182,8 +183,8 @@
 				<div class="min-w-0">
 					<SelectMenu
 						id="match-history-result"
-						label="Result"
-						options={resultFilterOptions}
+						label={t('common.result')}
+						options={resultFilterOptions()}
 						bind:value={resultFilter}
 					/>
 					<input type="hidden" name="mResult" value={resultFilter} />
@@ -192,8 +193,8 @@
 					<button
 						type="submit"
 						class="app-filter-submit"
-						aria-label="Filter match history"
-						title="Filter"
+						aria-label={t('matches.history.filterAria')}
+						title={t('common.filter')}
 						disabled={historyActionsBusy}
 						aria-busy={isFetching}
 					>
@@ -211,7 +212,7 @@
 
 			{#if hasActiveFilters && !isFetching}
 				<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-					Filtered
+					{t('common.filtered')}
 					{#if history.date}
 						· {history.date}
 					{/if}
@@ -220,7 +221,7 @@
 							history.sessionFilter}
 					{/if}
 					{#if history.resultFilter}
-						· {resultFilterOptions.find((option) => option.value === history.resultFilter)?.label ??
+						· {resultFilterOptions().find((option) => option.value === history.resultFilter)?.label ??
 							history.resultFilter}
 					{/if}
 				</p>
@@ -244,9 +245,9 @@
 				>
 					<DashboardIcon icon={isFilteredEmpty ? SearchIcon : TrophyIcon} accent="violet" class="mx-auto" />
 					{#if isFilteredEmpty}
-						<p class="mt-3 text-sm font-medium text-slate-900 dark:text-slate-100">No matches match your filters</p>
+						<p class="mt-3 text-sm font-medium text-slate-900 dark:text-slate-100">{t('matches.history.noMatchFilters')}</p>
 						<p class="mx-auto mt-1 max-w-xs text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
-							Try another date, session, or result, or reset to see your full match history.
+							{t('matches.history.noMatchFiltersHint')}
 						</p>
 						<button
 							type="button"
@@ -261,12 +262,12 @@
 									aria-hidden="true"
 								></span>
 							{/if}
-							Clear filters
+							{t('common.clearFilters')}
 						</button>
 					{:else}
-						<p class="mt-3 text-sm font-medium text-slate-900 dark:text-slate-100">No match history yet</p>
+						<p class="mt-3 text-sm font-medium text-slate-900 dark:text-slate-100">{t('matches.history.empty')}</p>
 						<p class="mx-auto mt-1 max-w-xs text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
-							Completed matches from sessions you join will appear here.
+							{t('matches.history.emptyHint')}
 						</p>
 						<button
 							type="button"
@@ -281,7 +282,7 @@
 									aria-hidden="true"
 								></span>
 							{/if}
-							Browse sessions →
+							{t('sessions.history.browseSessions')}
 						</button>
 					{/if}
 				</div>
@@ -293,7 +294,7 @@
 								match={item}
 								userId={data.userId}
 								matchNumber={history.items.length - index}
-								title="Court {item.court_number}"
+								title={t('matches.history.court', { number: item.court_number })}
 								subtitle="{item.session_name} · {item.club_name}"
 								disabled={historyActionsBusy && !summaryOpen}
 								onClick={() => openMatch(item)}

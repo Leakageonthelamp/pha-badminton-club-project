@@ -4,6 +4,7 @@ import type {
 	SessionHistoryPage
 } from '$lib/types/session';
 import { sessionStatusLabel } from '$lib/types/session';
+import { t } from '@repo/ui/i18n';
 
 export const SESSION_HISTORY_PAGE_SIZE = 10;
 
@@ -11,8 +12,8 @@ const HISTORY_STATUS_FILTERS = ['open', 'in_progress', 'closed', 'cancelled'] as
 
 export type SessionHistoryStatusFilter = '' | (typeof HISTORY_STATUS_FILTERS)[number];
 
-export const sessionStatusFilterOptions: { value: SessionHistoryStatusFilter; label: string }[] = [
-	{ value: '', label: 'All statuses' },
+export const sessionStatusFilterOptions = (): { value: SessionHistoryStatusFilter; label: string }[] => [
+	{ value: '', label: t('sessions.history.allStatuses') },
 	...HISTORY_STATUS_FILTERS.map((value) => ({
 		value,
 		label: sessionStatusLabel(value)
@@ -32,7 +33,7 @@ export const extractHistoryClubs = (items: SessionHistoryItem[]): SessionHistory
 export const clubFilterOptions = (
 	clubs: SessionHistoryClubOption[]
 ): { value: string; label: string }[] => [
-	{ value: '', label: 'All clubs' },
+	{ value: '', label: t('sessions.history.allClubs') },
 	...clubs.map((club) => ({ value: club.id, label: club.name }))
 ];
 
@@ -45,7 +46,7 @@ export const parseHistoryDate = (value: string | null): string => {
 };
 
 export const parseHistoryStatus = (value: string | null): SessionHistoryStatusFilter => {
-	const allowed = new Set(sessionStatusFilterOptions.map((option) => option.value));
+	const allowed = new Set(sessionStatusFilterOptions().map((option) => option.value));
 	return allowed.has(value as SessionHistoryStatusFilter)
 		? (value as SessionHistoryStatusFilter)
 		: '';

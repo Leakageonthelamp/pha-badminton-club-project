@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import { browser } from '$app/environment';
 	import { enhance } from '$app/forms';
 	import { goto, invalidate } from '$app/navigation';
@@ -57,7 +58,7 @@
 		session.settlement_started_at != null || session.ended_early
 	);
 	const sessionEndedLabel = $derived(
-		session.ended_early ? 'Ended early' : 'Session ended'
+		session.ended_early ? t('control.endedEarly') : t('control.sessionEnded')
 	);
 
 	const goToSessionControl = () => {
@@ -127,9 +128,9 @@
 		if (flashToastShown) return;
 
 		const flashMessage = data.edited
-			? 'Session updated and returned to draft. Open it again when ready.'
+			? t('sessions.updatedDraft')
 			: data.created
-				? 'Session created.'
+				? t('sessions.created')
 				: null;
 		if (!flashMessage) return;
 
@@ -218,7 +219,7 @@
 	{#if data.canManage && session.status !== 'draft'}
 		<AppCard class="space-y-6">
 			<div>
-				<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Participants</h2>
+				<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('sessions.detail.participants')}</h2>
 				<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 					Confirm or reject waiting players from 15 minutes before start until session end.
 				</p>
@@ -234,7 +235,7 @@
 					Waiting list ({waitingPlayers.length})
 				</h3>
 				{#if waitingPlayers.length === 0}
-					<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">No players waiting.</p>
+					<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('sessions.detail.noWaiting')}</p>
 				{:else}
 					<ul class="divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
 						{#each waitingPlayers as player (player.id)}
@@ -242,14 +243,14 @@
 								<div class="flex flex-wrap items-center justify-between gap-3">
 									<div class="flex min-w-0 items-center gap-3">
 										<UserAvatar
-											displayName={player.profile?.display_name ?? 'Player'}
+											displayName={player.profile?.display_name ?? t('role.player')}
 											avatarUrl={player.profile?.avatar_url ?? null}
 											size="sm"
 										/>
 										<div class="min-w-0">
 											<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
 												<p class="truncate font-medium text-slate-900 dark:text-slate-100">
-													{player.profile?.display_name ?? 'Unknown'}
+													{player.profile?.display_name ?? t('common.unknown')}
 												</p>
 												{#if player.profile?.tag}
 													<TagPill tag={player.profile.tag} />
@@ -312,20 +313,20 @@
 					Buffer queue ({queuedPlayers.length}/{session.max_buffer})
 				</h3>
 				{#if queuedPlayers.length === 0}
-					<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">No players in the buffer queue.</p>
+					<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('sessions.detail.noQueued')}</p>
 				{:else}
 					<ul class="divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
 						{#each queuedPlayers as player (player.id)}
 							<li class="flex items-center gap-3 bg-white dark:bg-slate-900 px-4 py-3">
 								<UserAvatar
-									displayName={player.profile?.display_name ?? 'Player'}
+									displayName={player.profile?.display_name ?? t('role.player')}
 									avatarUrl={player.profile?.avatar_url ?? null}
 									size="sm"
 								/>
 								<div class="min-w-0 flex-1">
 									<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
 										<p class="truncate font-medium text-slate-900 dark:text-slate-100">
-											{player.profile?.display_name ?? 'Unknown'}
+											{player.profile?.display_name ?? t('common.unknown')}
 										</p>
 										{#if player.profile?.tag}
 											<TagPill tag={player.profile.tag} />
@@ -345,20 +346,20 @@
 			<div class="space-y-3">
 				<h3 class="app-section-heading">Confirmed ({confirmedPlayers.length})</h3>
 				{#if confirmedPlayers.length === 0}
-					<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">No confirmed players yet.</p>
+					<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('sessions.detail.noConfirmed')}</p>
 				{:else}
 					<ul class="divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
 						{#each confirmedPlayers as player (player.id)}
 							<li class="flex items-center gap-3 bg-white dark:bg-slate-900 px-4 py-3">
 								<UserAvatar
-									displayName={player.profile?.display_name ?? 'Player'}
+									displayName={player.profile?.display_name ?? t('role.player')}
 									avatarUrl={player.profile?.avatar_url ?? null}
 									size="sm"
 								/>
 								<div class="min-w-0 flex-1">
 									<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
 										<p class="truncate font-medium text-slate-900 dark:text-slate-100">
-											{player.profile?.display_name ?? 'Unknown'}
+											{player.profile?.display_name ?? t('common.unknown')}
 										</p>
 										{#if player.profile?.tag}
 											<TagPill tag={player.profile.tag} />
@@ -394,9 +395,9 @@
 	<section class="space-y-6">
 		<div class="grid gap-6 lg:items-stretch">
 			<DashboardHero
-				eyebrow="Session"
+				eyebrow={t('sessions.detail.eyebrow')}
 				title={session.name}
-				subtitle={session.club?.name ?? 'Club session'}
+				subtitle={session.club?.name ?? t('control.clubSessionFallback')}
 			>
 				<div class="app-hero-status {sessionStatusHeroClass(session.status)}">
 					<span
@@ -406,13 +407,13 @@
 						aria-hidden="true"
 					></span>
 					<div class="min-w-0 flex-1">
-						<p class="app-hero-status-label">Session status</p>
+						<p class="app-hero-status-label">{t('sessions.detail.statusLabel')}</p>
 						<p class="app-hero-status-value">{sessionStatusLabel(session.status)}</p>
 					</div>
 					{#if data.isHost}
-						<span class="app-hero-badge shrink-0">You created this</span>
+						<span class="app-hero-badge shrink-0">{t('sessions.detail.youCreated')}</span>
 					{:else}
-						<span class="app-hero-badge shrink-0">Observation only</span>
+						<span class="app-hero-badge shrink-0">{t('sessions.detail.observationOnly')}</span>
 					{/if}
 				</div>
 				{#if endedOrReached && session.status === 'in_progress'}
@@ -429,7 +430,7 @@
 					<div>
 						{#if endedOrReached}
 							<h2 class="text-lg font-semibold text-rose-900">
-								{settlementStarted ? 'Settlement in progress' : sessionEndedLabel}
+								{settlementStarted ? t('common.settlementInProgress') : sessionEndedLabel}
 							</h2>
 							<p class="mt-1 text-sm text-rose-800">
 								{#if settlementStarted}
@@ -440,7 +441,7 @@
 								{/if}
 							</p>
 						{:else}
-							<h2 class="text-lg font-semibold text-sky-900">Session in progress</h2>
+							<h2 class="text-lg font-semibold text-sky-900">{t('sessions.detail.inProgressTitle')}</h2>
 							<p class="mt-1 text-sm text-sky-800">
 								Open session control to manage live play, courts, and participants.
 							</p>
@@ -450,7 +451,7 @@
 						type="button"
 						class="w-full! sm:w-auto"
 						loading={controlNavLoading}
-						loadingLabel="Opening…"
+						loadingLabel={t('sessions.detail.opening')}
 						onclick={goToSessionControl}
 					>
 						Session control
@@ -481,7 +482,7 @@
 		{#if data.canManage && data.cancellationFees.length > 0}
 			<AppCard class="space-y-4">
 				<div>
-					<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Cancellation fees</h2>
+					<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('sessions.detail.cancellationFees')}</h2>
 					<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 						Late cancellations waiting for payment or admin confirmation.
 					</p>
@@ -497,7 +498,7 @@
 		{#if session.status === 'draft'}
 			<AppCard class="space-y-4 border-amber-200 bg-amber-50/60">
 				<div>
-					<h2 class="text-lg font-semibold text-amber-900">Draft session</h2>
+					<h2 class="text-lg font-semibold text-amber-900">{t('sessions.detail.draftTitle')}</h2>
 					<p class="mt-2 text-sm text-amber-800">
 						This session is hidden from players until you open it. Open by
 						{formatDateTime(data.draftOpenDeadline)} (1 hour before start) or it will be auto-cancelled.
@@ -508,7 +509,7 @@
 						Open session
 					</SubmitButton>
 				{:else if data.canManage}
-					<p class="text-sm text-amber-800">The open window has passed.</p>
+					<p class="text-sm text-amber-800">{t('sessions.detail.openWindowPassed')}</p>
 				{/if}
 			</AppCard>
 		{/if}
@@ -516,7 +517,7 @@
 		{#if data.canModify}
 			<AppCard class="space-y-4">
 				<div>
-					<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Manage session</h2>
+					<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('sessions.detail.manage')}</h2>
 					<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 						Edit or cancel until 15 minutes before start. After that, changes are locked.
 					</p>
@@ -543,7 +544,7 @@
 		{/if}
 
 		<AppCard class="space-y-4">
-			<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Description</h2>
+			<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('clubs.create.descriptionLabel')}</h2>
 			<RichTextDisplay html={session.description} />
 		</AppCard>
 
@@ -553,12 +554,12 @@
 			>
 				<div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
 					<div class="app-history-stat">
-						<p class="app-history-stat-label">Start</p>
+						<p class="app-history-stat-label">{t('sessionForm.start')}</p>
 						<p class="app-history-stat-value">{formatTime(session.start_at)}</p>
 						<p class="app-history-stat-hint">{formatDate(session.start_at)}</p>
 					</div>
 					<div class="app-history-stat border-brand-200/80 bg-brand-50/50">
-						<p class="app-history-stat-label">Duration</p>
+						<p class="app-history-stat-label">{t('sessions.detail.duration')}</p>
 						<p class="app-history-stat-value">
 							{formatSessionDuration(session.start_at, session.end_at)}
 						</p>
@@ -567,7 +568,7 @@
 						</p>
 					</div>
 					<div class="app-history-stat">
-						<p class="app-history-stat-label">End</p>
+						<p class="app-history-stat-label">{t('sessionForm.end')}</p>
 						<p class="app-history-stat-value">{formatTime(session.end_at)}</p>
 						<p class="app-history-stat-hint">{formatDate(session.end_at)}</p>
 					</div>
@@ -580,13 +581,13 @@
 						<ClipboardDocumentListIcon class="h-5 w-5" />
 					</span>
 					<div>
-						<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Session details</h2>
-						<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Overview, venue, capacity, and match settings</p>
+						<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('sessionForm.details')}</h2>
+						<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('sessions.detail.detailsSubtitle')}</p>
 					</div>
 				</div>
 
 				<div class="space-y-3">
-					<h3 class="app-section-heading">Overview</h3>
+					<h3 class="app-section-heading">{t('sessions.detail.overview')}</h3>
 					<dl class="app-detail-contact-grid">
 						<div class="app-detail-contact-item">
 							<dt class="app-detail-contact-label">
@@ -607,7 +608,7 @@
 							<dd class="app-detail-contact-value">{session.host?.display_name ?? '—'}</dd>
 						</div>
 						<div class="app-detail-contact-item sm:col-span-2">
-							<dt class="app-detail-contact-label">Status</dt>
+							<dt class="app-detail-contact-label">{t('dashboard.super.statusLabel')}</dt>
 							<dd class="app-detail-contact-value">
 								<span
 									class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold {sessionStatusBadgeClass(
@@ -622,14 +623,14 @@
 				</div>
 
 				<div class="space-y-3">
-					<h3 class="app-section-heading">Venue</h3>
+					<h3 class="app-section-heading">{t('sessionForm.venue')}</h3>
 					<dl class="app-detail-contact-grid">
 						<div class="app-detail-contact-item app-detail-contact-item--wide">
-							<dt class="app-detail-contact-label">Venue name</dt>
+							<dt class="app-detail-contact-label">{t('clubs.detail.location.venueLabel')}</dt>
 							<dd class="app-detail-contact-value text-base">{session.venue_name ?? '—'}</dd>
 						</div>
 						<div class="app-detail-contact-item app-detail-contact-item--wide">
-							<dt class="app-detail-contact-label">Map coordinates</dt>
+							<dt class="app-detail-contact-label">{t('sessions.detail.mapCoordinates')}</dt>
 							<dd class="app-detail-contact-value">
 								{#if locationLabel && mapsUrl}
 									<a
@@ -640,7 +641,7 @@
 									>
 										{locationLabel}
 									</a>
-									<span class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">Open in Maps</span>
+									<span class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('sessions.detail.openInMaps')}</span>
 								{:else}
 									<span class="text-slate-500 dark:text-slate-400 dark:text-slate-500">—</span>
 								{/if}
@@ -650,37 +651,37 @@
 				</div>
 
 				<div class="space-y-3">
-					<h3 class="app-section-heading">Capacity & pricing</h3>
+					<h3 class="app-section-heading">{t('sessions.detail.capacityPricing')}</h3>
 					<dl class="app-detail-meta-grid">
 						<div class="app-detail-meta-item">
-							<dt class="app-detail-meta-label">Players</dt>
+							<dt class="app-detail-meta-label">{t('sessions.detail.players')}</dt>
 							<dd class="app-detail-meta-value">
 								<span class="text-lg font-semibold text-brand-700">{session.min_players}</span>
 								<span class="text-slate-400 dark:text-slate-500"> – </span>
 								<span class="text-lg font-semibold text-brand-700">{session.max_players}</span>
-								<span class="ml-1 text-xs font-normal text-slate-500 dark:text-slate-400 dark:text-slate-500">min – max</span>
+								<span class="ml-1 text-xs font-normal text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('sessions.detail.minMax')}</span>
 							</dd>
 						</div>
 						<div class="app-detail-meta-item">
-							<dt class="app-detail-meta-label">Courts</dt>
+							<dt class="app-detail-meta-label">{t('sessions.detail.courts')}</dt>
 							<dd class="app-detail-meta-value">
 								<span class="text-lg font-semibold text-brand-700">{session.court_count}</span>
 							</dd>
 						</div>
 						<div class="app-detail-meta-item">
-							<dt class="app-detail-meta-label">Court fee / hour</dt>
+							<dt class="app-detail-meta-label">{t('sessions.detail.courtFeeHour')}</dt>
 							<dd class="app-detail-meta-value text-base text-brand-800">
 								{formatThb(session.court_fee_per_hour)}
 							</dd>
 						</div>
 						<div class="app-detail-meta-item">
-							<dt class="app-detail-meta-label">Est. court cost</dt>
+							<dt class="app-detail-meta-label">{t('sessions.detail.estCourtCost')}</dt>
 							<dd class="app-detail-meta-value text-base text-brand-800">
 								{formatThb(estimatedCourtCost)}
 							</dd>
 						</div>
 						<div class="app-detail-meta-item sm:col-span-2">
-							<dt class="app-detail-meta-label">Fixed court fee / player</dt>
+							<dt class="app-detail-meta-label">{t('sessions.detail.fixedCourtFee')}</dt>
 							<dd class="app-detail-meta-value text-base text-brand-800">
 								{#if session.fixed_court_fee_per_player !== null}
 									{formatThb(session.fixed_court_fee_per_player)}
@@ -690,23 +691,23 @@
 										)} @ {confirmedPlayers.length} confirmed
 									</span>
 								{:else}
-									<span class="text-slate-500 dark:text-slate-400 dark:text-slate-500">Split evenly (cost-share)</span>
+									<span class="text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('sessions.detail.splitEvenly')}</span>
 								{/if}
 							</dd>
 						</div>
 						<div class="app-detail-meta-item sm:col-span-2">
-							<dt class="app-detail-meta-label">Shuttle</dt>
+							<dt class="app-detail-meta-label">{t('sessionForm.shuttle')}</dt>
 							<dd class="app-detail-meta-value">{shuttleLabel}</dd>
 						</div>
 						<div class="app-detail-meta-item">
-							<dt class="app-detail-meta-label">Buffer queue</dt>
+							<dt class="app-detail-meta-label">{t('sessions.detail.bufferQueue')}</dt>
 							<dd class="app-detail-meta-value">
 								<span class="text-lg font-semibold text-brand-700">{session.max_buffer}</span>
-								<span class="ml-1 text-xs font-normal text-slate-500 dark:text-slate-400 dark:text-slate-500">max overflow</span>
+								<span class="ml-1 text-xs font-normal text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('sessions.detail.maxOverflow')}</span>
 							</dd>
 						</div>
 						<div class="app-detail-meta-item">
-							<dt class="app-detail-meta-label">Late cancel fee</dt>
+							<dt class="app-detail-meta-label">{t('sessions.detail.lateCancelFee')}</dt>
 							<dd class="app-detail-meta-value text-base text-brand-800">
 								{formatThb(session.cancellation_fee)}
 							</dd>
@@ -715,7 +716,7 @@
 				</div>
 
 				<div class="space-y-3">
-					<h3 class="app-section-heading">Match settings</h3>
+					<h3 class="app-section-heading">{t('sessionForm.matchSettings')}</h3>
 					<dl class="app-detail-contact-grid">
 						<div class="app-detail-contact-item">
 							<dt class="app-detail-contact-label">
@@ -743,7 +744,7 @@
 		{#if data.isSuperAdmin && session.status !== 'closed' && session.status !== 'cancelled'}
 			<AppCard class="space-y-4 border-red-200 bg-red-50/40">
 				<div>
-					<h2 class="text-lg font-semibold text-red-900">Danger zone</h2>
+					<h2 class="text-lg font-semibold text-red-900">{t('clubs.detail.dangerZone')}</h2>
 					<p class="mt-2 text-sm text-red-800">
 						Force end this session immediately. Super admins only.
 					</p>
@@ -782,7 +783,7 @@
 				class="flex flex-wrap gap-2 p-4"
 				use:enhance={handleForceEnd}
 			>
-				<SubmitButton loading={forceEndLoading} loadingLabel="Ending…" class="!w-auto">
+				<SubmitButton loading={forceEndLoading} loadingLabel={t('sessions.detail.ending')} class="!w-auto">
 					Force end session
 				</SubmitButton>
 				<SubmitButton
@@ -807,7 +808,7 @@
 	>
 		<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
 			<div class="border-b border-brand-100 bg-brand-50 px-4 py-4">
-				<h2 id="open-session-title" class="text-lg font-semibold text-brand-900">Open session?</h2>
+				<h2 id="open-session-title" class="text-lg font-semibold text-brand-900">{t('sessions.detail.openSessionTitle')}</h2>
 				<p class="mt-2 text-sm text-brand-800">
 					Players will be able to discover and join this session once it is open.
 				</p>
@@ -818,7 +819,7 @@
 				class="flex flex-wrap gap-2 p-4"
 				use:enhance={handleOpenSession}
 			>
-				<SubmitButton loading={openLoading} loadingLabel="Opening…" class="!w-auto">
+				<SubmitButton loading={openLoading} loadingLabel={t('sessions.detail.opening')} class="!w-auto">
 					Open session
 				</SubmitButton>
 				<SubmitButton
@@ -856,7 +857,7 @@
 				class="flex flex-wrap gap-2 p-4"
 				use:enhance={handleCancelSession}
 			>
-				<SubmitButton loading={cancelLoading} loadingLabel="Cancelling…" class="!w-auto">
+				<SubmitButton loading={cancelLoading} loadingLabel={t('sessions.detail.cancelling')} class="!w-auto">
 					Cancel session
 				</SubmitButton>
 				<SubmitButton

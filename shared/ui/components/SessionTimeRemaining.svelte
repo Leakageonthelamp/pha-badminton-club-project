@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { formatCountdown } from '../datetime';
+	import { t } from '../i18n/i18n.svelte';
 
 	let {
 		endAt,
 		active = true,
-		label = 'Time left',
+		label,
 		variant = 'pill',
 		class: className = ''
 	}: {
@@ -20,6 +21,7 @@
 	const endMs = $derived(new Date(endAt).getTime());
 	const visible = $derived(active && !Number.isNaN(endMs) && nowMs < endMs);
 	const remainingLabel = $derived(formatCountdown(endAt, nowMs));
+	const resolvedLabel = $derived(label ?? t('session.timeLeft'));
 
 	$effect(() => {
 		if (typeof window === 'undefined' || !visible) return;
@@ -35,7 +37,7 @@
 {#if visible}
 	{#if variant === 'compact'}
 		<p class="app-session-countdown-compact {className}" aria-live="polite">
-			<span class="app-session-countdown-compact-label text-amber-700">{label}</span>
+			<span class="app-session-countdown-compact-label text-amber-700">{resolvedLabel}</span>
 			<span class="app-session-countdown-compact-value text-amber-900">{remainingLabel}</span>
 		</p>
 	{:else if variant === 'banner'}
@@ -45,13 +47,13 @@
 		>
 			<span class="app-session-countdown-label text-amber-800">
 				<span class="h-2 w-2 animate-pulse rounded-full bg-amber-500" aria-hidden="true"></span>
-				{label}
+				{resolvedLabel}
 			</span>
 			<span class="app-session-countdown-value text-amber-900">{remainingLabel}</span>
 		</div>
 	{:else}
 		<span class="app-tile-badge app-tile-badge--brand {className}" aria-live="polite">
-			{label} {remainingLabel}
+			{resolvedLabel} {remainingLabel}
 		</span>
 	{/if}
 {/if}

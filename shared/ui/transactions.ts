@@ -4,6 +4,7 @@ import {
 	type CancellationFeeStatus,
 	type PaymentStatus
 } from './payments';
+import { t, tForLocale, type Locale } from './i18n/i18n.svelte';
 
 export type TransactionKind = 'session_fee' | 'cancellation_fee';
 
@@ -15,23 +16,34 @@ export type TransactionForDisplay = {
 	filter_status: Exclude<TransactionFilterStatus, ''>;
 };
 
-export const transactionStatusFilterOptions: { value: TransactionFilterStatus; label: string }[] =
-	[
-		{ value: '', label: 'All statuses' },
-		{ value: 'pending', label: 'Pending payment' },
-		{ value: 'submitted', label: 'Awaiting confirmation' },
-		{ value: 'completed', label: 'Paid' },
-		{ value: 'waived', label: 'Waived' }
+export const transactionStatusFilterOptions = (
+	locale?: Locale
+): { value: TransactionFilterStatus; label: string }[] => {
+	const tr = (key: string) => (locale ? tForLocale(locale, key) : t(key));
+	return [
+		{ value: '', label: tr('transaction.allStatuses') },
+		{ value: 'pending', label: tr('payment.pending') },
+		{ value: 'submitted', label: tr('payment.awaitingConfirmation') },
+		{ value: 'completed', label: tr('payment.paid') },
+		{ value: 'waived', label: tr('payment.waived') }
 	];
+};
 
-export const transactionKindFilterOptions: { value: '' | TransactionKind; label: string }[] = [
-	{ value: '', label: 'All types' },
-	{ value: 'session_fee', label: 'Session fee' },
-	{ value: 'cancellation_fee', label: 'Cancellation fee' }
-];
+export const transactionKindFilterOptions = (
+	locale?: Locale
+): { value: '' | TransactionKind; label: string }[] => {
+	const tr = (key: string) => (locale ? tForLocale(locale, key) : t(key));
+	return [
+		{ value: '', label: tr('transaction.allTypes') },
+		{ value: 'session_fee', label: tr('transaction.sessionFee') },
+		{ value: 'cancellation_fee', label: tr('transaction.cancellationFee') }
+	];
+};
 
-export const transactionKindLabel = (kind: TransactionKind): string =>
-	kind === 'session_fee' ? 'Session fee' : 'Cancellation fee';
+export const transactionKindLabel = (kind: TransactionKind, locale?: Locale): string => {
+	const tr = (key: string) => (locale ? tForLocale(locale, key) : t(key));
+	return kind === 'session_fee' ? tr('transaction.sessionFee') : tr('transaction.cancellationFee');
+};
 
 export const paymentFilterStatus = (
 	status: PaymentStatus
@@ -63,10 +75,13 @@ export const cancellationFilterStatus = (
 	}
 };
 
-export const transactionStatusLabel = (transaction: TransactionForDisplay): string =>
+export const transactionStatusLabel = (
+	transaction: TransactionForDisplay,
+	locale?: Locale
+): string =>
 	transaction.kind === 'session_fee'
-		? paymentStatusLabel(transaction.status as PaymentStatus)
-		: cancellationFeeStatusLabel(transaction.status as CancellationFeeStatus);
+		? paymentStatusLabel(transaction.status as PaymentStatus, locale)
+		: cancellationFeeStatusLabel(transaction.status as CancellationFeeStatus, locale);
 
 export const transactionStatusBadgeClass = (
 	filterStatus: Exclude<TransactionFilterStatus, ''>

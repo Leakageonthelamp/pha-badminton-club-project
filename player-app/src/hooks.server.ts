@@ -1,9 +1,12 @@
+import '$lib/i18n';
 import { createSupabaseServerClient } from '$lib/supabase/server';
 import {
 	isSupabaseUnavailableError,
 	markServiceUnavailable
 } from '$lib/server/supabaseHealth';
 import { PUBLIC_SUPABASE_PUBLISHABLE_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public';
+import { DEFAULT_LOCALE, tForLocale } from '@repo/ui/i18n';
+import { localeHandle } from '@repo/ui/i18n/localeHandle';
 import { type Handle, redirect, type HandleServerError } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 
@@ -95,7 +98,7 @@ const authGuard: Handle = async ({ event, resolve }) => {
 export const handleError: HandleServerError = ({ error, status }) => {
 	if (isSupabaseUnavailableError(error)) {
 		return {
-			message: 'Backend services are temporarily unavailable. Please try again later.',
+			message: tForLocale(DEFAULT_LOCALE, 'errors.backendUnavailable'),
 			code: 'SERVICE_UNAVAILABLE'
 		};
 	}
@@ -103,8 +106,11 @@ export const handleError: HandleServerError = ({ error, status }) => {
 	console.error('Unhandled server error', error);
 
 	return {
-		message: status === 404 ? 'Page not found' : 'Something went wrong. Please try again later.'
+		message:
+			status === 404
+				? tForLocale(DEFAULT_LOCALE, 'errors.pageNotFound')
+				: tForLocale(DEFAULT_LOCALE, 'errors.generic')
 	};
 };
 
-export const handle = sequence(supabaseHandle, authGuard);
+export const handle = sequence(supabaseHandle, localeHandle, authGuard);

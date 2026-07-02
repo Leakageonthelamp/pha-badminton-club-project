@@ -1,8 +1,7 @@
+import { t } from '@repo/ui/i18n';
 import { describe, expect, it } from 'vitest';
 import {
-	DISPLAY_NAME_CHARS_ERROR,
 	DISPLAY_NAME_MAX,
-	DISPLAY_NAME_SPACE_ERROR,
 	validateDisplayName
 } from '$lib/validation/displayName';
 
@@ -16,22 +15,22 @@ describe('validateDisplayName', () => {
 
 	it('rejects names over 50 characters', () => {
 		expect(validateDisplayName('a'.repeat(DISPLAY_NAME_MAX + 1))).toBe(
-			'Display name must not exceed 50 characters'
+			t('validation.displayName.max', { max: DISPLAY_NAME_MAX })
 		);
 	});
 
 	it('rejects names under 2 characters', () => {
-		expect(validateDisplayName('J')).toBe('Display name must be at least 2 characters');
+		expect(validateDisplayName('J')).toBe(t('validation.displayName.min', { min: 2 }));
 	});
 
 	it('rejects names with spaces', () => {
-		expect(validateDisplayName('John Doe')).toBe(DISPLAY_NAME_SPACE_ERROR);
+		expect(validateDisplayName('John Doe')).toBe(t('validation.displayName.noSpaces'));
 		expect(validateDisplayName('John')).toBeNull();
 	});
 
 	it('rejects unsafe special characters', () => {
-		expect(validateDisplayName('John@Doe')).toBe(DISPLAY_NAME_CHARS_ERROR);
-		expect(validateDisplayName('<script>')).toBe(DISPLAY_NAME_CHARS_ERROR);
-		expect(validateDisplayName('player.name')).toBe(DISPLAY_NAME_CHARS_ERROR);
+		expect(validateDisplayName('John@Doe')).toBe(t('validation.displayName.invalidChars'));
+		expect(validateDisplayName('<script>')).toBe(t('validation.displayName.invalidChars'));
+		expect(validateDisplayName('player.name')).toBe(t('validation.displayName.invalidChars'));
 	});
 });

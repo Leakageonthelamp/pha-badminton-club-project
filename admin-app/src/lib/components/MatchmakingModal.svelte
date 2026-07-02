@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import AppModal from '@repo/ui/components/AppModal.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
@@ -37,7 +38,7 @@
 		idlePlayers.find((player) => player.user_id === userId) ?? null;
 
 	const playerName = (player: SessionPlayerWithProfile) =>
-		player.profile?.display_name ?? 'Unknown player';
+		player.profile?.display_name ?? t('control.unknownPlayer');
 
 	const slotPlayer = (index: number) => {
 		const userId = selectedIds[index];
@@ -70,10 +71,10 @@
 		<div class="space-y-4 border-b border-slate-100 dark:border-slate-800 px-5 py-4">
 			<div>
 				<h2 id="matchmaking-modal-title" class="text-lg font-semibold text-slate-900 dark:text-slate-100">
-					Assign match — Court {courtNumber ?? '—'}
+					{t('matchmaking.title', { court: courtNumber ?? '—' })}
 				</h2>
 				<p class="mt-1 text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
-					Select 4 idle players in order — first two are Team A, last two are Team B.
+					{t('matchmaking.subtitle')}
 				</p>
 			</div>
 
@@ -98,7 +99,7 @@
 			<div class="grid gap-3 sm:grid-cols-2">
 				<div class="rounded-xl border border-brand-200 bg-brand-50/60 p-3">
 					<div class="flex items-center justify-between gap-2">
-						<p class="text-xs font-semibold uppercase tracking-wide text-brand-800">Team A</p>
+						<p class="text-xs font-semibold uppercase tracking-wide text-brand-800">{t('match.teamA')}</p>
 						<p class="text-xs text-brand-700">{Math.min(selectedIds.length, 2)}/2</p>
 					</div>
 					<ul class="mt-2 space-y-2">
@@ -137,7 +138,7 @@
 
 				<div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 p-3">
 					<div class="flex items-center justify-between gap-2">
-						<p class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400 dark:text-slate-500">Team B</p>
+						<p class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400 dark:text-slate-500">{t('match.teamB')}</p>
 						<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">{Math.max(0, selectedIds.length - 2)}/2</p>
 					</div>
 					<ul class="mt-2 space-y-2">
@@ -178,7 +179,7 @@
 
 		<div class="flex min-h-[22rem] min-w-0 flex-1 flex-col px-5 py-4">
 			<div class="mb-2 flex items-center justify-between gap-2">
-				<p class="text-sm font-medium text-slate-800 dark:text-slate-200">Idle players</p>
+				<p class="text-sm font-medium text-slate-800 dark:text-slate-200">{t('matchmaking.idlePlayers')}</p>
 				<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">{selectedIds.length}/4 selected</p>
 			</div>
 
@@ -241,7 +242,7 @@
 		</div>
 
 		<div class="flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800 px-5 py-4">
-			<SubmitButton type="button" variant="secondary" onclick={onClose}>Cancel</SubmitButton>
+			<SubmitButton type="button" variant="secondary" onclick={onClose}>{t('avatarCrop.cancel')}</SubmitButton>
 			<SubmitButton
 				type="button"
 				loading={loading}

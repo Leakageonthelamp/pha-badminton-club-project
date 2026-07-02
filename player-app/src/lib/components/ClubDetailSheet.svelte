@@ -22,6 +22,7 @@
 	import { sessionPlayerStatusLabel, sessionStatusLabel } from '$lib/types/session';
 	import { liveSessionHref, shouldOpenLiveSession } from '$lib/sessions/navigation';
 	import { formatDateTime } from '@repo/ui/datetime';
+	import { t } from '@repo/ui/i18n';
 
 	let {
 		open = false,
@@ -130,7 +131,7 @@
 		}
 	};
 
-	const title = $derived(club?.name ?? preview?.name ?? 'Club');
+	const title = $derived(club?.name ?? preview?.name ?? t('clubs.title'));
 	const description = $derived(club?.description ?? preview?.description ?? '');
 	const activeClub = $derived(club ?? preview);
 	const hasLocation = $derived(
@@ -173,7 +174,7 @@
 		if (session.my_membership) {
 			parts.push(sessionPlayerStatusLabel(session.my_membership.status));
 		} else {
-			parts.push(`${session.waiting_count}/${session.max_players} spots`);
+			parts.push(t('clubs.spots', { waiting: session.waiting_count, max: session.max_players }));
 		}
 		return parts.join(' · ');
 	};
@@ -227,7 +228,7 @@
 			.then(async (response) => {
 				if (!response.ok) {
 					const message =
-						response.status === 404 ? 'Club not found.' : 'Could not load club details.';
+						response.status === 404 ? t('clubs.notFound') : t('clubs.loadError');
 					throw new Error(message);
 				}
 				return response.json() as Promise<ClubDetail>;
@@ -242,7 +243,7 @@
 			})
 			.catch((err) => {
 				if (cancelled) return;
-				loadError = err instanceof Error ? err.message : 'Could not load club details.';
+				loadError = err instanceof Error ? err.message : t('clubs.loadError');
 			})
 			.finally(() => {
 				if (!cancelled) loading = false;
@@ -282,7 +283,7 @@
 		<button
 			type="button"
 			class="bottom-sheet-backdrop"
-			aria-label="Close club details"
+			aria-label={t('clubs.closeAria')}
 			style:opacity={backdropOpacity}
 			onclick={close}
 		></button>
@@ -301,7 +302,7 @@
 				class="bottom-sheet-drag-handle flex shrink-0 justify-center pt-3 pb-2"
 				role="button"
 				tabindex="-1"
-				aria-label="Drag down to close"
+				aria-label={t('common.dragToClose')}
 				onpointerdown={onDragStart}
 				onpointermove={onDragMove}
 				onpointerup={onDragEnd}
@@ -314,7 +315,7 @@
 				<div class="min-w-0">
 					<h2 id="club-sheet-title" class="text-xl font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
 					{#if distanceLabel}
-						<p class="mt-1 text-sm font-medium text-brand-700">{distanceLabel} away</p>
+						<p class="mt-1 text-sm font-medium text-brand-700">{t('sessions.detail.away', { distance: distanceLabel })}</p>
 					{/if}
 				</div>
 				<button
@@ -322,7 +323,7 @@
 					class="rounded-lg px-2 py-1 text-sm font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 dark:bg-slate-800 hover:text-slate-700 dark:text-slate-300 dark:text-slate-600"
 					onclick={close}
 				>
-					Close
+					{t('common.close')}
 				</button>
 			</div>
 
@@ -337,7 +338,7 @@
 				{/if}
 
 				<div class="mt-6 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
-					<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Venue</h3>
+					<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">{t('clubs.venue')}</h3>
 					{#if loading}
 						<div class="mt-3 app-skeleton h-4 w-40"></div>
 					{:else if venueName}
@@ -346,7 +347,7 @@
 					{#if loading}
 						<div class="mt-3 app-skeleton h-4 w-52"></div>
 					{:else if hasLocation && googleMapsUrl && appleMapsUrl}
-						<p class="mt-2 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Get directions on the map.</p>
+						<p class="mt-2 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{t('clubs.getDirections')}</p>
 						<div class="mt-3 flex flex-wrap gap-x-4 gap-y-2">
 							<a
 								href={googleMapsUrl}
@@ -354,7 +355,7 @@
 								rel="noopener noreferrer"
 								class="text-sm font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800"
 							>
-								Open in Google Maps
+								{t('clubs.openInGoogleMaps')}
 							</a>
 							<a
 								href={appleMapsUrl}
@@ -362,22 +363,22 @@
 								rel="noopener noreferrer"
 								class="text-sm font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800"
 							>
-								Open in Apple Maps
+								{t('clubs.openInAppleMaps')}
 							</a>
 						</div>
 					{:else if !venueName}
-						<p class="mt-2 text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Venue location has not been set yet.</p>
+						<p class="mt-2 text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('sessions.detail.locationNotSet')}</p>
 					{/if}
 				</div>
 
 				<div class="mt-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4" aria-busy={loading}>
-					<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Sessions</h3>
-					<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Open and upcoming games at this club.</p>
+					<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">{t('clubs.sessionsSection')}</h3>
+					<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{t('clubs.sessionsSectionHint')}</p>
 
 					{#if loading}
 						<ul
 							class="mt-4 divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700"
-							aria-label="Loading sessions"
+							aria-label={t('clubs.loadingSessions')}
 						>
 							{#each [0, 1] as row (row)}
 								<li class="bg-white dark:bg-slate-900 px-4 py-3">
@@ -389,11 +390,11 @@
 					{:else if loadError}
 						<p class="mt-4 text-sm text-red-600">{loadError}</p>
 					{:else if !hasSessions}
-						<p class="mt-4 text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">No open or upcoming sessions yet.</p>
+						<p class="mt-4 text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('clubs.noOpenOrUpcoming')}</p>
 					{:else}
 						{#if openingSessions.length > 0}
 							<p class="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-								Open now
+								{t('clubs.openNow')}
 							</p>
 							<ul
 								class="mt-2 divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700"
@@ -418,7 +419,7 @@
 
 						{#if upcomingSessions.length > 0}
 							<p class="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-								Upcoming
+								{t('clubs.upcoming')}
 							</p>
 							<ul
 								class="mt-2 divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700"
@@ -444,13 +445,13 @@
 				</div>
 
 				<div class="mt-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4" aria-busy={loading}>
-					<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Shuttlecocks</h3>
-					<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Brands and speeds this club uses.</p>
+					<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">{t('clubs.shuttles')}</h3>
+					<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{t('clubs.shuttlesHint')}</p>
 
 					{#if loading}
 						<ul
 							class="mt-4 divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700"
-							aria-label="Loading shuttlecocks"
+							aria-label={t('clubs.loadingShuttles')}
 						>
 							{#each [0, 1] as row (row)}
 								<li class="bg-white dark:bg-slate-900 px-4 py-3">
@@ -461,7 +462,7 @@
 					{:else if loadError}
 						<p class="mt-4 text-sm text-red-600">{loadError}</p>
 					{:else if shuttles.length === 0}
-						<p class="mt-4 text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">No shuttlecocks listed yet.</p>
+						<p class="mt-4 text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('clubs.noShuttlesListed')}</p>
 					{:else}
 						<ul
 							class="mt-4 divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700"
@@ -479,13 +480,13 @@
 				</div>
 
 				<div class="mt-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4" aria-busy={loading}>
-					<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Club admins</h3>
-					<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">People who manage this club.</p>
+					<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">{t('clubs.admins')}</h3>
+					<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{t('clubs.adminsHint')}</p>
 
 					{#if loading}
 						<ul
 							class="mt-4 divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700"
-							aria-label="Loading club admins"
+							aria-label={t('clubs.loadingAdmins')}
 						>
 							{#each [0, 1, 2] as row (row)}
 								<li class="flex items-center gap-3 bg-white dark:bg-slate-900 px-4 py-3">
@@ -500,7 +501,7 @@
 					{:else if loadError}
 						<p class="mt-4 text-sm text-red-600">{loadError}</p>
 					{:else if admins.length === 0}
-						<p class="mt-4 text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">No admins assigned yet.</p>
+						<p class="mt-4 text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('clubs.noAdminsAssigned')}</p>
 					{:else}
 						<ul
 							class="mt-4 divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700"

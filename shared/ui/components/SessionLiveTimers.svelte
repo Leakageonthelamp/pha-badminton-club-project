@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { formatCountdown, formatUptime } from '../datetime';
+	import { t } from '../i18n/i18n.svelte';
 
 	let {
 		startAt,
@@ -57,7 +58,7 @@
 				<div class="app-session-timer-banner-cell app-session-timer-banner-cell--uptime">
 					<span class="app-session-timer-banner-label text-emerald-800">
 						<span class="h-2 w-2 animate-pulse rounded-full bg-emerald-500" aria-hidden="true"></span>
-						Uptime
+						{t('session.uptimeLabel')}
 					</span>
 					<span class="app-session-timer-banner-value text-emerald-900">{uptimeLabel}</span>
 				</div>
@@ -66,7 +67,7 @@
 				<div class="app-session-timer-banner-cell app-session-timer-banner-cell--remaining">
 					<span class="app-session-timer-banner-label text-amber-800">
 						<span class="h-2 w-2 animate-pulse rounded-full bg-amber-500" aria-hidden="true"></span>
-						Time left
+						{t('session.timeLeft')}
 					</span>
 					<span class="app-session-timer-banner-value text-amber-900">{remainingLabel}</span>
 				</div>
@@ -75,7 +76,7 @@
 				<div class="app-session-timer-banner-cell app-session-timer-banner-cell--overdue">
 					<span class="app-session-timer-banner-label text-rose-800">
 						<span class="h-2 w-2 animate-pulse rounded-full bg-rose-500" aria-hidden="true"></span>
-						Overdue
+						{t('session.overdue')}
 					</span>
 					<span class="app-session-timer-banner-value text-rose-900">{overdueLabel}</span>
 				</div>
@@ -86,19 +87,19 @@
 			<div class="app-session-timer-group" aria-live="polite">
 				{#if showUptime}
 					<p class="app-session-countdown-compact">
-						<span class="app-session-countdown-compact-label text-emerald-700">Uptime</span>
+						<span class="app-session-countdown-compact-label text-emerald-700">{t('session.uptimeLabel')}</span>
 						<span class="app-session-countdown-compact-value text-emerald-900">{uptimeLabel}</span>
 					</p>
 				{/if}
 				{#if showRemaining}
 					<p class="app-session-countdown-compact">
-						<span class="app-session-countdown-compact-label text-amber-700">Time left</span>
+						<span class="app-session-countdown-compact-label text-amber-700">{t('session.timeLeft')}</span>
 						<span class="app-session-countdown-compact-value text-amber-900">{remainingLabel}</span>
 					</p>
 				{/if}
 				{#if showOverdue}
 					<p class="app-session-countdown-compact">
-						<span class="app-session-countdown-compact-label text-rose-700">Overdue</span>
+						<span class="app-session-countdown-compact-label text-rose-700">{t('session.overdue')}</span>
 						<span class="app-session-countdown-compact-value text-rose-900">{overdueLabel}</span>
 					</p>
 				{/if}

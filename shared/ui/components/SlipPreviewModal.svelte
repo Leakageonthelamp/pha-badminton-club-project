@@ -1,10 +1,11 @@
 <script lang="ts">
 	import AppModal from './AppModal.svelte';
+	import { t } from '../i18n/i18n.svelte';
 
 	let {
 		open = false,
 		imageUrl = '',
-		title = 'Bank transfer slip',
+		title,
 		onClose
 	}: {
 		open?: boolean;
@@ -16,6 +17,8 @@
 	let imageLoading = $state(false);
 	let imageFailed = $state(false);
 	let imgEl = $state<HTMLImageElement | null>(null);
+
+	const resolvedTitle = $derived(title ?? t('slip.title'));
 
 	$effect(() => {
 		imageUrl;
@@ -39,7 +42,9 @@
 
 <AppModal {open} labelledBy="slip-preview-title" {onClose}>
 	<div class="app-card-padded space-y-4">
-		<h2 id="slip-preview-title" class="text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
+		<h2 id="slip-preview-title" class="text-lg font-semibold text-slate-900 dark:text-slate-100">
+			{resolvedTitle}
+		</h2>
 		{#if imageUrl && !imageFailed}
 			<div class="relative min-h-48 w-full">
 				{#if imageLoading}
@@ -47,13 +52,15 @@
 						class="app-skeleton flex min-h-48 w-full items-center justify-center rounded-lg"
 						aria-hidden="true"
 					>
-						<span class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Loading slip…</span>
+						<span class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
+							{t('slip.loading')}
+						</span>
 					</div>
 				{/if}
 				<img
 					bind:this={imgEl}
 					src={imageUrl}
-					alt="Bank transfer slip"
+					alt={t('slip.alt')}
 					loading="lazy"
 					decoding="async"
 					class="max-h-[70vh] w-full rounded-lg object-contain transition-opacity duration-200 {imageLoading
@@ -68,7 +75,7 @@
 			</div>
 		{:else}
 			<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
-				Slip image unavailable (it may have been removed from storage).
+				{t('slip.unavailable')}
 			</p>
 		{/if}
 	</div>

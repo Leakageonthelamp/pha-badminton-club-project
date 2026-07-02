@@ -1,29 +1,30 @@
+import { tForLocale } from '$lib/i18n';
 import { resolveEffectiveAppRole } from '$lib/server/adminDashboardMode';
 import { assertCanManageClub, loadManagedClubs } from '$lib/server/clubAccess';
 import { countActiveClubSessions, loadShuttlesForClubs } from '$lib/server/sessions';
 import { sanitizeRichText } from '$lib/server/sanitizeHtml';
 import { shuttlePricePerEach } from '$lib/types/club';
-import { sessionInputSchema } from '$lib/validation/session';
+import { buildSessionInputSchema } from '$lib/validation/session';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({
 	cookies,
-	locals: { supabase, user, appRole }
+	locals: { supabase, user, appRole, locale }
 }) => {
 	if (!user || !appRole) {
-		error(401, 'Sign in required');
+		error(401, tForLocale(locale, 'auth.error.signInRequired'));
 	}
 
 	const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
 
 	if (effectiveAppRole !== 'club_admin') {
-		error(403, 'Club admin access required to create sessions');
+		error(403, tForLocale(locale, 'errors.clubAdminRequiredCreateSession'));
 	}
 
 	const managedClubs = await loadManagedClubs(supabase, user.id, effectiveAppRole);
 	if (!managedClubs.length) {
-		error(403, 'No clubs assigned to you');
+		error(403, tForLocale(locale, 'errors.noClubsAssigned'));
 	}
 
 	const shuttles = await loadShuttlesForClubs(
@@ -38,19 +39,21 @@ export const load: PageServerLoad = async ({
 };
 
 export const actions: Actions = {
-	default: async ({ request, cookies, locals: { supabase, user, appRole } }) => {
+	default: async ({ request, cookies, locals: { supabase, user, appRole, locale } }) => {
 		if (!user || !appRole) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
 
 		if (effectiveAppRole !== 'club_admin') {
-			return fail(403, { message: 'Club admin access required to create sessions' });
+			return fail(403, {
+				message: tForLocale(locale, 'errors.clubAdminRequiredCreateSession')
+			});
 		}
 
 		const formData = await request.formData();
-		const parsed = sessionInputSchema.safeParse({
+		const parsed = buildSessionInputSchema(locale).safeParse({
 			club_id: formData.get('club_id'),
 			name: formData.get('name'),
 			description: formData.get('description'),
@@ -77,7 +80,9 @@ export const actions: Actions = {
 		if (!parsed.success) {
 			const fieldErrors = parsed.error.flatten().fieldErrors;
 			return fail(400, {
-				message: Object.values(fieldErrors).flat()[0] ?? 'Invalid session input',
+				message:
+					Object.values(fieldErrors).flat()[0] ??
+					tForLocale(locale, 'errors.invalidSessionInput'),
 				fieldErrors,
 				values: Object.fromEntries(formData.entries())
 			});
@@ -93,7 +98,9 @@ export const actions: Actions = {
 		const activeCount = await countActiveClubSessions(supabase, club.id);
 		if (activeCount >= club.max_active_sessions) {
 			return fail(400, {
-				message: `This club already has the maximum of ${club.max_active_sessions} active sessions`
+				message: tForLocale(locale, 'session.action.maxActiveSessions', {
+					max: club.max_active_sessions
+				})
 			});
 		}
 
@@ -105,7 +112,7 @@ export const actions: Actions = {
 			.maybeSingle();
 
 		if (shuttleError || !shuttle) {
-			return fail(400, { message: 'Selected shuttle is not valid for this club' });
+			return fail(400, { message: tForLocale(locale, 'session.action.invalidShuttle') });
 		}
 
 		const shuttleCostPerEach = shuttlePricePerEach(shuttle);
@@ -144,7 +151,7 @@ export const actions: Actions = {
 
 		if (insertError || !data) {
 			console.error('Failed to create session', insertError);
-			return fail(500, { message: 'Could not create session. Please try again.' });
+			return fail(500, { message: tForLocale(locale, 'session.action.createFailed') });
 		}
 
 		redirect(303, `/sessions/${data.id}?created=1`);

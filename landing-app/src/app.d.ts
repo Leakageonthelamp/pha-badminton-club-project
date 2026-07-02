@@ -4,8 +4,9 @@ declare global {
 	namespace App {
 		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 		interface Error {}
-		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-		interface Locals {}
+		interface Locals {
+			locale: import('@repo/ui/i18n/locale').Locale;
+		}
 	}
 }
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import { enhance } from '$app/forms';
 	import FormToast from '@repo/ui/components/FormToast.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
@@ -50,7 +51,7 @@
 <FormToast message={form?.message} variant="error" token={form?.message ?? ''} />
 
 <section class="space-y-6">
-	<DashboardHero title="Create club" subtitle="Set the club name, description, and session limit." />
+	<DashboardHero title={t('dashboard.super.createClub.title')} subtitle={t('clubs.create.subtitle')} />
 
 	<AppCard class="space-y-4">
 	<form
@@ -59,7 +60,7 @@
 		use:enhance={whileSubmitting((v) => (loading = v))}
 	>
 		<div>
-			<label for="name" class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">Club name</label>
+			<label for="name" class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">{t('clubs.create.nameLabel')}</label>
 			<input
 				id="name"
 				name="name"
@@ -81,7 +82,7 @@
 			name="description"
 			bind:value={description}
 			disabled={loading}
-			label="Description"
+			label={t('clubs.create.descriptionLabel')}
 		/>
 		<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 			Optional. Up to {CLUB_DESCRIPTION_MAX_LENGTH} characters of visible text.
@@ -138,18 +139,18 @@
 
 		<div class="flex items-center justify-between gap-4 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3">
 			<div>
-				<p class="text-sm font-medium text-slate-900 dark:text-slate-100">Club status</p>
+				<p class="text-sm font-medium text-slate-900 dark:text-slate-100">{t('clubs.create.statusLabel')}</p>
 				<p class="mt-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 					{isActive
-						? 'Active clubs are available to players.'
-						: 'Inactive clubs are hidden from players until reactivated.'}
+						? t('clubs.create.statusActive')
+						: t('clubs.create.statusInactive')}
 				</p>
 			</div>
 			<button
 				type="button"
 				role="switch"
 				aria-checked={isActive}
-				aria-label="Toggle club active status"
+				aria-label={t('clubs.create.toggleStatus')}
 				class="relative h-7 w-12 shrink-0 rounded-full transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 {isActive
 					? 'bg-brand-600'
 					: 'bg-slate-300'}"
@@ -165,7 +166,7 @@
 			<input type="hidden" name="is_active" value={isActive ? 'true' : 'false'} />
 		</div>
 
-		<SubmitButton loading={loading} loadingLabel="Creating…">Create club</SubmitButton>
+		<SubmitButton loading={loading} loadingLabel={t('clubs.create.submitting')}>{t('dashboard.super.createClub.title')}</SubmitButton>
 	</form>
 	</AppCard>
 </section>

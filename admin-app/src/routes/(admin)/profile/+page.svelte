@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import { enhance } from '$app/forms';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import AvatarCropModal from '$lib/components/AvatarCropModal.svelte';
@@ -103,8 +104,8 @@
 	const phoneSignInAvailable = $derived(!!parsedCredentialPhone);
 
 	const signInPreferenceOptions = $derived([
-		{ value: 'email', label: 'Email', disabled: !emailSignInAvailable },
-		{ value: 'phone', label: 'Phone', disabled: !phoneSignInAvailable }
+		{ value: 'email', label: t('signInMethod.email'), disabled: !emailSignInAvailable },
+		{ value: 'phone', label: t('signInMethod.phone'), disabled: !phoneSignInAvailable }
 	]);
 
 	const hasCredentialChanges = $derived.by(() => {
@@ -293,7 +294,7 @@
 			cropImageSrc = cropSourceSrc;
 			cropOpen = true;
 		} catch {
-			avatarError = 'Could not open that image. Try another photo.';
+			avatarError = t('profile.imageOpenError');
 			toast.error(avatarError);
 		} finally {
 			pickLoading = false;
@@ -341,17 +342,17 @@
 </script>
 
 <FormToast message={data.loadError} variant="warning" token={data.loadError ?? ''} />
-<FormToast message={form?.success ? 'Profile updated.' : null} variant="success" token={form?.at ?? ''} />
+<FormToast message={form?.success ? t('profile.updated') : null} variant="success" token={form?.at ?? ''} />
 <FormToast message={form?.error && !form?.credentialsAction ? form.error : null} variant="error" token={form?.error ?? ''} />
 <FormToast
-	message={credentialsForm?.credentialsSuccess ? 'Sign-in details updated.' : null}
+	message={credentialsForm?.credentialsSuccess ? t('profile.signInUpdated') : null}
 	variant="success"
 	token={credentialsForm?.credentialsAt ?? ''}
 />
 <FormToast message={credentialsForm?.error ?? null} variant="error" token={credentialsForm?.error ?? ''} />
 
 <section class="space-y-6">
-	<DashboardHero title="Profile" subtitle="Update your display name, tag, and avatar." />
+	<DashboardHero title={t('profile.profile')} subtitle={t('profile.page.subtitle')} />
 
 	{#if data.profile}
 		<AppCard class="flex items-center gap-4">
@@ -408,7 +409,7 @@
 			</div>
 
 			<div>
-				<label for="tagSuffix" class={labelClass}>Tag</label>
+				<label for="tagSuffix" class={labelClass}>{t('profile.tag')}</label>
 				<div class="relative">
 					{#if saveLoading}
 						<div class="app-skeleton absolute inset-0 z-10 h-[50px]" aria-hidden="true"></div>
@@ -433,7 +434,7 @@
 							autocomplete="off"
 							spellcheck="false"
 							inputmode="text"
-							placeholder="1234"
+							placeholder={t('profile.tagPlaceholder')}
 							value={tagSuffix}
 							disabled={saveLoading}
 							oninput={onTagSuffixInput}
@@ -450,7 +451,7 @@
 			</div>
 
 			<div>
-				<span class={labelClass}>Avatar</span>
+				<span class={labelClass}>{t('profile.avatar')}</span>
 				<input
 					bind:this={fileInput}
 					type="file"
@@ -470,12 +471,12 @@
 							variant="secondary"
 							class="w-auto! rounded-xl px-4 py-2.5"
 							loading={pickLoading}
-							loadingLabel="Opening…"
+							loadingLabel={t('sessions.detail.opening')}
 							disabled={saveLoading}
 							onclick={openFilePicker}
 						>
 						<UploadIcon class="h-5 w-5 shrink-0 text-brand-700" />
-						{processedAvatar ? 'Choose another photo' : 'Choose photo'}
+						{processedAvatar ? t('profile.chooseAnother') : t('profile.choosePhoto')}
 					</SubmitButton>
 
 					{#if processedAvatar}
@@ -505,7 +506,7 @@
 
 			<SubmitButton
 				loading={saveLoading}
-				loadingLabel="Saving…"
+				loadingLabel={t('clubs.detail.saving')}
 				disabled={!hasChanges || !!avatarError}
 			>
 				Save changes
@@ -514,7 +515,7 @@
 		</AppCard>
 
 		<AppCard class="space-y-4">
-			<h2 class="font-medium text-slate-900 dark:text-slate-100">Sign-in details</h2>
+			<h2 class="font-medium text-slate-900 dark:text-slate-100">{t('profile.signInDetails')}</h2>
 			<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 				{#if oauthAccount}
 					You signed in with {formatSignInMethodLabel(data.profile.sign_in_method)}. Add contact
@@ -549,7 +550,7 @@
 						bind:value={credentialEmail}
 						disabled={credentialsLoading}
 						class={inputClass}
-						placeholder="you@example.com"
+						placeholder={t('auth.field.placeholder.email')}
 					/>
 					{#if credentialsFieldErrors?.email}
 						<p class="mt-2 text-sm text-red-600">{credentialsFieldErrors.email}</p>
@@ -574,7 +575,7 @@
 						bind:value={credentialPhone}
 						disabled={credentialsLoading}
 						class={inputClass}
-						placeholder="0812345678"
+						placeholder={t('auth.field.placeholder.phone')}
 					/>
 					{#if credentialsFieldErrors?.phone}
 						<p class="mt-2 text-sm text-red-600">{credentialsFieldErrors.phone}</p>
@@ -602,7 +603,7 @@
 						<PasswordField
 							id="currentPassword"
 							name="currentPassword"
-							label="Current password"
+							label={t('profile.currentPassword')}
 							autocomplete="current-password"
 							bind:value={currentPassword}
 							serverError={credentialsFieldErrors?.currentPassword ?? null}
@@ -612,7 +613,7 @@
 
 				<SubmitButton
 					loading={credentialsLoading}
-					loadingLabel="Saving…"
+					loadingLabel={t('clubs.detail.saving')}
 					disabled={!hasCredentialChanges}
 				>
 					Save sign-in details
@@ -621,18 +622,18 @@
 		</AppCard>
 
 		<div class="app-muted-panel">
-			<h2 class="mb-3 font-medium text-slate-900 dark:text-slate-100">Account details</h2>
+			<h2 class="mb-3 font-medium text-slate-900 dark:text-slate-100">{t('profile.accountDetails')}</h2>
 			<dl class="space-y-3">
 				<div>
-					<dt class="text-slate-500 dark:text-slate-400 dark:text-slate-500">Role</dt>
+					<dt class="text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('users.list.roleLabel')}</dt>
 					<dd class="font-medium text-slate-800 dark:text-slate-200">{appRoleLabel(data.profile.app_role)}</dd>
 				</div>
 				{#if data.profile.app_role === 'club_admin'}
 					<div>
-						<dt class="text-slate-500 dark:text-slate-400 dark:text-slate-500">Clubs you admin</dt>
+						<dt class="text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('profile.clubsYouAdmin')}</dt>
 						<dd class="font-medium text-slate-800 dark:text-slate-200">
 							{#if data.managedClubs.length === 0}
-								<span class="text-slate-500 dark:text-slate-400 dark:text-slate-500">None assigned</span>
+								<span class="text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('profile.noneAssigned')}</span>
 							{:else}
 								<ul class="mt-1 space-y-1.5">
 									{#each data.managedClubs as club (club.id)}
@@ -644,7 +645,7 @@
 												{club.name}
 											</a>
 											{#if !club.is_active}
-												<span class="text-xs font-medium text-amber-700">Inactive</span>
+												<span class="text-xs font-medium text-amber-700">{t('dashboard.super.inactive')}</span>
 											{/if}
 										</li>
 									{/each}
@@ -654,27 +655,27 @@
 					</div>
 				{/if}
 				<div>
-					<dt class="text-slate-500 dark:text-slate-400 dark:text-slate-500">Sign-in method</dt>
+					<dt class="text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('users.detail.signInMethod')}</dt>
 					<dd class="font-medium text-slate-800 dark:text-slate-200">
 						{formatSignInMethodLabel(data.profile.sign_in_method)}
 					</dd>
 				</div>
 				{#if data.profile.email}
 					<div>
-						<dt class="text-slate-500 dark:text-slate-400 dark:text-slate-500">Email address</dt>
+						<dt class="text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('auth.field.identifierEmail')}</dt>
 						<dd class="font-medium text-slate-800 dark:text-slate-200">{data.profile.email}</dd>
 					</div>
 				{/if}
 				{#if data.profile.phone}
 					<div>
-						<dt class="text-slate-500 dark:text-slate-400 dark:text-slate-500">Phone number</dt>
+						<dt class="text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('auth.field.identifierPhone')}</dt>
 						<dd class="font-medium text-slate-800 dark:text-slate-200">{phoneForInput(data.profile.phone)}</dd>
 					</div>
 				{/if}
 				{#if oauthAccount}
 					<div>
-						<dt class="text-slate-500 dark:text-slate-400 dark:text-slate-500">Password</dt>
-						<dd class="font-medium text-slate-800 dark:text-slate-200">Not used</dd>
+						<dt class="text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('auth.field.password')}</dt>
+						<dd class="font-medium text-slate-800 dark:text-slate-200">{t('profile.passwordNotUsed')}</dd>
 					</div>
 				{/if}
 			</dl>

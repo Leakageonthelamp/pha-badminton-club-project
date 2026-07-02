@@ -48,6 +48,7 @@
 	} from '$lib/sessions/navigation';
 	import { createSupabaseBrowserClient } from '$lib/supabase/client';
 	import { sessionStatusBadgeClass, sessionStatusLabel } from '$lib/types/session';
+	import { t } from '@repo/ui/i18n';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import { onMount } from 'svelte';
 	import type { ActionData, PageData } from './$types';
@@ -148,15 +149,15 @@
 		const start = new Date(session.start_at);
 		const end = new Date(session.end_at);
 		const ms = end.getTime() - start.getTime();
-		if (ms <= 0) return '—';
+		if (ms <= 0) return t('common.dash');
 
 		const totalMinutes = Math.round(ms / 60_000);
 		const hours = Math.floor(totalMinutes / 60);
 		const minutes = totalMinutes % 60;
 
-		if (minutes === 0) return `${hours} hr`;
-		if (hours === 0) return `${minutes} min`;
-		return `${hours} hr ${minutes} min`;
+		if (minutes === 0) return t('duration.hours', { hours });
+		if (hours === 0) return t('duration.minutes', { minutes });
+		return t('duration.hoursMinutes', { hours, minutes });
 	});
 
 	const shuttlePriceLabel = $derived(formatThb(session.shuttle_price_per_each));
@@ -167,7 +168,12 @@
 	const shuttleDetailLabel = $derived.by(() => {
 		if (!session.shuttle) return shuttlePriceLabel;
 
-		return `${session.shuttle.name} · Speed ${session.shuttle.speed} · ${shuttlePriceLabel} each · ${shuttleSharedEachLabel} after shared`;
+		return t('shuttle.detail', {
+			name: session.shuttle.name,
+			speed: session.shuttle.speed,
+			price: shuttlePriceLabel,
+			shared: shuttleSharedEachLabel
+		});
 	});
 
 	const summaryPaymentStatus = $derived(data.myPayment?.status ?? null);
@@ -185,10 +191,10 @@
 	});
 	const summaryHeadline = $derived.by(() => {
 		if (playerEarlyLeave) {
-			if (summaryPaymentStatus === 'approved') return 'You left early — all settled';
-			return 'You left early';
+			if (summaryPaymentStatus === 'approved') return t('sessions.live.summaryAllSettled');
+			return t('sessions.live.summaryEarlyLeave');
 		}
-		return 'Session complete';
+		return t('sessions.live.summaryComplete');
 	});
 	const inviteExpiredLocally = $derived.by(() => {
 		const invite = data.myInviteMatch;
@@ -432,7 +438,7 @@
 	<div class="app-cost-panel">
 		{#if hero}
 			<div class="app-cost-hero">
-				<p class="app-cost-hero-label">Your cost</p>
+				<p class="app-cost-hero-label">{t('sessions.live.yourCost')}</p>
 				<div class="app-cost-hero-row">
 					<p class="app-cost-hero-amount">{formatThb(myTotalCost)}</p>
 					<div class="app-cost-hero-meta">
@@ -443,7 +449,7 @@
 								{paymentStatusLabel(paymentStatus)}
 							</span>
 						{:else if !isBilled}
-							<span class="app-cost-hero-estimate">Estimate</span>
+							<span class="app-cost-hero-estimate">{t('common.estimate')}</span>
 						{/if}
 					</div>
 				</div>
@@ -454,7 +460,7 @@
 			<div class="app-cost-line">
 				<div class="min-w-0">
 					<p class="app-cost-line-label">
-						Court fee per player · {courtFeePerPlayerModeLabel(session.fixed_court_fee_per_player)}
+						{t('sessions.live.courtFeePerPlayerLabel', { mode: courtFeePerPlayerModeLabel(session.fixed_court_fee_per_player) })}
 					</p>
 					<p class="app-cost-line-hint">{courtFeePerPlayerHint}</p>
 				</div>
@@ -462,14 +468,14 @@
 			</div>
 			<div class="app-cost-line">
 				<div class="min-w-0">
-					<p class="app-cost-line-label">Shuttle fee</p>
+					<p class="app-cost-line-label">{t('sessions.live.shuttleFee')}</p>
 					<p class="app-cost-line-hint">
 						{#if myShuttlesUsedDisplay === 0}
-							No shuttles from your matches yet
+							{t('sessions.live.noShuttlesYet')}
 						{:else if myShuttlesUsedDisplay === sessionShuttlesUsed}
-							{myShuttlesUsedDisplay} shuttle{myShuttlesUsedDisplay === 1 ? '' : 's'} from your matches
+							{myShuttlesUsedDisplay === 1 ? t('sessions.live.shuttlesFromMatches', { count: myShuttlesUsedDisplay }) : t('sessions.live.shuttlesFromMatchesPlural', { count: myShuttlesUsedDisplay })}
 						{:else}
-							{myShuttlesUsedDisplay} in your matches · {sessionShuttlesUsed} session-wide
+							{t('sessions.live.shuttlesMixed', { my: myShuttlesUsedDisplay, session: sessionShuttlesUsed })}
 						{/if}
 					</p>
 				</div>
@@ -478,28 +484,28 @@
 		</div>
 
 		{#if footnote && !isBilled}
-			<p class="app-cost-footnote">Shuttle fee may increase if you play more matches.</p>
+			<p class="app-cost-footnote">{t('sessions.live.shuttleMayIncrease')}</p>
 		{/if}
 	</div>
 {/snippet}
 
 <section class="space-y-6">
 	<DashboardHero
-		eyebrow={uiState === 'summary' ? 'Wrap-up' : playerEarlyLeaveInProgress ? 'Early leave' : 'Live session'}
+		eyebrow={uiState === 'summary' ? t('sessions.live.eyebrow.wrapUp') : playerEarlyLeaveInProgress ? t('sessions.live.eyebrow.earlyLeave') : t('sessions.live.eyebrow.live')}
 		title={session.name}
-		subtitle={session.club?.name ?? 'Session'}
+		subtitle={session.club?.name ?? t('sessions.detail.title')}
 	>
 		<div class="flex flex-wrap items-center gap-2">
 			<span class="rounded-full px-2 py-0.5 text-xs font-medium {sessionStatusBadgeClass(session.status)}">
 				{sessionStatusLabel(session.status)}
 			</span>
 			{#if playerEarlyLeave}
-				<span class="app-hero-stat app-hero-stat--warn">Early leaved</span>
+				<span class="app-hero-stat app-hero-stat--warn">{t('sessions.playerStatus.earlyLeaved')}</span>
 			{:else if sessionEnded}
-				<span class="app-hero-stat app-hero-stat--warn">Session ended</span>
+				<span class="app-hero-stat app-hero-stat--warn">{t('sessions.live.sessionEnded')}</span>
 			{/if}
 			{#if uiState === 'summary'}
-				<span class="app-hero-stat app-hero-stat--success">Done</span>
+				<span class="app-hero-stat app-hero-stat--success">{t('common.done')}</span>
 			{/if}
 		</div>
 	</DashboardHero>
@@ -517,25 +523,21 @@
 			<div
 				class="rounded-xl border border-rose-200 bg-rose-50/70 px-4 py-3 text-sm text-rose-900 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-200"
 			>
-				<strong>Session ended.</strong> Wait for the host to start settlement. You cannot take a break
-				or request to leave until then.
+				{t('sessions.live.sessionEndedNoBreak')}
 			</div>
 		{:else if playerEarlyLeaveInProgress}
 			<div
 				class="rounded-xl border border-sky-200 bg-sky-50/70 px-4 py-3 text-sm text-sky-900 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-200"
 			>
-				<strong>You left early.</strong>
+				<strong>{t('sessions.live.leftEarlyStrong')}</strong>
 				{#if uiState === 'payment_due'}
-					Complete your payment below. The session continues for other players until the host closes
-					it.
+					{t('sessions.live.leftEarlyPaymentDue')}
 				{:else if uiState === 'payment_submitted'}
-					Payment submitted — waiting for admin confirmation. The session continues for other
-					players.
+					{t('sessions.live.leftEarlySubmitted')}
 				{:else if uiState === 'awaiting_leave'}
-					Payment confirmed — waiting for admin to approve your leave. The session continues for
-					other players.
+					{t('sessions.live.leftEarlyAwaitingLeave')}
 				{:else}
-					Your leave is being processed. The session continues for other players.
+					{t('sessions.live.leftEarlyProcessing')}
 				{/if}
 			</div>
 		{/if}
@@ -545,20 +547,18 @@
 				class="app-session-countdown flex flex-col gap-3 border-brand-200 bg-brand-50/80 dark:border-brand-800 dark:bg-brand-900/30"
 			>
 				<div class="flex items-center justify-between gap-3">
-					<span class="app-session-countdown-label text-brand-800 dark:text-brand-300">Your status</span>
+					<span class="app-session-countdown-label text-brand-800 dark:text-brand-300">{t('sessions.live.yourStatus')}</span>
 					<PlayerStatusBadge
 						status={myLiveStatus === 'playing' || hasOpenCourtMatch ? 'playing' : myLiveStatus}
 					/>
 				</div>
 				{#if showInviteModal}
 					<p class="text-sm leading-relaxed text-brand-900 dark:text-brand-200">
-						Respond to the match invite — session leave, break, and other actions are unavailable
-						until the invite is resolved.
+						{t('sessions.live.matchInviteBlocked')}
 					</p>
 				{:else}
 					<p class="text-sm leading-relaxed text-brand-900 dark:text-brand-200">
-						You are in a match. Leave, break, and other session actions are unavailable until the
-						match ends.
+						{t('sessions.live.inMatchBlocked')}
 					</p>
 				{/if}
 				{#if data.myOpenMatch && shouldOpenMatchLive(data.myOpenMatch)}
@@ -566,11 +566,11 @@
 						type="button"
 						variant="accent"
 						loading={matchNavLoading}
-						loadingLabel="Opening match…"
+						loadingLabel={t('common.openingMatch')}
 						disabled={sessionActionsBusy && !matchNavLoading}
 						onclick={openMatchLive}
 					>
-						Open match live
+						{t('sessions.live.openMatchLive')}
 					</SubmitButton>
 				{/if}
 			</div>
@@ -579,19 +579,18 @@
 				class="app-session-countdown flex flex-col gap-3 border-sky-200 bg-sky-50/80 dark:border-sky-800 dark:bg-sky-950/40"
 			>
 				<div class="flex items-center justify-between gap-3">
-					<span class="app-session-countdown-label text-sky-800 dark:text-sky-300">Your status</span>
+					<span class="app-session-countdown-label text-sky-800 dark:text-sky-300">{t('sessions.live.yourStatus')}</span>
 					<PlayerStatusBadge status={myLiveStatus} />
 				</div>
 				<p class="text-sm leading-relaxed text-sky-900 dark:text-sky-200">
 					{#if uiState === 'payment_due'}
-						Waiting for your PromptPay transfer. You cannot join matches or take a break while
-						leaving.
+						{t('sessions.live.waitingPromptPay')}
 					{:else if uiState === 'payment_submitted'}
-						Waiting for admin to confirm your payment.
+						{t('sessions.live.waitingPaymentConfirmShort')}
 					{:else if uiState === 'awaiting_leave'}
-						Payment confirmed — waiting for admin to approve your leave.
+						{t('sessions.live.leaveApprovedPending')}
 					{:else}
-						Early leave in progress — waiting for admin.
+						{t('sessions.live.earlyLeaveInProgress')}
 					{/if}
 				</p>
 			</div>
@@ -600,13 +599,13 @@
 				class="app-session-countdown flex flex-col gap-3 border-slate-200 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-800/50"
 			>
 					<div class="flex items-center justify-between gap-3">
-						<span class="app-session-countdown-label text-slate-700 dark:text-slate-300 dark:text-slate-600">Your status</span>
+						<span class="app-session-countdown-label text-slate-700 dark:text-slate-300 dark:text-slate-600">{t('sessions.live.yourStatus')}</span>
 						<PlayerStatusBadge status={myLiveStatus} />
 					</div>
 
 					{#if myLiveStatus === 'idle' && myIdleLabel}
 						<div>
-							<p class="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">Idle time</p>
+							<p class="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('sessions.live.idleTime')}</p>
 							<p
 								class="font-mono text-2xl font-semibold tabular-nums text-slate-900 dark:text-slate-100"
 								aria-live="polite"
@@ -618,7 +617,7 @@
 
 					{#if myLiveStatus === 'idle'}
 						<p class="text-sm leading-relaxed text-slate-600 dark:text-slate-400 dark:text-slate-500">
-							You are available for the admin to assign to a match.
+							{t('sessions.live.availableForMatch')}
 						</p>
 						<form method="POST" action="?/toggleBreak" use:enhance={handleAction('breakOn')}>
 							<input type="hidden" name="on_break" value="true" />
@@ -627,12 +626,12 @@
 								loading={actionLoading === 'breakOn'}
 								disabled={sessionEnded || (sessionActionsBusy && actionLoading !== 'breakOn')}
 							>
-								Take a break
+								{t('sessions.live.takeBreak')}
 							</SubmitButton>
 						</form>
 					{:else}
 						<p class="text-sm leading-relaxed text-slate-600 dark:text-slate-400 dark:text-slate-500">
-							You are on break. The admin cannot assign you until you continue.
+							{t('sessions.live.onBreakCannotAssign')}
 						</p>
 						<form method="POST" action="?/toggleBreak" use:enhance={handleAction('breakOff')}>
 							<input type="hidden" name="on_break" value="false" />
@@ -641,7 +640,7 @@
 								loading={actionLoading === 'breakOff'}
 								disabled={sessionEnded || (sessionActionsBusy && actionLoading !== 'breakOff')}
 							>
-								Continue playing
+								{t('sessions.live.continuePlaying')}
 							</SubmitButton>
 						</form>
 					{/if}
@@ -664,8 +663,7 @@
 				</div>
 				<h2 class="mt-4 text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{summaryHeadline}</h2>
 				<p class="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400 dark:text-slate-500">
-					Thanks for playing{session.club?.name ? ` at ${session.club.name}` : ''}. Here is your
-					session recap.
+					{t('sessions.live.sessionRecap', { atClub: session.club?.name ? t('sessions.live.summaryAtClub', { clubName: session.club.name }) : '' })}
 				</p>
 			</div>
 
@@ -673,7 +671,7 @@
 				class="flex flex-col items-stretch gap-4 border-y border-emerald-100/80 bg-white/70 px-4 py-5 dark:border-emerald-900/50 dark:bg-slate-900/50 sm:flex-row sm:items-center sm:justify-between sm:gap-6 lg:px-8"
 			>
 				<div class="min-w-0 sm:flex-1">
-					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">Start</p>
+					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">{t('common.start')}</p>
 					<p class="mt-1 text-sm font-semibold leading-snug text-slate-900 dark:text-slate-100 sm:text-base">
 						{formatDate(session.start_at)}
 					</p>
@@ -686,7 +684,7 @@
 				<div
 					class="rounded-2xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 shadow-sm ring-1 ring-emerald-100/80 dark:border-emerald-800 dark:bg-emerald-950/40 dark:ring-emerald-900/50 sm:shrink-0 sm:min-w-[8.5rem] sm:self-center sm:px-5 sm:text-center"
 				>
-					<p class="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Duration</p>
+					<p class="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">{t('common.duration')}</p>
 					<p class="mt-1 whitespace-nowrap text-lg font-semibold text-emerald-900 dark:text-emerald-200">
 						{sessionDurationLabel}
 					</p>
@@ -694,7 +692,7 @@
 				<div class="hidden h-10 w-px shrink-0 self-center bg-emerald-200 dark:bg-emerald-800 sm:block" aria-hidden="true">
 				</div>
 				<div class="min-w-0 sm:flex-1 sm:text-right">
-					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">End</p>
+					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">{t('common.end')}</p>
 					<p class="mt-1 text-sm font-semibold leading-snug text-slate-900 dark:text-slate-100 sm:text-base">
 						{formatDate(session.end_at)}
 					</p>
@@ -709,24 +707,24 @@
 					{@render playerCostPanel(true, true, summaryPaymentStatus)}
 					<p class="app-history-stat-hint px-1">
 						{#if summaryPaymentStatus === 'approved'}
-							Payment confirmed — you are all set.
+							{t('sessions.live.paymentConfirmedSet')}
 						{:else if summaryPaymentStatus === 'submitted'}
-							Waiting for admin to confirm your transfer.
+							{t('sessions.live.waitingAdminTransfer')}
 						{:else if summaryPaymentStatus === 'pending'}
-							Complete your PromptPay transfer if you have not already.
+							{t('sessions.live.completePromptPay')}
 						{:else}
-							Your share for this session.
+							{t('sessions.live.yourShare')}
 						{/if}
 					</p>
 				</div>
 
 				<div class="app-history-stat">
-					<p class="app-history-stat-label">Venue</p>
-					<p class="app-history-stat-value text-base leading-snug">{session.venue_name ?? '—'}</p>
+					<p class="app-history-stat-label">{t('common.venue')}</p>
+					<p class="app-history-stat-value text-base leading-snug">{session.venue_name ?? t('common.dash')}</p>
 				</div>
 
 				<div class="app-history-stat">
-					<p class="app-history-stat-label">Courts</p>
+					<p class="app-history-stat-label">{t('common.courts')}</p>
 					<p class="app-history-stat-value">{session.court_count}</p>
 					{#if session.fixed_court_fee_per_player === null}
 						<p class="app-history-stat-hint">
@@ -736,11 +734,11 @@
 				</div>
 
 				<div class="app-history-stat">
-					<p class="app-history-stat-label">Matches played</p>
+					<p class="app-history-stat-label">{t('sessions.live.matchesPlayed')}</p>
 					<p class="app-history-stat-value">{myMatchRecord.played}</p>
 					<p class="app-history-stat-hint">
 						{#if myMatchRecord.played === 0}
-							No matches
+							{t('sessions.live.noMatchesShort')}
 						{:else}
 							{formatMatchRecord(myMatchRecord.wins, myMatchRecord.losses, myMatchRecord.draws)}
 						{/if}
@@ -748,35 +746,35 @@
 				</div>
 
 				<div class="app-history-stat">
-					<p class="app-history-stat-label">Your shuttles</p>
+					<p class="app-history-stat-label">{t('sessions.live.yourShuttles')}</p>
 					<p class="app-history-stat-value">{myShuttlesUsedDisplay}</p>
-					<p class="app-history-stat-hint">From your matches</p>
+					<p class="app-history-stat-hint">{t('sessions.live.fromYourMatches')}</p>
 				</div>
 
 				<div class="app-history-stat">
-					<p class="app-history-stat-label">Time in session</p>
+					<p class="app-history-stat-label">{t('sessions.live.timeInSession')}</p>
 					<p class="app-history-stat-value font-mono tabular-nums">
-						{mySessionDuration?.label ?? '—'}
+						{mySessionDuration?.label ?? t('common.dash')}
 					</p>
 					<p class="app-history-stat-hint">
 						{#if mySessionDuration?.leftEarly}
-							Until you left early
+							{t('sessions.live.untilLeftEarly')}
 						{:else}
-							Joined through session end
+							{t('sessions.live.throughSessionEnd')}
 						{/if}
 					</p>
 				</div>
 
 				<div class="app-history-stat">
-					<p class="app-history-stat-label">Match time</p>
+					<p class="app-history-stat-label">{t('sessions.live.matchTime')}</p>
 					<p class="app-history-stat-value font-mono tabular-nums">
-						{myTotalMatchDuration ?? '—'}
+						{myTotalMatchDuration ?? t('common.dash')}
 					</p>
 					<p class="app-history-stat-hint">
 						{#if myMatchRecord.played === 0}
-							No matches played
+							{t('sessions.live.noMatchesPlayed')}
 						{:else}
-							Total on court
+							{t('sessions.live.totalOnCourt')}
 						{/if}
 					</p>
 				</div>
@@ -784,7 +782,7 @@
 
 			<div class="border-t border-emerald-100/80 bg-white/70 px-4 py-5 dark:border-emerald-900/50 dark:bg-slate-900/40 sm:px-6">
 				<div class="flex items-center justify-between gap-2">
-					<h3 class="text-sm font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">Your matches</h3>
+					<h3 class="text-sm font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">{t('sessions.live.yourMatches')}</h3>
 					{#if myMatchRecord.played > 0}
 						<span
 							class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300"
@@ -795,7 +793,7 @@
 				</div>
 				{#if sortedMyMatchHistory.length === 0}
 					<p class="mt-3 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
-						You did not play a recorded match this session.
+						{t('sessions.live.noRecordedMatch')}
 					</p>
 				{:else}
 					<ul class="mt-3 space-y-2">
@@ -818,13 +816,13 @@
 				<SubmitButton
 					type="button"
 					loading={homeNavLoading}
-					loadingLabel="Going home…"
+					loadingLabel={t('common.goingHome')}
 					disabled={summaryActionsBusy && !homeNavLoading}
 					onclick={goHomeFromSummary}
 				>
 					<span class="inline-flex items-center justify-center gap-2">
 						<HomeIcon class="h-5 w-5" />
-						Back to home
+						{t('sessions.live.backToHome')}
 					</span>
 				</SubmitButton>
 			</div>
@@ -837,7 +835,7 @@
 				class="flex flex-col items-stretch gap-4 border-b border-brand-100 bg-gradient-to-br from-brand-50 via-white to-brand-50/50 px-4 py-5 dark:border-brand-800 dark:from-slate-900 dark:via-slate-900 dark:to-brand-900/30 sm:flex-row sm:items-center sm:justify-between sm:gap-6 lg:px-8"
 			>
 				<div class="min-w-0 sm:flex-1">
-					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">Start</p>
+					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">{t('common.start')}</p>
 					<p class="mt-1 text-base font-semibold leading-snug text-slate-900 dark:text-slate-100">
 						{formatDate(session.start_at)}
 					</p>
@@ -850,7 +848,7 @@
 				<div
 					class="rounded-2xl border border-brand-100 bg-white/80 px-4 py-3 shadow-sm ring-1 ring-brand-100/80 dark:border-brand-800 dark:bg-slate-800/80 dark:ring-brand-900/50 sm:shrink-0 sm:min-w-[8.5rem] sm:self-center sm:px-5 sm:text-center"
 				>
-					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">Duration</p>
+					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">{t('common.duration')}</p>
 					<p class="mt-1 whitespace-nowrap text-lg font-semibold text-brand-800 dark:text-brand-200">
 						{sessionDurationLabel}
 					</p>
@@ -858,7 +856,7 @@
 				<div class="hidden h-10 w-px shrink-0 self-center bg-brand-200 dark:bg-brand-800 sm:block" aria-hidden="true">
 				</div>
 				<div class="min-w-0 sm:flex-1 sm:text-right">
-					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">End</p>
+					<p class="text-xs font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">{t('common.end')}</p>
 					<p class="mt-1 text-base font-semibold leading-snug text-slate-900 dark:text-slate-100">
 						{formatDate(session.end_at)}
 					</p>
@@ -874,8 +872,8 @@
 						<ClipboardDocumentListIcon class="h-5 w-5" />
 					</span>
 					<div>
-						<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Session details</h2>
-						<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Venue, courts, and shuttle for this session</p>
+						<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('sessions.live.sessionDetails')}</h2>
+						<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('sessions.live.sessionDetailsHint')}</p>
 					</div>
 				</div>
 
@@ -884,54 +882,56 @@
 						<dt class="app-detail-contact-label">
 							<span class="inline-flex items-center gap-1.5">
 								<BuildingIcon class="h-4 w-4 text-brand-500" />
-								Venue
+								{t('common.venue')}
 							</span>
 						</dt>
-						<dd class="app-detail-contact-value text-base">{session.venue_name ?? '—'}</dd>
+						<dd class="app-detail-contact-value text-base">{session.venue_name ?? t('common.dash')}</dd>
 					</div>
 				</dl>
 
 				<dl class="app-detail-meta-grid">
 					<div class="app-detail-meta-item">
-						<dt class="app-detail-meta-label">Courts</dt>
+						<dt class="app-detail-meta-label">{t('common.courts')}</dt>
 						<dd class="app-detail-meta-value">
 							<span class="text-lg font-semibold text-brand-700">{session.court_count}</span>
 						</dd>
 					</div>
 					<div class="app-detail-meta-item">
-						<dt class="app-detail-meta-label">Court fee / hr</dt>
+						<dt class="app-detail-meta-label">{t('sessions.live.courtFeePerHour')}</dt>
 						<dd class="app-detail-meta-value text-base text-brand-800">
 							{formatThb(session.court_fee_per_hour)}
 						</dd>
 					</div>
 					<div class="app-detail-meta-item">
-						<dt class="app-detail-meta-label">Shuttle usage</dt>
+						<dt class="app-detail-meta-label">{t('sessions.live.shuttleUsage')}</dt>
 						<dd class="app-detail-meta-value">
 							<span class="text-lg font-semibold text-brand-700">{sessionShuttlesUsed}</span>
 							<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 								{#if completedSessionMatchCount === 0}
-									No completed matches yet
+									{t('sessions.live.noCompletedMatches')}
 								{:else}
-									{sessionShuttlesUsed === 1 ? 'Shuttle' : 'Shuttles'} from {completedSessionMatchCount}
-									completed match{completedSessionMatchCount === 1 ? '' : 'es'}
+									{completedSessionMatchCount === 1 ? t('sessions.live.shuttleSingular') : t('sessions.live.shuttlesPluralShort')} {completedSessionMatchCount === 1 ? t('sessions.live.fromCompletedMatch', { count: completedSessionMatchCount }) : t('sessions.live.fromCompletedMatches', { count: completedSessionMatchCount })}
 								{/if}
 							</p>
 						</dd>
 					</div>
 					<div class="app-detail-meta-item sm:col-span-2">
-						<dt class="app-detail-meta-label">Shuttle</dt>
+						<dt class="app-detail-meta-label">{t('sessions.detail.shuttle')}</dt>
 						<dd class="app-detail-meta-value">
 							{#if session.shuttle}
 								<p class="text-base font-semibold text-slate-900 dark:text-slate-100">{session.shuttle.name}</p>
 								<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
-									Speed {session.shuttle.speed} · {shuttlePriceLabel} each · {shuttleSharedEachLabel}
-									after shared
+									{t('sessions.live.speedEachShared', {
+										speed: session.shuttle.speed,
+										price: shuttlePriceLabel,
+										shared: shuttleSharedEachLabel
+									})}
 								</p>
 								<p class="mt-2 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 									{#if myShuttlesUsed > 0}
-										Your shuttle share is in your cost above ({myShuttlesUsed} shuttle{myShuttlesUsed === 1 ? '' : 's'} from your matches).
+										{t('sessions.live.shuttleShareInCost', { count: myShuttlesUsed })}
 									{:else}
-										Your shuttle share appears in your cost when you complete matches.
+										{t('sessions.live.shuttleShareWhenPlay')}
 									{/if}
 								</p>
 							{:else}
@@ -944,9 +944,9 @@
 		</section>
 
 		<AppCard class="space-y-4">
-			<SectionHeading title="Active players" />
+			<SectionHeading title={t('sessions.live.activePlayers')} />
 			{#if data.activePlayers.length === 0}
-				<EmptyState message="No active players right now." />
+				<EmptyState message={t('sessions.live.noActivePlayers')} />
 			{:else}
 				<ul class="divide-y divide-slate-100 dark:divide-slate-800">
 					{#each data.activePlayers as player (player.id)}
@@ -956,15 +956,15 @@
 						})}
 						<li class="flex items-center gap-3 py-3">
 							<UserAvatar
-								displayName={player.profile?.display_name ?? 'Player'}
+								displayName={player.profile?.display_name ?? t('common.player')}
 								avatarUrl={player.profile?.avatar_url ?? null}
 								size="sm"
 							/>
 							<div class="min-w-0 flex-1">
 								<p class="truncate font-medium text-slate-800 dark:text-slate-200">
-									{player.profile?.display_name ?? 'Unknown player'}
+									{player.profile?.display_name ?? t('common.unknownPlayer')}
 									{#if player.is_me}
-										<span class="text-slate-500 dark:text-slate-400 dark:text-slate-500">(you)</span>
+										<span class="text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('common.youParen')}</span>
 									{/if}
 								</p>
 								{#if player.profile?.tag}
@@ -979,9 +979,9 @@
 		</AppCard>
 
 		<AppCard class="space-y-4">
-			<SectionHeading title="Your match history" />
+			<SectionHeading title={t('sessions.live.matchHistory')} />
 			{#if sortedMyMatchHistory.length === 0}
-				<EmptyState message="No matches recorded yet." />
+				<EmptyState message={t('sessions.live.noMatchesRecorded')} />
 			{:else}
 				<ul class="space-y-2">
 					{#each sortedMyMatchHistory as match, index (match.id)}
@@ -999,7 +999,7 @@
 		</AppCard>
 
 		<AppCard class="space-y-4">
-			<SectionHeading title="Courts" />
+			<SectionHeading title={t('sessions.live.courtsSection')} />
 			<CourtGrid
 				courtCount={session.court_count}
 				matches={data.courtGridMatches}
@@ -1008,12 +1008,12 @@
 		</AppCard>
 
 		<AppCard class="space-y-4">
-			<SectionHeading title="Early leave" />
+			<SectionHeading title={t('sessions.live.earlyLeave')} />
 			{#if matchLocked}
-				<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Finish your current match before requesting to leave.</p>
+				<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{t('sessions.live.finishMatchFirst')}</p>
 			{:else if uiState === 'leave_pending'}
 				<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
-					Your leave request is waiting for admin review. Complete payment below while you wait.
+					{t('sessions.live.leavePending')}
 				</p>
 				<form method="POST" action="?/cancelLeave" use:enhance={handleAction('cancelLeave')}>
 					<SubmitButton
@@ -1021,29 +1021,29 @@
 						loading={actionLoading === 'cancelLeave'}
 						disabled={sessionActionsBusy && actionLoading !== 'cancelLeave'}
 					>
-						Cancel leave request
+						{t('sessions.live.cancelLeaveRequest')}
 					</SubmitButton>
 				</form>
 			{:else if canRequestEarlyLeave(session.my_membership, data.myLeaveRequest?.status ?? null, sessionEnded)}
 				<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
-					You can leave before the session ends. You will still owe your court and shuttle share.
+					{t('sessions.live.leaveBeforeEnd')}
 				</p>
 				<SubmitButton type="button" onclick={() => (leaveConfirmOpen = true)}>
-					Request to leave
+					{t('sessions.detail.requestLeave')}
 				</SubmitButton>
 			{:else if uiState === 'awaiting_leave'}
 				<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
-					Payment confirmed. Waiting for admin to approve your leave request.
+					{t('sessions.live.leaveApprovedPending')}
 				</p>
 			{:else if uiState === 'payment_submitted'}
-				<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Payment submitted. Waiting for admin confirmation.</p>
+				<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{t('sessions.live.paymentSubmittedToast')}</p>
 			{:else if sessionEnded}
 				<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
-					Session ended — wait for the host to start settlement and bill everyone.
+					{t('sessions.live.waitSettlement')}
 				</p>
 			{:else}
 				<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
-					Stay in the session or request to leave when you are ready.
+					{t('sessions.live.stayOrLeave')}
 				</p>
 			{/if}
 		</AppCard>
@@ -1057,9 +1057,9 @@
 	closeOnEscape={false}
 >
 	<div class="app-card-padded space-y-4">
-		<h2 id="payment-modal-title" class="text-lg font-semibold text-slate-900 dark:text-slate-100">Pay session fee</h2>
+		<h2 id="payment-modal-title" class="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('sessions.live.paySessionFee')}</h2>
 		<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
-			Transfer exactly {formatThb(myTotalCost)} using PromptPay, attach your bank slip, then tap “I've paid”.
+			{t('sessions.live.paySessionFeeBody', { amount: formatThb(myTotalCost) })}
 		</p>
 
 		{@render playerCostPanel(false, !isBilled, data.myPayment?.status ?? null)}
@@ -1067,7 +1067,7 @@
 		{#if promptPayTarget}
 			<PaymentQr target={promptPayTarget} amount={myTotalCost} />
 		{:else}
-			<EmptyState message="Club PromptPay is not configured. Contact the admin." />
+			<EmptyState message={t('payments.cancellationFee.noPromptPay')} />
 		{/if}
 
 		{#if uiState === 'payment_due'}
@@ -1083,7 +1083,7 @@
 					loading={actionLoading === 'submitPayment'}
 					disabled={!paymentSlipFile}
 				>
-					I've paid
+					{t('sessions.live.ivePaid')}
 				</SubmitButton>
 			</form>
 		{:else}
@@ -1098,16 +1098,15 @@
 	<div class="app-card-padded space-y-4">
 		<div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 dark:border-amber-800 dark:bg-amber-950/40">
 			<h2 id="leave-confirm-title" class="text-lg font-semibold text-amber-950 dark:text-amber-200">
-				Leave session early?
+				{t('sessions.live.leaveEarlyTitle')}
 			</h2>
 			<ul class="mt-3 space-y-2 text-sm leading-relaxed text-amber-950/90 dark:text-amber-200/90">
 				<li>
-					You will be billed <strong>{formatThb(myTotalCost)}</strong> — your court and shuttle share
-					for this session so far.
+					{t('sessions.live.leaveEarlyBill', { amount: formatThb(myTotalCost) })}
 				</li>
-				<li>Pay via PromptPay right after. Admin approves your leave once payment is confirmed.</li>
-				<li>The session continues for other players until it ends.</li>
-				<li>You can cancel the leave request while it is still pending review.</li>
+				<li>{t('sessions.live.leaveEarlyPayAfter')}</li>
+				<li>{t('sessions.live.leaveEarlySessionContinues')}</li>
+				<li>{t('sessions.live.leaveEarlyCancelPending')}</li>
 			</ul>
 		</div>
 
@@ -1116,11 +1115,11 @@
 		<form method="POST" action="?/requestLeave" class="flex flex-wrap gap-2" use:enhance={handleLeaveRequest}>
 			<SubmitButton
 				loading={actionLoading === 'requestLeave'}
-				loadingLabel="Requesting…"
+				loadingLabel={t('common.requesting')}
 				disabled={sessionActionsBusy && actionLoading !== 'requestLeave'}
 				class="!w-auto flex-1"
 			>
-				Confirm leave request
+				{t('sessions.live.confirmLeaveRequest')}
 			</SubmitButton>
 			<SubmitButton
 				type="button"
@@ -1129,7 +1128,7 @@
 				disabled={actionLoading === 'requestLeave'}
 				onclick={closeLeaveConfirm}
 			>
-				Stay in session
+				{t('sessions.live.stayInSession')}
 			</SubmitButton>
 		</form>
 	</div>
@@ -1159,11 +1158,11 @@
 		type="button"
 		variant="accent"
 		loading={matchNavLoading}
-		loadingLabel="Opening match…"
+		loadingLabel={t('common.openingMatch')}
 		disabled={sessionActionsBusy && !matchNavLoading}
 		onclick={openSelectedCourtMatch}
 	>
-		Open match
+		{t('sessions.live.openMatch')}
 	</SubmitButton>
 {/snippet}
 

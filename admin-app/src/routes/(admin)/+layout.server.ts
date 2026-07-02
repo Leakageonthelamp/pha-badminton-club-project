@@ -16,7 +16,7 @@ import { error } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({
-	locals: { supabase, user, appRole },
+	locals: { supabase, user, appRole, locale },
 	cookies,
 	depends,
 	setHeaders
@@ -55,7 +55,7 @@ export const load: LayoutServerLoad = async ({
 		dashboardMode = sanitizeDashboardMode(appRole, dashboardMode, hasClubMembership, cookies);
 	}
 
-	const workspaceOptions = getWorkspaceOptions(appRole, hasClubMembership);
+	const workspaceOptions = getWorkspaceOptions(appRole, hasClubMembership, locale);
 	const effectiveAppRole = getEffectiveAppRole(appRole, dashboardMode, hasClubMembership);
 	const inClubWorkspace = shouldUseClubDashboard(appRole, dashboardMode, hasClubMembership);
 	const managedClubs = inClubWorkspace

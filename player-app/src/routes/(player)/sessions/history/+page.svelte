@@ -19,6 +19,7 @@
 	import { formatDateTime } from '@repo/ui/datetime';
 	import ClockIcon from '@repo/ui/icons/ClockIcon.svelte';
 	import SearchIcon from '@repo/ui/icons/SearchIcon.svelte';
+	import { t } from '@repo/ui/i18n';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -111,24 +112,24 @@
 
 <section class="space-y-6">
 	<DashboardHero
-		eyebrow="Sessions"
-		title="Session history"
-		subtitle="Every session you joined, newest first."
+		eyebrow={t('sessions.list.eyebrow')}
+		title={t('sessions.history.title')}
+		subtitle={t('sessions.history.subtitle')}
 	>
 		{#if !isFetching && history.totalCount > 0}
-			<span class="app-hero-stat app-hero-stat--accent">{history.totalCount} total</span>
+			<span class="app-hero-stat app-hero-stat--accent">{t('common.total', { count: history.totalCount })}</span>
 		{/if}
 	</DashboardHero>
 
 	<AppCard>
 		<div class="space-y-2">
 			<form method="GET" action="/sessions/history" class="history-filter-form">
-			<DatePicker id="history-date" label="Date" variant="filter" bind:value={dateFilter} />
+			<DatePicker id="history-date" label={t('common.date')} variant="filter" bind:value={dateFilter} />
 			<input type="hidden" name="hDate" value={dateFilter} />
 			<div class="min-w-0">
 				<SelectMenu
 					id="history-club"
-					label="Club"
+					label={t('common.club')}
 					options={clubOptions}
 					bind:value={clubFilter}
 				/>
@@ -137,8 +138,8 @@
 			<div class="min-w-0">
 				<SelectMenu
 					id="history-status"
-					label="Status"
-					options={sessionStatusFilterOptions}
+					label={t('common.status')}
+					options={sessionStatusFilterOptions()}
 					bind:value={statusFilter}
 				/>
 				<input type="hidden" name="hStatus" value={statusFilter} />
@@ -147,8 +148,8 @@
 				<button
 					type="submit"
 					class="app-filter-submit"
-					aria-label="Filter session history"
-					title="Filter"
+					aria-label={t('sessions.history.filterAria')}
+					title={t('common.filter')}
 					disabled={historyActionsBusy}
 					aria-busy={isFetching}
 				>
@@ -166,7 +167,7 @@
 
 		{#if hasActiveFilters && !isFetching}
 			<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-				Filtered
+				{t('common.filtered')}
 				{#if history.date}
 					· {history.date}
 				{/if}
@@ -175,7 +176,7 @@
 						history.clubFilter}
 				{/if}
 				{#if history.statusFilter}
-					· {sessionStatusFilterOptions.find((option) => option.value === history.statusFilter)?.label ??
+					· {sessionStatusFilterOptions().find((option) => option.value === history.statusFilter)?.label ??
 						history.statusFilter}
 				{/if}
 			</p>
@@ -199,9 +200,9 @@
 			>
 				<DashboardIcon icon={isFilteredEmpty ? SearchIcon : ClockIcon} accent="indigo" class="mx-auto" />
 				{#if isFilteredEmpty}
-					<p class="mt-3 text-sm font-medium text-slate-900 dark:text-slate-100">No sessions match your filters</p>
+					<p class="mt-3 text-sm font-medium text-slate-900 dark:text-slate-100">{t('sessions.history.noMatchFilters')}</p>
 					<p class="mx-auto mt-1 max-w-xs text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
-						Try another date, club, or status, or reset to see your full session history.
+						{t('sessions.history.noMatchFiltersHint')}
 					</p>
 					<button
 						type="button"
@@ -216,12 +217,12 @@
 								aria-hidden="true"
 							></span>
 						{/if}
-						Clear filters
+						{t('common.clearFilters')}
 					</button>
 				{:else}
-					<p class="mt-3 text-sm font-medium text-slate-900 dark:text-slate-100">No session history yet</p>
+					<p class="mt-3 text-sm font-medium text-slate-900 dark:text-slate-100">{t('sessions.history.empty')}</p>
 					<p class="mx-auto mt-1 max-w-xs text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
-						Sessions you join will appear here once you have played.
+						{t('sessions.history.emptyHint')}
 					</p>
 					<button
 						type="button"
@@ -236,7 +237,7 @@
 								aria-hidden="true"
 							></span>
 						{/if}
-						Browse sessions →
+						{t('sessions.history.browseSessions')}
 					</button>
 				{/if}
 			</div>

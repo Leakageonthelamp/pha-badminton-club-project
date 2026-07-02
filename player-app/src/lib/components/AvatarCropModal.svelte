@@ -2,6 +2,7 @@
 	import Cropper from 'svelte-easy-crop';
 	import AppModal from '@repo/ui/components/AppModal.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
+	import { t } from '@repo/ui/i18n';
 	import { toast } from '@repo/ui/toast/toast.svelte';
 	import {
 		AVATAR_OUTPUT_SIZE,
@@ -50,7 +51,7 @@
 			const file = await cropAvatarToFile(imageSrc, croppedAreaPixels);
 			onConfirm(file);
 		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'Could not crop image.');
+			toast.error(err instanceof Error ? err.message : t('profile.cropError'));
 		} finally {
 			processing = false;
 		}
@@ -61,14 +62,16 @@
 	<AppModal
 		open={modalOpen}
 		labelledBy="avatar-crop-title"
-		closeLabel="Close crop dialog"
+		closeLabel={t('avatarCrop.closeAria')}
 		onClose={onCancel}
 	>
 		<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
 			<div class="border-b border-slate-200 dark:border-slate-700 px-4 py-3">
-				<h2 id="avatar-crop-title" class="text-base font-semibold text-slate-900 dark:text-slate-100">Crop avatar</h2>
+				<h2 id="avatar-crop-title" class="text-base font-semibold text-slate-900 dark:text-slate-100">
+					{t('avatarCrop.title')}
+				</h2>
 				<p class="mt-1 text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
-					Drag and pinch to fit your face. Saved as {AVATAR_OUTPUT_SIZE}×{AVATAR_OUTPUT_SIZE} px.
+					{t('profile.avatarSizeHint', { size: AVATAR_OUTPUT_SIZE })}
 				</p>
 			</div>
 
@@ -86,8 +89,8 @@
 			</div>
 
 			<div class="space-y-4 p-4">
-				<label class="block text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">
-					Zoom
+				<label class="block">
+					<span class="sr-only">{t('avatarCrop.title')}</span>
 					<input
 						type="range"
 						min={1}
@@ -95,6 +98,7 @@
 						step={0.01}
 						bind:value={zoom}
 						class="mt-2 w-full accent-brand-700"
+						aria-label={t('avatarCrop.title')}
 					/>
 				</label>
 
@@ -106,17 +110,17 @@
 						disabled={processing}
 						onclick={onCancel}
 					>
-						Cancel
+						{t('avatarCrop.cancel')}
 					</SubmitButton>
 					<SubmitButton
 						type="button"
 						class="flex-1"
 						loading={processing}
-						loadingLabel="Processing…"
+						loadingLabel={t('avatarCrop.processing')}
 						disabled={!croppedAreaPixels}
 						onclick={confirmCrop}
 					>
-						Use photo
+						{t('avatarCrop.confirm')}
 					</SubmitButton>
 				</div>
 			</div>

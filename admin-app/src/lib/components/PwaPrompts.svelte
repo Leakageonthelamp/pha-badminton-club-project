@@ -1,10 +1,10 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import { onMount } from 'svelte';
 	import { fly } from 'svelte/transition';
 	import AppLogo from '$lib/components/AppLogo.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import {
-		manualInstallHint,
 		manualInstallVariant,
 		readDeferredInstallPrompt,
 		isStandaloneMode,
@@ -44,7 +44,9 @@
 	const showManualInstall = $derived(
 		manualVariant !== null && !isStandalone && !manualInstallDismissed && !showInstall
 	);
-	const manualHint = $derived(manualVariant ? manualInstallHint[manualVariant] : '');
+	const manualHint = $derived(
+		manualVariant ? t(`pwa.manualInstall.${manualVariant}`) : ''
+	);
 
 	const syncDeferredPrompt = () => {
 		const prompt = readDeferredInstallPrompt();
@@ -123,7 +125,7 @@
 		in:fly={bannerTransition}
 		out:fly={bannerTransition}
 	>
-		<p class="text-sm font-medium text-slate-900 dark:text-slate-100">App ready to work offline.</p>
+		<p class="text-sm font-medium text-slate-900 dark:text-slate-100">{t('pwa.offlineReady')}</p>
 		<div class="mt-3 flex gap-2">
 			<button
 				type="button"
@@ -146,14 +148,14 @@
 		<div class="flex items-start gap-3">
 			<AppLogo size={36} />
 			<div>
-				<p class="text-sm font-medium text-brand-900">A new version is available.</p>
+				<p class="text-sm font-medium text-brand-900">{t('pwa.updateAvailable')}</p>
 				<div class="mt-3 flex gap-2">
 					<SubmitButton
 						type="button"
 						variant="primary"
 						class="w-auto! rounded-lg px-3 py-2 text-sm font-medium"
 						loading={reloading}
-						loadingLabel="Reloading…"
+						loadingLabel={t('pwa.reloading')}
 						onclick={reloadForUpdate}
 					>
 						Reload
@@ -176,14 +178,14 @@
 	<div
 		class="app-fixed-bottom fixed z-50 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-lg"
 		role="dialog"
-		aria-label="Install app"
+		aria-label={t('pwa.installAria')}
 		in:fly={bannerTransition}
 		out:fly={bannerTransition}
 	>
 		<div class="flex items-start gap-3">
 			<AppLogo size={40} />
 			<div>
-				<p class="text-sm font-medium text-slate-900 dark:text-slate-100">Install {appName}</p>
+				<p class="text-sm font-medium text-slate-900 dark:text-slate-100">{t('pwa.installTitle', { appName })}</p>
 				<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 					Add to your home screen for a full-screen app experience.
 				</p>
@@ -195,7 +197,7 @@
 				variant="primary"
 				class="w-auto! rounded-lg px-3 py-2 text-sm font-medium"
 				loading={installing}
-				loadingLabel="Installing…"
+				loadingLabel={t('pwa.installing')}
 				onclick={installApp}
 			>
 				Install
@@ -216,14 +218,14 @@
 	<div
 		class="app-fixed-bottom fixed z-50 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-lg"
 		role="dialog"
-		aria-label="Install app"
+		aria-label={t('pwa.installAria')}
 		in:fly={bannerTransition}
 		out:fly={bannerTransition}
 	>
 		<div class="flex items-start gap-3">
 			<AppLogo size={40} />
 			<div>
-				<p class="text-sm font-medium text-slate-900 dark:text-slate-100">Install {appName}</p>
+				<p class="text-sm font-medium text-slate-900 dark:text-slate-100">{t('pwa.installTitle', { appName })}</p>
 				<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{manualHint}</p>
 			</div>
 		</div>

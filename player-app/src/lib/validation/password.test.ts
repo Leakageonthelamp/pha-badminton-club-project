@@ -1,25 +1,26 @@
+import { t } from '@repo/ui/i18n';
 import { describe, expect, it } from 'vitest';
 import {
-	PASSWORD_MIN_LENGTH_ERROR,
-	PASSWORD_SPECIAL_ERROR,
-	PASSWORD_UPPERCASE_ERROR,
+	PASSWORD_MIN_LENGTH,
 	validateRegisterPassword
 } from '$lib/validation/password';
 
 describe('validateRegisterPassword', () => {
-	it('accepts passwords that meet all rules', () => {
+	it('accepts a valid password', () => {
 		expect(validateRegisterPassword('Password123!')).toBeNull();
 	});
 
-	it('rejects passwords under 10 characters', () => {
-		expect(validateRegisterPassword('Pass1!')).toBe(PASSWORD_MIN_LENGTH_ERROR);
+	it('rejects short passwords', () => {
+		expect(validateRegisterPassword('Pass1!')).toBe(
+			t('validation.password.minLength', { min: PASSWORD_MIN_LENGTH })
+		);
 	});
 
-	it('rejects passwords without uppercase', () => {
-		expect(validateRegisterPassword('password123!')).toBe(PASSWORD_UPPERCASE_ERROR);
+	it('requires an uppercase letter', () => {
+		expect(validateRegisterPassword('password123!')).toBe(t('validation.password.uppercase'));
 	});
 
-	it('rejects passwords without special characters', () => {
-		expect(validateRegisterPassword('Password1234')).toBe(PASSWORD_SPECIAL_ERROR);
+	it('requires a special character', () => {
+		expect(validateRegisterPassword('Password1234')).toBe(t('validation.password.special'));
 	});
 });

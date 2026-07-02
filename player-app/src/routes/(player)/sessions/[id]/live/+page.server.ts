@@ -18,14 +18,15 @@ import {
 import { readSlipFromForm, uploadSlip } from '$lib/server/slips';
 import { ensureSupabaseAuth } from '$lib/server/supabaseAuth';
 import { shouldViewSessionLivePage } from '$lib/sessions/navigation';
+import { tForLocale } from '@repo/ui/i18n';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ params, depends, locals: { supabase, user } }) => {
+export const load: PageServerLoad = async ({ params, depends, locals: { supabase, user, locale } }) => {
 	depends('app:live-session');
 
 	if (!user) {
-		error(401, 'Sign in required');
+		error(401, tForLocale(locale, 'auth.error.signInRequired'));
 	}
 
 	await expirePendingMatches(supabase, params.id);
@@ -33,7 +34,7 @@ export const load: PageServerLoad = async ({ params, depends, locals: { supabase
 	const live = await loadLiveSessionForPlayer(supabase, params.id, user.id);
 
 	if (!live) {
-		error(404, 'Session not found');
+		error(404, tForLocale(locale, 'errors.sessionNotFound'));
 	}
 
 	if (
@@ -64,9 +65,9 @@ export const load: PageServerLoad = async ({ params, depends, locals: { supabase
 };
 
 export const actions = {
-	requestLeave: async ({ params, locals: { supabase, user } }) => {
+	requestLeave: async ({ params, locals: { supabase, user, locale } }) => {
 		if (!user) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const result = await requestSessionLeave(supabase, params.id);
@@ -74,12 +75,12 @@ export const actions = {
 			return fail(400, { message: result.message });
 		}
 
-		return { success: true, message: 'Leave request sent to admin.' };
+		return { success: true, message: tForLocale(locale, 'sessions.live.leaveSent') };
 	},
 
-	cancelLeave: async ({ params, locals: { supabase, user } }) => {
+	cancelLeave: async ({ params, locals: { supabase, user, locale } }) => {
 		if (!user) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const result = await cancelSessionLeave(supabase, params.id);
@@ -87,12 +88,12 @@ export const actions = {
 			return fail(400, { message: result.message });
 		}
 
-		return { success: true, message: 'Leave request cancelled.' };
+		return { success: true, message: tForLocale(locale, 'sessions.live.leaveCancelled') };
 	},
 
-	submitPayment: async ({ params, request, locals: { supabase, user } }) => {
+	submitPayment: async ({ params, request, locals: { supabase, user, locale } }) => {
 		if (!user) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const formData = await request.formData();
@@ -107,7 +108,7 @@ export const actions = {
 		}
 
 		if (!(await ensureSupabaseAuth(supabase))) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const result = await submitPayment(supabase, params.id, upload.path);
@@ -115,12 +116,12 @@ export const actions = {
 			return fail(400, { message: result.message });
 		}
 
-		return { success: true, message: 'Payment submitted. Waiting for admin confirmation.' };
+		return { success: true, message: tForLocale(locale, 'toast.paymentSubmitted') };
 	},
 
-	toggleBreak: async ({ params, request, locals: { supabase, user } }) => {
+	toggleBreak: async ({ params, request, locals: { supabase, user, locale } }) => {
 		if (!user) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const formData = await request.formData();
@@ -133,13 +134,15 @@ export const actions = {
 
 		return {
 			success: true,
-			message: onBreak ? 'You are on break.' : 'Welcome back — you are idle again.'
+			message: onBreak
+				? tForLocale(locale, 'sessions.live.breakOn')
+				: tForLocale(locale, 'sessions.live.breakOff')
 		};
 	},
 
-	respondInvite: async ({ request, locals: { supabase, user } }) => {
+	respondInvite: async ({ request, locals: { supabase, user, locale } }) => {
 		if (!user) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const formData = await request.formData();
@@ -147,7 +150,7 @@ export const actions = {
 		const accept = formData.get('accept') === 'true';
 
 		if (typeof matchId !== 'string' || !matchId) {
-			return fail(400, { message: 'Match is required' });
+			return fail(400, { message: tForLocale(locale, 'validation.match.required') });
 		}
 
 		const result = await respondMatchInvite(supabase, matchId, accept);
@@ -157,13 +160,15 @@ export const actions = {
 
 		return {
 			success: true,
-			message: accept ? 'Match accepted.' : 'Match declined.'
+			message: accept
+				? tForLocale(locale, 'matches.invite.acceptedToast')
+				: tForLocale(locale, 'matches.invite.declinedToast')
 		};
 	},
 
-	respondScore: async ({ request, locals: { supabase, user } }) => {
+	respondScore: async ({ request, locals: { supabase, user, locale } }) => {
 		if (!user) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const formData = await request.formData();
@@ -171,7 +176,7 @@ export const actions = {
 		const accept = formData.get('accept') === 'true';
 
 		if (typeof matchId !== 'string' || !matchId) {
-			return fail(400, { message: 'Match is required' });
+			return fail(400, { message: tForLocale(locale, 'validation.match.required') });
 		}
 
 		const result = await respondMatchScore(supabase, matchId, accept);
@@ -181,7 +186,9 @@ export const actions = {
 
 		return {
 			success: true,
-			message: accept ? 'Score accepted.' : 'Score rejected — admin will review.'
+			message: accept
+				? tForLocale(locale, 'matches.live.scoreAccepted')
+				: tForLocale(locale, 'matches.live.scoreRejected')
 		};
 	}
 } satisfies Actions;

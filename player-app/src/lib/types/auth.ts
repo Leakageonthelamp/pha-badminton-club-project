@@ -1,3 +1,5 @@
+import { DEFAULT_LOCALE, t, tForLocale, type Locale } from '@repo/ui/i18n';
+
 export const PHONE_EMAIL_DOMAIN = 'phone.ph-badminton.local';
 export const SESSION_MAX_AGE = 60 * 60 * 24 * 7;
 
@@ -65,13 +67,13 @@ export const getProfileCredential = (
 export const formatSignInMethodLabel = (method: SignInMethod): string => {
 	switch (method) {
 		case 'google':
-			return 'Google';
+			return t('signIn.google');
 		case 'facebook':
-			return 'Facebook';
+			return t('signIn.facebook');
 		case 'phone':
-			return 'Phone';
+			return t('signIn.phone');
 		default:
-			return 'Email';
+			return t('signIn.email');
 	}
 };
 
@@ -84,15 +86,5 @@ export type AuthErrorCode =
 	| 'register_failed'
 	| 'oauth_failed';
 
-const AUTH_ERROR_MESSAGES: Record<AuthErrorCode, string> = {
-	invalid_input: 'Please check your input and try again.',
-	email_taken: 'This email is already registered.',
-	phone_taken: 'This phone number is already registered.',
-	account_not_found: 'No account found for that email or phone number.',
-	invalid_credentials: 'Incorrect password. Please try again.',
-	register_failed: 'Could not create your account. Please try again.',
-	oauth_failed: 'Social login failed. Please try again.'
-};
-
-export const authErrorMessage = (code: AuthErrorCode): string =>
-	AUTH_ERROR_MESSAGES[code] ?? 'Something went wrong. Please try again.';
+export const authErrorMessage = (code: AuthErrorCode, locale?: Locale): string =>
+	tForLocale(locale ?? DEFAULT_LOCALE, `auth.error.${code}`);

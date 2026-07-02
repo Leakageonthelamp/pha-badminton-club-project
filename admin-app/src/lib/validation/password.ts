@@ -1,36 +1,41 @@
+import type { Locale } from '$lib/i18n';
+import { tForLocale } from '$lib/i18n';
+import { DEFAULT_LOCALE } from '@repo/ui/i18n';
 import { z } from 'zod';
 
 export const PASSWORD_MIN_LENGTH = 10;
 
-export const PASSWORD_MIN_LENGTH_ERROR = `Password must be at least ${PASSWORD_MIN_LENGTH} characters`;
-export const PASSWORD_UPPERCASE_ERROR = 'Password must include at least one uppercase letter';
-export const PASSWORD_SPECIAL_ERROR = 'Password must include at least one special character';
-
 const HAS_UPPERCASE = /[A-Z]/;
 const HAS_SPECIAL = /[^A-Za-z0-9]/;
 
-export const validateRegisterPassword = (value: string): string | null => {
+export const validateRegisterPassword = (
+	value: string,
+	locale: Locale = DEFAULT_LOCALE
+): string | null => {
 	if (value.length < PASSWORD_MIN_LENGTH) {
-		return PASSWORD_MIN_LENGTH_ERROR;
+		return tForLocale(locale, 'validation.password.minLength', { min: PASSWORD_MIN_LENGTH });
 	}
 
 	if (!HAS_UPPERCASE.test(value)) {
-		return PASSWORD_UPPERCASE_ERROR;
+		return tForLocale(locale, 'validation.password.uppercase');
 	}
 
 	if (!HAS_SPECIAL.test(value)) {
-		return PASSWORD_SPECIAL_ERROR;
+		return tForLocale(locale, 'validation.password.special');
 	}
 
 	return null;
 };
 
-export const registerPasswordSchema = z.string().superRefine((value, ctx) => {
-	const message = validateRegisterPassword(value);
-	if (message) {
-		ctx.addIssue({
-			code: z.ZodIssueCode.custom,
-			message
-		});
-	}
-});
+export const buildRegisterPasswordSchema = (locale: Locale = DEFAULT_LOCALE) =>
+	z.string().superRefine((value, ctx) => {
+		const message = validateRegisterPassword(value, locale);
+		if (message) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message
+			});
+		}
+	});
+
+export const registerPasswordSchema = buildRegisterPasswordSchema();

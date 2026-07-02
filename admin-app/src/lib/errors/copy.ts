@@ -1,36 +1,25 @@
+import type { Locale } from '@repo/ui/i18n';
+import { DEFAULT_LOCALE } from '@repo/ui/i18n';
+import { tForLocale } from '@repo/ui/i18n/i18n.svelte';
+
 type ErrorCopy = {
 	title: string;
 	hint: string;
 };
 
-const errorCopyByStatus: Record<number, ErrorCopy> = {
-	400: {
-		title: 'Invalid request',
-		hint: 'Something in the request was not valid. Please check and try again.'
-	},
-	401: {
-		title: 'Sign in required',
-		hint: 'You need to log in before opening this page.'
-	},
-	403: {
-		title: 'Access denied',
-		hint: 'You do not have permission to view this page.'
-	},
-	404: {
-		title: 'Page not found',
-		hint: 'This page does not exist or may have been moved.'
-	},
-	500: {
-		title: 'Something went wrong',
-		hint: 'An unexpected error occurred. Please try again in a moment.'
-	},
-	503: {
-		title: 'Temporarily unavailable',
-		hint: 'We are investigating an issue with our backend services. Please come back later.'
-	}
+const errorKeysByStatus: Record<number, { title: string; hint: string }> = {
+	400: { title: 'error.invalidRequest.title', hint: 'error.invalidRequest.hint' },
+	401: { title: 'error.signInRequired.title', hint: 'error.signInRequired.hint' },
+	403: { title: 'error.accessDenied.title', hint: 'error.accessDenied.hint' },
+	404: { title: 'error.notFound.title', hint: 'error.notFound.hint' },
+	500: { title: 'error.server.title', hint: 'error.server.hint' },
+	503: { title: 'error.unavailable.title', hint: 'error.unavailable.hint' }
 };
 
-const defaultErrorCopy: ErrorCopy = errorCopyByStatus[500];
-
-export const getErrorCopy = (status: number): ErrorCopy =>
-	errorCopyByStatus[status] ?? defaultErrorCopy;
+export const getErrorCopy = (status: number, locale: Locale = DEFAULT_LOCALE): ErrorCopy => {
+	const keys = errorKeysByStatus[status] ?? errorKeysByStatus[500];
+	return {
+		title: tForLocale(locale, keys.title),
+		hint: tForLocale(locale, keys.hint)
+	};
+};

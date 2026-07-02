@@ -1,3 +1,4 @@
+import { t } from '@repo/ui/i18n';
 import { describe, expect, it } from 'vitest';
 import { clubsWithDistance, formatOpenSessionBadge, openSessionCountByClub } from './nearby';
 import type { ClubPublic } from '$lib/types/club';
@@ -66,8 +67,8 @@ describe('openSessionCountByClub', () => {
 	});
 
 	it('formats open session badge labels', () => {
-		expect(formatOpenSessionBadge(0)).toBe('No open sessions');
-		expect(formatOpenSessionBadge(1)).toBe('1 open session');
-		expect(formatOpenSessionBadge(3)).toBe('3 open sessions');
+		expect(formatOpenSessionBadge(0)).toBe(t('openSessions.badge.none'));
+		expect(formatOpenSessionBadge(1)).toBe(t('openSessions.badge.one'));
+		expect(formatOpenSessionBadge(3)).toBe(t('openSessions.badge.many', { count: 3 }));
 	});
 });

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import SlipPreviewButton from '@repo/ui/components/SlipPreviewButton.svelte';
 	import SlipPreviewModal from '@repo/ui/components/SlipPreviewModal.svelte';
+	import { t } from '@repo/ui/i18n';
 	import {
 		compressSlipToFile,
 		validateSlipFile,
@@ -20,6 +21,10 @@
 	let errorMessage = $state<string | null>(null);
 	let processing = $state(false);
 	let inputEl = $state<HTMLInputElement | null>(null);
+
+	const buttonLabel = $derived(
+		processing ? t('common.processing') : file ? t('profile.chooseAnotherPhoto') : t('payments.slip.attach')
+	);
 
 	const revokePreview = () => {
 		if (previewUrl) {
@@ -55,7 +60,7 @@
 			file = compressed;
 			previewUrl = URL.createObjectURL(compressed);
 		} catch (err) {
-			errorMessage = err instanceof Error ? err.message : 'Could not process image.';
+			errorMessage = err instanceof Error ? err.message : t('validation.avatar.prepareError');
 		} finally {
 			processing = false;
 		}
@@ -66,7 +71,7 @@
 
 <div class="space-y-2">
 	<label class="block text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600" for="slip-upload-input">
-		Bank transfer slip <span class="text-red-600">*</span>
+		{t('slip.title')} <span class="text-red-600">*</span>
 	</label>
 	<input
 		id="slip-upload-input"
@@ -84,11 +89,11 @@
 			disabled={disabled || processing}
 			onclick={() => inputEl?.click()}
 		>
-			{processing ? 'Processing…' : file ? 'Change slip' : 'Attach slip'}
+			{buttonLabel}
 		</button>
 		{#if file}
-			<span class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">Ready to upload</span>
-			<SlipPreviewButton label="Preview" onclick={() => (previewOpen = true)} />
+			<span class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('common.done')}</span>
+			<SlipPreviewButton label={t('common.preview')} onclick={() => (previewOpen = true)} />
 		{/if}
 	</div>
 	{#if errorMessage}

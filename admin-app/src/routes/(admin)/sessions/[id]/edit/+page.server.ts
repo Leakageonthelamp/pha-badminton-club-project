@@ -1,3 +1,4 @@
+import { tForLocale } from '$lib/i18n';
 import { resolveEffectiveAppRole } from '$lib/server/adminDashboardMode';
 import { assertCanManageClub, loadManagedClubs } from '$lib/server/clubAccess';
 import {
@@ -14,8 +15,8 @@ import type { Actions, PageServerLoad } from './$types';
 
 const editableStatuses = ['draft', 'open'] as const;
 
-const parseFormData = (formData: FormData) =>
-	buildSessionInputSchema(0).safeParse({
+const parseFormData = (formData: FormData, locale: App.Locals['locale']) =>
+	buildSessionInputSchema(locale, 0).safeParse({
 		club_id: formData.get('club_id'),
 		name: formData.get('name'),
 		description: formData.get('description'),
@@ -42,23 +43,23 @@ const parseFormData = (formData: FormData) =>
 export const load: PageServerLoad = async ({
 	params,
 	cookies,
-	locals: { supabase, user, appRole }
+	locals: { supabase, user, appRole, locale }
 }) => {
 	if (!user || !appRole) {
-		error(401, 'Sign in required');
+		error(401, tForLocale(locale, 'auth.error.signInRequired'));
 	}
 
 	const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
 	const session = await loadSessionDetail(supabase, params.id);
 
 	if (!session) {
-		error(404, 'Session not found');
+		error(404, tForLocale(locale, 'errors.sessionNotFound'));
 	}
 
 	try {
 		await assertCanManageClub(supabase, user.id, session.club_id, effectiveAppRole);
 	} catch {
-		error(403, 'Club admin access required');
+		error(403, tForLocale(locale, 'errors.clubAdminRequired'));
 	}
 
 	if (
@@ -75,22 +76,22 @@ export const load: PageServerLoad = async ({
 };
 
 export const actions: Actions = {
-	default: async ({ params, request, cookies, locals: { supabase, user, appRole } }) => {
+	default: async ({ params, request, cookies, locals: { supabase, user, appRole, locale } }) => {
 		if (!user || !appRole) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
 		const session = await loadSessionDetail(supabase, params.id);
 
 		if (!session) {
-			return fail(404, { message: 'Session not found' });
+			return fail(404, { message: tForLocale(locale, 'errors.sessionNotFound') });
 		}
 
 		try {
 			await assertCanManageClub(supabase, user.id, session.club_id, effectiveAppRole);
 		} catch {
-			return fail(403, { message: 'Club admin access required' });
+			return fail(403, { message: tForLocale(locale, 'errors.clubAdminRequired') });
 		}
 
 		if (
@@ -98,23 +99,25 @@ export const actions: Actions = {
 			!isSessionMutable(session.start_at)
 		) {
 			return fail(400, {
-				message: 'This session can no longer be edited within 15 minutes of start.'
+				message: tForLocale(locale, 'session.action.editLocked')
 			});
 		}
 
 		const formData = await request.formData();
-		const parsed = parseFormData(formData);
+		const parsed = parseFormData(formData, locale);
 
 		if (!parsed.success) {
 			const fieldErrors = parsed.error.flatten().fieldErrors;
 			return fail(400, {
-				message: Object.values(fieldErrors).flat()[0] ?? 'Invalid session input',
+				message:
+					Object.values(fieldErrors).flat()[0] ??
+					tForLocale(locale, 'errors.invalidSessionInput'),
 				fieldErrors
 			});
 		}
 
 		if (parsed.data.club_id !== session.club_id) {
-			return fail(400, { message: 'Cannot change the club for this session.' });
+			return fail(400, { message: tForLocale(locale, 'session.action.cannotChangeClub') });
 		}
 
 		const { data: shuttle, error: shuttleError } = await supabase
@@ -125,7 +128,7 @@ export const actions: Actions = {
 			.maybeSingle();
 
 		if (shuttleError || !shuttle) {
-			return fail(400, { message: 'Selected shuttle is not valid for this club' });
+			return fail(400, { message: tForLocale(locale, 'session.action.invalidShuttle') });
 		}
 
 		const shuttleCostPerEach = shuttlePricePerEach(shuttle);
@@ -164,11 +167,11 @@ export const actions: Actions = {
 
 		if (updateError) {
 			console.error('Failed to update session', updateError);
-			return fail(500, { message: 'Could not save session. Please try again.' });
+			return fail(500, { message: tForLocale(locale, 'session.action.saveFailed') });
 		}
 
 		if (!data) {
-			return fail(400, { message: 'Session is no longer editable.' });
+			return fail(400, { message: tForLocale(locale, 'session.action.noLongerEditable') });
 		}
 
 		const releaseResult = await releaseActiveSessionPlayers(supabase, params.id);

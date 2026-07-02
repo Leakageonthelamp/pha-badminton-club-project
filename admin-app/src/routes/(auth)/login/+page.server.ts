@@ -4,22 +4,22 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import type { Provider } from '@supabase/supabase-js';
 
-const mapLoginError = (errorParam: string | null) => {
+const mapLoginError = (errorParam: string | null, locale?: import('@repo/ui/i18n').Locale) => {
 	if (errorParam === 'access_denied') {
-		return authErrorMessage('access_denied');
+		return authErrorMessage('access_denied', locale);
 	}
 
 	return errorParam;
 };
 
-export const load: PageServerLoad = async ({ url }) => {
+export const load: PageServerLoad = async ({ url, locals: { locale } }) => {
 	return {
-		error: mapLoginError(url.searchParams.get('error'))
+		error: mapLoginError(url.searchParams.get('error'), locale)
 	};
 };
 
 export const actions: Actions = {
-	login: async ({ request, locals: { supabase } }) => {
+	login: async ({ request, locals: { supabase, locale } }) => {
 		const formData = await request.formData();
 		const parsed = parseLoginInput({
 			identifier: String(formData.get('identifier') ?? ''),
@@ -38,7 +38,7 @@ export const actions: Actions = {
 		const authEmail = await resolveLoginEmail(parsed.data.identifier);
 		if (!authEmail) {
 			return fail(400, {
-				message: authErrorMessage('account_not_found'),
+				message: authErrorMessage('account_not_found', locale),
 				values: parsed.data
 			});
 		}
@@ -50,7 +50,7 @@ export const actions: Actions = {
 
 		if (error) {
 			return fail(400, {
-				message: authErrorMessage('invalid_credentials'),
+				message: authErrorMessage('invalid_credentials', locale),
 				values: { identifier: parsed.data.identifier }
 			});
 		}
@@ -58,12 +58,12 @@ export const actions: Actions = {
 		redirect(303, '/');
 	},
 
-	oauth: async ({ request, locals: { supabase }, url }) => {
+	oauth: async ({ request, locals: { supabase, locale }, url }) => {
 		const formData = await request.formData();
 		const provider = String(formData.get('provider') ?? '') as Provider;
 
 		if (provider !== 'google' && provider !== 'facebook') {
-			return fail(400, { message: authErrorMessage('oauth_failed') });
+			return fail(400, { message: authErrorMessage('oauth_failed', locale) });
 		}
 
 		await supabase.auth.signOut();
@@ -76,7 +76,7 @@ export const actions: Actions = {
 		});
 
 		if (error || !data.url) {
-			return fail(400, { message: authErrorMessage('oauth_failed') });
+			return fail(400, { message: authErrorMessage('oauth_failed', locale) });
 		}
 
 		redirect(303, data.url);

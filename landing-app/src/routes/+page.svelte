@@ -2,8 +2,10 @@
 	import AppLogo from '$lib/components/AppLogo.svelte';
 	import FeatureCard from '$lib/components/FeatureCard.svelte';
 	import InstallQr from '$lib/components/InstallQr.svelte';
+	import LangSwitch from '$lib/components/LangSwitch.svelte';
 	import PhoneMockup from '$lib/components/PhoneMockup.svelte';
 	import { landingConfig } from '$lib/config';
+	import { t } from '$lib/i18n';
 	import BanknotesIcon from '$lib/icons/BanknotesIcon.svelte';
 	import CalendarIcon from '$lib/icons/CalendarIcon.svelte';
 	import ClockIcon from '$lib/icons/ClockIcon.svelte';
@@ -16,51 +18,44 @@
 
 	const features = [
 		{
-			title: 'Discover nearby clubs & sessions',
-			description:
-				'Browse active clubs and upcoming open sessions sorted by distance when you share your location.',
+			titleKey: 'landing.features.discover.title',
+			descriptionKey: 'landing.features.discover.description',
 			icon: UserGroupIcon,
 			accent: 'brand' as const
 		},
 		{
-			title: 'Join with waiting list & queue',
-			description:
-				'Reserve your spot on popular sessions. Get confirmed by the club or wait in the queue when sessions fill up.',
+			titleKey: 'landing.features.join.title',
+			descriptionKey: 'landing.features.join.description',
 			icon: CalendarIcon,
 			accent: 'secondary' as const
 		},
 		{
-			title: 'Live session court grid',
-			description:
-				'See real-time court occupancy, player activity, and match status while you play — all from your phone.',
+			titleKey: 'landing.features.live.title',
+			descriptionKey: 'landing.features.live.description',
 			icon: Squares2x2Icon,
 			accent: 'violet' as const
 		},
 		{
-			title: 'Match invites & peer scoring',
-			description:
-				'Accept 2v2 match invites, submit rally scores, and confirm results with your teammates using official 15/21-point rules.',
+			titleKey: 'landing.features.match.title',
+			descriptionKey: 'landing.features.match.description',
 			icon: TrophyIcon,
 			accent: 'secondary' as const
 		},
 		{
-			title: 'Session & match history',
-			description:
-				'Review past sessions you joined and every match you played — scores, wins, and activity at a glance.',
+			titleKey: 'landing.features.history.title',
+			descriptionKey: 'landing.features.history.description',
 			icon: ClockIcon,
 			accent: 'sky' as const
 		},
 		{
-			title: 'Split costs with PromptPay',
-			description:
-				'Pay your share of court and shuttle fees with a generated PromptPay QR. Upload your slip and track payment status.',
+			titleKey: 'landing.features.payment.title',
+			descriptionKey: 'landing.features.payment.description',
 			icon: BanknotesIcon,
 			accent: 'indigo' as const
 		},
 		{
-			title: 'Installable PWA on any device',
-			description:
-				'Add Antonsmash to your home screen on phone, tablet, or laptop for a full-screen app experience — no app store required.',
+			titleKey: 'landing.features.pwa.title',
+			descriptionKey: 'landing.features.pwa.description',
 			icon: DevicePhoneIcon,
 			accent: 'brand' as const
 		}
@@ -69,18 +64,18 @@
 	const steps = [
 		{
 			step: '1',
-			title: 'Find a club',
-			description: 'Explore clubs and upcoming sessions near you, then pick a time that works.'
+			titleKey: 'landing.how.step1.title',
+			descriptionKey: 'landing.how.step1.description'
 		},
 		{
 			step: '2',
-			title: 'Join & play',
-			description: 'Get confirmed, show up, accept match invites, and log scores with your group.'
+			titleKey: 'landing.how.step2.title',
+			descriptionKey: 'landing.how.step2.description'
 		},
 		{
 			step: '3',
-			title: 'Split the bill',
-			description: 'Scan PromptPay, pay your court and shuttle share, and you are done.'
+			titleKey: 'landing.how.step3.title',
+			descriptionKey: 'landing.how.step3.description'
 		}
 	];
 </script>
@@ -91,7 +86,12 @@
 			<AppLogo size={36} title={appName} />
 			<span>{appName}</span>
 		</a>
-		<a href="#download" class="landing-btn-accent shrink-0 px-5 py-2.5 text-sm">Get the app</a>
+		<div class="flex items-center gap-2">
+			<LangSwitch />
+			<a href="#download" class="landing-btn-accent shrink-0 px-5 py-2.5 text-sm">
+				{t('landing.nav.getApp')}
+			</a>
+		</div>
 	</div>
 </header>
 
@@ -103,22 +103,21 @@
 					<p
 						class="inline-flex items-center rounded-full bg-brand-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-brand-800"
 					>
-						Player app for badminton clubs
+						{t('landing.hero.badge')}
 					</p>
 					<h1 class="mt-5 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
-						Your club sessions,<br />
-						<span class="bg-linear-to-r from-brand-600 to-brand-800 bg-clip-text text-transparent"
-							>matches & payments</span
-						>
-						in one app.
+						{t('landing.hero.titleLine1')}<br />
+						<span class="bg-linear-to-r from-brand-600 to-brand-800 bg-clip-text text-transparent">
+							{t('landing.hero.titleHighlight')}
+						</span>
+						{' '}{t('landing.hero.titleLine2')}
 					</h1>
 					<p class="mt-6 text-lg leading-relaxed text-slate-600 sm:text-xl">
-						{appName} helps players discover sessions, join 2v2 matches, track live court activity,
-						and split costs — all from an installable app on your phone, tablet, or laptop.
+						{t('landing.hero.lead', { appName })}
 					</p>
 					<div class="mt-8 flex flex-wrap gap-3">
-						<a href="#download" class="landing-btn-accent">Get the app</a>
-						<a href="#features" class="landing-btn-secondary">See features</a>
+						<a href="#download" class="landing-btn-accent">{t('landing.hero.ctaPrimary')}</a>
+						<a href="#features" class="landing-btn-secondary">{t('landing.hero.ctaSecondary')}</a>
 					</div>
 				</div>
 
@@ -132,18 +131,15 @@
 	<section id="features" class="border-t border-slate-200/80 bg-white py-16 sm:py-24">
 		<div class="landing-container">
 			<div class="max-w-2xl">
-				<h2 class="landing-section-title">Everything you need to play</h2>
-				<p class="landing-section-lead">
-					From finding a session to settling the bill — built for real club badminton, not generic
-					sports apps.
-				</p>
+				<h2 class="landing-section-title">{t('landing.features.title')}</h2>
+				<p class="landing-section-lead">{t('landing.features.lead')}</p>
 			</div>
 
 			<div class="landing-feature-grid mt-12">
-				{#each features as feature (feature.title)}
+				{#each features as feature (feature.titleKey)}
 					<FeatureCard
-						title={feature.title}
-						description={feature.description}
+						title={t(feature.titleKey)}
+						description={t(feature.descriptionKey)}
 						icon={feature.icon}
 						accent={feature.accent}
 					/>
@@ -155,10 +151,8 @@
 	<section class="border-t border-slate-200/80 bg-slate-50 py-16 sm:py-24">
 		<div class="landing-container">
 			<div class="mx-auto max-w-2xl text-center">
-				<h2 class="landing-section-title">How it works</h2>
-				<p class="landing-section-lead mx-auto">
-					Three steps from browsing to playing to paying — no spreadsheets, no chasing cash.
-				</p>
+				<h2 class="landing-section-title">{t('landing.how.title')}</h2>
+				<p class="landing-section-lead mx-auto">{t('landing.how.lead')}</p>
 			</div>
 
 			<div class="landing-step-grid mt-14">
@@ -173,8 +167,8 @@
 						>
 							{item.step}
 						</div>
-						<h3 class="mt-5 text-lg font-semibold text-slate-900">{item.title}</h3>
-						<p class="mt-2 text-sm leading-relaxed text-slate-600">{item.description}</p>
+						<h3 class="mt-5 text-lg font-semibold text-slate-900">{t(item.titleKey)}</h3>
+						<p class="mt-2 text-sm leading-relaxed text-slate-600">{t(item.descriptionKey)}</p>
 					</div>
 				{/each}
 			</div>
@@ -188,20 +182,20 @@
 			>
 				<div class="grid items-center gap-12 lg:grid-cols-2">
 					<div class="text-white">
-						<h2 class="text-3xl font-bold tracking-tight sm:text-4xl">Get {appName} on your device</h2>
+						<h2 class="text-3xl font-bold tracking-tight sm:text-4xl">
+							{t('landing.download.title', { appName })}
+						</h2>
 						<p class="mt-4 text-lg leading-relaxed text-brand-100">
-							Scan the QR code with your phone camera, or open the link on this device. Install the
-							app to your home screen for the best experience — works on mobile, tablet, and
-							desktop browsers that support PWAs.
+							{t('landing.download.lead')}
 						</p>
 						<ul class="mt-6 space-y-2 text-sm text-brand-100/95">
 							<li class="flex items-start gap-2">
 								<span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-200"></span>
-								<span>Phone & tablet — scan QR or tap the link, then “Add to Home Screen”</span>
+								<span>{t('landing.download.hintPhone')}</span>
 							</li>
 							<li class="flex items-start gap-2">
 								<span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-200"></span>
-								<span>Laptop — open in Chrome or Edge and install from the browser menu</span>
+								<span>{t('landing.download.hintLaptop')}</span>
 							</li>
 						</ul>
 						<a
@@ -210,14 +204,15 @@
 							target="_blank"
 							rel="noopener noreferrer"
 						>
-							Open on this device
+							{t('landing.download.openDevice')}
 						</a>
 					</div>
 
 					<div class="landing-qr-card mx-auto w-full max-w-sm">
-						<InstallQr url={playerAppUrl} label="Scan to open the player app" />
+						<InstallQr url={playerAppUrl} />
 						<p class="mt-4 text-center text-xs text-slate-500">
-							Links to <span class="font-medium text-slate-700">{playerAppUrl}</span>
+							{t('landing.download.linksTo')}
+							<span class="font-medium text-slate-700">{playerAppUrl}</span>
 						</p>
 					</div>
 				</div>
@@ -234,7 +229,7 @@
 			<AppLogo size={28} title={appName} />
 			<div>
 				<p class="font-semibold text-slate-900">{appName}</p>
-				<p class="text-sm text-slate-500">2v2 badminton club sessions, matches & payments</p>
+				<p class="text-sm text-slate-500">{t('landing.footer.tagline')}</p>
 			</div>
 		</div>
 		<a
@@ -243,7 +238,7 @@
 			target="_blank"
 			rel="noopener noreferrer"
 		>
-			Open player app →
+			{t('landing.footer.openPlayerApp')}
 		</a>
 	</div>
 </footer>

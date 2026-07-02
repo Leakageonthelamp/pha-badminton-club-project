@@ -60,17 +60,20 @@ describe('session list filters', () => {
 	});
 
 	it('filters draft sessions by status and start time', () => {
-		const sessions = filterDraftSessions([
-			baseSession({ id: '1', status: 'draft', start_at: '2026-07-02T10:00:00.000Z' }),
-			baseSession({ id: '2', status: 'open' }),
-			baseSession({ id: '3', status: 'draft', start_at: '2026-07-01T10:00:00.000Z' }),
-			baseSession({
-				id: '4',
-				status: 'draft',
-				start_at: '2026-05-01T10:00:00.000Z',
-				end_at: '2026-05-01T14:00:00.000Z'
-			})
-		]);
+		const sessions = filterDraftSessions(
+			[
+				baseSession({ id: '1', status: 'draft', start_at: '2026-07-02T10:00:00.000Z' }),
+				baseSession({ id: '2', status: 'open' }),
+				baseSession({ id: '3', status: 'draft', start_at: '2026-07-01T10:00:00.000Z' }),
+				baseSession({
+					id: '4',
+					status: 'draft',
+					start_at: '2026-05-01T10:00:00.000Z',
+					end_at: '2026-05-01T14:00:00.000Z'
+				})
+			],
+			Date.parse('2026-06-15T00:00:00.000Z')
+		);
 
 		expect(sessions.map((session) => session.id)).toEqual(['3', '1']);
 	});

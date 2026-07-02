@@ -26,6 +26,7 @@
 	import type { MatchGameInput, MatchPlayerWithProfile } from '$lib/types/match';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { ActionData, PageData } from './$types';
+	import { t } from '@repo/ui/i18n';
 
 	const LIVE_MATCH_PATH = /^\/sessions\/([^/]+)\/live\/match\/([^/]+)$/;
 
@@ -70,7 +71,7 @@
 		}))
 	);
 	const gameCount = $derived(match.round_type === 'two_round' ? 2 : 1);
-	const uptimeLabel = $derived(match.started_at ? formatUptime(match.started_at, nowMs) : '—');
+	const uptimeLabel = $derived(match.started_at ? formatUptime(match.started_at, nowMs) : t('common.dash'));
 	const scoreHeadline = $derived(
 		match.games.length > 0
 			? match.games.map((game) => `${game.team_a_score} - ${game.team_b_score}`).join(' · ')
@@ -197,15 +198,15 @@
 {#snippet playerRow(player: MatchPlayerWithProfile)}
 	<li class="flex items-center gap-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/60 p-3">
 		<UserAvatar
-			displayName={player.profile?.display_name ?? 'Player'}
+			displayName={player.profile?.display_name ?? t('common.player')}
 			avatarUrl={player.profile?.avatar_url ?? null}
 			size="sm"
 		/>
 		<div class="min-w-0 flex-1">
 			<p class="truncate font-medium text-slate-800 dark:text-slate-200">
-				{player.profile?.display_name ?? 'Player'}
+				{player.profile?.display_name ?? t('common.player')}
 				{#if player.user_id === data.userId}
-					<span class="text-slate-500 dark:text-slate-400 dark:text-slate-500">(you)</span>
+					<span class="text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('common.youParen')}</span>
 				{/if}
 			</p>
 			<div class="mt-1 flex flex-wrap items-center gap-2">
@@ -228,7 +229,7 @@
 {/snippet}
 
 <section class="app-page space-y-6">
-	<DashboardHero eyebrow="Match live" title={`Court ${match.court_number}`} subtitle={session.name}>
+	<DashboardHero eyebrow={t('matches.live.title')} title={t('matches.summary.court', { number: match.court_number })} subtitle={session.name}>
 		<span class="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">
 			{matchStatusLabel(match.status)}
 		</span>
@@ -238,11 +239,11 @@
 
 	<div class="grid grid-cols-2 gap-4">
 		<AppCard class="space-y-2">
-			<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Match time</p>
+			<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('matches.live.matchTime')}</p>
 			<p class="font-mono text-2xl font-extrabold tabular-nums text-slate-900 dark:text-slate-100">{uptimeLabel}</p>
 		</AppCard>
 		<AppCard class="space-y-2">
-			<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Shuttles used</p>
+			<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('matches.live.shuttlesUsed')}</p>
 			<p class="text-2xl font-extrabold tabular-nums text-slate-900 dark:text-slate-100">{match.shuttles_used}</p>
 		</AppCard>
 	</div>
@@ -250,7 +251,7 @@
 	<div
 		class="rounded-[1.75rem] border border-secondary-200 bg-secondary-50/90 px-6 py-5 text-center shadow-md shadow-secondary-200/40"
 	>
-		<p class="text-xs font-semibold uppercase tracking-wide text-secondary-800">Score</p>
+		<p class="text-xs font-semibold uppercase tracking-wide text-secondary-800">{t('matches.live.scoreLabel')}</p>
 		<p class="mt-1 font-mono text-5xl font-extrabold tabular-nums tracking-tight text-secondary-900 sm:text-6xl">
 			{scoreHeadline}
 		</p>
@@ -261,10 +262,10 @@
 	{/if}
 
 	<AppCard class="space-y-4">
-		<h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Players</h2>
+		<h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200">{t('matches.live.players')}</h2>
 		<div class="space-y-4">
 			<div class="space-y-2">
-				<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Team A</p>
+				<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('common.teamA')}</p>
 				<ul class="space-y-2">
 					{#each teams.teamA as player (player.id)}
 						{@render playerRow(player)}
@@ -272,7 +273,7 @@
 				</ul>
 			</div>
 			<div class="space-y-2">
-				<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Team B</p>
+				<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('common.teamB')}</p>
 				<ul class="space-y-2">
 					{#each teams.teamB as player (player.id)}
 						{@render playerRow(player)}
@@ -284,18 +285,18 @@
 
 	{#if canSubmitScore}
 		<AppCard class="space-y-3">
-			<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Log the match score when play finishes.</p>
+			<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{t('matches.live.logWhenFinished')}</p>
 			<SubmitButton type="button" variant="accent" disabled={isBusy} onclick={openScoreModal}>
-				Log score
+				{t('matches.live.logScore')}
 			</SubmitButton>
 		</AppCard>
 	{:else if match.status === 'suspended'}
 		<AppCard>
-			<p class="text-sm text-amber-800">Score rejected — waiting for admin to resolve.</p>
+			<p class="text-sm text-amber-800">{t('matches.live.suspendedHint')}</p>
 		</AppCard>
 	{:else if match.status === 'score_pending' && myPlayer?.user_id === match.score_submitted_by}
 		<AppCard>
-			<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Waiting for other players to confirm your submitted score.</p>
+			<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{t('matches.live.waitingConfirmScore')}</p>
 		</AppCard>
 	{/if}
 
@@ -303,11 +304,11 @@
 		type="button"
 		variant="secondary"
 		loading={backLoading}
-		loadingLabel="Going back…"
+		loadingLabel={t('common.goingBack')}
 		disabled={isBusy && !backLoading}
 		onclick={goBack}
 	>
-		Back to session live
+		{t('actions.backToSession')}
 	</SubmitButton>
 </section>
 
@@ -322,9 +323,9 @@
 >
 	<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
 		<div class="border-b border-brand-100 bg-brand-50 px-4 py-4">
-			<h2 id="log-score-title" class="text-lg font-semibold text-brand-900">Log match score</h2>
+			<h2 id="log-score-title" class="text-lg font-semibold text-brand-900">{t('matches.live.logScoreTitle')}</h2>
 			<p class="mt-1 text-sm text-brand-800">
-				Court {match.court_number} · play to {match.score_type} points
+				{t('matches.live.courtPlayTo', { number: match.court_number, scoreType: match.score_type })}
 			</p>
 		</div>
 		<form
@@ -356,16 +357,16 @@
 						scoreFormError = null;
 					}}
 				>
-					Cancel
+					{t('common.cancel')}
 				</SubmitButton>
 				<SubmitButton
 					variant="accent"
 					loading={actionLoading === 'submitScore'}
-					loadingLabel="Submitting…"
+					loadingLabel={t('common.submitting')}
 					class="!w-auto"
 					disabled={!canSubmitScores}
 				>
-					Submit score
+					{t('matches.live.submitScore')}
 				</SubmitButton>
 			</div>
 		</form>

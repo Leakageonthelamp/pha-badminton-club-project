@@ -1,3 +1,4 @@
+import { t } from '@repo/ui/i18n';
 import { z } from 'zod';
 
 export const isEmail = (value: string): boolean =>
@@ -54,18 +55,18 @@ export const getIdentifierKind = (value: string): IdentifierKind => {
 export const validateIdentifier = (value: string): string | null => {
 	const trimmed = value.trim();
 	if (!trimmed) {
-		return 'Enter your email or phone number';
+		return t('validation.identifier.required');
 	}
 
 	const kind = getIdentifierKind(trimmed);
 
 	if (kind === 'phone') {
-		return normalizePhone(trimmed) ? null : 'Enter a valid Thai phone number (e.g. 0812345678)';
+		return normalizePhone(trimmed) ? null : t('validation.identifier.invalidPhone');
 	}
 
 	if (kind === 'email') {
-		return isEmail(trimmed) ? null : 'Enter a valid email address';
+		return isEmail(trimmed) ? null : t('validation.identifier.invalidEmail');
 	}
 
-	return 'Enter a valid email or Thai phone number';
+	return t('validation.identifier.invalid');
 };

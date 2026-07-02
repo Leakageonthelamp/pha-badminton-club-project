@@ -8,6 +8,7 @@
 	import ProfileMenu from '$lib/components/ProfileMenu.svelte';
 	import BackLink from '@repo/ui/components/BackLink.svelte';
 	import HomeLink from '@repo/ui/components/HomeLink.svelte';
+	import LocalePicker from '@repo/ui/components/LocalePicker.svelte';
 	import PageTransition from '$lib/components/PageTransition.svelte';
 	import { syncSelectedClub, selectClub } from '$lib/clubWorkspace.svelte';
 	import { appConfig } from '$lib/config/app';
@@ -96,6 +97,7 @@
 			currentWorkspace={data.dashboardMode ?? 'super'}
 			canSwitch={data.canSwitchWorkspace ?? false}
 		/>
+		<LocalePicker />
 		<ProfileMenu profile={data.profile} />
 	</div>
 </header>

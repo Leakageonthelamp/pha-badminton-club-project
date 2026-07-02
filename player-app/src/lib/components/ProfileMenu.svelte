@@ -6,6 +6,7 @@
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import ThemePicker from '@repo/ui/components/ThemePicker.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
+	import { t } from '@repo/ui/i18n';
 	import type { Profile } from '$lib/types/auth';
 
 	let {
@@ -64,7 +65,7 @@
 			class="block rounded-full p-0.5 ring-2 ring-transparent transition hover:ring-brand-200 focus:outline-none focus-visible:ring-brand-600"
 			aria-expanded={open}
 			aria-haspopup="menu"
-			aria-label="Account menu"
+			aria-label={t('profile.menu')}
 			onclick={toggleMenu}
 		>
 			<UserAvatar
@@ -79,7 +80,7 @@
 				<button
 					type="button"
 					class="fixed inset-0 z-[100] cursor-default"
-					aria-label="Close account menu"
+					aria-label={t('profile.closeMenu')}
 					onclick={closeMenu}
 				></button>
 
@@ -121,7 +122,7 @@
 							onclick={closeMenu}
 						>
 							<UserIcon class="h-5 w-5 shrink-0 text-brand-700 dark:text-brand-300" />
-							Profile
+							{t('profile.profile')}
 						</a>
 
 						<ThemePicker />
@@ -133,7 +134,7 @@
 								class="flex w-full items-center justify-start gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
 							>
 								<LogOutIcon class="h-5 w-5 shrink-0 text-slate-500 dark:text-slate-400" />
-								Log out
+								{t('profile.logOut')}
 							</SubmitButton>
 						</form>
 					</div>

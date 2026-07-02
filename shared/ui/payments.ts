@@ -1,3 +1,5 @@
+import { t, tForLocale, type Locale } from './i18n/i18n.svelte';
+
 export type CourtShareInput = {
 	courtFeePerHour: number;
 	startAt: string;
@@ -52,28 +54,42 @@ export const hasFixedCourtFee = (fixedCourtFeePerPlayer: number | null | undefin
 
 /** Short mode label for per-player court fee UI. */
 export const courtFeePerPlayerModeLabel = (
-	fixedCourtFeePerPlayer: number | null | undefined
-): 'Fixed fee' | 'Shared cost' =>
-	hasFixedCourtFee(fixedCourtFeePerPlayer) ? 'Fixed fee' : 'Shared cost';
+	fixedCourtFeePerPlayer: number | null | undefined,
+	locale?: Locale
+): string => {
+	const tr = (key: string) => (locale ? tForLocale(locale, key) : t(key));
+	return hasFixedCourtFee(fixedCourtFeePerPlayer)
+		? tr('payment.fixedFee')
+		: tr('payment.sharedCost');
+};
 
 /** Lowercase noun phrase for inline copy (e.g. modal parentheticals). */
 export const courtFeePerPlayerModeNoun = (
-	fixedCourtFeePerPlayer: number | null | undefined
-): 'fixed court fee' | 'shared court cost' =>
-	hasFixedCourtFee(fixedCourtFeePerPlayer) ? 'fixed court fee' : 'shared court cost';
+	fixedCourtFeePerPlayer: number | null | undefined,
+	locale?: Locale
+): string => {
+	const tr = (key: string) => (locale ? tForLocale(locale, key) : t(key));
+	return hasFixedCourtFee(fixedCourtFeePerPlayer)
+		? tr('payment.fixedCourtFee')
+		: tr('payment.sharedCourtCost');
+};
 
 /** Hint under per-player court fee amounts. Pass activePlayers for shared-cost split detail. */
 export const courtFeePerPlayerModeHint = (
 	fixedCourtFeePerPlayer: number | null | undefined,
-	activePlayers?: number | null
+	activePlayers?: number | null,
+	locale?: Locale
 ): string => {
+	const tr = (key: string, params?: Record<string, string | number>) =>
+		locale ? tForLocale(locale, key, params) : t(key, params);
+
 	if (hasFixedCourtFee(fixedCourtFeePerPlayer)) {
-		return 'Fixed fee — same amount for every player';
+		return tr('payment.fixedFeeHint');
 	}
 	if (activePlayers != null && activePlayers > 0) {
-		return `Shared cost — split across ${activePlayers} active player${activePlayers === 1 ? '' : 's'}`;
+		return tr('payment.sharedCostHintPlayers', { count: activePlayers, plural: activePlayers === 1 ? '' : 's' });
 	}
-	return 'Shared cost — split evenly among active players';
+	return tr('payment.sharedCostHint');
 };
 
 export type SessionProfitInput = {
@@ -164,14 +180,15 @@ export const formatThb = (amount: number): string =>
 
 export type PaymentStatus = 'pending' | 'submitted' | 'approved';
 
-export const paymentStatusLabel = (status: PaymentStatus): string => {
+export const paymentStatusLabel = (status: PaymentStatus, locale?: Locale): string => {
+	const tr = (key: string) => (locale ? tForLocale(locale, key) : t(key));
 	switch (status) {
 		case 'pending':
-			return 'Pending payment';
+			return tr('payment.pending');
 		case 'submitted':
-			return 'Awaiting confirmation';
+			return tr('payment.awaitingConfirmation');
 		case 'approved':
-			return 'Paid';
+			return tr('payment.paid');
 	}
 };
 
@@ -182,32 +199,37 @@ export const isOutstandingCancellationFee = (
 	feeStatus: CancellationFeeStatus
 ): boolean => feeOwed > 0 && (feeStatus === 'owed' || feeStatus === 'submitted');
 
-export const cancellationFeeStatusLabel = (status: CancellationFeeStatus): string => {
+export const cancellationFeeStatusLabel = (
+	status: CancellationFeeStatus,
+	locale?: Locale
+): string => {
+	const tr = (key: string) => (locale ? tForLocale(locale, key) : t(key));
 	switch (status) {
 		case 'none':
-			return 'No fee';
+			return tr('payment.noFee');
 		case 'owed':
-			return 'Payment due';
+			return tr('payment.paymentDue');
 		case 'submitted':
-			return 'Awaiting confirmation';
+			return tr('payment.awaitingConfirmation');
 		case 'paid':
-			return 'Paid';
+			return tr('payment.paid');
 		case 'waived':
-			return 'Waived';
+			return tr('payment.waived');
 	}
 };
 
 export type LeaveRequestStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
 
-export const leaveRequestStatusLabel = (status: LeaveRequestStatus): string => {
+export const leaveRequestStatusLabel = (status: LeaveRequestStatus, locale?: Locale): string => {
+	const tr = (key: string) => (locale ? tForLocale(locale, key) : t(key));
 	switch (status) {
 		case 'pending':
-			return 'Pending approval';
+			return tr('payment.leavePending');
 		case 'approved':
-			return 'Approved';
+			return tr('payment.leaveApproved');
 		case 'rejected':
-			return 'Rejected';
+			return tr('payment.leaveRejected');
 		case 'cancelled':
-			return 'Cancelled';
+			return tr('payment.leaveCancelled');
 	}
 };

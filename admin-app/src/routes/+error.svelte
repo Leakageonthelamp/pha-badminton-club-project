@@ -1,18 +1,30 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import { dev } from '$app/environment';
 	import AppLogo from '$lib/components/AppLogo.svelte';
 	import ServiceUnavailable from '$lib/components/ServiceUnavailable.svelte';
-	import { getErrorCopy } from '$lib/errors/copy';
 
 	let { error, status }: { error: App.Error; status: number } = $props();
 
+	const ERROR_STATUSES = [400, 401, 403, 404, 500, 503] as const;
+
 	const isServiceDown = $derived(status === 503 || error?.code === 'SERVICE_UNAVAILABLE');
-	const copy = $derived(getErrorCopy(status));
+	const copy = $derived(
+		ERROR_STATUSES.includes(status as (typeof ERROR_STATUSES)[number])
+			? {
+					title: t(`errors.${status}.title`),
+					hint: t(`errors.${status}.hint`)
+				}
+			: {
+					title: t('errors.500.title'),
+					hint: t('errors.500.hint')
+				}
+	);
 	const detail = $derived(error?.message?.trim() || copy.hint);
 </script>
 
 <svelte:head>
-	<title>{isServiceDown ? 'Unavailable' : status} · {copy.title}</title>
+	<title>{isServiceDown ? t('errors.title.unavailable') : status} · {copy.title}</title>
 </svelte:head>
 
 {#if isServiceDown}
@@ -34,7 +46,7 @@
 			href="/"
 			class="mt-8 inline-flex w-full items-center justify-center rounded-xl bg-brand-700 px-4 py-3 text-base font-semibold text-white transition hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
 		>
-			Back to home
+			{t('errors.backToHome')}
 		</a>
 	</section>
 {/if}

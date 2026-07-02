@@ -1,6 +1,7 @@
 <script lang="ts">
 	import ChevronDownIcon from '../icons/ChevronDownIcon.svelte';
 	import { formatDateTime, formatUptime } from '../datetime';
+	import { t } from '../i18n/i18n.svelte';
 	import {
 		deriveGameWinner,
 		findPlayerTeam,
@@ -74,7 +75,11 @@
 							? 'bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300'
 							: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'}"
 				>
-					{result === 'win' ? 'Win' : result === 'lose' ? 'Loss' : 'Draw'}
+					{result === 'win'
+						? t('common.win')
+						: result === 'lose'
+							? t('common.loss')
+							: t('common.draw')}
 				</span>
 			{/if}
 		</div>
@@ -94,7 +99,7 @@
 								? 'bg-emerald-50 ring-emerald-200 dark:bg-emerald-950/40 dark:ring-emerald-800'
 								: 'bg-slate-50 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700'}"
 						>
-							<p class="text-[0.6rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">You</p>
+							<p class="text-[0.6rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('common.you')}</p>
 							<p
 								class="font-mono {sortedGames.length > 1
 									? 'text-base'
@@ -105,13 +110,13 @@
 								{playerScore}
 							</p>
 						</div>
-						<span class="text-[0.65rem] font-semibold text-slate-400 dark:text-slate-500">vs</span>
+						<span class="text-[0.65rem] font-semibold text-slate-400 dark:text-slate-500">{t('common.vs')}</span>
 						<div
 							class="rounded-md px-2 py-1 text-center ring-1 {gameWinner && !playerWonGame
 								? 'bg-emerald-50 ring-emerald-200 dark:bg-emerald-950/40 dark:ring-emerald-800'
 								: 'bg-slate-50 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700'}"
 						>
-							<p class="text-[0.6rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Opp</p>
+							<p class="text-[0.6rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('common.opp')}</p>
 							<p
 								class="font-mono {sortedGames.length > 1
 									? 'text-base'

@@ -4,6 +4,7 @@
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
+	import { t } from '@repo/ui/i18n';
 	import { splitTeams } from '@repo/ui/matches';
 	import type { MatchWithDetails } from '$lib/types/match';
 	import type { SubmitFunction } from '@sveltejs/kit';
@@ -67,20 +68,20 @@
 	);
 
 	const roundLabel = $derived(
-		match?.round_type === 'two_round' ? '2 games' : '1 game'
+		match?.round_type === 'two_round' ? t('matches.invite.twoGames') : t('matches.invite.oneGame')
 	);
 
 	const playerName = (player: MatchWithDetails['players'][number]) =>
-		player.profile?.display_name ?? 'Player';
+		player.profile?.display_name ?? t('common.player');
 
 	const inviteStatusLabel = (status: MatchWithDetails['players'][number]['invite_status']) => {
 		switch (status) {
 			case 'accepted':
-				return 'Accepted';
+				return t('matches.invite.statusAccepted');
 			case 'rejected':
-				return 'Declined';
+				return t('matches.invite.statusDeclined');
 			default:
-				return 'Waiting';
+				return t('matches.invite.statusWaiting');
 		}
 	};
 
@@ -94,6 +95,13 @@
 				return 'bg-amber-100 text-amber-800';
 		}
 	};
+
+	const waitingForMoreLabel = $derived.by(() => {
+		const count = 4 - acceptedCount;
+		return count === 1
+			? t('matches.invite.waitingForMore', { count })
+			: t('matches.invite.waitingForMorePlural', { count });
+	});
 </script>
 
 {#snippet playerRow(player: MatchWithDetails['players'][number], you = false)}
@@ -107,7 +115,7 @@
 			<p class="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
 				{playerName(player)}
 				{#if you}
-					<span class="text-slate-500 dark:text-slate-400 dark:text-slate-500">(you)</span>
+					<span class="text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('common.youParen')}</span>
 				{/if}
 			</p>
 			{#if player.profile?.tag}
@@ -134,13 +142,13 @@
 		<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl ring-1 ring-black/5">
 			<div class="border-b border-brand-700/40 bg-brand-600 px-4 py-3 text-white sm:px-5">
 				<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-white/75">
-					{waitingForOthers ? 'Waiting for players' : "You're invited"}
+					{waitingForOthers ? t('matches.invite.waitingForPlayers') : t('matches.invite.youreInvited')}
 				</p>
 				<h2 id="match-found-title" class="mt-0.5 text-base font-bold tracking-tight">
-					Match on Court {match.court_number}
+					{t('matches.invite.matchOnCourt', { number: match.court_number })}
 				</h2>
 				<p class="mt-0.5 text-xs text-white/80">
-					Play to {match.score_type} · {roundLabel}
+					{t('matches.invite.playTo', { scoreType: match.score_type, roundLabel })}
 				</p>
 
 				<div
@@ -149,7 +157,7 @@
 				>
 					<div class="rounded-lg bg-white/15 px-2.5 py-2 text-center ring-1 ring-white/20">
 						<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-white/75">
-							Accepted
+							{t('matches.invite.accepted')}
 						</p>
 						<p class="mt-0.5 font-mono text-xl font-bold tabular-nums leading-none">
 							{acceptedCount}/4
@@ -161,7 +169,7 @@
 							<p
 								class="text-center text-[0.65rem] font-semibold uppercase tracking-wide text-white/75"
 							>
-								Time left
+								{t('matches.invite.timeLeft')}
 							</p>
 							<p class="mt-0.5 text-center font-mono text-xl font-bold tabular-nums leading-none">
 								{countdownSeconds}s
@@ -184,30 +192,30 @@
 						aria-live="polite"
 					>
 						<p class="text-sm font-medium text-brand-900 dark:text-brand-200">
-							You accepted — waiting for {4 - acceptedCount} more player{4 - acceptedCount === 1
-								? ''
-								: 's'}.
+							{waitingForMoreLabel}
 						</p>
 						{#if inviteWindowOpen}
 							<p class="mt-1 text-sm text-brand-800 dark:text-brand-300">
-								All four must accept within {countdownSeconds}s or this match is cancelled.
+								{t('matches.invite.allMustAccept', { seconds: countdownSeconds })}
 							</p>
 						{/if}
 					</div>
 				{:else if awaitingResponse}
 					<p class="text-sm leading-relaxed text-slate-600 dark:text-slate-400 dark:text-slate-500">
 						{#if inviteWindowOpen}
-							Accept to play on court {match.court_number}. Decline if you can't — the invite ends in
-							{countdownSeconds}s and the match is cancelled if not everyone accepts.
+							{t('matches.invite.acceptPrompt', {
+								court: match.court_number,
+								seconds: countdownSeconds
+							})}
 						{:else}
-							Accept to play on court {match.court_number}. Decline if you can't play.
+							{t('matches.invite.acceptPromptNoTimer', { court: match.court_number })}
 						{/if}
 					</p>
 				{/if}
 
 				<div class="grid gap-3 sm:grid-cols-2">
 					<div class="rounded-xl border border-brand-200 bg-brand-50/60 p-3 dark:border-brand-800 dark:bg-brand-900/30">
-						<p class="text-xs font-semibold uppercase tracking-wide text-brand-700 dark:text-brand-300">Your team</p>
+						<p class="text-xs font-semibold uppercase tracking-wide text-brand-700 dark:text-brand-300">{t('matches.invite.yourTeam')}</p>
 						<ul class="mt-2 space-y-2">
 							{#each teammates as player (player.id)}
 								{@render playerRow(player, player.user_id === userId)}
@@ -216,7 +224,7 @@
 					</div>
 
 					<div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 p-3 dark:bg-slate-800/50">
-						<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Opponents</p>
+						<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('matches.invite.opponents')}</p>
 						<ul class="mt-2 space-y-2">
 							{#each opponents as player (player.id)}
 								{@render playerRow(player)}
@@ -240,7 +248,7 @@
 								loading={actionLoading === 'rejectInvite'}
 								class="w-full sm:!w-auto"
 							>
-								Decline
+								{t('matches.invite.decline')}
 							</SubmitButton>
 						</form>
 						<form
@@ -252,7 +260,7 @@
 							<input type="hidden" name="match_id" value={match.id} />
 							<input type="hidden" name="accept" value="true" />
 							<SubmitButton loading={actionLoading === 'acceptInvite'} class="w-full">
-								Accept match
+								{t('matches.invite.acceptMatch')}
 							</SubmitButton>
 						</form>
 					</div>

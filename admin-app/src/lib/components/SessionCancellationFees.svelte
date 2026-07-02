@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import { enhance } from '$app/forms';
 	import AppModal from '@repo/ui/components/AppModal.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
@@ -82,7 +83,7 @@
 </script>
 
 {#if fees.length === 0}
-	<EmptyState message="No cancellation fees for this session." />
+	<EmptyState message={t('cancellationFees.empty')} />
 {:else}
 	{#if outstandingCount > 0}
 		<p class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
@@ -96,14 +97,14 @@
 			<li class="rounded-2xl border p-4 {feeCardClass(fee.fee_status, outstanding)}">
 				<div class="flex items-start gap-3">
 					<UserAvatar
-						displayName={fee.profile?.display_name ?? 'Player'}
+						displayName={fee.profile?.display_name ?? t('role.player')}
 						avatarUrl={fee.profile?.avatar_url ?? null}
 						size="sm"
 					/>
 					<div class="min-w-0 flex-1">
 						<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
 							<p class="truncate font-semibold text-slate-900 dark:text-slate-100">
-								{fee.profile?.display_name ?? 'Unknown player'}
+								{fee.profile?.display_name ?? t('control.unknownPlayer')}
 							</p>
 							{#if fee.profile?.tag}
 								<TagPill tag={fee.profile.tag} />
@@ -155,7 +156,7 @@
 								type="button"
 								class="{compactButtonClass} sm:!w-full"
 								loading={feeActionLoading === `confirm-${fee.id}`}
-								loadingLabel="Confirming…"
+								loadingLabel={t('cancellationFees.confirming')}
 								disabled={!!feeActionLoading}
 								onclick={() => requestConfirmFee(fee)}
 							>
@@ -174,7 +175,7 @@
 								variant="secondary"
 								class="{compactButtonClass} sm:!w-full"
 								loading={feeActionLoading === `waive-${fee.id}`}
-								loadingLabel="Waiving…"
+								loadingLabel={t('cancellationFees.waiving')}
 								disabled={!!feeActionLoading}
 							>
 								Waive fee

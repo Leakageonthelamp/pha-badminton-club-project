@@ -1,3 +1,4 @@
+import { tForLocale } from '$lib/i18n';
 import { assertSuperAdmin } from '$lib/server/clubAccess';
 import {
 	assertCallerCanManageUser,
@@ -18,13 +19,13 @@ export type ManagedClub = {
 	name: string;
 };
 
-export const load: PageServerLoad = async ({ params, locals: { supabase, appRole } }) => {
+export const load: PageServerLoad = async ({ params, locals: { supabase, appRole, locale } }) => {
 	assertSuperAdmin(appRole);
 
 	const profile = await loadProfileForManagement(supabase, params.id);
 
 	if (!profile) {
-		error(404, 'User not found');
+		error(404, tForLocale(locale, 'errors.userNotFound'));
 	}
 
 	const { data: memberships, error: membershipError } = await supabase
@@ -75,9 +76,10 @@ export const load: PageServerLoad = async ({ params, locals: { supabase, appRole
 	};
 };
 
-const passwordSchema = z.object({
-	password: z.string().min(1, 'Password is required')
-});
+const buildPasswordSchema = (locale: App.Locals['locale']) =>
+	z.object({
+		password: z.string().min(1, tForLocale(locale, 'users.action.passwordRequired'))
+	});
 
 const runCallerCheck = (
 	appRole: App.Locals['appRole'],
@@ -93,9 +95,9 @@ const runCallerCheck = (
 };
 
 export const actions: Actions = {
-	resetPassword: async ({ request, params, locals: { supabase, user, appRole } }) => {
+	resetPassword: async ({ request, params, locals: { supabase, user, appRole, locale } }) => {
 		if (!user) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const callerFail = runCallerCheck(appRole, user.id, params.id);
@@ -105,14 +107,14 @@ export const actions: Actions = {
 
 		const profile = await loadProfileForManagement(supabase, params.id);
 		if (!profile) {
-			return fail(404, { message: 'User not found.' });
+			return fail(404, { message: tForLocale(locale, 'errors.userNotFound') });
 		}
 
 		const formData = await request.formData();
-		const parsed = passwordSchema.safeParse({ password: formData.get('password') });
+		const parsed = buildPasswordSchema(locale).safeParse({ password: formData.get('password') });
 
 		if (!parsed.success) {
-			return fail(400, { message: 'Password is required' });
+			return fail(400, { message: tForLocale(locale, 'users.action.passwordRequired') });
 		}
 
 		const result = await resetUserPassword(
@@ -125,12 +127,12 @@ export const actions: Actions = {
 			return fail(400, { message: result.message });
 		}
 
-		return { success: true, message: 'Password set.' };
+		return { success: true, message: tForLocale(locale, 'users.action.passwordSet') };
 	},
 
-	ban: async ({ params, locals: { user, appRole } }) => {
+	ban: async ({ params, locals: { user, appRole, locale } }) => {
 		if (!user) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const callerFail = runCallerCheck(appRole, user.id, params.id);
@@ -143,12 +145,12 @@ export const actions: Actions = {
 			return fail(400, { message: result.message });
 		}
 
-		return { success: true, message: 'User banned.' };
+		return { success: true, message: tForLocale(locale, 'users.action.banned') };
 	},
 
-	unban: async ({ params, locals: { user, appRole } }) => {
+	unban: async ({ params, locals: { user, appRole, locale } }) => {
 		if (!user) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const callerFail = runCallerCheck(appRole, user.id, params.id);
@@ -161,12 +163,12 @@ export const actions: Actions = {
 			return fail(400, { message: result.message });
 		}
 
-		return { success: true, message: 'User unbanned.' };
+		return { success: true, message: tForLocale(locale, 'users.action.unbanned') };
 	},
 
-	delete: async ({ request, params, locals: { supabase, user, appRole } }) => {
+	delete: async ({ request, params, locals: { supabase, user, appRole, locale } }) => {
 		if (!user) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const callerFail = runCallerCheck(appRole, user.id, params.id);
@@ -176,7 +178,7 @@ export const actions: Actions = {
 
 		const profile = await loadProfileForManagement(supabase, params.id);
 		if (!profile) {
-			return fail(404, { message: 'User not found.' });
+			return fail(404, { message: tForLocale(locale, 'errors.userNotFound') });
 		}
 
 		const formData = await request.formData();

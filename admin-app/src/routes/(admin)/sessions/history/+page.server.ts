@@ -1,3 +1,4 @@
+import { tForLocale } from '$lib/i18n';
 import { resolveEffectiveAppRole } from '$lib/server/adminDashboardMode';
 import { loadManagedClubs } from '$lib/server/clubAccess';
 import { loadOutstandingCancellationFeeCountsBySession } from '$lib/server/sessionPlayers';
@@ -8,10 +9,10 @@ import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({
 	cookies,
-	locals: { supabase, user, appRole }
+	locals: { supabase, user, appRole, locale }
 }) => {
 	if (!user || !appRole) {
-		error(401, 'Sign in required');
+		error(401, tForLocale(locale, 'auth.error.signInRequired'));
 	}
 
 	const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);

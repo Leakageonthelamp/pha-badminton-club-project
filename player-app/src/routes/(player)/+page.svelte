@@ -29,8 +29,9 @@
 	} from '@repo/ui/geolocation';
 	import { isRichTextEmpty, richTextExcerpt } from '@repo/ui/richText';
 	import { DASHBOARD_PREVIEW_LIMIT } from '@repo/ui/pagination';
-	import { SESSION_IN_PROGRESS_JOIN_REMARK } from '$lib/config/session';
+	import { sessionInProgressJoinRemark } from '$lib/config/session';
 	import { sessionPlayerStatusLabel, sessionStatusLabel } from '$lib/types/session';
+	import { t } from '@repo/ui/i18n';
 	import type { ClubPublic } from '$lib/types/club';
 	import type { SessionListItem } from '$lib/types/session';
 	import type { LayoutData } from '../$types';
@@ -46,50 +47,64 @@
 	const hasMoreMySessions = $derived(mySessions.length > DASHBOARD_PREVIEW_LIMIT);
 	const featured = $derived(featuredSessions(data.sessions ?? [], userLocation));
 	const sortedByDistance = $derived(userLocation !== null);
-	const profileName = $derived(data.profile?.display_name ?? 'Player');
+	const profileName = $derived(data.profile?.display_name ?? t('layout.defaultPlayerName'));
 	const liveSession = $derived(findLiveSession(data.sessions ?? []));
 	const liveSessionSubtitle = $derived.by(() => {
 		if (!liveSession) return '';
 
 		const parts: string[] = [];
 		if (liveSession.club?.name) parts.push(liveSession.club.name);
-		parts.push(`Playing as ${profileName}`);
+		parts.push(t('home.hero.playingAs', { name: profileName }));
 		return parts.join(' · ');
 	});
-	const clubCountLabel = $derived(`${clubs.length} club${clubs.length === 1 ? '' : 's'}`);
+	const clubCountLabel = $derived(
+		clubs.length === 1
+			? t('common.clubCount', { count: clubs.length })
+			: t('common.clubCountPlural', { count: clubs.length })
+	);
 	const totalSessions = $derived(data.sessions?.length ?? 0);
 	const joinableSessionCount = $derived(
 		(data.sessions ?? []).filter(isJoinableFeaturedSession).length
 	);
 	const hasMoreSessions = $derived(joinableSessionCount > featured.length);
-	const sectionTitle = $derived(sortedByDistance ? 'Nearby clubs' : 'Clubs');
+	const sectionTitle = $derived(
+		sortedByDistance ? t('home.clubs.nearby') : t('home.clubs.all')
+	);
 	const sectionMeta = $derived(
 		clubs.length === 0
 			? sortedByDistance
-				? 'Nearest clubs appear here once available'
-				: 'Active clubs appear here once available'
+				? t('home.clubs.emptyMetaLocation')
+				: t('home.clubs.emptyMetaNoLocation')
 			: sortedByDistance
-				? `${clubCountLabel} · nearest first · open sessions shown on each club`
-				: `${clubCountLabel} · A–Z · open sessions shown on each club`
+				? t('home.clubs.metaLocation', { clubCount: clubCountLabel })
+				: t('home.clubs.meta', { clubCount: clubCountLabel })
 	);
 	const featuredMeta = $derived(
 		featured.length === 0
-			? 'Open and in-progress sessions you can join will appear here'
+			? t('home.featured.emptyMeta')
 			: sortedByDistance
-				? `Top ${featured.length} nearest joinable sessions · tap to view and join`
-				: `Top ${featured.length} joinable sessions · tap to view and join`
+				? t('home.featured.metaNearest', { count: featured.length })
+				: t('home.featured.meta', { count: featured.length })
 	);
 	const mySessionsMeta = $derived(
 		mySessions.length === 0
-			? 'Sessions you join will appear here with waiting list and queue'
-			: `${mySessions.length} joined · tap for details and roster`
+			? t('home.mySessions.emptyMeta')
+			: t('home.mySessions.meta', { count: mySessions.length })
+	);
+	const browseAllSessionsDesc = $derived(
+		hasMoreSessions
+			? t('home.featured.browseAllMore', { count: joinableSessionCount })
+			: t('home.featured.browseAllDefault')
 	);
 
 	const joinedSessionDescription = (session: SessionListItem) => {
 		const parts = [
 			session.club?.name,
 			formatDateTime(session.start_at),
-			`${session.waiting_count} waiting · ${session.queued_count} queued`
+			t('home.waitingQueued', {
+				waiting: session.waiting_count,
+				queued: session.queued_count
+			})
 		].filter(Boolean);
 		return parts.join(' · ');
 	};
@@ -168,7 +183,7 @@
 	const sessionDescription = (session: SessionListItem) => {
 		const parts = [session.club?.name, formatDateTime(session.start_at)].filter(Boolean);
 		if (shouldShowInProgressJoinRemark(session)) {
-			parts.push(SESSION_IN_PROGRESS_JOIN_REMARK);
+			parts.push(sessionInProgressJoinRemark());
 		} else if (session.my_membership) {
 			parts.push(sessionPlayerStatusLabel(session.my_membership.status));
 		}
@@ -194,68 +209,68 @@
 
 <section class="space-y-6">
 	{#if liveSession}
-		<DashboardHero eyebrow="Live session" title={liveSession.name} subtitle={liveSessionSubtitle}>
+		<DashboardHero eyebrow={t('home.hero.liveSession')} title={liveSession.name} subtitle={liveSessionSubtitle}>
 			<a href={liveSessionHref(liveSession.id)} class="app-hero-action app-hero-action--accent"
-				><span>Go to live session</span></a
+				><span>{t('home.hero.goToLive')}</span></a
 			>
 		</DashboardHero>
 	{:else}
 		<DashboardHero
-			eyebrow="Welcome back"
+			eyebrow={t('home.hero.welcomeBack')}
 			title={profileName}
 			tag={data.profile?.tag}
-			subtitle="Join upcoming sessions or explore clubs near you."
+			subtitle={t('home.hero.subtitle')}
 		>
 			{#if mySessions.length > 0}
-				<span class="app-hero-stat">{mySessions.length} joined</span>
+				<span class="app-hero-stat">{t('home.hero.joined', { count: mySessions.length })}</span>
 			{/if}
 			{#if featured.length > 0}
-				<span class="app-hero-stat app-hero-stat--accent">{featured.length} featured</span>
+				<span class="app-hero-stat app-hero-stat--accent">{t('home.hero.featured', { count: featured.length })}</span>
 			{/if}
 			{#if clubs.length > 0}
 				<span class="app-hero-stat">{clubCountLabel}</span>
 			{/if}
 			{#if sortedByDistance}
-				<span class="app-hero-stat app-hero-stat--success">Sorted by distance</span>
+				<span class="app-hero-stat app-hero-stat--success">{t('common.sortedByDistance')}</span>
 			{/if}
 		</DashboardHero>
 	{/if}
 
 	<div class="space-y-3">
-		<SectionHeading title="Quick actions" />
+		<SectionHeading title={t('home.quickActions.title')} />
 		<div class="app-quick-actions-grid">
 			<DashboardTile
 				href="/sessions"
-				title="Sessions"
-				description="Browse and join games"
+				title={t('home.quickActions.sessions')}
+				description={t('home.quickActions.sessionsDesc')}
 				icon={CalendarDaysIcon}
 				accent="brand"
 			/>
 			<DashboardTile
 				href="/sessions/history"
-				title="Session history"
-				description="Past sessions you joined"
+				title={t('home.quickActions.sessionHistory')}
+				description={t('home.quickActions.sessionHistoryDesc')}
 				icon={ClockIcon}
 				accent="secondary"
 			/>
 			<DashboardTile
 				href="/matches/history"
-				title="Match history"
-				description="Wins, scores, and stats"
+				title={t('home.quickActions.matchHistory')}
+				description={t('home.quickActions.matchHistoryDesc')}
 				icon={TrophyIcon}
 				accent="violet"
 			/>
 			<DashboardTile
 				href="/profile"
-				title="Profile"
-				description="Account and payments"
+				title={t('home.quickActions.profile')}
+				description={t('home.quickActions.profileDesc')}
 				icon={UserIcon}
 				accent="indigo"
 			/>
 			<DashboardTile
 				href="#clubs"
-				title="Clubs"
-				description="Explore nearby clubs"
+				title={t('home.quickActions.clubs')}
+				description={t('home.quickActions.clubsDesc')}
 				icon={UserGroupIcon}
 				accent="secondary"
 			/>
@@ -265,13 +280,13 @@
 	<div class="space-y-4">
 		<header class="app-section-header">
 			<div class="min-w-0">
-				<h2 class="app-section-title">My sessions</h2>
+				<h2 class="app-section-title">{t('home.mySessions.title')}</h2>
 				<p class="app-section-meta">{mySessionsMeta}</p>
 			</div>
 		</header>
 
 		{#if mySessions.length === 0}
-			<EmptyState message="You haven't joined any upcoming sessions yet." />
+			<EmptyState message={t('home.mySessions.empty')} />
 		{:else}
 			<div class="grid grid-cols-1 gap-3">
 				{#each previewMySessions as session (session.id)}
@@ -293,7 +308,7 @@
 							{#if session.status === 'in_progress'}
 								<SessionLiveTimers startAt={session.start_at} endAt={session.end_at} class="mb-1" />
 								{#if shouldShowInProgressJoinRemark(session)}
-									<p class="text-xs text-sky-700">{SESSION_IN_PROGRESS_JOIN_REMARK}</p>
+									<p class="text-xs text-sky-700">{sessionInProgressJoinRemark()}</p>
 								{/if}
 							{:else if session.status === 'open'}
 								<SessionStartCountdown
@@ -310,8 +325,8 @@
 			{#if hasMoreMySessions}
 				<ActionRowLink
 					href="/sessions"
-					title="View all my sessions"
-					description="See all {mySessions.length} joined sessions"
+					title={t('home.mySessions.viewAll')}
+					description={t('home.mySessions.viewAllDesc', { count: mySessions.length })}
 					icon={CalendarDaysIcon}
 					accent="brand"
 				/>
@@ -322,14 +337,14 @@
 	<div class="space-y-4">
 		<header class="app-section-header">
 			<div class="min-w-0">
-				<h2 class="app-section-title">Featured sessions</h2>
+				<h2 class="app-section-title">{t('home.featured.title')}</h2>
 				<p class="app-section-meta">{featuredMeta}</p>
 			</div>
 			<button
 				type="button"
 				class="app-section-action"
 				disabled={refreshing}
-				aria-label="Refresh dashboard"
+				aria-label={t('home.featured.refreshAria')}
 				aria-busy={refreshing}
 				onclick={refreshDashboard}
 			>
@@ -341,12 +356,12 @@
 				{:else}
 					<RefreshIcon class="h-4 w-4 text-brand-700" />
 				{/if}
-				Refresh
+				{t('common.refresh')}
 			</button>
 		</header>
 
 		{#if featured.length === 0}
-			<EmptyState message="No upcoming sessions yet. Check back soon or browse clubs below." />
+			<EmptyState message={t('home.featured.empty')} />
 		{:else}
 			<div class="grid grid-cols-1 gap-3">
 				{#each featured as session (session.id)}
@@ -366,7 +381,7 @@
 							{#if session.status === 'in_progress'}
 								<SessionLiveTimers startAt={session.start_at} endAt={session.end_at} class="mb-1" />
 								{#if shouldShowInProgressJoinRemark(session)}
-									<p class="text-xs text-sky-700">{SESSION_IN_PROGRESS_JOIN_REMARK}</p>
+									<p class="text-xs text-sky-700">{sessionInProgressJoinRemark()}</p>
 								{/if}
 							{:else if session.status === 'open'}
 								<SessionStartCountdown
@@ -384,10 +399,8 @@
 
 		<ActionRowLink
 			href="/sessions"
-			title="Browse all sessions"
-			description={hasMoreSessions
-				? `View all ${joinableSessionCount} joinable sessions`
-				: 'See the full sessions list'}
+			title={t('home.featured.browseAll')}
+			description={browseAllSessionsDesc}
 			icon={CalendarDaysIcon}
 			accent="indigo"
 		/>
@@ -402,7 +415,7 @@
 		</header>
 
 		{#if clubs.length === 0}
-			<EmptyState message="No active clubs yet. Check back later." />
+			<EmptyState message={t('home.clubs.empty')} />
 		{:else}
 			<div class="grid grid-cols-2 gap-3">
 				{#each previewClubs as club (club.id)}
@@ -410,7 +423,7 @@
 					<DashboardTile
 						title={club.name}
 						description={isRichTextEmpty(club.description)
-							? 'Tap to view club and sessions'
+							? t('home.clubs.tapToView')
 							: richTextExcerpt(club.description)}
 						icon={UserGroupIcon}
 						accent="indigo"
@@ -430,8 +443,8 @@
 				>
 					<DashboardIcon icon={UserGroupIcon} accent="indigo" />
 					<div class="min-w-0 flex-1">
-						<p class="font-semibold text-slate-900 dark:text-slate-100">View all clubs</p>
-						<p class="text-sm leading-snug text-slate-500 dark:text-slate-400 dark:text-slate-500">See all {clubs.length} clubs</p>
+						<p class="font-semibold text-slate-900 dark:text-slate-100">{t('home.clubs.viewAll')}</p>
+						<p class="text-sm leading-snug text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('home.clubs.viewAllDesc', { count: clubs.length })}</p>
 					</div>
 					<span class="app-action-row-arrow" aria-hidden="true">→</span>
 				</button>

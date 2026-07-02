@@ -1,3 +1,4 @@
+import { tForLocale } from '$lib/i18n';
 import { resolveEffectiveAppRole } from '$lib/server/adminDashboardMode';
 import { assertCanManageClub } from '$lib/server/clubAccess';
 import {
@@ -34,19 +35,19 @@ export const load: PageServerLoad = async ({
 	params,
 	cookies,
 	depends,
-	locals: { supabase, user, appRole }
+	locals: { supabase, user, appRole, locale }
 }) => {
 	depends('app:session-match-control');
 
 	if (!user || !appRole) {
-		error(401, 'Sign in required');
+		error(401, tForLocale(locale, 'auth.error.signInRequired'));
 	}
 
 	await sweepStartedSessions(supabase);
 
 	const session = await loadSessionDetail(supabase, params.id);
 	if (!session) {
-		error(404, 'Session not found');
+		error(404, tForLocale(locale, 'errors.sessionNotFound'));
 	}
 
 	const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
@@ -54,7 +55,7 @@ export const load: PageServerLoad = async ({
 	try {
 		await assertCanManageClub(supabase, user.id, session.club_id, effectiveAppRole);
 	} catch {
-		error(403, 'Club admin access required');
+		error(403, tForLocale(locale, 'errors.clubAdminRequired'));
 	}
 
 	if (session.status !== 'in_progress') {
@@ -65,7 +66,7 @@ export const load: PageServerLoad = async ({
 
 	const match = await loadMatchDetail(supabase, params.matchId);
 	if (!match || match.session_id !== session.id) {
-		error(404, 'Match not found');
+		error(404, tForLocale(locale, 'errors.matchNotFound'));
 	}
 
 	if (!['active', 'suspended', 'score_pending'].includes(match.status)) {
@@ -76,9 +77,9 @@ export const load: PageServerLoad = async ({
 };
 
 export const actions = {
-	addShuttle: async ({ params, locals: { supabase, user, appRole } }) => {
+	addShuttle: async ({ params, locals: { supabase, user, appRole, locale } }) => {
 		if (!user || !appRole) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const result = await addMatchShuttle(supabase, params.matchId);
@@ -86,12 +87,12 @@ export const actions = {
 			return fail(400, { message: result.message });
 		}
 
-		return { success: true, message: 'Shuttle added.' };
+		return { success: true, message: tForLocale(locale, 'match.action.shuttleAdded') };
 	},
 
-	endNoScore: async ({ params, locals: { supabase, user, appRole } }) => {
+	endNoScore: async ({ params, locals: { supabase, user, appRole, locale } }) => {
 		if (!user || !appRole) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const result = await endMatchNoScore(supabase, params.matchId);
@@ -102,14 +103,14 @@ export const actions = {
 		redirect(303, `/sessions/${params.id}/control`);
 	},
 
-	endWithScore: async ({ params, request, locals: { supabase, user, appRole } }) => {
+	endWithScore: async ({ params, request, locals: { supabase, user, appRole, locale } }) => {
 		if (!user || !appRole) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const games = readMatchGames(await request.formData());
 		if (!games?.length) {
-			return fail(400, { message: 'Score is required' });
+			return fail(400, { message: tForLocale(locale, 'match.action.scoreRequired') });
 		}
 
 		const result = await endMatchWithScore(supabase, params.matchId, games);
@@ -120,14 +121,14 @@ export const actions = {
 		redirect(303, `/sessions/${params.id}/control`);
 	},
 
-	resolveScore: async ({ params, request, locals: { supabase, user, appRole } }) => {
+	resolveScore: async ({ params, request, locals: { supabase, user, appRole, locale } }) => {
 		if (!user || !appRole) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const games = readMatchGames(await request.formData());
 		if (!games?.length) {
-			return fail(400, { message: 'Score is required' });
+			return fail(400, { message: tForLocale(locale, 'match.action.scoreRequired') });
 		}
 
 		const result = await resolveMatchScore(supabase, params.matchId, games);

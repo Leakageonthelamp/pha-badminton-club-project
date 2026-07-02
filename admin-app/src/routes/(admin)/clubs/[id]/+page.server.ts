@@ -1,3 +1,4 @@
+import { tForLocale } from '$lib/i18n';
 import {
 	assertCanManageClub,
 	assertSuperAdmin
@@ -11,14 +12,14 @@ import { buildProfileSearchOrFilter } from '$lib/server/profileSearch';
 import { sanitizeRichText } from '$lib/server/sanitizeHtml';
 import { CLUB_DELETE_CONFIRM_PHRASE } from '$lib/config/club';
 import type { ClubShuttle } from '$lib/types/club';
-import { clubInputSchema } from '$lib/validation/club';
+import { buildClubInputSchema } from '$lib/validation/club';
 import {
-	clubAdminClubInputSchema,
-	locationInputSchema,
-	promptPayInputSchema,
-	shuttleDeleteSchema,
-	shuttleInputSchema,
-	shuttleUpdateSchema
+	buildClubAdminClubInputSchema,
+	buildLocationInputSchema,
+	buildPromptPayInputSchema,
+	buildShuttleDeleteSchema,
+	buildShuttleInputSchema,
+	buildShuttleUpdateSchema
 } from '$lib/validation/clubSettings';
 import type { Profile } from '$lib/types/auth';
 import { error, fail, redirect } from '@sveltejs/kit';
@@ -140,10 +141,10 @@ export const load: PageServerLoad = async ({
 	params,
 	url,
 	cookies,
-	locals: { supabase, user, appRole }
+	locals: { supabase, user, appRole, locale }
 }) => {
 	if (!user || !appRole) {
-		error(401, 'Sign in required');
+		error(401, tForLocale(locale, 'auth.error.signInRequired'));
 	}
 
 	const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
@@ -220,9 +221,9 @@ export const load: PageServerLoad = async ({
 };
 
 export const actions: Actions = {
-	update: async ({ request, params, cookies, locals: { supabase, user, appRole } }) => {
+	update: async ({ request, params, cookies, locals: { supabase, user, appRole, locale } }) => {
 		if (!user || !appRole) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
@@ -231,7 +232,7 @@ export const actions: Actions = {
 		const formData = await request.formData();
 
 		if (effectiveAppRole === 'club_admin') {
-			const parsed = clubAdminClubInputSchema.safeParse({
+			const parsed = buildClubAdminClubInputSchema(locale).safeParse({
 				name: formData.get('name'),
 				description: formData.get('description') ?? ''
 			});
@@ -239,7 +240,7 @@ export const actions: Actions = {
 			if (!parsed.success) {
 				const fieldErrors = parsed.error.flatten().fieldErrors;
 				return fail(400, {
-					message: Object.values(fieldErrors).flat()[0] ?? 'Invalid input',
+					message: Object.values(fieldErrors).flat()[0] ?? tForLocale(locale, 'errors.invalidInput'),
 					error: fieldErrors
 				});
 			}
@@ -254,13 +255,13 @@ export const actions: Actions = {
 
 			if (updateError) {
 				console.error('Failed to update club', updateError);
-				return fail(500, { message: 'Could not update club. Please try again.' });
+				return fail(500, { message: tForLocale(locale, 'clubs.action.updateFailed') });
 			}
 
-			return { success: true, message: 'Club updated.' };
+			return { success: true, message: tForLocale(locale, 'clubs.action.updated') };
 		}
 
-		const parsed = clubInputSchema.safeParse({
+		const parsed = buildClubInputSchema(locale).safeParse({
 			name: formData.get('name'),
 			description: formData.get('description') ?? '',
 			max_active_sessions: formData.get('max_active_sessions'),
@@ -271,7 +272,7 @@ export const actions: Actions = {
 		if (!parsed.success) {
 			const fieldErrors = parsed.error.flatten().fieldErrors;
 			return fail(400, {
-				message: Object.values(fieldErrors).flat()[0] ?? 'Invalid input',
+				message: Object.values(fieldErrors).flat()[0] ?? tForLocale(locale, 'errors.invalidInput'),
 				error: fieldErrors
 			});
 		}
@@ -283,12 +284,14 @@ export const actions: Actions = {
 
 		if (countError) {
 			console.error('Failed to count club admins', countError);
-			return fail(500, { message: 'Could not update club. Please try again.' });
+			return fail(500, { message: tForLocale(locale, 'clubs.action.updateFailed') });
 		}
 
 		if ((assignedCount ?? 0) > parsed.data.max_admins) {
 			return fail(400, {
-				message: `Max admins cannot be below current assignments (${assignedCount}). Remove admins first.`
+				message: tForLocale(locale, 'clubs.action.maxAdminsBelowAssignments', {
+					count: assignedCount ?? 0
+				})
 			});
 		}
 
@@ -306,25 +309,25 @@ export const actions: Actions = {
 		if (updateError) {
 			console.error('Failed to update club', updateError);
 			return fail(500, {
-				message: 'Could not update club. Please try again.',
+				message: tForLocale(locale, 'clubs.action.updateFailed'),
 				error: {},
 				values: parsed.data
 			});
 		}
 
-		return { success: true, message: 'Club updated.' };
+		return { success: true, message: tForLocale(locale, 'clubs.action.updated') };
 	},
 
-	updatePromptPay: async ({ request, params, cookies, locals: { supabase, user, appRole } }) => {
+	updatePromptPay: async ({ request, params, cookies, locals: { supabase, user, appRole, locale } }) => {
 		if (!user || !appRole) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
 		await assertCanManageClub(supabase, user.id, params.id, effectiveAppRole);
 
 		const formData = await request.formData();
-		const parsed = promptPayInputSchema.safeParse({
+		const parsed = buildPromptPayInputSchema(locale).safeParse({
 			clear: formData.get('clear'),
 			promptpay_type: formData.get('promptpay_type') || undefined,
 			promptpay_target: String(formData.get('promptpay_target') ?? '')
@@ -333,7 +336,7 @@ export const actions: Actions = {
 		if (!parsed.success) {
 			const fieldErrors = parsed.error.flatten().fieldErrors;
 			return fail(400, {
-				message: Object.values(fieldErrors).flat()[0] ?? 'Invalid PromptPay info',
+				message: Object.values(fieldErrors).flat()[0] ?? tForLocale(locale, 'errors.invalidPromptPayInfo'),
 				error: fieldErrors
 			});
 		}
@@ -349,22 +352,22 @@ export const actions: Actions = {
 
 		if (updateError) {
 			console.error('Failed to update PromptPay', updateError);
-			return fail(500, { message: 'Could not save PromptPay info. Please try again.' });
+			return fail(500, { message: tForLocale(locale, 'clubs.action.promptPaySaveFailed') });
 		}
 
-		return { success: true, message: 'PromptPay info saved.' };
+		return { success: true, message: tForLocale(locale, 'clubs.action.promptPaySaved') };
 	},
 
-	updateLocation: async ({ request, params, cookies, locals: { supabase, user, appRole } }) => {
+	updateLocation: async ({ request, params, cookies, locals: { supabase, user, appRole, locale } }) => {
 		if (!user || !appRole) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
 		await assertCanManageClub(supabase, user.id, params.id, effectiveAppRole);
 
 		const formData = await request.formData();
-		const parsed = locationInputSchema.safeParse({
+		const parsed = buildLocationInputSchema(locale).safeParse({
 			clear: formData.get('clear'),
 			venue_name: formData.get('venue_name'),
 			latitude: formData.get('latitude'),
@@ -374,7 +377,7 @@ export const actions: Actions = {
 		if (!parsed.success) {
 			const fieldErrors = parsed.error.flatten().fieldErrors;
 			return fail(400, {
-				message: Object.values(fieldErrors).flat()[0] ?? 'Invalid location',
+				message: Object.values(fieldErrors).flat()[0] ?? tForLocale(locale, 'errors.invalidLocation'),
 				error: fieldErrors
 			});
 		}
@@ -391,22 +394,22 @@ export const actions: Actions = {
 
 		if (updateError) {
 			console.error('Failed to update location', updateError);
-			return fail(500, { message: 'Could not save location. Please try again.' });
+			return fail(500, { message: tForLocale(locale, 'clubs.action.locationSaveFailed') });
 		}
 
-		return { success: true, message: 'Location saved.' };
+		return { success: true, message: tForLocale(locale, 'clubs.action.locationSaved') };
 	},
 
-	createShuttle: async ({ request, params, cookies, locals: { supabase, user, appRole } }) => {
+	createShuttle: async ({ request, params, cookies, locals: { supabase, user, appRole, locale } }) => {
 		if (!user || !appRole) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
 		await assertCanManageClub(supabase, user.id, params.id, effectiveAppRole);
 
 		const formData = await request.formData();
-		const parsed = shuttleInputSchema.safeParse({
+		const parsed = buildShuttleInputSchema(locale).safeParse({
 			name: formData.get('name'),
 			speed: formData.get('speed'),
 			price: formData.get('price'),
@@ -416,7 +419,7 @@ export const actions: Actions = {
 		if (!parsed.success) {
 			const fieldErrors = parsed.error.flatten().fieldErrors;
 			return fail(400, {
-				message: Object.values(fieldErrors).flat()[0] ?? 'Invalid shuttle input',
+				message: Object.values(fieldErrors).flat()[0] ?? tForLocale(locale, 'errors.invalidShuttleInput'),
 				error: fieldErrors
 			});
 		}
@@ -428,26 +431,26 @@ export const actions: Actions = {
 
 		if (insertError) {
 			if (insertError.code === '23505') {
-				return fail(400, { message: 'A shuttle with this name and speed already exists.' });
+				return fail(400, { message: tForLocale(locale, 'clubs.action.shuttleDuplicate') });
 			}
 
 			console.error('Failed to create shuttle', insertError);
-			return fail(500, { message: 'Could not add shuttle. Please try again.' });
+			return fail(500, { message: tForLocale(locale, 'clubs.action.shuttleAddFailed') });
 		}
 
-		return { success: true, message: 'Shuttle added.' };
+		return { success: true, message: tForLocale(locale, 'clubs.action.shuttleAdded') };
 	},
 
-	updateShuttle: async ({ request, params, cookies, locals: { supabase, user, appRole } }) => {
+	updateShuttle: async ({ request, params, cookies, locals: { supabase, user, appRole, locale } }) => {
 		if (!user || !appRole) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
 		await assertCanManageClub(supabase, user.id, params.id, effectiveAppRole);
 
 		const formData = await request.formData();
-		const parsed = shuttleUpdateSchema.safeParse({
+		const parsed = buildShuttleUpdateSchema(locale).safeParse({
 			shuttleId: formData.get('shuttleId'),
 			name: formData.get('name'),
 			speed: formData.get('speed'),
@@ -458,7 +461,7 @@ export const actions: Actions = {
 		if (!parsed.success) {
 			const fieldErrors = parsed.error.flatten().fieldErrors;
 			return fail(400, {
-				message: Object.values(fieldErrors).flat()[0] ?? 'Invalid shuttle input',
+				message: Object.values(fieldErrors).flat()[0] ?? tForLocale(locale, 'errors.invalidShuttleInput'),
 				error: fieldErrors
 			});
 		}
@@ -472,31 +475,31 @@ export const actions: Actions = {
 
 		if (updateError) {
 			if (updateError.code === '23505') {
-				return fail(400, { message: 'A shuttle with this name and speed already exists.' });
+				return fail(400, { message: tForLocale(locale, 'clubs.action.shuttleDuplicate') });
 			}
 
 			console.error('Failed to update shuttle', updateError);
-			return fail(500, { message: 'Could not update shuttle. Please try again.' });
+			return fail(500, { message: tForLocale(locale, 'clubs.action.shuttleUpdateFailed') });
 		}
 
-		return { success: true, message: 'Shuttle updated.' };
+		return { success: true, message: tForLocale(locale, 'clubs.action.shuttleUpdated') };
 	},
 
-	deleteShuttle: async ({ request, params, cookies, locals: { supabase, user, appRole } }) => {
+	deleteShuttle: async ({ request, params, cookies, locals: { supabase, user, appRole, locale } }) => {
 		if (!user || !appRole) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
 		await assertCanManageClub(supabase, user.id, params.id, effectiveAppRole);
 
 		const formData = await request.formData();
-		const parsed = shuttleDeleteSchema.safeParse({
+		const parsed = buildShuttleDeleteSchema(locale).safeParse({
 			shuttleId: formData.get('shuttleId')
 		});
 
 		if (!parsed.success) {
-			return fail(400, { message: 'Invalid shuttle selected' });
+			return fail(400, { message: tForLocale(locale, 'errors.invalidShuttleSelected') });
 		}
 
 		const { error: deleteError } = await supabase
@@ -507,37 +510,37 @@ export const actions: Actions = {
 
 		if (deleteError) {
 			console.error('Failed to delete shuttle', deleteError);
-			return fail(500, { message: 'Could not delete shuttle. Please try again.' });
+			return fail(500, { message: tForLocale(locale, 'clubs.action.shuttleDeleteFailed') });
 		}
 
-		return { success: true, message: 'Shuttle removed.' };
+		return { success: true, message: tForLocale(locale, 'clubs.action.shuttleRemoved') };
 	},
 
-	delete: async ({ request, params, locals: { supabase, appRole } }) => {
+	delete: async ({ request, params, locals: { supabase, appRole, locale } }) => {
 		assertSuperAdmin(appRole);
 
 		const formData = await request.formData();
 		const confirmText = String(formData.get('confirmText') ?? '').trim();
 
 		if (confirmText !== CLUB_DELETE_CONFIRM_PHRASE) {
-			return fail(400, { message: `Type "${CLUB_DELETE_CONFIRM_PHRASE}" to confirm deletion.` });
+			return fail(400, { message: tForLocale(locale, 'clubs.action.deleteConfirmRequired', { phrase: CLUB_DELETE_CONFIRM_PHRASE }) });
 		}
 
 		const { error: deleteError } = await supabase.from('clubs').delete().eq('id', params.id);
 
 		if (deleteError) {
 			console.error('Failed to delete club', deleteError);
-			return fail(500, { message: 'Could not delete club. Please try again.' });
+			return fail(500, { message: tForLocale(locale, 'clubs.action.deleteFailed') });
 		}
 
 		redirect(303, '/?deleted=1');
 	},
 
-	assign: async ({ request, params, locals: { supabase, user, appRole } }) => {
+	assign: async ({ request, params, locals: { supabase, user, appRole, locale } }) => {
 		assertSuperAdmin(appRole);
 
 		if (!user) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const formData = await request.formData();
@@ -546,7 +549,7 @@ export const actions: Actions = {
 		});
 
 		if (!parsed.success) {
-			return fail(400, { message: 'Invalid user selected' });
+			return fail(400, { message: tForLocale(locale, 'errors.invalidRequest') });
 		}
 
 		const { data: club, error: clubError } = await supabase
@@ -556,7 +559,7 @@ export const actions: Actions = {
 			.single();
 
 		if (clubError || !club) {
-			return fail(404, { message: 'Club not found' });
+			return fail(404, { message: tForLocale(locale, 'errors.clubNotFound') });
 		}
 
 		const { count: assignedCount, error: countError } = await supabase
@@ -566,12 +569,12 @@ export const actions: Actions = {
 
 		if (countError) {
 			console.error('Failed to count club admins', countError);
-			return fail(500, { message: 'Could not assign club admin. Please try again.' });
+			return fail(500, { message: tForLocale(locale, 'clubs.action.assignFailed') });
 		}
 
 		if ((assignedCount ?? 0) >= club.max_admins) {
 			return fail(400, {
-				message: `This club already has the maximum of ${club.max_admins} admins`
+				message: tForLocale(locale, 'clubs.action.maxAdmins', { max: club.max_admins })
 			});
 		}
 
@@ -582,7 +585,7 @@ export const actions: Actions = {
 			.single();
 
 		if (targetError || !target) {
-			return fail(404, { message: 'User not found' });
+			return fail(404, { message: tForLocale(locale, 'errors.userNotFound') });
 		}
 
 		const { count: existingMembershipCount, error: membershipError } = await supabase
@@ -593,11 +596,11 @@ export const actions: Actions = {
 
 		if (membershipError) {
 			console.error('Failed to check existing club admin membership', membershipError);
-			return fail(500, { message: 'Could not assign club admin. Please try again.' });
+			return fail(500, { message: tForLocale(locale, 'clubs.action.assignFailed') });
 		}
 
 		if ((existingMembershipCount ?? 0) > 0) {
-			return fail(400, { message: 'User is already a club admin for this club' });
+			return fail(400, { message: tForLocale(locale, 'clubs.action.alreadyAdmin') });
 		}
 
 		const { error: insertError } = await supabase.from('club_admins').insert({
@@ -608,17 +611,17 @@ export const actions: Actions = {
 
 		if (insertError) {
 			if (insertError.code === '23505') {
-				return fail(400, { message: 'User is already a club admin for this club' });
+				return fail(400, { message: tForLocale(locale, 'clubs.action.alreadyAdmin') });
 			}
 
 			console.error('Failed to assign club admin', insertError);
-			return fail(500, { message: 'Could not assign club admin. Please try again.' });
+			return fail(500, { message: tForLocale(locale, 'clubs.action.assignFailed') });
 		}
 
-		return { success: true, message: 'Club admin assigned.' };
+		return { success: true, message: tForLocale(locale, 'clubs.action.adminAssigned') };
 	},
 
-	remove: async ({ request, params, locals: { supabase, appRole } }) => {
+	remove: async ({ request, params, locals: { supabase, appRole, locale } }) => {
 		assertSuperAdmin(appRole);
 
 		const formData = await request.formData();
@@ -627,7 +630,7 @@ export const actions: Actions = {
 		});
 
 		if (!parsed.success) {
-			return fail(400, { message: 'Invalid user selected' });
+			return fail(400, { message: tForLocale(locale, 'errors.invalidRequest') });
 		}
 
 		const { error: removeError } = await supabase
@@ -638,9 +641,9 @@ export const actions: Actions = {
 
 		if (removeError) {
 			console.error('Failed to remove club admin', removeError);
-			return fail(500, { message: 'Could not remove club admin. Please try again.' });
+			return fail(500, { message: tForLocale(locale, 'clubs.action.removeAdminFailed') });
 		}
 
-		return { success: true, message: 'Club admin removed.' };
+		return { success: true, message: tForLocale(locale, 'clubs.action.adminRemoved') };
 	}
 };

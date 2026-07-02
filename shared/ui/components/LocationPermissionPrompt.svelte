@@ -1,5 +1,6 @@
 <script lang="ts">
 	import SubmitButton from './SubmitButton.svelte';
+	import { t } from '../i18n/i18n.svelte';
 	import {
 		getLocationAccessState,
 		locationFailureMessage,
@@ -9,8 +10,8 @@
 	} from '../geolocation';
 
 	let {
-		title = 'Location is required',
-		description = 'Allow location access so we can show nearby clubs and help you set venues on the map.'
+		title,
+		description
 	}: {
 		title?: string;
 		description?: string;
@@ -20,6 +21,9 @@
 	let loading = $state(false);
 	let errorMessage = $state<string | null>(null);
 	let infoMessage = $state<string | null>(null);
+
+	const resolvedTitle = $derived(title ?? t('location.requiredTitle'));
+	const resolvedDescription = $derived(description ?? t('location.requiredBody'));
 
 	$effect(() => {
 		if (typeof window === 'undefined') return;
@@ -62,8 +66,10 @@
 {:else if accessState === 'prompt'}
 	<div class="app-location-prompt">
 		<div class="min-w-0">
-			<p class="font-medium text-slate-900 dark:text-slate-100">{title}</p>
-			<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{description}</p>
+			<p class="font-medium text-slate-900 dark:text-slate-100">{resolvedTitle}</p>
+			<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
+				{resolvedDescription}
+			</p>
 			{#if errorMessage}
 				<p class="mt-2 text-sm text-amber-800">{errorMessage}</p>
 			{/if}
@@ -72,35 +78,34 @@
 			type="button"
 			class="!w-auto shrink-0 !py-2.5 !text-sm"
 			loading={loading}
-			loadingLabel="Locating…"
+			loadingLabel={t('location.locating')}
 			onclick={enableLocation}
 		>
-			Use current location
+			{t('location.useCurrentLocation')}
 		</SubmitButton>
 	</div>
 {:else if accessState === 'denied'}
 	<div class="app-location-prompt app-location-prompt--warning">
-		<p class="text-sm font-medium text-amber-900">Location access is turned off</p>
+		<p class="text-sm font-medium text-amber-900">{t('location.offTitle')}</p>
 		<p class="mt-1 text-sm text-amber-800">
-			{errorMessage ??
-				'This app needs your location to work properly. Enable it in your browser or device settings, then tap below.'}
+			{errorMessage ?? t('location.deniedBody')}
 		</p>
 		<SubmitButton
 			type="button"
 			variant="secondary"
 			class="mt-3 !w-auto !py-2.5 !text-sm"
 			loading={loading}
-			loadingLabel="Locating…"
+			loadingLabel={t('location.locating')}
 			onclick={enableLocation}
 		>
-			Try again
+			{t('location.tryAgain')}
 		</SubmitButton>
 	</div>
 {:else if accessState === 'unsupported'}
 	<div class="app-location-prompt app-location-prompt--warning">
-		<p class="text-sm font-medium text-amber-900">Location not available</p>
+		<p class="text-sm font-medium text-amber-900">{t('location.unavailableTitle')}</p>
 		<p class="mt-1 text-sm text-amber-800">
-			{errorMessage ?? 'This browser does not support location services.'}
+			{errorMessage ?? t('location.unavailableBody')}
 		</p>
 	</div>
 {/if}

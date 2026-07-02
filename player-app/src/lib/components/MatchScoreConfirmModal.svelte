@@ -3,9 +3,8 @@
 	import AppModal from '@repo/ui/components/AppModal.svelte';
 	import MatchScoreDisplay from '@repo/ui/components/MatchScoreDisplay.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
-	import {
-		splitTeams
-	} from '@repo/ui/matches';
+	import { t } from '@repo/ui/i18n';
+	import { splitTeams } from '@repo/ui/matches';
 	import type { MatchWithDetails } from '$lib/types/match';
 	import type { SubmitFunction } from '@sveltejs/kit';
 
@@ -45,9 +44,9 @@
 		}))
 	);
 	const submitterName = $derived.by(() => {
-		if (!match?.score_submitted_by) return 'A teammate';
+		if (!match?.score_submitted_by) return t('matches.scoreConfirm.teammateFallback');
 		const submitter = match.players.find((player) => player.user_id === match.score_submitted_by);
-		return submitter?.profile?.display_name ?? 'A teammate';
+		return submitter?.profile?.display_name ?? t('matches.scoreConfirm.teammateFallback');
 	});
 </script>
 
@@ -60,21 +59,22 @@
 	>
 		<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
 			<div class="app-surface-header border-sky-200 px-4 py-5 dark:border-sky-800">
-				<p class="text-xs font-semibold uppercase tracking-wide text-sky-700">Score check</p>
+				<p class="text-xs font-semibold uppercase tracking-wide text-sky-700">{t('matches.scoreConfirm.eyebrow')}</p>
 				<h2 id="score-confirm-title" class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
-					Confirm match result
+					{t('matches.scoreConfirm.title')}
 				</h2>
 				<p class="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400 dark:text-slate-500">
-					<span class="font-medium text-slate-800 dark:text-slate-200">{submitterName}</span> logged this score for
-					<span class="font-medium text-slate-800 dark:text-slate-200">court {match.court_number}</span>. Accept if it
-					matches what you played — reject only if the numbers are wrong.
+					{t('matches.scoreConfirm.body', {
+						submitterName,
+						court: match.court_number
+					})}
 				</p>
 			</div>
 
 			<div class="p-4">
 				{#if viewerTeam}
 					<p class="mb-3 text-sm font-medium text-brand-800">
-						Your team is highlighted on the scoreboard below.
+						{t('matches.scoreConfirm.highlightHint')}
 					</p>
 				{/if}
 				<MatchScoreDisplay
@@ -94,11 +94,11 @@
 					<SubmitButton
 						variant="secondary"
 						loading={actionLoading === 'rejectScore'}
-						loadingLabel="Rejecting…"
+						loadingLabel={t('common.rejecting')}
 						disabled={isBusy && actionLoading !== 'rejectScore'}
 						class="!w-full"
 					>
-						Reject score
+						{t('matches.live.rejectScore')}
 					</SubmitButton>
 				</form>
 				<form method="POST" action={formAction} use:enhance={handleAction('acceptScore')}>
@@ -106,11 +106,11 @@
 					<input type="hidden" name="accept" value="true" />
 					<SubmitButton
 						loading={actionLoading === 'acceptScore'}
-						loadingLabel="Accepting…"
+						loadingLabel={t('common.accepting')}
 						disabled={isBusy && actionLoading !== 'acceptScore'}
 						class="!w-full"
 					>
-						Accept score
+						{t('matches.live.acceptScore')}
 					</SubmitButton>
 				</form>
 			</div>

@@ -11,6 +11,7 @@
 	import { formatThb } from '@repo/ui/payments';
 	import SlipPreviewButton from '@repo/ui/components/SlipPreviewButton.svelte';
 	import SlipPreviewModal from '@repo/ui/components/SlipPreviewModal.svelte';
+	import { t } from '@repo/ui/i18n';
 	import type { PlayerTransaction, PlayerTransactionPage } from '$lib/types/transaction';
 	import { slipPreviewUrl } from '$lib/slips';
 	import {
@@ -63,7 +64,7 @@
 		(transaction.filter_status === 'pending' || transaction.filter_status === 'submitted');
 
 	const kindShort = (kind: PlayerTransaction['kind']): string =>
-		kind === 'session_fee' ? 'Session' : 'Late cancel';
+		kind === 'session_fee' ? t('transactions.kindSession') : t('transactions.kindLateCancel');
 
 	const metaLine = (transaction: PlayerTransaction): string =>
 		`${transaction.club_name} · ${kindShort(transaction.kind)} · ${formatDate(transaction.session_start_at)}`;
@@ -89,7 +90,7 @@
 		</div>
 		{#if canPreviewSlip(transaction)}
 			<SlipPreviewButton
-				label="Slip"
+				label={t('payments.slip.preview')}
 				onclick={() => (slipPreviewPath = transaction.slip_path)}
 			/>
 		{/if}
@@ -98,31 +99,31 @@
 
 <AppCard class="space-y-3">
 	<div class="flex items-baseline justify-between gap-3">
-		<h2 class="font-medium text-slate-900 dark:text-slate-100">Payment history</h2>
+		<h2 class="font-medium text-slate-900 dark:text-slate-100">{t('transactions.title')}</h2>
 		{#if !isFetching && transactions.totalCount > 0}
-			<span class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">{transactions.totalCount} total</span>
+			<span class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('common.total', { count: transactions.totalCount })}</span>
 		{/if}
 	</div>
 
 	<form method="GET" action="/profile" class="app-filter-row">
-		<DatePicker id="tx-date" label="Date" variant="filter" bind:value={dateFilter} />
+		<DatePicker id="tx-date" label={t('common.date')} variant="filter" bind:value={dateFilter} />
 		<input type="hidden" name="txDate" value={dateFilter} />
 		<div class="min-w-0">
 			<SelectMenu
 				id="tx-status"
-				label="Status"
-				options={transactionStatusFilterOptions}
+				label={t('common.status')}
+				options={transactionStatusFilterOptions()}
 				bind:value={statusFilter}
 			/>
 			<input type="hidden" name="txStatus" value={statusFilter} />
 		</div>
 		<div class="app-filter-submit-wrap">
-			<span class="app-filter-label invisible" aria-hidden="true">Filter</span>
+			<span class="app-filter-label invisible" aria-hidden="true">{t('common.filter')}</span>
 			<button
 				type="submit"
 				class="app-filter-submit"
-				aria-label="Filter transactions"
-				title="Filter"
+				aria-label={t('transactions.filterAria')}
+				title={t('common.filter')}
 				disabled={isFetching}
 				aria-busy={isFetching}
 			>
@@ -140,12 +141,12 @@
 
 	{#if hasActiveFilters && !isFetching}
 		<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-			Filtered
+			{t('common.filtered')}
 			{#if transactions.date}
 				· {transactions.date}
 			{/if}
 			{#if transactions.statusFilter}
-				· {transactionStatusFilterOptions.find((option) => option.value === transactions.statusFilter)?.label ??
+				· {transactionStatusFilterOptions().find((option) => option.value === transactions.statusFilter)?.label ??
 					transactions.statusFilter}
 			{/if}
 		</p>
@@ -165,23 +166,23 @@
 		>
 			<DashboardIcon icon={isFilteredEmpty ? SearchIcon : BanknotesIcon} accent="indigo" class="mx-auto" />
 			{#if isFilteredEmpty}
-				<p class="mt-3 text-sm font-medium text-slate-900 dark:text-slate-100">No transactions match your filters</p>
+				<p class="mt-3 text-sm font-medium text-slate-900 dark:text-slate-100">{t('transactions.noMatchFilters')}</p>
 				<p class="mx-auto mt-1 max-w-xs text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
-					Try another date or status, or reset to see your full payment history.
+					{t('transactions.noMatchFiltersHint')}
 				</p>
 				<a href="/profile" class="mt-4 inline-flex text-sm font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800">
-					Clear filters
+					{t('common.clearFilters')}
 				</a>
 			{:else}
-				<p class="mt-3 text-sm font-medium text-slate-900 dark:text-slate-100">No payments yet</p>
+				<p class="mt-3 text-sm font-medium text-slate-900 dark:text-slate-100">{t('transactions.empty')}</p>
 				<p class="mx-auto mt-1 max-w-xs text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
-					Session fees and late-cancellation charges show up here after you join a game.
+					{t('transactions.emptyHint')}
 				</p>
 				<a
 					href="/sessions"
 					class="mt-4 inline-flex text-sm font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800"
 				>
-					Browse sessions →
+					{t('transactions.browseSessions')}
 				</a>
 			{/if}
 		</div>

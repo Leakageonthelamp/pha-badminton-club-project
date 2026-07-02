@@ -1,3 +1,5 @@
+import { t, tForLocale, type Locale } from './i18n/i18n.svelte';
+
 export type MatchStatus =
 	| 'pending'
 	| 'active'
@@ -36,20 +38,21 @@ export type MatchGameLike = {
 	team_b_score: number;
 };
 
-export const matchStatusLabel = (status: MatchStatus): string => {
+export const matchStatusLabel = (status: MatchStatus, locale?: Locale): string => {
+	const tr = (key: string) => (locale ? tForLocale(locale, key) : t(key));
 	switch (status) {
 		case 'pending':
-			return 'Inviting';
+			return tr('match.inviting');
 		case 'active':
-			return 'Playing';
+			return tr('match.playing');
 		case 'score_pending':
-			return 'Confirming score';
+			return tr('match.confirmingScore');
 		case 'suspended':
-			return 'Suspended';
+			return tr('match.suspended');
 		case 'completed':
-			return 'Completed';
+			return tr('match.completed');
 		case 'cancelled':
-			return 'Cancelled';
+			return tr('match.cancelled');
 		default:
 			return status;
 	}
@@ -76,16 +79,18 @@ export const matchStatusBadgeClass = (status: MatchStatus): string => {
 
 export const matchScoreResponseLabel = (
 	response: MatchScoreResponse,
-	isSubmitter = false
+	isSubmitter = false,
+	locale?: Locale
 ): string => {
-	if (isSubmitter) return 'Submitted';
+	const tr = (key: string) => (locale ? tForLocale(locale, key) : t(key));
+	if (isSubmitter) return tr('match.submitted');
 	switch (response) {
 		case 'accepted':
-			return 'Accepted';
+			return tr('match.accepted');
 		case 'rejected':
-			return 'Rejected';
+			return tr('match.rejected');
 		default:
-			return 'Waiting';
+			return tr('match.waiting');
 	}
 };
 
@@ -169,8 +174,16 @@ export const playerMatchResult = (
 	return team === winner ? 'win' : 'lose';
 };
 
-export const formatMatchRecord = (wins: number, losses: number, draws: number): string =>
-	`${wins}W · ${losses}L · ${draws}D`;
+export const formatMatchRecord = (
+	wins: number,
+	losses: number,
+	draws: number,
+	locale?: Locale
+): string => {
+	const tr = (key: string, params?: Record<string, string | number>) =>
+		locale ? tForLocale(locale, key, params) : t(key, params);
+	return tr('match.record', { wins, losses, draws });
+};
 
 export const formatMatchScoreForTeam = (games: MatchGameLike[], team: MatchTeam): string =>
 	[...games]
@@ -182,32 +195,43 @@ export const formatMatchScoreForTeam = (games: MatchGameLike[], team: MatchTeam)
 		)
 		.join(', ');
 
-export const courtGridStatusLabel = (status?: MatchStatus | null): string =>
-	status ? matchStatusLabel(status) : 'Idle';
+export const courtGridStatusLabel = (status?: MatchStatus | null, locale?: Locale): string =>
+	status ? matchStatusLabel(status, locale) : (locale ? tForLocale(locale, 'match.courtIdle') : t('match.courtIdle'));
 
 export const isCourtClickable = (status?: MatchStatus | null): boolean => !status;
 
 /** Rally-point game: win at target if opponent below deuce line, or win by 2 after deuce. */
-export const rallyScoreHint = (scoreType: MatchScoreType): string => {
+export const rallyScoreHint = (scoreType: MatchScoreType, locale?: Locale): string => {
 	const deuceLine = scoreType - 1;
-	return `First to ${scoreType} wins if the other team is below ${deuceLine}. At ${deuceLine}-${deuceLine}, play continues until one team leads by 2 (e.g. ${scoreType + 1}-${deuceLine}).`;
+	const tr = (key: string, params?: Record<string, string | number>) =>
+		locale ? tForLocale(locale, key, params) : t(key, params);
+	return tr('match.rallyScoreHint', {
+		target: scoreType,
+		deuceLine,
+		exampleWin: scoreType + 1,
+		exampleLose: deuceLine
+	});
 };
 
 export const validateRallyGameScore = (
 	teamA: number,
 	teamB: number,
-	scoreType: MatchScoreType
+	scoreType: MatchScoreType,
+	locale?: Locale
 ): string | null => {
+	const tr = (key: string, params?: Record<string, string | number>) =>
+		locale ? tForLocale(locale, key, params) : t(key, params);
+
 	if (!Number.isFinite(teamA) || !Number.isFinite(teamB)) {
-		return 'Enter both scores';
+		return tr('match.enterBothScores');
 	}
 
 	if (teamA < 0 || teamB < 0) {
-		return 'Scores cannot be negative';
+		return tr('match.scoresNegative');
 	}
 
 	if (teamA === teamB) {
-		return 'Game cannot be tied';
+		return tr('match.gameTied');
 	}
 
 	const deuceLine = scoreType - 1;
@@ -222,30 +246,34 @@ export const validateRallyGameScore = (
 		return null;
 	}
 
-	return `Invalid ${scoreType}-point game score`;
+	return tr('match.invalidScore', { scoreType });
 };
 
 export const isValidRallyGameScore = (
 	teamA: number,
 	teamB: number,
-	scoreType: MatchScoreType
-): boolean => validateRallyGameScore(teamA, teamB, scoreType) === null;
+	scoreType: MatchScoreType,
+	locale?: Locale
+): boolean => validateRallyGameScore(teamA, teamB, scoreType, locale) === null;
 
 export const validateMatchGames = (
 	games: MatchGameLike[],
 	roundType: MatchRoundType,
-	scoreType: MatchScoreType
+	scoreType: MatchScoreType,
+	locale?: Locale
 ): string | null => {
+	const tr = (key: string, params?: Record<string, string | number>) =>
+		locale ? tForLocale(locale, key, params) : t(key, params);
 	const expected = roundType === 'two_round' ? 2 : 1;
 
 	if (games.length !== expected) {
-		return `Enter ${expected} game score${expected === 1 ? '' : 's'}`;
+		return tr('match.enterGameScores', { count: expected, plural: expected === 1 ? '' : 's' });
 	}
 
 	for (const game of games) {
-		const error = validateRallyGameScore(game.team_a_score, game.team_b_score, scoreType);
+		const error = validateRallyGameScore(game.team_a_score, game.team_b_score, scoreType, locale);
 		if (error) {
-			return `Game ${game.game_no}: ${error}`;
+			return tr('match.gameError', { gameNo: game.game_no, error });
 		}
 	}
 

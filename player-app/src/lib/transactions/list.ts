@@ -44,7 +44,7 @@ export const parseTransactionDateFilter = (value: string | null): string => {
 export const parseTransactionStatusFilter = (
 	value: string | null
 ): PlayerTransactionFilterStatus => {
-	const allowed = new Set(transactionStatusFilterOptions.map((option) => option.value));
+	const allowed = new Set(transactionStatusFilterOptions().map((option) => option.value));
 	return allowed.has(value as PlayerTransactionFilterStatus)
 		? (value as PlayerTransactionFilterStatus)
 		: '';

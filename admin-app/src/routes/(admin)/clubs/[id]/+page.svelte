@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
@@ -69,11 +70,11 @@
 	let editShuttlePerBox = $state('12');
 
 	const isSuperAdmin = $derived(data.isSuperAdmin);
-	const clubHeroEyebrow = $derived(isSuperAdmin ? 'Club management' : 'Club settings');
+	const clubHeroEyebrow = $derived(isSuperAdmin ? t('clubs.detail.managementEyebrow') : t('dashboard.club.clubSettings.title'));
 	const clubHeroSubtitle = $derived(
 		isSuperAdmin
-			? 'Manage club settings and admins.'
-			: 'Configure shuttles, PromptPay, venue, and location.'
+			? t('clubs.detail.managementSubtitle')
+			: t('clubs.detail.settingsSubtitle')
 	);
 
 	const clubDescriptionNotSet = $derived(isRichTextEmpty(data.club.description));
@@ -246,7 +247,7 @@
 		}
 	});
 
-	const toastMessage = $derived(form?.message ?? (data.created ? 'Club created.' : null));
+	const toastMessage = $derived(form?.message ?? (data.created ? t('clubs.created') : null));
 	const toastVariant = $derived(form?.success || data.created ? 'success' : 'error');
 
 	const labelClass = 'mb-2 block text-sm font-medium text-slate-700';
@@ -283,9 +284,9 @@
 <section class="space-y-6">
 	<DashboardHero eyebrow={clubHeroEyebrow} title={data.club.name} subtitle={clubHeroSubtitle}>
 		{#if data.club.is_active}
-			<span class="app-hero-stat app-hero-stat--success">Active</span>
+			<span class="app-hero-stat app-hero-stat--success">{t('dashboard.super.active')}</span>
 		{:else}
-			<span class="app-hero-stat app-hero-stat--warn">Inactive</span>
+			<span class="app-hero-stat app-hero-stat--warn">{t('dashboard.super.inactive')}</span>
 		{/if}
 		<span class="app-hero-stat">
 			{data.admins.length} admin{data.admins.length === 1 ? '' : 's'}
@@ -303,14 +304,14 @@
 		aria-busy={updateLoading}
 	>
 		<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-			<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Club settings</h2>
+			<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('dashboard.club.clubSettings.title')}</h2>
 			{#if clubDescriptionNotSet}
 				<NotSetBadge />
 			{/if}
 		</div>
 
 		<div>
-			<label for="name" class={labelClass}>Club name</label>
+			<label for="name" class={labelClass}>{t('clubs.create.nameLabel')}</label>
 			<div class="relative">
 				{#if updateLoading}
 					<div class="app-skeleton absolute inset-0 z-10 h-[50px]" aria-hidden="true"></div>
@@ -338,7 +339,7 @@
 						name="description"
 						bind:value={description}
 						disabled={updateLoading}
-						label="Description"
+						label={t('clubs.create.descriptionLabel')}
 					/>
 					<p class="mt-2 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 						Up to {CLUB_DESCRIPTION_MAX_LENGTH} characters of visible text.
@@ -349,7 +350,7 @@
 
 		{#if isSuperAdmin}
 		<div>
-			<label for="max_active_sessions" class={labelClass}>Max active sessions</label>
+			<label for="max_active_sessions" class={labelClass}>{t('clubs.create.maxSessionsLabel')}</label>
 			<div class="relative">
 				{#if updateLoading}
 					<div class="app-skeleton absolute inset-0 z-10 h-[50px]" aria-hidden="true"></div>
@@ -373,7 +374,7 @@
 		</div>
 
 		<div>
-			<label for="max_admins" class={labelClass}>Max club admins</label>
+			<label for="max_admins" class={labelClass}>{t('clubs.create.maxAdminsLabel')}</label>
 			<div class="relative">
 				{#if updateLoading}
 					<div class="app-skeleton absolute inset-0 z-10 h-[50px]" aria-hidden="true"></div>
@@ -403,18 +404,18 @@
 				<div class="app-skeleton absolute inset-0 z-10" aria-hidden="true"></div>
 			{/if}
 			<div class={updateLoading ? 'opacity-0' : ''}>
-				<p class="text-sm font-medium text-slate-900 dark:text-slate-100">Club status</p>
+				<p class="text-sm font-medium text-slate-900 dark:text-slate-100">{t('clubs.create.statusLabel')}</p>
 				<p class="mt-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 					{isActive
-						? 'Active clubs are available to players.'
-						: 'Inactive clubs are hidden from players until reactivated.'}
+						? t('clubs.create.statusActive')
+						: t('clubs.create.statusInactive')}
 				</p>
 			</div>
 			<button
 				type="button"
 				role="switch"
 				aria-checked={isActive}
-				aria-label="Toggle club active status"
+				aria-label={t('clubs.create.toggleStatus')}
 				disabled={updateLoading}
 				class="relative h-7 w-12 shrink-0 rounded-full transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 disabled:cursor-wait{updateLoading
 					? ' opacity-0'
@@ -432,7 +433,7 @@
 		</div>
 		{/if}
 
-		<SubmitButton loading={updateLoading} loadingLabel="Saving…" disabled={!hasChanges || updateLoading}>
+		<SubmitButton loading={updateLoading} loadingLabel={t('clubs.detail.saving')} disabled={!hasChanges || updateLoading}>
 			Save changes
 		</SubmitButton>
 	</form>
@@ -440,24 +441,24 @@
 	{#if !isSuperAdmin}
 		<section class="{cardClass} space-y-4">
 			<div>
-				<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Club admins</h2>
-				<p class="mt-2 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">People who manage this club.</p>
+				<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('clubs.detail.adminsTitle')}</h2>
+				<p class="mt-2 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{t('clubs.detail.adminsSubtitle')}</p>
 			</div>
 
 			{#if data.admins.length === 0}
-				<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">No club admins assigned yet.</p>
+				<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('clubs.detail.noAdmins')}</p>
 			{:else}
 				<ul class="divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
 					{#each data.admins as admin (admin.user_id)}
 						<li class="flex items-center gap-3 bg-white dark:bg-slate-900 px-4 py-3">
 							<UserAvatar
-								displayName={admin.profile?.display_name ?? 'Unknown'}
+								displayName={admin.profile?.display_name ?? t('common.unknown')}
 								avatarUrl={admin.profile?.avatar_url}
 								size="sm"
 							/>
 							<div class="min-w-0 flex-1">
 								<p class="truncate font-medium text-slate-900 dark:text-slate-100">
-									{admin.profile?.display_name ?? 'Unknown'}
+									{admin.profile?.display_name ?? t('common.unknown')}
 								</p>
 								{#if admin.profile?.email}
 									<p class="truncate text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{admin.profile.email}</p>
@@ -478,16 +479,16 @@
 	<section class="{cardClass} space-y-4">
 		<div>
 			<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-				<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Shuttlecocks</h2>
+				<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('clubs.detail.shuttlesTitle')}</h2>
 				{#if shuttlesNotSet}
 					<NotSetBadge />
 				{/if}
 			</div>
-			<p class="mt-2 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Brands and pricing your club uses.</p>
+			<p class="mt-2 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{t('clubs.detail.shuttlesSubtitle')}</p>
 		</div>
 
 		{#if data.shuttles.length === 0}
-			<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">No shuttlecocks yet — add the brands your club uses.</p>
+			<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('clubs.detail.noShuttles')}</p>
 		{:else}
 			<ul class="space-y-3">
 				{#each data.shuttles as shuttle (shuttle.id)}
@@ -504,7 +505,7 @@
 								<input type="hidden" name="shuttleId" value={shuttle.id} />
 								<div class="grid gap-3 sm:grid-cols-2">
 									<div class="sm:col-span-2">
-										<label class={labelClass} for="edit-name-{shuttle.id}">Name</label>
+										<label class={labelClass} for="edit-name-{shuttle.id}">{t('clubs.detail.shuttle.name')}</label>
 										<input
 											id="edit-name-{shuttle.id}"
 											name="name"
@@ -518,14 +519,14 @@
 									<div>
 										<SelectMenu
 											id="edit-speed-{shuttle.id}"
-											label="Speed"
+											label={t('clubs.detail.shuttle.speed')}
 											options={shuttleSpeedOptions}
 											bind:value={editShuttleSpeed}
 										/>
 										<input type="hidden" name="speed" value={editShuttleSpeed} />
 									</div>
 									<div>
-										<label class={labelClass} for="edit-per-box-{shuttle.id}">Amount per tube</label>
+										<label class={labelClass} for="edit-per-box-{shuttle.id}">{t('clubs.detail.shuttle.amountPerTube')}</label>
 										<input
 											id="edit-per-box-{shuttle.id}"
 											name="number_per_box"
@@ -537,7 +538,7 @@
 										/>
 									</div>
 									<div>
-										<label class={labelClass} for="edit-price-{shuttle.id}">Tube price</label>
+										<label class={labelClass} for="edit-price-{shuttle.id}">{t('clubs.detail.shuttle.tubePrice')}</label>
 										<input
 											id="edit-price-{shuttle.id}"
 											name="price"
@@ -553,7 +554,7 @@
 								<div class="flex flex-wrap gap-2">
 									<SubmitButton
 										loading={shuttleUpdateLoadingId === shuttle.id}
-										loadingLabel="Saving…"
+										loadingLabel={t('clubs.detail.saving')}
 										class="!w-auto"
 									>
 										Save
@@ -577,7 +578,7 @@
 										</div>
 									</div>
 									<div class="shrink-0 text-right">
-										<p class="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">Per each</p>
+										<p class="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('clubs.detail.shuttle.perEach')}</p>
 										<p class="text-lg font-semibold tabular-nums text-brand-700">
 											{formatThb(shuttlePricePerEach(shuttle))}
 										</p>
@@ -586,13 +587,13 @@
 
 								<dl class="mt-3 grid grid-cols-2 gap-2">
 									<div class="rounded-lg bg-slate-50 dark:bg-slate-950 px-3 py-2">
-										<dt class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">Tube price</dt>
+										<dt class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('clubs.detail.shuttle.tubePrice')}</dt>
 										<dd class="mt-0.5 text-sm font-medium tabular-nums text-slate-900 dark:text-slate-100">
 											{formatThb(shuttle.price)}
 										</dd>
 									</div>
 									<div class="rounded-lg bg-slate-50 dark:bg-slate-950 px-3 py-2">
-										<dt class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">In tube</dt>
+										<dt class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('clubs.detail.shuttle.inTube')}</dt>
 										<dd class="mt-0.5 text-sm font-medium tabular-nums text-slate-900 dark:text-slate-100">
 											{shuttle.number_per_box}
 										</dd>
@@ -619,7 +620,7 @@
 										<SubmitButton
 											variant="ghost"
 											loading={shuttleDeleteLoadingId === shuttle.id}
-											loadingLabel="Removing…"
+											loadingLabel={t('clubs.detail.shuttle.removing')}
 											class="!w-auto !py-2 !text-sm text-red-600 hover:!bg-red-50"
 										>
 											Delete
@@ -639,10 +640,10 @@
 			class="space-y-3 border-t border-slate-100 dark:border-slate-800 pt-4"
 			use:enhance={whileSubmitting((v) => (shuttleCreateLoading = v))}
 		>
-			<h3 class="text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">Add shuttlecock</h3>
+			<h3 class="text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">{t('clubs.detail.shuttle.addTitle')}</h3>
 			<div class="grid gap-3 sm:grid-cols-2">
 				<div class="sm:col-span-2">
-					<label class={labelClass} for="new-shuttle-name">Name</label>
+					<label class={labelClass} for="new-shuttle-name">{t('clubs.detail.shuttle.name')}</label>
 					<input
 						id="new-shuttle-name"
 						name="name"
@@ -651,20 +652,20 @@
 						maxlength={SHUTTLE_NAME_MAX_LENGTH}
 						bind:value={newShuttleName}
 						class={inputClass}
-						placeholder="Yonex AS-30"
+						placeholder={t('clubs.detail.shuttle.namePlaceholder')}
 					/>
 				</div>
 				<div>
 					<SelectMenu
 						id="new-shuttle-speed"
-						label="Speed"
+						label={t('clubs.detail.shuttle.speed')}
 						options={shuttleSpeedOptions}
 						bind:value={newShuttleSpeed}
 					/>
 					<input type="hidden" name="speed" value={newShuttleSpeed} />
 				</div>
 				<div>
-					<label class={labelClass} for="new-shuttle-per-box">Amount per tube</label>
+					<label class={labelClass} for="new-shuttle-per-box">{t('clubs.detail.shuttle.amountPerTube')}</label>
 					<input
 						id="new-shuttle-per-box"
 						name="number_per_box"
@@ -676,7 +677,7 @@
 					/>
 				</div>
 				<div>
-					<label class={labelClass} for="new-shuttle-price">Tube price</label>
+					<label class={labelClass} for="new-shuttle-price">{t('clubs.detail.shuttle.tubePrice')}</label>
 					<input
 						id="new-shuttle-price"
 						name="price"
@@ -689,7 +690,7 @@
 					/>
 				</div>
 			</div>
-			<SubmitButton loading={shuttleCreateLoading} loadingLabel="Adding…" class="!w-auto">
+			<SubmitButton loading={shuttleCreateLoading} loadingLabel={t('clubs.detail.shuttle.adding')} class="!w-auto">
 				Add shuttlecock
 			</SubmitButton>
 		</form>
@@ -703,7 +704,7 @@
 	>
 		<div>
 			<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-				<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">PromptPay</h2>
+				<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('clubs.detail.promptPayTitle')}</h2>
 				{#if promptPayNotSet}
 					<NotSetBadge />
 				{/if}
@@ -714,7 +715,7 @@
 		</div>
 
 		<fieldset class="space-y-3">
-			<legend class="sr-only">PromptPay type</legend>
+			<legend class="sr-only">{t('sessionForm.promptPayTypeLegend')}</legend>
 			<label class="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3">
 				<input
 					type="radio"
@@ -723,7 +724,7 @@
 					bind:group={promptPayType}
 					class="h-4 w-4 border-slate-300 dark:border-slate-600 text-brand-600 focus:ring-brand-600"
 				/>
-				<span class="text-sm font-medium text-slate-900 dark:text-slate-100">Mobile phone</span>
+				<span class="text-sm font-medium text-slate-900 dark:text-slate-100">{t('clubs.detail.promptPay.mobilePhone')}</span>
 			</label>
 			<label class="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3">
 				<input
@@ -733,13 +734,13 @@
 					bind:group={promptPayType}
 					class="h-4 w-4 border-slate-300 dark:border-slate-600 text-brand-600 focus:ring-brand-600"
 				/>
-				<span class="text-sm font-medium text-slate-900 dark:text-slate-100">National ID card</span>
+				<span class="text-sm font-medium text-slate-900 dark:text-slate-100">{t('clubs.detail.promptPay.nationalIdCard')}</span>
 			</label>
 		</fieldset>
 
 		<div>
 			<label for="promptpay_target" class={labelClass}>
-				{promptPayType === 'national_id' ? 'National ID' : 'Phone number'}
+				{promptPayType === 'national_id' ? t('clubs.detail.promptPay.nationalId') : t('auth.field.identifierPhone')}
 			</label>
 			<input
 				id="promptpay_target"
@@ -747,7 +748,7 @@
 				type="text"
 				inputmode={promptPayType === 'national_id' ? 'numeric' : 'tel'}
 				bind:value={promptPayTarget}
-				placeholder={promptPayType === 'national_id' ? '1234567890123' : '0812345678'}
+				placeholder={promptPayType === 'national_id' ? t('sessionForm.nationalIdPlaceholder') : t('auth.field.placeholder.phone')}
 				class={inputClass}
 			/>
 		</div>
@@ -755,7 +756,7 @@
 		<div class="flex flex-wrap gap-2">
 			<SubmitButton
 				loading={promptPayLoading}
-				loadingLabel="Saving…"
+				loadingLabel={t('clubs.detail.saving')}
 				disabled={!hasPromptPayChanges || !promptPayType}
 				class="!w-auto"
 			>
@@ -768,7 +769,7 @@
 					value="true"
 					variant="ghost"
 					loading={promptPayLoading}
-					loadingLabel="Clearing…"
+					loadingLabel={t('clubs.detail.promptPay.clearing')}
 					class="!w-auto !text-sm"
 				>
 					Clear PromptPay
@@ -785,7 +786,7 @@
 	>
 		<div>
 			<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-				<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Venue & location</h2>
+				<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('clubs.detail.locationTitle')}</h2>
 				{#if locationNotSet}
 					<NotSetBadge />
 				{/if}
@@ -800,7 +801,7 @@
 		</div>
 
 		<div>
-			<label for="venue_name" class={labelClass}>Venue name</label>
+			<label for="venue_name" class={labelClass}>{t('clubs.detail.location.venueLabel')}</label>
 			<input
 				id="venue_name"
 				name="venue_name"
@@ -808,7 +809,7 @@
 				maxlength={VENUE_NAME_MAX_LENGTH}
 				bind:value={venueName}
 				disabled={locationLocked || locationLoading}
-				placeholder="e.g. Rama IX Sports Center"
+				placeholder={t('clubs.detail.location.venuePlaceholder')}
 				class={inputClass}
 			/>
 			<p class="mt-2 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
@@ -838,7 +839,7 @@
 					value="true"
 					variant="ghost"
 					loading={locationLoading}
-					loadingLabel="Clearing…"
+					loadingLabel={t('clubs.detail.promptPay.clearing')}
 					class="!w-auto !text-sm"
 					onclick={() => {
 						latitude = null;
@@ -851,7 +852,7 @@
 			{:else}
 				<SubmitButton
 					loading={locationLoading}
-					loadingLabel="Saving…"
+					loadingLabel={t('clubs.detail.saving')}
 					disabled={!hasLocationChanges || latitude === null || longitude === null || !venueName.trim()}
 					class="!w-auto"
 				>
@@ -876,7 +877,7 @@
 	<section class="{cardClass} space-y-4">
 		<div>
 			<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-				<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Club admins</h2>
+				<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('clubs.detail.adminsTitle')}</h2>
 				{#if clubAdminsNotSet}
 					<NotSetBadge />
 				{/if}
@@ -899,7 +900,7 @@
 				type="search"
 				name="q"
 				bind:value={searchInput}
-				placeholder="Search by name, tag, email, or phone"
+				placeholder={t('clubs.detail.searchPlaceholder')}
 				class="{inputClass} min-w-0 flex-1"
 				autocomplete="off"
 				disabled={searchLoading}
@@ -908,7 +909,7 @@
 				type="submit"
 				variant="secondary"
 				loading={searchLoading}
-				loadingLabel="Searching…"
+				loadingLabel={t('clubs.detail.searching')}
 				class="!w-full sm:!w-auto"
 			>
 				Search
@@ -917,7 +918,7 @@
 
 		{#if data.searchQuery.length >= 2}
 			{#if data.searchResults.length === 0}
-				<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">No matching users found.</p>
+				<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('clubs.detail.noSearchResults')}</p>
 			{:else}
 				<ul class="divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
 					{#each data.searchResults as user (user.id)}
@@ -952,7 +953,7 @@
 								<SubmitButton
 									variant="secondary"
 									loading={assignLoadingUserId === user.id}
-									loadingLabel="Assigning…"
+									loadingLabel={t('clubs.detail.assigning')}
 									disabled={data.atAdminCapacity}
 									class="!py-2.5 !text-sm sm:!w-auto"
 								>
@@ -964,13 +965,13 @@
 				</ul>
 			{/if}
 		{:else if data.searchQuery.length > 0}
-			<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Type at least 2 characters to search.</p>
+			<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('clubs.detail.assignAdminsSubtitle')}</p>
 		{/if}
 
 		<div class="space-y-2">
-			<h3 class="text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">Assigned admins</h3>
+			<h3 class="text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">{t('clubs.detail.currentAdmins')}</h3>
 			{#if data.admins.length === 0}
-				<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">No club admins assigned yet.</p>
+				<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('clubs.detail.noAdmins')}</p>
 			{:else}
 				<ul class="divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
 					{#each data.admins as admin (admin.user_id)}
@@ -979,7 +980,7 @@
 						>
 							<div class="min-w-0">
 								<p class="font-medium text-slate-900 dark:text-slate-100">
-									{admin.profile?.display_name ?? 'Unknown'}
+									{admin.profile?.display_name ?? t('common.unknown')}
 									{#if admin.profile?.tag}
 										<span class="text-slate-400 dark:text-slate-500">{admin.profile.tag}</span>
 									{/if}
@@ -1009,7 +1010,7 @@
 								<SubmitButton
 									variant="ghost"
 									loading={removeLoadingUserId === admin.user_id}
-									loadingLabel="Removing…"
+									loadingLabel={t('clubs.detail.shuttle.removing')}
 									class="!w-full !py-2.5 !text-sm text-red-600 hover:!bg-red-50 sm:!w-auto"
 								>
 									Remove
@@ -1023,7 +1024,7 @@
 	</section>
 
 	<section class="rounded-2xl border border-red-300 bg-red-50 p-4">
-		<h2 class="text-lg font-semibold text-red-900">Danger zone</h2>
+		<h2 class="text-lg font-semibold text-red-900">{t('clubs.detail.dangerZone')}</h2>
 		<p class="mt-2 text-sm text-red-800">
 			Deleting a club removes all club admin assignments. This cannot be undone.
 		</p>
@@ -1042,7 +1043,7 @@
 	<AppModal open={deleteModalOpen} labelledBy="delete-club-title" onClose={closeDeleteModal}>
 		<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
 			<div class="border-b border-red-100 bg-red-50 px-4 py-4">
-				<h2 id="delete-club-title" class="text-lg font-semibold text-red-900">Delete this club?</h2>
+				<h2 id="delete-club-title" class="text-lg font-semibold text-red-900">{t('clubs.detail.deleteModalTitle')}</h2>
 				<p class="mt-2 text-sm text-red-800">
 					This permanently deletes <span class="font-semibold">{data.club.name}</span> and all club admin
 					assignments.
@@ -1077,7 +1078,7 @@
 					</SubmitButton>
 					<SubmitButton
 						loading={deleteLoading}
-						loadingLabel="Deleting…"
+						loadingLabel={t('clubs.detail.deleting')}
 						disabled={!deleteConfirmed}
 						class="!w-full border-transparent bg-red-600 text-white hover:!bg-red-700 disabled:!bg-red-300 disabled:hover:!bg-red-300 sm:!w-auto"
 					>

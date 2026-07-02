@@ -5,15 +5,16 @@ import type {
 	MatchHistorySummary,
 	MatchResultFilter
 } from '$lib/types/match';
+import { t } from '@repo/ui/i18n';
 import { occurredOnDate } from '@repo/ui/transactions';
 
 export const MATCH_HISTORY_PAGE_SIZE = 10;
 
-export const resultFilterOptions: { value: MatchResultFilter; label: string }[] = [
-	{ value: '', label: 'All results' },
-	{ value: 'win', label: 'Wins' },
-	{ value: 'lose', label: 'Losses' },
-	{ value: 'draw', label: 'Draws' }
+export const resultFilterOptions = (): { value: MatchResultFilter; label: string }[] => [
+	{ value: '', label: t('matches.history.allResults') },
+	{ value: 'win', label: t('matches.history.wins') },
+	{ value: 'lose', label: t('matches.history.losses') },
+	{ value: 'draw', label: t('matches.history.draws') }
 ];
 
 export const extractHistorySessions = (
@@ -31,7 +32,7 @@ export const extractHistorySessions = (
 export const sessionFilterOptions = (
 	sessions: MatchHistorySessionOption[]
 ): { value: string; label: string }[] => [
-	{ value: '', label: 'All sessions' },
+	{ value: '', label: t('matches.history.allSessions') },
 	...sessions.map((session) => ({ value: session.id, label: session.name }))
 ];
 
@@ -44,7 +45,7 @@ export const parseHistoryDate = (value: string | null): string => {
 };
 
 export const parseResultFilter = (value: string | null): MatchResultFilter => {
-	const allowed = new Set(resultFilterOptions.map((option) => option.value));
+	const allowed = new Set(resultFilterOptions().map((option) => option.value));
 	return allowed.has(value as MatchResultFilter) ? (value as MatchResultFilter) : '';
 };
 

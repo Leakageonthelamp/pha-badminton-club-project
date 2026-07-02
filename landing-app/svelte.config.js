@@ -5,7 +5,10 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 const config = {
 	preprocess: vitePreprocess(),
 	kit: {
-		adapter: adapter({ regions: ['sin1'] })
+		adapter: adapter({ regions: ['sin1'] }),
+		alias: {
+			'@repo/ui': '../shared/ui'
+		}
 	}
 };
 

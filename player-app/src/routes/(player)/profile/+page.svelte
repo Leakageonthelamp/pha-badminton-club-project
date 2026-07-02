@@ -29,6 +29,7 @@
 		type PasswordSignInPreference
 	} from '$lib/types/auth';
 	import { storeSignInPreference } from '@repo/ui/signInPreference';
+	import { t } from '@repo/ui/i18n';
 	import type { ActionData, PageData } from './$types';
 
 	function phoneForInput(phone: string | null): string {
@@ -109,8 +110,8 @@
 	const phoneSignInAvailable = $derived(!!parsedCredentialPhone);
 
 	const signInPreferenceOptions = $derived([
-		{ value: 'email', label: 'Email', disabled: !emailSignInAvailable },
-		{ value: 'phone', label: 'Phone', disabled: !phoneSignInAvailable }
+		{ value: 'email', label: t('auth.signInMethod.email'), disabled: !emailSignInAvailable },
+		{ value: 'phone', label: t('auth.signInMethod.phone'), disabled: !phoneSignInAvailable }
 	]);
 
 	const hasCredentialChanges = $derived.by(() => {
@@ -299,7 +300,7 @@
 			cropImageSrc = cropSourceSrc;
 			cropOpen = true;
 		} catch {
-			avatarError = 'Could not open that image. Try another photo.';
+			avatarError = t('profile.avatarOpenError');
 			toast.error(avatarError);
 		} finally {
 			pickLoading = false;
@@ -356,7 +357,7 @@
 		if (selectedFee) {
 			selectedFee = { ...selectedFee, fee_status: 'submitted' };
 		}
-		toast.success('Payment submitted. Waiting for admin confirmation.');
+		toast.success(t('toast.paymentSubmitted'));
 		await invalidate('app:profile');
 	};
 
@@ -373,10 +374,10 @@
 </script>
 
 <FormToast message={data.loadError} variant="warning" token={data.loadError ?? ''} />
-<FormToast message={form?.success ? 'Profile updated.' : null} variant="success" token={form?.at ?? ''} />
+<FormToast message={form?.success ? t('profile.updated') : null} variant="success" token={form?.at ?? ''} />
 <FormToast message={form?.error && !form?.credentialsAction ? form.error : null} variant="error" token={form?.error ?? ''} />
 <FormToast
-	message={credentialsForm?.credentialsSuccess ? 'Sign-in details updated.' : null}
+	message={credentialsForm?.credentialsSuccess ? t('profile.credentialsUpdated') : null}
 	variant="success"
 	token={credentialsForm?.credentialsAt ?? ''}
 />
@@ -390,13 +391,13 @@
 	>
 		<div>
 			<h2 class="font-medium text-slate-900 dark:text-slate-100">
-				{hasOutstandingFees ? 'Action required' : 'Outstanding fees'}
+				{hasOutstandingFees ? t('profile.actionRequired') : t('profile.outstandingFees')}
 			</h2>
 			<p class="mt-1 text-sm {hasOutstandingFees ? 'text-amber-900/80' : 'text-slate-500'}">
 				{#if hasOutstandingFees}
-					Pay or wait for admin confirmation before joining another session.
+					{t('profile.payBeforeJoin')}
 				{:else}
-					Late cancellation fees must be settled before you can join another session.
+					{t('profile.feesMustSettle')}
 				{/if}
 			</p>
 		</div>
@@ -429,13 +430,13 @@
 				{/each}
 			</ul>
 		{:else}
-			<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">You're all clear — no fees owed.</p>
+			<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('profile.allClear')}</p>
 		{/if}
 	</AppCard>
 {/snippet}
 
 <section class="space-y-6">
-	<DashboardHero title="Profile" subtitle="Update your display name, tag, and avatar." />
+	<DashboardHero title={t('profile.title')} subtitle={t('profile.subtitle')} />
 
 	{#if data.profile}
 		{#if hasOutstandingFees}
@@ -474,7 +475,7 @@
 		>
 			<div>
 				<label for="displayName" class={labelClass}>
-					Display name
+					{t('profile.displayName')}
 				</label>
 				<div class="relative">
 					{#if saveLoading}
@@ -496,7 +497,7 @@
 			</div>
 
 			<div>
-				<label for="tagSuffix" class={labelClass}>Tag</label>
+				<label for="tagSuffix" class={labelClass}>{t('profile.tag')}</label>
 				<div class="relative">
 					{#if saveLoading}
 						<div class="app-skeleton absolute inset-0 z-10 h-[50px]" aria-hidden="true"></div>
@@ -521,7 +522,7 @@
 							autocomplete="off"
 							spellcheck="false"
 							inputmode="text"
-							placeholder="1234"
+							placeholder={t('profile.tagPlaceholder')}
 							value={tagSuffix}
 							disabled={saveLoading}
 							oninput={onTagSuffixInput}
@@ -530,7 +531,7 @@
 					</div>
 				</div>
 				<p class="mt-2 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-					Unique player ID when display names match. Enter 4 letters or numbers.
+					{t('profile.tagHint')}
 				</p>
 				{#if fieldErrors?.tag}
 					<p class="mt-2 text-sm text-red-600">{fieldErrors.tag}</p>
@@ -538,7 +539,7 @@
 			</div>
 
 			<div>
-				<span class={labelClass}>Avatar</span>
+				<span class={labelClass}>{t('profile.avatar')}</span>
 				<input
 					bind:this={fileInput}
 					type="file"
@@ -558,12 +559,12 @@
 							variant="secondary"
 							class="w-auto! rounded-xl px-4 py-2.5"
 							loading={pickLoading}
-							loadingLabel="Opening…"
+							loadingLabel={t('common.opening')}
 							disabled={saveLoading}
 							onclick={openFilePicker}
 						>
 						<UploadIcon class="h-5 w-5 shrink-0 text-brand-700" />
-						{processedAvatar ? 'Choose another photo' : 'Choose photo'}
+						{processedAvatar ? t('profile.chooseAnotherPhoto') : t('profile.choosePhoto')}
 					</SubmitButton>
 
 					{#if processedAvatar}
@@ -572,45 +573,42 @@
 							class="text-sm font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800"
 							onclick={reopenCrop}
 						>
-							Edit crop
+							{t('profile.editCrop')}
 						</button>
 						<button
 							type="button"
 							class="text-sm font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:text-slate-600"
 							onclick={clearAvatarSelection}
 						>
-							Remove
+							{t('profile.remove')}
 						</button>
 					{/if}
 					</div>
 				</div>
 
 				<p class="mt-2 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-					Large phone photos are cropped and resized to {AVATAR_OUTPUT_SIZE}×{AVATAR_OUTPUT_SIZE} px
-					before upload.
+					{t('profile.avatarSizeHint', { size: AVATAR_OUTPUT_SIZE })}
 				</p>
 			</div>
 
 			<SubmitButton
 				loading={saveLoading}
-				loadingLabel="Saving…"
+				loadingLabel={t('common.saving')}
 				variant="accent"
 				disabled={!hasChanges || !!avatarError}
 			>
-				Save changes
+				{t('profile.saveChanges')}
 			</SubmitButton>
 		</form>
 		</AppCard>
 
 		<AppCard class="space-y-4">
-			<h2 class="font-medium text-slate-900 dark:text-slate-100">Sign-in details</h2>
+			<h2 class="font-medium text-slate-900 dark:text-slate-100">{t('profile.signInDetails')}</h2>
 			<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 				{#if oauthAccount}
-					You signed in with {formatSignInMethodLabel(data.profile.sign_in_method)}. Add contact
-					details below if you like — your social login stays the same.
+					{t('profile.oauthHint', { method: formatSignInMethodLabel(data.profile.sign_in_method) })}
 				{:else}
-					Update your email or phone. Both can be used to log in; choose which one the login page
-					hints at by default.
+					{t('profile.passwordHint')}
 				{/if}
 			</p>
 
@@ -624,7 +622,7 @@
 				<div>
 					<div class="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1">
 						<label for="credentialEmail" class="text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">
-							Email address
+							{t('profile.email')}
 						</label>
 						{#if !data.profile.email}
 							<NotSetBadge />
@@ -638,7 +636,7 @@
 						bind:value={credentialEmail}
 						disabled={credentialsLoading}
 						class={inputClass}
-						placeholder="you@example.com"
+						placeholder={t('profile.emailPlaceholder')}
 					/>
 					{#if credentialsFieldErrors?.email}
 						<p class="mt-2 text-sm text-red-600">{credentialsFieldErrors.email}</p>
@@ -648,7 +646,7 @@
 				<div>
 					<div class="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1">
 						<label for="credentialPhone" class="text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">
-							Phone number
+							{t('profile.phone')}
 						</label>
 						{#if !data.profile.phone}
 							<NotSetBadge />
@@ -663,7 +661,7 @@
 						bind:value={credentialPhone}
 						disabled={credentialsLoading}
 						class={inputClass}
-						placeholder="0812345678"
+						placeholder={t('profile.phonePlaceholder')}
 					/>
 					{#if credentialsFieldErrors?.phone}
 						<p class="mt-2 text-sm text-red-600">{credentialsFieldErrors.phone}</p>
@@ -673,7 +671,7 @@
 				{#if !oauthAccount}
 					<div>
 						<span id="sign-in-preference-label" class={labelClass}>
-							Default sign-in on login page
+							{t('profile.defaultSignIn')}
 						</span>
 						<SegmentedControl
 							name="signInPreference"
@@ -691,7 +689,7 @@
 						<PasswordField
 							id="currentPassword"
 							name="currentPassword"
-							label="Current password"
+							label={t('profile.currentPassword')}
 							autocomplete="current-password"
 							bind:value={currentPassword}
 							serverError={credentialsFieldErrors?.currentPassword ?? null}
@@ -701,11 +699,11 @@
 
 				<SubmitButton
 					loading={credentialsLoading}
-					loadingLabel="Saving…"
+					loadingLabel={t('common.saving')}
 					variant="accent"
 					disabled={!hasCredentialChanges}
 				>
-					Save sign-in details
+					{t('profile.saveSignInDetails')}
 				</SubmitButton>
 			</form>
 		</AppCard>
@@ -716,30 +714,30 @@
 		/>
 
 		<div class="app-muted-panel">
-			<h2 class="mb-3 font-medium text-slate-900 dark:text-slate-100">Account details</h2>
+			<h2 class="mb-3 font-medium text-slate-900 dark:text-slate-100">{t('profile.accountDetails')}</h2>
 			<dl class="space-y-3">
 				<div>
-					<dt class="text-slate-500 dark:text-slate-400 dark:text-slate-500">Sign-in method</dt>
+					<dt class="text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('profile.signInMethod')}</dt>
 					<dd class="font-medium text-slate-800 dark:text-slate-200">
 						{formatSignInMethodLabel(data.profile.sign_in_method)}
 					</dd>
 				</div>
 				{#if data.profile.email}
 					<div>
-						<dt class="text-slate-500 dark:text-slate-400 dark:text-slate-500">Email address</dt>
+						<dt class="text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('profile.email')}</dt>
 						<dd class="font-medium text-slate-800 dark:text-slate-200">{data.profile.email}</dd>
 					</div>
 				{/if}
 				{#if data.profile.phone}
 					<div>
-						<dt class="text-slate-500 dark:text-slate-400 dark:text-slate-500">Phone number</dt>
+						<dt class="text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('profile.phone')}</dt>
 						<dd class="font-medium text-slate-800 dark:text-slate-200">{phoneForInput(data.profile.phone)}</dd>
 					</div>
 				{/if}
 				{#if oauthAccount}
 					<div>
-						<dt class="text-slate-500 dark:text-slate-400 dark:text-slate-500">Password</dt>
-						<dd class="font-medium text-slate-800 dark:text-slate-200">Not used</dd>
+						<dt class="text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('auth.field.password')}</dt>
+						<dd class="font-medium text-slate-800 dark:text-slate-200">{t('profile.passwordNotUsed')}</dd>
 					</div>
 				{/if}
 			</dl>

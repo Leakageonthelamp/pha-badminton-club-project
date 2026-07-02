@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import FormToast from '@repo/ui/components/FormToast.svelte';
 	import AppCard from '@repo/ui/components/AppCard.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
@@ -19,7 +20,7 @@
 
 <section class="space-y-6">
 	<DashboardHero
-		title="Create session"
+		title={t('dashboard.club.createSession.title')}
 		subtitle={activeClub
 			? `Schedule a new badminton session for ${activeClub.name}.`
 			: 'Schedule a new badminton session.'}
@@ -30,8 +31,8 @@
 			mode="create"
 			managedClubs={data.managedClubs}
 			shuttles={data.shuttles}
-			submitLabel="Create session"
-			loadingLabel="Creating…"
+			submitLabel={t('dashboard.club.createSession.title')}
+			loadingLabel={t('clubs.create.submitting')}
 		/>
 	</AppCard>
 </section>

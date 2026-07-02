@@ -1,3 +1,4 @@
+import { t } from '@repo/ui/i18n';
 import { z } from 'zod';
 
 export const DISPLAY_NAME_MIN = 2;
@@ -6,14 +7,11 @@ export const DISPLAY_NAME_MAX = 50;
 /** Letters (Latin + Thai), digits, hyphen, underscore — no spaces or other symbols */
 export const DISPLAY_NAME_PATTERN = /^[a-zA-Z0-9_\-\u0E00-\u0E7F]+$/;
 
-export const DISPLAY_NAME_SPACE_ERROR = 'Display name must not contain spaces';
-export const DISPLAY_NAME_CHARS_ERROR = 'Display name must not contain special characters';
-
 const displayNameCharsRefine = (value: string, ctx: z.RefinementCtx) => {
 	if (/\s/.test(value)) {
 		ctx.addIssue({
 			code: z.ZodIssueCode.custom,
-			message: DISPLAY_NAME_SPACE_ERROR
+			message: t('validation.displayName.noSpaces')
 		});
 		return;
 	}
@@ -21,7 +19,7 @@ const displayNameCharsRefine = (value: string, ctx: z.RefinementCtx) => {
 	if (!DISPLAY_NAME_PATTERN.test(value)) {
 		ctx.addIssue({
 			code: z.ZodIssueCode.custom,
-			message: DISPLAY_NAME_CHARS_ERROR
+			message: t('validation.displayName.invalidChars')
 		});
 	}
 };
@@ -29,9 +27,31 @@ const displayNameCharsRefine = (value: string, ctx: z.RefinementCtx) => {
 export const displayNameSchema = z
 	.string()
 	.trim()
-	.min(DISPLAY_NAME_MIN, `Display name must be at least ${DISPLAY_NAME_MIN} characters`)
-	.max(DISPLAY_NAME_MAX, `Display name must not exceed ${DISPLAY_NAME_MAX} characters`)
-	.superRefine(displayNameCharsRefine);
+	.superRefine((value, ctx) => {
+		if (value.length < DISPLAY_NAME_MIN) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.too_small,
+				minimum: DISPLAY_NAME_MIN,
+				type: 'string',
+				inclusive: true,
+				message: t('validation.displayName.min', { min: DISPLAY_NAME_MIN })
+			});
+			return;
+		}
+
+		if (value.length > DISPLAY_NAME_MAX) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.too_big,
+				maximum: DISPLAY_NAME_MAX,
+				type: 'string',
+				inclusive: true,
+				message: t('validation.displayName.max', { max: DISPLAY_NAME_MAX })
+			});
+			return;
+		}
+
+		displayNameCharsRefine(value, ctx);
+	});
 
 export const validateDisplayName = (value: string): string | null => {
 	const result = displayNameSchema.safeParse(value);
@@ -39,5 +59,5 @@ export const validateDisplayName = (value: string): string | null => {
 		return null;
 	}
 
-	return result.error.issues[0]?.message ?? 'Invalid display name';
+	return result.error.issues[0]?.message ?? t('validation.displayName.invalid');
 };

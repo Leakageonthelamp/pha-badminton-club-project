@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
 	import Pagination from '@repo/ui/components/Pagination.svelte';
@@ -45,39 +46,39 @@
 
 <section class="space-y-6">
 	<DashboardHero
-		eyebrow="Sessions"
-		title="Session history"
+		eyebrow={t('dashboard.super.sessions.title')}
+		title={t('dashboard.club.history.title')}
 		tag={data.profile?.tag}
 		roleLabel={roleLabel}
 		roleBadgeClass={roleBadgeClass}
-		subtitle="Closed and cancelled sessions for your club."
+		subtitle={t('sessions.history.subtitle')}
 	/>
 
 	{#if filteredHistory.length > 0}
 		<dl class="grid grid-cols-2 gap-3">
 			<div class="app-history-stat">
-				<dt class="app-history-stat-label">Past sessions</dt>
+				<dt class="app-history-stat-label">{t('sessions.history.pastSessions')}</dt>
 				<dd class="app-history-stat-value">{summary.total}</dd>
 			</div>
 			<div class="app-history-stat">
-				<dt class="app-history-stat-label">Closed</dt>
+				<dt class="app-history-stat-label">{t('session.status.closed')}</dt>
 				<dd class="app-history-stat-value">{summary.closed}</dd>
 			</div>
 			<div class="app-history-stat">
-				<dt class="app-history-stat-label">Cancelled</dt>
+				<dt class="app-history-stat-label">{t('session.status.cancelled')}</dt>
 				<dd class="app-history-stat-value">{summary.cancelled}</dd>
 			</div>
 			<div class="app-history-stat">
-				<dt class="app-history-stat-label">Outstanding fees</dt>
+				<dt class="app-history-stat-label">{t('transactions.unpaid')}</dt>
 				<dd class="app-history-stat-value">{outstandingFees}</dd>
 			</div>
 		</dl>
 	{/if}
 
 	<div class="space-y-4">
-		<SectionHeading title="Past sessions" />
+		<SectionHeading title={t('sessions.history.pastSessions')} />
 		{#if filteredHistory.length === 0}
-			<EmptyState message="No closed or cancelled sessions yet." />
+			<EmptyState message={t('sessions.history.empty')} />
 		{:else}
 			<div class="space-y-3">
 				{#each pagedHistory.items as session (session.id)}

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { getIdentifierKind, validateIdentifier } from '$lib/validation/identifier';
 	import type { SignInPreference } from '@repo/ui/signInPreference';
+	import { t } from '@repo/ui/i18n';
 
 	let {
 		id = 'identifier',
@@ -30,17 +31,17 @@
 	const inputMode = $derived(kind === 'phone' ? 'tel' : kind === 'email' ? 'email' : 'text');
 	const label = $derived(
 		preference === 'email'
-			? 'Email address'
+			? t('profile.email')
 			: preference === 'phone'
-				? 'Phone number'
-				: 'Email or phone'
+				? t('profile.phone')
+				: t('auth.field.identifier')
 	);
 	const placeholder = $derived(
 		preference === 'email'
-			? 'you@example.com'
+			? t('profile.emailPlaceholder')
 			: preference === 'phone'
-				? '0812345678'
-				: 'you@example.com or 0812345678'
+				? t('profile.phonePlaceholder')
+				: `${t('profile.emailPlaceholder')} or ${t('profile.phonePlaceholder')}`
 	);
 
 	const onBlur = () => {

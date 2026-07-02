@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import type { HTMLButtonAttributes } from 'svelte/elements';
+	import { t } from '../i18n/i18n.svelte';
 
 	type Variant = 'primary' | 'secondary' | 'accent' | 'ghost';
 
@@ -14,7 +15,7 @@
 
 	let {
 		loading = false,
-		loadingLabel = 'Please wait…',
+		loadingLabel,
 		variant = 'primary',
 		class: className = '',
 		type = 'submit',
@@ -22,6 +23,8 @@
 		children,
 		...rest
 	}: Props = $props();
+
+	const resolvedLoadingLabel = $derived(loadingLabel ?? t('submit.saving'));
 
 	const variantClasses: Record<Variant, string> = {
 		primary:
@@ -48,7 +51,7 @@
 				class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
 				aria-hidden="true"
 			></span>
-			{loadingLabel}
+			{resolvedLoadingLabel}
 		</span>
 	{:else}
 		{@render children()}

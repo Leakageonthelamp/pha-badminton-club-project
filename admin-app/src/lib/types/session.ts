@@ -1,3 +1,6 @@
+import type { Locale } from '$lib/i18n';
+import { tForLocale } from '$lib/i18n';
+import { DEFAULT_LOCALE } from '@repo/ui/i18n';
 import type { PromptPayType } from '$lib/types/club';
 import type { CancellationFeeStatus } from '@repo/ui/payments';
 import type { PlayerActivity } from '@repo/ui/sessionStatus';
@@ -79,23 +82,26 @@ export type SessionDetail = Session & {
 	cancelled_by_profile: SessionCancelledByProfile | null;
 };
 
-export const sessionStatusLabel = (status: SessionStatus): string => {
+export const sessionStatusLabel = (status: SessionStatus, locale?: Locale): string => {
+	const loc = locale ?? DEFAULT_LOCALE;
 	switch (status) {
 		case 'draft':
-			return 'Draft';
+			return tForLocale(loc, 'session.status.draft');
 		case 'open':
-			return 'Open';
+			return tForLocale(loc, 'session.status.open');
 		case 'in_progress':
-			return 'In progress';
+			return tForLocale(loc, 'session.status.inProgress');
 		case 'closed':
-			return 'Closed';
+			return tForLocale(loc, 'session.status.closed');
 		case 'cancelled':
-			return 'Cancelled';
+			return tForLocale(loc, 'session.status.cancelled');
 	}
 };
 
-export const matchTypeLabel = (matchType: MatchType): string =>
-	matchType === 'one_round' ? 'One round' : 'Two rounds';
+export const matchTypeLabel = (matchType: MatchType, locale?: Locale): string =>
+	matchType === 'one_round'
+		? tForLocale(locale ?? DEFAULT_LOCALE, 'session.matchType.oneRound')
+		: tForLocale(locale ?? DEFAULT_LOCALE, 'session.matchType.twoRounds');
 
 export const sessionStatusBadgeClass = (status: SessionStatus): string => {
 	switch (status) {
@@ -168,19 +174,20 @@ export type SessionPlayerWithProfile = SessionPlayer & {
 	profile: SessionPlayerProfile | null;
 };
 
-export const sessionPlayerStatusLabel = (status: SessionPlayerStatus): string => {
+export const sessionPlayerStatusLabel = (status: SessionPlayerStatus, locale?: Locale): string => {
+	const loc = locale ?? DEFAULT_LOCALE;
 	switch (status) {
 		case 'waiting':
-			return 'Waiting';
+			return tForLocale(loc, 'session.playerStatus.waiting');
 		case 'queued':
-			return 'In queue';
+			return tForLocale(loc, 'session.playerStatus.queued');
 		case 'confirmed':
-			return 'Confirmed';
+			return tForLocale(loc, 'session.playerStatus.confirmed');
 		case 'rejected':
-			return 'Rejected';
+			return tForLocale(loc, 'session.playerStatus.rejected');
 		case 'cancelled':
-			return 'Cancelled';
+			return tForLocale(loc, 'session.playerStatus.cancelled');
 		case 'left':
-			return 'Left';
+			return tForLocale(loc, 'session.playerStatus.left');
 	}
 };

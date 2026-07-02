@@ -2,6 +2,7 @@ export type SessionStatus = 'draft' | 'open' | 'in_progress' | 'closed' | 'cance
 export type MatchScoreType = 15 | 21;
 export type MatchType = 'one_round' | 'two_round';
 
+import { t } from '@repo/ui/i18n';
 import type { CancellationFeeStatus } from '@repo/ui/payments';
 import type { PlayerActivity } from '@repo/ui/sessionStatus';
 
@@ -160,20 +161,20 @@ export type SessionHistoryPage = {
 };
 
 export const matchTypeLabel = (matchType: MatchType): string =>
-	matchType === 'one_round' ? 'One round' : 'Two rounds';
+	matchType === 'one_round' ? t('sessions.matchType.one_round') : t('sessions.matchType.two_round');
 
 export const sessionStatusLabel = (status: SessionStatus): string => {
 	switch (status) {
 		case 'draft':
-			return 'Draft';
+			return t('sessions.status.draft');
 		case 'open':
-			return 'Open';
+			return t('sessions.status.open');
 		case 'in_progress':
-			return 'In progress';
+			return t('sessions.status.in_progress');
 		case 'closed':
-			return 'Closed';
+			return t('sessions.status.closed');
 		case 'cancelled':
-			return 'Cancelled';
+			return t('sessions.status.cancelled');
 	}
 };
 
@@ -195,17 +196,17 @@ export const sessionStatusBadgeClass = (status: SessionStatus): string => {
 export const sessionPlayerStatusLabel = (status: SessionPlayerStatus): string => {
 	switch (status) {
 		case 'waiting':
-			return 'Waiting for confirmation';
+			return t('sessions.playerStatus.waiting');
 		case 'queued':
-			return 'In buffer queue';
+			return t('sessions.playerStatus.queued');
 		case 'confirmed':
-			return 'Confirmed';
+			return t('sessions.playerStatus.confirmed');
 		case 'rejected':
-			return 'Rejected';
+			return t('sessions.playerStatus.rejected');
 		case 'cancelled':
-			return 'Cancelled';
+			return t('sessions.playerStatus.cancelled');
 		case 'left':
-			return 'Left';
+			return t('sessions.playerStatus.left');
 	}
 };
 

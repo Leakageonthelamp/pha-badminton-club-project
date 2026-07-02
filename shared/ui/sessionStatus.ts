@@ -1,3 +1,5 @@
+import { t, tForLocale, type Locale } from './i18n/i18n.svelte';
+
 export type PlayerActivity = 'idle' | 'playing' | 'break' | 'billing';
 
 export type PlayerLiveStatus = 'idle' | 'playing' | 'break' | 'billing' | 'leave';
@@ -25,23 +27,27 @@ export const derivePlayerLiveStatus = ({
 
 export const playerLiveStatusLabel = (
 	status: PlayerLiveStatus,
-	courtNumber?: number | null
+	courtNumber?: number | null,
+	locale?: Locale
 ): string => {
+	const tr = (key: string, params?: Record<string, string | number>) =>
+		locale ? tForLocale(locale, key, params) : t(key, params);
+
 	if (status === 'playing' && courtNumber != null) {
-		return `Playing on court ${courtNumber}`;
+		return tr('status.playingOnCourt', { court: courtNumber });
 	}
 
 	switch (status) {
 		case 'idle':
-			return 'Idle';
+			return tr('status.idle');
 		case 'playing':
-			return 'Playing';
+			return tr('status.playing');
 		case 'break':
-			return 'Break';
+			return tr('status.break');
 		case 'billing':
-			return 'Billing';
+			return tr('status.billing');
 		case 'leave':
-			return 'Leave';
+			return tr('status.leave');
 	}
 };
 

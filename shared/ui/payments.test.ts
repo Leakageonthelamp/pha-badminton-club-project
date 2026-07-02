@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { configureI18n, initLocale } from './i18n/i18n.svelte';
+import { sharedEn, sharedTh } from './i18n/messages';
 import {
 	computePlayerShuttleShare,
 	courtFeePerPlayerModeHint,
@@ -6,6 +8,9 @@ import {
 	courtFeePerPlayerModeNoun,
 	deriveShuttlesFromShare
 } from './payments.js';
+
+configureI18n({ en: sharedEn, th: sharedTh });
+initLocale('en');
 
 describe('computePlayerShuttleShare', () => {
 	it('returns 0 when no shuttles used', () => {

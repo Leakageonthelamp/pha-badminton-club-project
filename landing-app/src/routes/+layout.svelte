@@ -1,16 +1,17 @@
 <script lang="ts">
 	import '../app.css';
 	import { landingConfig } from '$lib/config';
+	import { t } from '$lib/i18n';
 
 	let { children }: { children: import('svelte').Snippet } = $props();
+
+	const pageTitle = $derived(t('landing.meta.title', { appName: landingConfig.appName }));
+	const pageDescription = $derived(t('landing.meta.description'));
 </script>
 
 <svelte:head>
-	<title>{landingConfig.appName} — Badminton club sessions, matches & payments</title>
-	<meta
-		name="description"
-		content="Discover clubs, join 2v2 badminton sessions, track live matches, split costs with PromptPay, and install the Antonsmash player app on any device."
-	/>
+	<title>{pageTitle}</title>
+	<meta name="description" content={pageDescription} />
 </svelte:head>
 
 {@render children()}

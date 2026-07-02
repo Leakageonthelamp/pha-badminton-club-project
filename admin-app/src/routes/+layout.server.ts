@@ -1,9 +1,12 @@
 import type { LayoutServerLoad } from './$types';
 import { authLoadDepends } from '$lib/navigation/authCache';
 
-export const load: LayoutServerLoad = async ({ locals: { safeGetSession, serviceUnavailable }, depends }) => {
+export const load: LayoutServerLoad = async ({
+	locals: { safeGetSession, serviceUnavailable, locale },
+	depends
+}) => {
 	if (serviceUnavailable) {
-		return { session: null, user: null, serviceUnavailable: true };
+		return { session: null, user: null, serviceUnavailable: true, locale };
 	}
 
 	const { session, user } = await safeGetSession();
@@ -12,6 +15,7 @@ export const load: LayoutServerLoad = async ({ locals: { safeGetSession, service
 	return {
 		session,
 		user,
-		serviceUnavailable: serviceUnavailable ?? false
+		serviceUnavailable: serviceUnavailable ?? false,
+		locale
 	};
 };

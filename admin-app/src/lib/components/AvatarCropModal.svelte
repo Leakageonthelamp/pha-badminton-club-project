@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import Cropper from 'svelte-easy-crop';
 	import AppModal from '@repo/ui/components/AppModal.svelte';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
@@ -50,7 +51,7 @@
 			const file = await cropAvatarToFile(imageSrc, croppedAreaPixels);
 			onConfirm(file);
 		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'Could not crop image.');
+			toast.error(err instanceof Error ? err.message : t('validation.avatar.cropFailed'));
 		} finally {
 			processing = false;
 		}
@@ -61,14 +62,14 @@
 	<AppModal
 		open={modalOpen}
 		labelledBy="avatar-crop-title"
-		closeLabel="Close crop dialog"
+		closeLabel={t('common.cancel')}
 		onClose={onCancel}
 	>
 		<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
 			<div class="border-b border-slate-200 dark:border-slate-700 px-4 py-3">
-				<h2 id="avatar-crop-title" class="text-base font-semibold text-slate-900 dark:text-slate-100">Crop avatar</h2>
+				<h2 id="avatar-crop-title" class="text-base font-semibold text-slate-900 dark:text-slate-100">{t('avatarCrop.title')}</h2>
 				<p class="mt-1 text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
-					Drag and pinch to fit your face. Saved as {AVATAR_OUTPUT_SIZE}×{AVATAR_OUTPUT_SIZE} px.
+					{t('profile.avatarHint', { size: AVATAR_OUTPUT_SIZE })}
 				</p>
 			</div>
 
@@ -112,7 +113,7 @@
 						type="button"
 						class="flex-1"
 						loading={processing}
-						loadingLabel="Processing…"
+						loadingLabel={t('avatarCrop.processing')}
 						disabled={!croppedAreaPixels}
 						onclick={confirmCrop}
 					>

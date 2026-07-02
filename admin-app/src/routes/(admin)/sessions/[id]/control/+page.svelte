@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import { browser } from '$app/environment';
 	import { enhance } from '$app/forms';
 	import { goto, invalidate } from '$app/navigation';
@@ -235,10 +236,10 @@
 	);
 
 	const timeUntilEndLabel = $derived.by(() => {
-		if (session.ended_early) return 'Ended early';
+		if (session.ended_early) return t('control.endedEarly');
 
 		const diff = new Date(session.end_at).getTime() - nowMs;
-		if (diff <= 0) return 'Session ended';
+		if (diff <= 0) return t('control.sessionEnded');
 		const totalMinutes = Math.ceil(diff / 60_000);
 		const hours = Math.floor(totalMinutes / 60);
 		const minutes = totalMinutes % 60;
@@ -267,13 +268,13 @@
 	const paymentRowHint = (status: PaymentStatus | null): string => {
 		switch (status) {
 			case 'approved':
-				return 'Paid and confirmed';
+				return t('control.payment.approved');
 			case 'submitted':
-				return 'Player marked paid — confirm transfer';
+				return t('control.payment.submitted');
 			case 'pending':
-				return 'Waiting for player to pay';
+				return t('control.payment.pending');
 			default:
-				return 'Bill created at settlement';
+				return t('control.payment.created');
 		}
 	};
 
@@ -290,11 +291,11 @@
 		}
 
 		if (data.endReached) {
-			return 'Sorted by longest idle first · scheduled end reached — start settlement to bill players';
+			return t('control.idleSort.settlementDue');
 		}
 
 		if (session.ended_early) {
-			return 'Sorted by longest idle first · session ended early — confirm each payment below';
+			return t('control.idleSort.endedEarly');
 		}
 
 		return `Sorted by longest idle first · settlement opens at ${formatDateTime(session.end_at)}`;
@@ -532,7 +533,7 @@
 						status
 					)}"
 				>
-					{payment ? paymentStatusLabel(payment.status) : 'Not billed'}
+					{payment ? paymentStatusLabel(payment.status) : t('control.notBilled')}
 				</span>
 			</div>
 			{#if payment && payment.status !== 'approved'}
@@ -553,7 +554,7 @@
 	{@const matchCount = matchCountForPlayer(player.user_id)}
 	{@const expanded = expandedPlayerIds.has(player.id)}
 	{@const expandable = matchCount > 0}
-	{@const displayName = player.profile?.display_name ?? 'Unknown player'}
+	{@const displayName = player.profile?.display_name ?? t('control.unknownPlayer')}
 	{#if expandable}
 		<button
 			type="button"
@@ -561,12 +562,12 @@
 			aria-expanded={expanded}
 			aria-controls="player-match-history-{player.id}"
 			aria-label="{displayName} — {matchCount} match{matchCount === 1 ? '' : 'es'}, {expanded
-				? 'collapse'
-				: 'expand'} history"
+				? t('control.collapseHistory')
+				: t('control.expandHistory')} history"
 			onclick={() => togglePlayerMatchHistory(player.id)}
 		>
 			<UserAvatar
-				displayName={player.profile?.display_name ?? 'Player'}
+				displayName={player.profile?.display_name ?? t('role.player')}
 				avatarUrl={player.profile?.avatar_url ?? null}
 				size="sm"
 			/>
@@ -596,7 +597,7 @@
 	{:else}
 		<div class="flex items-start gap-3 px-4 py-3">
 			<UserAvatar
-				displayName={player.profile?.display_name ?? 'Player'}
+				displayName={player.profile?.display_name ?? t('role.player')}
 				avatarUrl={player.profile?.avatar_url ?? null}
 				size="sm"
 			/>
@@ -622,7 +623,7 @@
 {/snippet}
 
 {#snippet playerRosterIdentity(player: SessionPlayerWithProfile, liveStatus: PlayerLiveStatus)}
-	{@const displayName = player.profile?.display_name ?? 'Unknown player'}
+	{@const displayName = player.profile?.display_name ?? t('control.unknownPlayer')}
 	{@const matchCount = matchCountForPlayer(player.user_id)}
 	{@const playingCourt = liveStatus === 'playing' ? courtForPlayer(player.user_id) : null}
 	<p class="truncate font-semibold text-slate-900 dark:text-slate-100">
@@ -643,9 +644,9 @@
 
 <section class="space-y-6">
 	<DashboardHero
-		eyebrow="Live session control"
+		eyebrow={t('control.eyebrow')}
 		title={session.name}
-		subtitle={session.club?.name ?? 'Club session'}
+		subtitle={session.club?.name ?? t('control.clubSessionFallback')}
 	>
 		<div class="flex flex-wrap items-center gap-2">
 			<span
@@ -677,7 +678,7 @@
 	<!-- Workflow -->
 	<AppCard class="space-y-4">
 		<div>
-			<h2 class="app-section-title">How to wrap up</h2>
+			<h2 class="app-section-title">{t('control.howToWrapUp')}</h2>
 			<p class="app-section-meta">
 				Manage live play first, then bill players at end time, then close when everyone has paid.
 			</p>
@@ -691,9 +692,9 @@
 						? 'border-emerald-200 bg-emerald-50/50'
 						: 'border-slate-200 dark:border-slate-700 bg-slate-50/80'}"
 			>
-				<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Step 1</p>
-				<p class="mt-1 font-semibold text-slate-900 dark:text-slate-100">Live play</p>
-				<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Roster, courts, early leave requests</p>
+				<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('control.step1')}</p>
+				<p class="mt-1 font-semibold text-slate-900 dark:text-slate-100">{t('control.step1Title')}</p>
+				<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{t('control.step1Desc')}</p>
 			</li>
 			<li
 				class="rounded-2xl border px-4 py-3 {workflowStep === 2
@@ -702,10 +703,10 @@
 						? 'border-emerald-200 bg-emerald-50/50'
 						: 'border-slate-200 dark:border-slate-700 bg-slate-50/80'}"
 			>
-				<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Step 2</p>
-				<p class="mt-1 font-semibold text-slate-900 dark:text-slate-100">Settlement</p>
+				<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('control.step2')}</p>
+				<p class="mt-1 font-semibold text-slate-900 dark:text-slate-100">{t('control.step2Title')}</p>
 				<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
-					{data.settlementStarted ? 'Confirm each PromptPay transfer' : 'Start after scheduled end'}
+					{data.settlementStarted ? t('control.step2DescConfirm') : t('control.step2DescStart')}
 				</p>
 			</li>
 			<li
@@ -713,9 +714,9 @@
 					? 'border-secondary-400 bg-secondary-100/90 ring-2 ring-secondary-300 dark:border-secondary-600 dark:bg-secondary-900/35 dark:ring-secondary-700'
 					: 'border-slate-200 dark:border-slate-700 bg-slate-50/80'}"
 			>
-				<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Step 3</p>
-				<p class="mt-1 font-semibold text-slate-900 dark:text-slate-100">Close session</p>
-				<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Mark everyone left and archive the session</p>
+				<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('control.step3')}</p>
+				<p class="mt-1 font-semibold text-slate-900 dark:text-slate-100">{t('control.step3Title')}</p>
+				<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{t('control.step3Desc')}</p>
 			</li>
 		</ol>
 	</AppCard>
@@ -724,11 +725,11 @@
 	<div class="grid grid-cols-2 gap-3">
 		<div class="app-card-padded flex min-h-24 flex-col items-center justify-center gap-1 text-center">
 			<p class="text-2xl font-extrabold tabular-nums text-secondary-900">{data.activePlayerCount}</p>
-			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Players</p>
+			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('sessions.detail.players')}</p>
 		</div>
 		<div class="app-card-padded flex min-h-24 flex-col items-center justify-center gap-1 text-center">
 			<p class="text-2xl font-extrabold tabular-nums text-secondary-900">{session.court_count}</p>
-			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Courts</p>
+			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('sessions.detail.courts')}</p>
 		</div>
 		<div class="app-card-padded flex min-h-24 flex-col items-center justify-center gap-1 text-center">
 			<p class="text-xl font-extrabold tabular-nums leading-tight text-secondary-900">
@@ -767,7 +768,7 @@
 			<p class="text-2xl font-extrabold tabular-nums text-secondary-900">
 				{paymentsApprovedCount}/{data.activePlayerCount || '—'}
 			</p>
-			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Paid</p>
+			<p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('control.paid')}</p>
 		</div>
 		<div class="app-card-padded flex min-h-24 flex-col items-center justify-center gap-1 text-center">
 			<p class="text-xl font-extrabold tabular-nums leading-tight text-secondary-900">
@@ -785,7 +786,7 @@
 			: 'border-rose-200 bg-rose-50/40'}"
 	>
 		<div>
-			<h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Profit breakdown</h2>
+			<h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">{t('control.profitBreakdown')}</h2>
 			<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 				Projected from {billedPlayerCount} billed player{billedPlayerCount === 1 ? '' : 's'}
 				· {shuttlesUsed} shuttle{shuttlesUsed === 1 ? '' : 's'} used so far
@@ -794,10 +795,10 @@
 
 		<div class="space-y-4 text-sm">
 			<div class="space-y-2">
-				<h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Court</h3>
+				<h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('control.courtSection')}</h3>
 				<dl class="space-y-1.5">
 					<div class="flex items-baseline justify-between gap-3">
-						<dt class="text-slate-600 dark:text-slate-400 dark:text-slate-500">Your actual cost</dt>
+						<dt class="text-slate-600 dark:text-slate-400 dark:text-slate-500">{t('control.yourActualCost')}</dt>
 						<dd class="shrink-0 tabular-nums font-medium text-slate-900 dark:text-slate-100">
 							{formatThb(projectedProfit.courtCost)}
 						</dd>
@@ -808,14 +809,14 @@
 						)}/hr · session length
 					</p>
 					<div class="flex items-baseline justify-between gap-3">
-						<dt class="text-slate-600 dark:text-slate-400 dark:text-slate-500">Player revenue</dt>
+						<dt class="text-slate-600 dark:text-slate-400 dark:text-slate-500">{t('control.playerRevenue')}</dt>
 						<dd class="shrink-0 tabular-nums font-medium text-slate-900 dark:text-slate-100">
 							{formatThb(projectedProfit.courtRevenue)}
 						</dd>
 					</div>
 					<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">{courtRevenueLabel}</p>
 					<div class="flex items-baseline justify-between gap-3 border-t border-slate-200/80 dark:border-slate-700/80 pt-2">
-						<dt class="font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">Court profit</dt>
+						<dt class="font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">{t('control.courtProfit')}</dt>
 						<dd
 							class="shrink-0 tabular-nums font-semibold {projectedProfit.courtProfit >= 0
 								? 'text-emerald-700'
@@ -828,10 +829,10 @@
 			</div>
 
 			<div class="space-y-2">
-				<h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Shuttle</h3>
+				<h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('sessionForm.shuttle')}</h3>
 				<dl class="space-y-1.5">
 					<div class="flex items-baseline justify-between gap-3">
-						<dt class="text-slate-600 dark:text-slate-400 dark:text-slate-500">Player revenue</dt>
+						<dt class="text-slate-600 dark:text-slate-400 dark:text-slate-500">{t('control.playerRevenue')}</dt>
 						<dd class="shrink-0 tabular-nums font-medium text-slate-900 dark:text-slate-100">
 							{formatThb(projectedProfit.shuttleRevenue)}
 						</dd>
@@ -840,7 +841,7 @@
 						{shuttlesUsed} × {formatThb(session.shuttle_price_per_each)} charged to players
 					</p>
 					<div class="flex items-baseline justify-between gap-3">
-						<dt class="text-slate-600 dark:text-slate-400 dark:text-slate-500">Your actual cost</dt>
+						<dt class="text-slate-600 dark:text-slate-400 dark:text-slate-500">{t('control.yourActualCost')}</dt>
 						<dd class="shrink-0 tabular-nums font-medium text-slate-900 dark:text-slate-100">
 							{formatThb(projectedProfit.shuttleCost)}
 						</dd>
@@ -849,7 +850,7 @@
 						{shuttlesUsed} × {formatThb(session.shuttle_cost_per_each)} club cost per shuttle
 					</p>
 					<div class="flex items-baseline justify-between gap-3 border-t border-slate-200/80 dark:border-slate-700/80 pt-2">
-						<dt class="font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">Shuttle profit</dt>
+						<dt class="font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">{t('control.shuttleProfit')}</dt>
 						<dd
 							class="shrink-0 tabular-nums font-semibold {projectedProfit.shuttleProfit >= 0
 								? 'text-emerald-700'
@@ -866,7 +867,7 @@
 					? 'border-emerald-200 bg-white/70'
 					: 'border-rose-200 bg-white/70'}"
 			>
-				<dt class="text-base font-semibold text-slate-900 dark:text-slate-100">Total projected profit</dt>
+				<dt class="text-base font-semibold text-slate-900 dark:text-slate-100">{t('control.totalProjectedProfit')}</dt>
 				<dd
 					class="shrink-0 text-lg font-bold tabular-nums {profitPositive
 						? 'text-emerald-700'
@@ -880,7 +881,7 @@
 
 	{#if needsAttention}
 		<AppCard class="space-y-2 border-amber-200 bg-amber-50/70">
-			<h2 class="text-base font-semibold text-amber-900">Needs your attention</h2>
+			<h2 class="text-base font-semibold text-amber-900">{t('control.needsAttention')}</h2>
 			<ul class="space-y-1 text-sm text-amber-900">
 				{#if paymentsAwaitingConfirm > 0}
 					<li>
@@ -904,7 +905,7 @@
 		<AppCard class="space-y-4 border-amber-200/80">
 			<div class="app-section-header">
 				<div>
-					<h2 class="app-section-title">Early leave requests</h2>
+					<h2 class="app-section-title">{t('control.earlyLeave')}</h2>
 					<p class="app-section-meta">
 						Confirm the player's PromptPay transfer before approving their leave.
 					</p>
@@ -923,13 +924,13 @@
 						<div class="flex flex-wrap items-start justify-between gap-3">
 							<div class="flex min-w-0 items-center gap-3">
 								<UserAvatar
-									displayName={request.profile?.display_name ?? 'Player'}
+									displayName={request.profile?.display_name ?? t('role.player')}
 									avatarUrl={request.profile?.avatar_url ?? null}
 									size="md"
 								/>
 								<div>
 									<p class="font-semibold text-slate-900 dark:text-slate-100">
-										{request.profile?.display_name ?? 'Unknown player'}
+										{request.profile?.display_name ?? t('control.unknownPlayer')}
 									</p>
 									<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 										Requested {formatDateTime(request.requested_at)}
@@ -976,7 +977,7 @@
 										Waiting for the player to pay via PromptPay.
 									</p>
 								{:else if payment.status === 'approved'}
-									<p class="text-sm font-medium text-emerald-700">Payment confirmed</p>
+									<p class="text-sm font-medium text-emerald-700">{t('control.paymentConfirmed')}</p>
 								{:else if payment.status === 'pending'}
 									<p class="text-sm text-amber-900">
 										Player has not tapped “I've paid” yet.
@@ -1025,7 +1026,7 @@
 									</form>
 								</div>
 								{#if !payment || payment.status !== 'approved'}
-									<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">Complete step 1 first.</p>
+									<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('control.completeStep1')}</p>
 								{/if}
 							</div>
 						</div>
@@ -1039,7 +1040,7 @@
 	<AppCard class="space-y-4">
 		<div class="app-section-header">
 			<div>
-				<h2 class="app-section-title">Active players & payments</h2>
+				<h2 class="app-section-title">{t('control.activePlayers')}</h2>
 				<p class="app-section-meta">{rosterSectionMeta}</p>
 			</div>
 		</div>
@@ -1047,7 +1048,7 @@
 		{#if data.settlementStarted && billedPlayerCount > 0}
 			<div>
 				<div class="mb-1 flex justify-between text-xs font-medium text-slate-600 dark:text-slate-400 dark:text-slate-500">
-					<span>Progress</span>
+					<span>{t('control.progress')}</span>
 					<span>{paymentProgress}%</span>
 				</div>
 				<div class="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
@@ -1060,12 +1061,12 @@
 		{/if}
 
 		{#if checklistPlayers.length === 0}
-			<EmptyState message="No active players in this session." />
+			<EmptyState message={t('control.noActivePlayers')} />
 		{:else if !data.settlementStarted}
 			<div class="app-muted-panel">
 				Live player status and idle time below — assign matches to those idle longest first.
-				Payments for remaining players appear after you tap <strong>Start settlement</strong> at
-				session end. Early leavers are handled in <strong>Early leave requests</strong> above.
+				Payments for remaining players appear after you tap <strong>{t('control.startSettlement')}</strong> at
+				session end. Early leavers are handled in <strong>{t('control.earlyLeave')}</strong> above.
 			</div>
 			<ul class="space-y-3">
 				{#each checklistPlayers as player (player.id)}
@@ -1084,15 +1085,15 @@
 					>
 						{#snippet statusMeta()}
 							{#if liveStatus === 'break'}
-								<p class="mt-1 text-xs text-amber-700">On break — not available for assignment</p>
+								<p class="mt-1 text-xs text-amber-700">{t('control.onBreak')}</p>
 							{:else if liveStatus === 'billing'}
-								<p class="mt-1 text-xs text-sky-700">Waiting for payment confirmation</p>
+								<p class="mt-1 text-xs text-sky-700">{t('control.awaitingPayment')}</p>
 							{:else if pendingLeaveUserIds.has(player.user_id)}
 								<p class="mt-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
 									Pending leave — confirm payment in Early leave requests above
 								</p>
 							{:else if liveStatus === 'leave'}
-								<p class="mt-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">Left the session</p>
+								<p class="mt-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('control.leftSession')}</p>
 							{:else if payment}
 								<p class="mt-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">{paymentRowHint(payment.status)}</p>
 							{/if}
@@ -1139,7 +1140,7 @@
 		<AppCard class="space-y-4">
 			<div class="app-section-header">
 				<div>
-					<h2 class="app-section-title">Cancellation fees</h2>
+					<h2 class="app-section-title">{t('sessions.detail.cancellationFees')}</h2>
 					<p class="app-section-meta">
 						Resolve all late cancellation fees before closing the session.
 					</p>
@@ -1161,7 +1162,7 @@
 					<Squares2x2Icon class="h-5 w-5" />
 				</span>
 				<div>
-					<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Courts & matches</h2>
+					<h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('control.courtsMatches')}</h2>
 					<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
 						Tap a court to view details or assign a match on idle courts.
 					</p>
@@ -1169,8 +1170,7 @@
 			</div>
 			{#if endedOrReached}
 				<div class="rounded-xl border border-rose-200 bg-rose-50/70 px-3 py-2.5 text-sm text-rose-900">
-					<strong>Session ended.</strong> Matches already in progress can finish, but no new matches
-					can be assigned. Start settlement when ready.
+					{t('control.sessionEndedBanner')}
 				</div>
 			{/if}
 			<CourtGrid
@@ -1180,7 +1180,7 @@
 				onCourtClick={handleCourtClick}
 			/>
 			{#if sortedCompletedMatches.length === 0}
-				<EmptyState message="No matches recorded yet." />
+				<EmptyState message={t('control.noMatches')} />
 			{:else}
 				<div class="space-y-3">
 					<p class="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
@@ -1211,7 +1211,7 @@
 	<!-- Settlement actions -->
 	<AppCard class="space-y-4 {canCloseSession ? 'border-emerald-200 bg-emerald-50/40' : ''}">
 		<div>
-			<h2 class="app-section-title">Finish the session</h2>
+			<h2 class="app-section-title">{t('control.finishSession')}</h2>
 			<p class="app-section-meta">
 				Bill everyone at scheduled end, or end early if play finishes ahead of time — then close once
 				every payment is confirmed.
@@ -1220,13 +1220,13 @@
 
 		{#if session.ended_early}
 			<div class="rounded-xl border border-amber-200 bg-amber-50/70 px-3 py-2.5 text-sm text-amber-900">
-				<strong>Ended early.</strong> Every active player was billed
+				{t('control.endedEarlyBanner')}
 				{formatThb(data.perPlayerCost)} ({courtFeePerPlayerNoun}). Confirm each PromptPay transfer below,
 				then close when all payments are approved.
 			</div>
 		{:else if session.status === 'in_progress' && !data.endReached && !data.settlementStarted}
 			<div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 dark:text-slate-600">
-				<strong>End session now</strong> — use when play finishes before
+				<strong>{t('control.endSessionNow')}</strong> — use when play finishes before
 				{formatDateTime(session.end_at)}. Bills all {activePlayers.length} active player{activePlayers.length ===
 				1
 					? ''
@@ -1245,7 +1245,7 @@
 					{data.settlementStarted ? '✓' : '1'}
 				</span>
 				<span>
-					<strong>Start settlement</strong>
+					<strong>{t('control.startSettlement')}</strong>
 					{#if session.ended_early}
 						— done (session ended early)
 					{:else if !data.endReached}
@@ -1266,7 +1266,7 @@
 					{canCloseSession ? '✓' : '2'}
 				</span>
 				<span>
-					<strong>Close session</strong>
+					<strong>{t('control.step3Title')}</strong>
 					{#if !data.allCancellationFeesResolved}
 						— resolve outstanding cancellation fees first
 					{:else if !data.settlementStarted}
@@ -1399,7 +1399,7 @@
 	<AppModal open={closeModalOpen} labelledBy="close-modal-title" onClose={() => (closeModalOpen = false)}>
 		<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
 			<div class="border-b border-brand-100 bg-brand-50 px-4 py-4">
-				<h2 id="close-modal-title" class="text-lg font-semibold text-brand-900">Close session?</h2>
+				<h2 id="close-modal-title" class="text-lg font-semibold text-brand-900">{t('control.closeSessionTitle')}</h2>
 				<p class="mt-2 text-sm text-brand-800">
 					All {activePlayers.length} active player{activePlayers.length === 1 ? '' : 's'} have
 					confirmed payments. Remaining players will be marked as left and the session will be archived.
@@ -1415,7 +1415,7 @@
 				>
 					Cancel
 				</SubmitButton>
-				<SubmitButton loading={actionLoading === 'close'} class="!w-auto">Close session</SubmitButton>
+				<SubmitButton loading={actionLoading === 'close'} class="!w-auto">{t('control.step3Title')}</SubmitButton>
 			</form>
 		</div>
 	</AppModal>
@@ -1431,12 +1431,12 @@
 		<SubmitButton
 			type="button"
 			loading={courtLoadingNumber === selectedCourtMatch?.courtNumber}
-			loadingLabel="Opening match…"
+			loadingLabel={t('control.openingMatch')}
 			disabled={selectedCourtMatch?.status === 'pending' ||
 				(courtLoadingNumber !== null && courtLoadingNumber !== selectedCourtMatch?.courtNumber)}
 			onclick={openSelectedCourtMatchControl}
 		>
-			{selectedCourtMatch?.status === 'suspended' ? 'Resolve score' : 'Open match control'}
+			{selectedCourtMatch?.status === 'suspended' ? t('match.resolveScore') : t('sessions.detail.openControl')}
 		</SubmitButton>
 	</div>
 {/snippet}

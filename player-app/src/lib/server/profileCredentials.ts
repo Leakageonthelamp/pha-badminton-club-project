@@ -9,6 +9,8 @@ import {
 	type SignInMethod
 } from '$lib/types/auth';
 import { isEmail, normalizePhone } from '$lib/validation/identifier';
+import type { Locale } from '@repo/ui/i18n';
+import { tForLocale } from '@repo/ui/i18n';
 import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { phoneToAuthEmail } from './auth';
 import { z } from 'zod';
@@ -99,13 +101,15 @@ export const updateProfileCredentials = async ({
 	supabase,
 	userId,
 	profile,
-	input
+	input,
+	locale
 }: {
 	admin: SupabaseClient;
 	supabase: SupabaseClient;
 	userId: string;
 	profile: Pick<Profile, 'email' | 'phone' | 'sign_in_method'>;
 	input: CredentialsInput;
+	locale: Locale;
 }): Promise<
 	| { ok: true; signInPreference: PasswordSignInPreference | null }
 	| { ok: false; code: AuthErrorCode; error: string; fieldErrors?: CredentialsFieldErrors; values?: CredentialsInput }
@@ -117,7 +121,7 @@ export const updateProfileCredentials = async ({
 			ok: false,
 			code: 'invalid_input',
 			error:
-				fieldErrors.signInPreference?.[0] ?? authErrorMessage('invalid_input'),
+				fieldErrors.signInPreference?.[0] ?? authErrorMessage('invalid_input', locale),
 			fieldErrors: {
 				signInPreference: fieldErrors.signInPreference?.[0] ?? null
 			},
@@ -130,31 +134,34 @@ export const updateProfileCredentials = async ({
 	const oauthAccount = isOAuthSignInMethod(profile.sign_in_method);
 
 	if (!oauthAccount && !parsed.data.currentPassword.trim()) {
+		const msg = tForLocale(locale, 'profile.credentials.error.currentPasswordRequired');
 		return {
 			ok: false,
 			code: 'invalid_input',
-			error: 'Enter your current password',
-			fieldErrors: { currentPassword: 'Enter your current password' },
+			error: msg,
+			fieldErrors: { currentPassword: msg },
 			values: input
 		};
 	}
 
 	if (input.email.trim() && !email) {
+		const msg = tForLocale(locale, 'validation.identifier.invalidEmail');
 		return {
 			ok: false,
 			code: 'invalid_input',
-			error: 'Enter a valid email address',
-			fieldErrors: { email: 'Enter a valid email address' },
+			error: msg,
+			fieldErrors: { email: msg },
 			values: input
 		};
 	}
 
 	if (input.phone.trim() && !phone) {
+		const msg = tForLocale(locale, 'validation.identifier.invalidPhone');
 		return {
 			ok: false,
 			code: 'invalid_input',
-			error: 'Enter a valid Thai phone number (e.g. 0812345678)',
-			fieldErrors: { phone: 'Enter a valid Thai phone number (e.g. 0812345678)' },
+			error: msg,
+			fieldErrors: { phone: msg },
 			values: input
 		};
 	}
@@ -163,21 +170,23 @@ export const updateProfileCredentials = async ({
 
 	if (!oauthAccount) {
 		if (passwordSignInPreference === 'email' && !email) {
+			const msg = tForLocale(locale, 'profile.credentials.error.emailRequiredForPreference');
 			return {
 				ok: false,
 				code: 'invalid_input',
-				error: 'Add an email address before choosing email as your default sign-in',
-				fieldErrors: { email: 'Email is required for email sign-in preference' },
+				error: msg,
+				fieldErrors: { email: msg },
 				values: input
 			};
 		}
 
 		if (passwordSignInPreference === 'phone' && !phone) {
+			const msg = tForLocale(locale, 'profile.credentials.error.phoneRequiredForPreference');
 			return {
 				ok: false,
 				code: 'invalid_input',
-				error: 'Add a phone number before choosing phone as your default sign-in',
-				fieldErrors: { phone: 'Phone number is required for phone sign-in preference' },
+				error: msg,
+				fieldErrors: { phone: msg },
 				values: input
 			};
 		}
@@ -194,7 +203,7 @@ export const updateProfileCredentials = async ({
 		return {
 			ok: false,
 			code: 'invalid_input',
-			error: 'No credential changes to save.',
+			error: tForLocale(locale, 'profile.credentials.error.noChanges'),
 			values: input
 		};
 	}
@@ -211,8 +220,8 @@ export const updateProfileCredentials = async ({
 			return {
 				ok: false,
 				code: 'email_taken',
-				error: authErrorMessage('email_taken'),
-				fieldErrors: { email: authErrorMessage('email_taken') },
+				error: authErrorMessage('email_taken', locale),
+				fieldErrors: { email: authErrorMessage('email_taken', locale) },
 				values: input
 			};
 		}
@@ -230,8 +239,8 @@ export const updateProfileCredentials = async ({
 			return {
 				ok: false,
 				code: 'phone_taken',
-				error: authErrorMessage('phone_taken'),
-				fieldErrors: { phone: authErrorMessage('phone_taken') },
+				error: authErrorMessage('phone_taken', locale),
+				fieldErrors: { phone: authErrorMessage('phone_taken', locale) },
 				values: input
 			};
 		}
@@ -242,7 +251,7 @@ export const updateProfileCredentials = async ({
 		return {
 			ok: false,
 			code: 'register_failed',
-			error: 'Could not verify your account. Please try again.',
+			error: tForLocale(locale, 'profile.credentials.error.verifyFailed'),
 			values: input
 		};
 	}
@@ -257,8 +266,8 @@ export const updateProfileCredentials = async ({
 			return {
 				ok: false,
 				code: 'invalid_credentials',
-				error: authErrorMessage('invalid_credentials'),
-				fieldErrors: { currentPassword: authErrorMessage('invalid_credentials') },
+				error: authErrorMessage('invalid_credentials', locale),
+				fieldErrors: { currentPassword: authErrorMessage('invalid_credentials', locale) },
 				values: input
 			};
 		}
@@ -289,7 +298,7 @@ export const updateProfileCredentials = async ({
 				return {
 					ok: false,
 					code: emailChanged ? 'email_taken' : 'phone_taken',
-					error: authErrorMessage(emailChanged ? 'email_taken' : 'phone_taken'),
+					error: authErrorMessage(emailChanged ? 'email_taken' : 'phone_taken', locale),
 					values: input
 				};
 			}
@@ -297,7 +306,7 @@ export const updateProfileCredentials = async ({
 			return {
 				ok: false,
 				code: 'register_failed',
-				error: 'Could not update sign-in details. Please try again.',
+				error: tForLocale(locale, 'profile.credentials.error.updateFailed'),
 				values: input
 			};
 		}
@@ -324,8 +333,8 @@ export const updateProfileCredentials = async ({
 	if (profileError) {
 		if (profileError.code === '23505') {
 			const message = profileError.message.includes('email')
-				? authErrorMessage('email_taken')
-				: authErrorMessage('phone_taken');
+				? authErrorMessage('email_taken', locale)
+				: authErrorMessage('phone_taken', locale);
 			return {
 				ok: false,
 				code: profileError.message.includes('email') ? 'email_taken' : 'phone_taken',
@@ -337,7 +346,7 @@ export const updateProfileCredentials = async ({
 		return {
 			ok: false,
 			code: 'register_failed',
-			error: 'Could not update profile. Please try again.',
+			error: tForLocale(locale, 'profile.updateError'),
 			values: input
 		};
 	}

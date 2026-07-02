@@ -1,7 +1,7 @@
+import { t } from '@repo/ui/i18n';
 import { describe, expect, it } from 'vitest';
 import {
 	normalizeTag,
-	TAG_FORMAT_ERROR,
 	tagSuffixFromFull,
 	toFullTag,
 	validateTag
@@ -14,28 +14,31 @@ describe('validateTag', () => {
 		expect(validateTag('#Ab9Z')).toBeNull();
 	});
 
-	it('rejects wrong length or missing hash', () => {
-		expect(validateTag('1234')).toBe(TAG_FORMAT_ERROR);
-		expect(validateTag('#123')).toBe(TAG_FORMAT_ERROR);
-		expect(validateTag('#12345')).toBe(TAG_FORMAT_ERROR);
+	it('rejects invalid formats', () => {
+		const invalid = t('validation.tag.invalid');
+		expect(validateTag('1234')).toBe(invalid);
+		expect(validateTag('#123')).toBe(invalid);
+		expect(validateTag('#12345')).toBe(invalid);
 	});
 
-	it('rejects invalid characters', () => {
-		expect(validateTag('#12-3')).toBe(TAG_FORMAT_ERROR);
-		expect(validateTag('#abcd!')).toBe(TAG_FORMAT_ERROR);
-	});
-
-	it('normalizes to lowercase', () => {
-		expect(normalizeTag('#Ab12')).toBe('#ab12');
+	it('rejects non-alphanumeric suffix characters', () => {
+		const invalid = t('validation.tag.invalid');
+		expect(validateTag('#12-3')).toBe(invalid);
+		expect(validateTag('#abcd!')).toBe(invalid);
 	});
 });
 
-describe('tag suffix helpers', () => {
-	it('strips hash for input display', () => {
-		expect(tagSuffixFromFull('#peeo')).toBe('peeo');
+describe('tag helpers', () => {
+	it('normalizes tags to lowercase', () => {
+		expect(normalizeTag('#Ab12')).toBe('#ab12');
 	});
 
-	it('builds full tag for submit', () => {
+	it('extracts suffix from full tag', () => {
+		expect(tagSuffixFromFull('#ab12')).toBe('ab12');
+		expect(tagSuffixFromFull('ab12')).toBe('ab12');
+	});
+
+	it('builds full tag from suffix', () => {
 		expect(toFullTag('Ab12')).toBe('#ab12');
 	});
 });

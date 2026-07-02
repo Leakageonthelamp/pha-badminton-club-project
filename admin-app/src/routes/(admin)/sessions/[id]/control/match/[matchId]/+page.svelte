@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import { browser } from '$app/environment';
 	import { enhance } from '$app/forms';
 	import { goto, invalidate } from '$app/navigation';
@@ -158,7 +159,7 @@
 
 <section class="app-page space-y-6">
 	<DashboardHero
-		eyebrow="Match control"
+		eyebrow={t('match.eyebrow')}
 		title={`Court ${match.court_number}`}
 		subtitle={session.name}
 	>
@@ -171,11 +172,11 @@
 
 	<div class="grid gap-4 sm:grid-cols-2">
 		<AppCard class="space-y-2">
-			<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Match time</p>
+			<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('match.time')}</p>
 			<p class="font-mono text-2xl font-semibold text-slate-900 dark:text-slate-100">{uptimeLabel}</p>
 		</AppCard>
 		<AppCard class="space-y-2">
-			<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Shuttles used</p>
+			<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('match.shuttlesUsed')}</p>
 			<p class="font-mono text-2xl font-semibold text-slate-900 dark:text-slate-100">{match.shuttles_used}</p>
 		</AppCard>
 	</div>
@@ -184,7 +185,7 @@
 		<AppCard class="overflow-hidden border border-brand-200 bg-gradient-to-br from-brand-50/80 to-white">
 			<div class="space-y-3">
 				<div>
-					<p class="text-sm font-semibold text-brand-900">Log shuttle usage</p>
+					<p class="text-sm font-semibold text-brand-900">{t('match.logShuttle')}</p>
 					<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 						Tap below each time a new shuttle is opened during this match.
 					</p>
@@ -192,7 +193,7 @@
 				<form method="POST" action="?/addShuttle" use:enhance={handleAction('addShuttle')}>
 					<SubmitButton
 						loading={actionLoading === 'addShuttle'}
-						loadingLabel="Adding shuttle…"
+						loadingLabel={t('match.addingShuttle')}
 						disabled={isBusy && actionLoading !== 'addShuttle'}
 						class="!w-full py-3.5 text-base font-semibold"
 					>
@@ -205,17 +206,17 @@
 
 	<div class="grid gap-4 md:grid-cols-2">
 		<AppCard class="space-y-3">
-			<h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Team A</h2>
+			<h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200">{t('match.teamA')}</h2>
 			<ul class="space-y-2">
 				{#each teams.teamA as player (player.id)}
 					<li class="flex items-center gap-3">
 						<UserAvatar
-							displayName={player.profile?.display_name ?? 'Player'}
+							displayName={player.profile?.display_name ?? t('role.player')}
 							avatarUrl={player.profile?.avatar_url ?? null}
 							size="sm"
 						/>
 						<div>
-							<p class="font-medium text-slate-800 dark:text-slate-200">{player.profile?.display_name ?? 'Player'}</p>
+							<p class="font-medium text-slate-800 dark:text-slate-200">{player.profile?.display_name ?? t('role.player')}</p>
 							{#if player.profile?.tag}
 								<TagPill tag={player.profile.tag} />
 							{/if}
@@ -225,17 +226,17 @@
 			</ul>
 		</AppCard>
 		<AppCard class="space-y-3">
-			<h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Team B</h2>
+			<h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200">{t('match.teamB')}</h2>
 			<ul class="space-y-2">
 				{#each teams.teamB as player (player.id)}
 					<li class="flex items-center gap-3">
 						<UserAvatar
-							displayName={player.profile?.display_name ?? 'Player'}
+							displayName={player.profile?.display_name ?? t('role.player')}
 							avatarUrl={player.profile?.avatar_url ?? null}
 							size="sm"
 						/>
 						<div>
-							<p class="font-medium text-slate-800 dark:text-slate-200">{player.profile?.display_name ?? 'Player'}</p>
+							<p class="font-medium text-slate-800 dark:text-slate-200">{player.profile?.display_name ?? t('role.player')}</p>
 							{#if player.profile?.tag}
 								<TagPill tag={player.profile.tag} />
 							{/if}
@@ -248,12 +249,12 @@
 
 	{#if match.games.length}
 		<AppCard class="space-y-2">
-			<h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Current score</h2>
+			<h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200">{t('match.currentScore')}</h2>
 			<p class="text-lg font-medium text-slate-900 dark:text-slate-100">{formatMatchScore(match.games)}</p>
 			{#if winner}
 				<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Winner: Team {winner}</p>
 			{:else if matchDraw}
-				<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Match drawn</p>
+				<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{t('match.drawn')}</p>
 			{/if}
 		</AppCard>
 	{/if}
@@ -261,7 +262,7 @@
 	{#if match.status === 'active'}
 		<AppCard class="space-y-3">
 			<div>
-				<h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200">End match</h2>
+				<h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200">{t('match.endMatch')}</h2>
 				<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 					When play is finished, log the score or end without one.
 				</p>
@@ -312,7 +313,7 @@
 				<input type="hidden" name="games_json" value={gamesJson} />
 				<SubmitButton
 					loading={actionLoading === 'resolveScore'}
-					loadingLabel="Resolving score…"
+					loadingLabel={t('match.resolvingScore')}
 					disabled={!canSubmitScores}
 				>
 					Resolve score
@@ -321,7 +322,7 @@
 		</AppCard>
 	{:else if match.status === 'score_pending'}
 		<AppCard>
-			<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Waiting for players to confirm the submitted score.</p>
+			<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{t('match.waitingConfirm')}</p>
 		</AppCard>
 	{/if}
 
@@ -329,7 +330,7 @@
 		type="button"
 		variant="secondary"
 		loading={backLoading}
-		loadingLabel="Going back…"
+		loadingLabel={t('match.goingBack')}
 		disabled={isBusy && !backLoading}
 		onclick={goBack}
 	>
@@ -387,7 +388,7 @@
 					</SubmitButton>
 					<SubmitButton
 						loading={actionLoading === 'endWithScore'}
-						loadingLabel="Ending match…"
+						loadingLabel={t('match.endingMatch')}
 						class="!w-auto"
 						disabled={!canSubmitScores}
 					>
@@ -432,7 +433,7 @@
 				</SubmitButton>
 				<SubmitButton
 					loading={actionLoading === 'endNoScore'}
-					loadingLabel="Ending match…"
+					loadingLabel={t('match.endingMatch')}
 					class="!w-auto"
 				>
 					End without score

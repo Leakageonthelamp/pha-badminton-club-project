@@ -2,6 +2,7 @@
 	import { fade, fly } from 'svelte/transition';
 	import { portal } from '../actions/portal';
 	import XMarkIcon from '../icons/XMarkIcon.svelte';
+	import { t } from '../i18n/i18n.svelte';
 	import {
 		modalBackdropTransition,
 		modalPanelTransition,
@@ -12,7 +13,7 @@
 	let {
 		open = false,
 		labelledBy,
-		closeLabel = 'Close dialog',
+		closeLabel,
 		closeOnBackdrop = true,
 		closeOnEscape = true,
 		onClose,
@@ -29,6 +30,8 @@
 
 	let mounted = $state(false);
 	let reduceMotion = $state(false);
+
+	const resolvedCloseLabel = $derived(closeLabel ?? t('common.closeDialog'));
 
 	const showCloseButton = $derived(
 		Boolean(onClose) && (closeOnBackdrop || closeOnEscape)
@@ -95,7 +98,7 @@
 			<button
 				type="button"
 				class="absolute inset-0 z-0 cursor-default"
-				aria-label={closeLabel}
+				aria-label={resolvedCloseLabel}
 				onclick={() => onClose?.()}
 			></button>
 		{:else}
@@ -112,7 +115,7 @@
 				<button
 					type="button"
 					class="absolute right-3 top-3 z-20 rounded-lg bg-white/90 p-1.5 text-slate-500 shadow-sm ring-1 ring-slate-200 hover:bg-slate-100 hover:text-slate-700 dark:bg-slate-800/90 dark:text-slate-400 dark:ring-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200"
-					aria-label={closeLabel}
+					aria-label={resolvedCloseLabel}
 					onclick={() => onClose?.()}
 				>
 					<XMarkIcon class="h-5 w-5" />

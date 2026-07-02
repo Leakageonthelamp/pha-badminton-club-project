@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import ActionRowLink from '@repo/ui/components/ActionRowLink.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
@@ -43,32 +44,32 @@
 
 <section class="space-y-6">
 	<DashboardHero
-		eyebrow="Sessions"
-		title={data.profile?.display_name ?? 'Sessions'}
+		eyebrow={t('dashboard.super.sessions.title')}
+		title={data.profile?.display_name ?? t('dashboard.super.sessions.title')}
 		tag={data.profile?.tag}
 		roleLabel={roleLabel}
 		roleBadgeClass={roleBadgeClass}
 		subtitle={data.isSuperAdmin
-			? 'All active sessions across clubs you manage.'
-			: 'Draft, open, and in-progress sessions for your club.'}
+			? t('dashboard.super.sessions.description')
+			: t('sessions.list.subtitle')}
 	/>
 
 	<div class="space-y-3">
-		<SectionHeading title="Menu" />
+		<SectionHeading title={t('dashboard.club.menu')} />
 		<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
 			{#if canCreate}
 				<ActionRowLink
 					href="/sessions/new"
-					title="Create session"
-					description="Schedule a new badminton session"
+					title={t('dashboard.club.createSession.title')}
+					description={t('dashboard.club.createSession.description')}
 					icon={PlusIcon}
 					accent="violet"
 				/>
 			{/if}
 			<ActionRowLink
 				href="/sessions/history"
-				title="Session history"
-				description="Closed and cancelled sessions"
+				title={t('dashboard.club.history.title')}
+				description={t('dashboard.club.history.description')}
 				icon={ClockIcon}
 				accent="indigo"
 			/>
@@ -78,28 +79,28 @@
 	{#if filteredSessions.length > 0}
 		<dl class="grid grid-cols-2 gap-3">
 			<div class="app-history-stat">
-				<dt class="app-history-stat-label">Active sessions</dt>
+				<dt class="app-history-stat-label">{t('sessions.list.allSessions')}</dt>
 				<dd class="app-history-stat-value">{summary.total}</dd>
 			</div>
 			<div class="app-history-stat">
-				<dt class="app-history-stat-label">Open</dt>
+				<dt class="app-history-stat-label">{t('session.status.open')}</dt>
 				<dd class="app-history-stat-value">{summary.open}</dd>
 			</div>
 			<div class="app-history-stat">
-				<dt class="app-history-stat-label">In progress</dt>
+				<dt class="app-history-stat-label">{t('session.status.inProgress')}</dt>
 				<dd class="app-history-stat-value">{summary.inProgress}</dd>
 			</div>
 			<div class="app-history-stat">
-				<dt class="app-history-stat-label">Draft</dt>
+				<dt class="app-history-stat-label">{t('session.status.draft')}</dt>
 				<dd class="app-history-stat-value">{summary.draft}</dd>
 			</div>
 		</dl>
 	{/if}
 
 	<div class="space-y-4">
-		<SectionHeading title="All sessions" />
+		<SectionHeading title={t('sessions.list.allSessions')} />
 		{#if filteredSessions.length === 0}
-			<EmptyState message="No active sessions for this club." />
+			<EmptyState message={t('sessions.list.noActive')} />
 		{:else}
 			<div class="space-y-3">
 				{#each pagedSessions.items as session (session.id)}

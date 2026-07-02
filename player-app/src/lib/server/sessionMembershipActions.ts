@@ -6,17 +6,18 @@ import {
 } from '$lib/server/sessions';
 import { readSlipFromForm, uploadSlip } from '$lib/server/slips';
 import { ensureSupabaseAuth } from '$lib/server/supabaseAuth';
+import { tForLocale } from '@repo/ui/i18n';
 import { fail, type Actions } from '@sveltejs/kit';
 
 export const sessionMembershipActions = {
-	join: async ({ request, locals: { supabase, user } }) => {
+	join: async ({ request, locals: { supabase, user, locale } }) => {
 		if (!user) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const sessionId = (await request.formData()).get('session_id');
 		if (typeof sessionId !== 'string' || !sessionId) {
-			return fail(400, { message: 'Session is required' });
+			return fail(400, { message: tForLocale(locale, 'validation.session.required') });
 		}
 
 		const result = await joinSession(supabase, sessionId);
@@ -25,19 +26,21 @@ export const sessionMembershipActions = {
 		}
 
 		const label =
-			result.status === 'queued' ? 'Added to buffer queue.' : 'Joined waiting list.';
+			result.status === 'queued'
+				? tForLocale(locale, 'sessions.detail.joinSuccessQueued')
+				: tForLocale(locale, 'sessions.detail.joinSuccessWaiting');
 
 		return { success: true, message: label, sessionId };
 	},
 
-	cancel: async ({ request, locals: { supabase, user } }) => {
+	cancel: async ({ request, locals: { supabase, user, locale } }) => {
 		if (!user) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const sessionId = (await request.formData()).get('session_id');
 		if (typeof sessionId !== 'string' || !sessionId) {
-			return fail(400, { message: 'Session is required' });
+			return fail(400, { message: tForLocale(locale, 'validation.session.required') });
 		}
 
 		const result = await cancelSessionMembership(supabase, sessionId);
@@ -47,8 +50,10 @@ export const sessionMembershipActions = {
 
 		const message =
 			result.feeOwed > 0
-				? `Membership cancelled. Cancellation fee of ${result.feeOwed.toFixed(2)} THB recorded.`
-				: 'Membership cancelled.';
+				? tForLocale(locale, 'sessions.detail.cancelSuccessWithFee', {
+						amount: result.feeOwed.toFixed(2)
+					})
+				: tForLocale(locale, 'sessions.detail.cancelSuccess');
 
 		return {
 			success: true,
@@ -60,14 +65,14 @@ export const sessionMembershipActions = {
 		};
 	},
 
-	leave: async ({ request, locals: { supabase, user } }) => {
+	leave: async ({ request, locals: { supabase, user, locale } }) => {
 		if (!user) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const sessionId = (await request.formData()).get('session_id');
 		if (typeof sessionId !== 'string' || !sessionId) {
-			return fail(400, { message: 'Session is required' });
+			return fail(400, { message: tForLocale(locale, 'validation.session.required') });
 		}
 
 		const result = await leaveSession(supabase, sessionId);
@@ -75,18 +80,18 @@ export const sessionMembershipActions = {
 			return fail(400, { message: result.message });
 		}
 
-		return { success: true, message: 'Left session.', sessionId };
+		return { success: true, message: tForLocale(locale, 'sessions.detail.leftSuccess'), sessionId };
 	},
 
-	submitFee: async ({ request, locals: { supabase, user } }) => {
+	submitFee: async ({ request, locals: { supabase, user, locale } }) => {
 		if (!user) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const formData = await request.formData();
 		const playerId = formData.get('player_id');
 		if (typeof playerId !== 'string' || !playerId) {
-			return fail(400, { message: 'Fee record is required' });
+			return fail(400, { message: tForLocale(locale, 'validation.feeRecord.required') });
 		}
 
 		const slipInput = readSlipFromForm(formData);
@@ -100,7 +105,7 @@ export const sessionMembershipActions = {
 		}
 
 		if (!(await ensureSupabaseAuth(supabase))) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const result = await submitCancellationFee(supabase, playerId, upload.path);
@@ -110,7 +115,7 @@ export const sessionMembershipActions = {
 
 		return {
 			success: true,
-			message: 'Payment submitted. Waiting for admin confirmation.',
+			message: tForLocale(locale, 'toast.paymentSubmitted'),
 			playerId
 		};
 	}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import { goto } from '$app/navigation';
 	import { getWorkspaceHomePath } from '$lib/adminWorkspace';
 	import {
@@ -55,8 +56,8 @@
 			aria-expanded={open}
 			aria-busy={switching}
 			aria-haspopup="menu"
-			aria-label="Switch club workspace ({activeClub.name})"
-			title="Club workspace"
+			aria-label={t('workspace.club.switchAria', { name: activeClub.name })}
+			title={t('workspace.club.title')}
 			disabled={switching}
 			onclick={toggleMenu}
 		>
@@ -74,7 +75,7 @@
 			<button
 				type="button"
 				class="fixed inset-0 z-40 cursor-default"
-				aria-label="Close club menu"
+				aria-label={t('workspace.club.closeMenu')}
 				onclick={closeMenu}
 			></button>
 
@@ -84,7 +85,7 @@
 			>
 				<div class="border-b border-slate-100 dark:border-slate-800 px-3 py-2.5">
 					<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-						Club workspace
+						{t('workspace.club.title')}
 					</p>
 					<p class="mt-0.5 text-xs text-slate-400 dark:text-slate-500">Saved on this device</p>
 				</div>
@@ -110,7 +111,7 @@
 							<span class="min-w-0">
 								<span class="block truncate font-semibold">{club.name}</span>
 								<span class="block text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-									{club.is_active ? 'Active club' : 'Inactive club'}
+									{club.is_active ? t('workspace.club.active') : t('workspace.club.inactive')}
 								</span>
 							</span>
 							{#if club.id === clubWorkspaceState.selectedClubId}

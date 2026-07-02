@@ -1,5 +1,6 @@
 <script lang="ts">
 	import '../app.css';
+	import { t } from '@repo/ui/i18n';
 	import { browser } from '$app/environment';
 	import { afterNavigate, beforeNavigate } from '$app/navigation';
 	import { appConfig } from '$lib/config/app';
@@ -70,9 +71,7 @@
 		{#if data.serviceUnavailable}
 			<ServiceUnavailable />
 		{:else}
-			<LocationPermissionPrompt
-				description="Allow location access so we can show nearby clubs and improve your experience."
-			/>
+			<LocationPermissionPrompt description={t('common.locationPrompt')} />
 			{@render children()}
 		{/if}
 	</div>

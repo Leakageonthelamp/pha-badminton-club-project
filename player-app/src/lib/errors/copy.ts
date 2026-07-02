@@ -1,36 +1,24 @@
+import { DEFAULT_LOCALE, tForLocale, type Locale } from '@repo/ui/i18n';
+
 type ErrorCopy = {
 	title: string;
 	hint: string;
 };
 
-const errorCopyByStatus: Record<number, ErrorCopy> = {
-	400: {
-		title: 'Invalid request',
-		hint: 'Something in the request was not valid. Please check and try again.'
-	},
-	401: {
-		title: 'Sign in required',
-		hint: 'You need to log in before opening this page.'
-	},
-	403: {
-		title: 'Access denied',
-		hint: 'You do not have permission to view this page.'
-	},
-	404: {
-		title: 'Page not found',
-		hint: 'This page does not exist or may have been moved.'
-	},
-	500: {
-		title: 'Something went wrong',
-		hint: 'An unexpected error occurred. Please try again in a moment.'
-	},
-	503: {
-		title: 'Temporarily unavailable',
-		hint: 'We are investigating an issue with our backend services. Please come back later.'
+const ERROR_STATUSES = [400, 401, 403, 404, 500, 503] as const;
+
+export const getErrorCopy = (status: number, locale?: Locale): ErrorCopy => {
+	const resolvedLocale = locale ?? DEFAULT_LOCALE;
+
+	if (ERROR_STATUSES.includes(status as (typeof ERROR_STATUSES)[number])) {
+		return {
+			title: tForLocale(resolvedLocale, `errors.${status}.title`),
+			hint: tForLocale(resolvedLocale, `errors.${status}.hint`)
+		};
 	}
+
+	return {
+		title: tForLocale(resolvedLocale, 'errors.500.title'),
+		hint: tForLocale(resolvedLocale, 'errors.500.hint')
+	};
 };
-
-const defaultErrorCopy: ErrorCopy = errorCopyByStatus[500];
-
-export const getErrorCopy = (status: number): ErrorCopy =>
-	errorCopyByStatus[status] ?? defaultErrorCopy;

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { DISPLAY_NAME_MAX, validateDisplayName } from '$lib/validation/displayName';
+	import { t } from '@repo/ui/i18n';
 
 	let {
 		id = 'displayName',
@@ -34,7 +35,9 @@
 </script>
 
 <div>
-	<label for={id} class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">Display name</label>
+	<label for={id} class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">
+		{t('auth.field.displayName')}
+	</label>
 	<input
 		{id}
 		{name}

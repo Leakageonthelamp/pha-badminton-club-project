@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { t } from '../i18n/i18n.svelte';
+
 	let {
 		page,
 		hasPrev,
@@ -29,7 +31,9 @@
 
 	const sizeClass = $derived(size === 'xs' ? 'text-xs' : 'text-sm');
 	const pageLabel = $derived(
-		totalPages !== undefined ? `Page ${page} of ${totalPages}` : `${page}`
+		totalPages !== undefined
+			? t('pagination.pageOf', { page, total: totalPages })
+			: `${page}`
 	);
 	const controlClass = $derived(
 		`inline-flex items-center gap-1.5 font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800 dark:text-brand-300 disabled:opacity-50 ${sizeClass}`
@@ -39,18 +43,20 @@
 {#if hasPrev || hasNext}
 	<nav
 		class="flex items-center justify-center gap-3 pt-1 {sizeClass} {className}"
-		aria-label="Pagination"
+		aria-label={t('pagination.label')}
 	>
 		{#if hasPrev}
 			{#if prevHref}
-				<a href={prevHref} class={controlClass} aria-label="Previous page">← Prev</a>
+				<a href={prevHref} class={controlClass} aria-label={t('pagination.prevAria')}>
+					{t('pagination.prev')}
+				</a>
 			{:else}
 				<button
 					type="button"
 					class={controlClass}
 					disabled={disabled || pending !== null}
 					aria-busy={pending === 'prev'}
-					aria-label="Previous page"
+					aria-label={t('pagination.prevAria')}
 					onclick={onprev}
 				>
 					{#if pending === 'prev'}
@@ -59,7 +65,7 @@
 							aria-hidden="true"
 						></span>
 					{/if}
-					← Prev
+					{t('pagination.prev')}
 				</button>
 			{/if}
 		{/if}
@@ -68,14 +74,16 @@
 
 		{#if hasNext}
 			{#if nextHref}
-				<a href={nextHref} class={controlClass} aria-label="Next page">Next →</a>
+				<a href={nextHref} class={controlClass} aria-label={t('pagination.nextAria')}>
+					{t('pagination.next')}
+				</a>
 			{:else}
 				<button
 					type="button"
 					class={controlClass}
 					disabled={disabled || pending !== null}
 					aria-busy={pending === 'next'}
-					aria-label="Next page"
+					aria-label={t('pagination.nextAria')}
 					onclick={onnext}
 				>
 					{#if pending === 'next'}
@@ -84,7 +92,7 @@
 							aria-hidden="true"
 						></span>
 					{/if}
-					Next →
+					{t('pagination.next')}
 				</button>
 			{/if}
 		{/if}

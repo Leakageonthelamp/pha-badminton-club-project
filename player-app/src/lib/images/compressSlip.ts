@@ -1,3 +1,5 @@
+import { t } from '@repo/ui/i18n';
+
 export const SLIP_MAX_EDGE = 1500;
 export const SLIP_JPEG_QUALITY = 0.7;
 export const SLIP_OUTPUT_FILENAME = 'slip.jpg';
@@ -18,28 +20,28 @@ export function buildSlipStoragePath(userId: string, kind: SlipKind, key: string
 }
 
 export function validateSlipInput(file: File | null | undefined): string | null {
-	if (!file) return 'Choose a bank slip image.';
+	if (!file) return t('validation.slip.choose');
 
 	if (!file.type.startsWith('image/')) {
-		return 'Bank slip must be an image file.';
+		return t('validation.slip.mustBeImage');
 	}
 
 	if (file.size > SLIP_INPUT_MAX_BYTES) {
-		return `Image must be ${SLIP_INPUT_MAX_MB} MB or smaller.`;
+		return t('validation.avatar.inputTooLarge', { max: SLIP_INPUT_MAX_MB });
 	}
 
 	return null;
 }
 
 export function validateSlipFile(file: File | null | undefined): string | null {
-	if (!file || file.size === 0) return 'Choose a bank slip image.';
+	if (!file || file.size === 0) return t('validation.slip.choose');
 
 	if (!file.type.startsWith('image/')) {
-		return 'Bank slip must be an image file.';
+		return t('validation.slip.mustBeImage');
 	}
 
 	if (file.size > SLIP_MAX_BYTES) {
-		return `Processed slip must be ${SLIP_MAX_KB} KB or smaller. Please try again.`;
+		return t('validation.avatar.outputTooLarge', { max: SLIP_MAX_KB });
 	}
 
 	return null;

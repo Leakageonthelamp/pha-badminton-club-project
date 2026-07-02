@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { t } from '../i18n/i18n.svelte';
+
 	let {
 		html,
 		class: className = 'prose prose-sm max-w-none text-slate-700'
@@ -11,7 +13,7 @@
 {#if html.trim()}
 	<div class={className}>{@html html}</div>
 {:else}
-	<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">No description.</p>
+	<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('richText.empty')}</p>
 {/if}
 
 <style>

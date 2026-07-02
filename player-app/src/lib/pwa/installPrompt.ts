@@ -1,3 +1,5 @@
+import { t } from '@repo/ui/i18n';
+
 export type ManualInstallVariant = 'ios' | 'samsung' | 'android';
 
 export function readDeferredInstallPrompt(): BeforeInstallPromptEvent | null {
@@ -34,8 +36,6 @@ export function manualInstallVariant(): ManualInstallVariant | null {
 	return null;
 }
 
-export const manualInstallHint: Record<ManualInstallVariant, string> = {
-	ios: 'Tap the Share button, then choose Add to Home Screen.',
-	samsung: 'Tap Menu at the bottom, then Add page to → Home screen.',
-	android: 'Tap the browser menu, then Install app or Add to Home screen.'
-};
+export function getManualInstallHint(variant: ManualInstallVariant): string {
+	return t(`pwa.manual.${variant}`);
+}

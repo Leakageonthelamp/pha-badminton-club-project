@@ -3,13 +3,14 @@
 	import ComputerDesktopIcon from '../icons/ComputerDesktopIcon.svelte';
 	import MoonIcon from '../icons/MoonIcon.svelte';
 	import SunIcon from '../icons/SunIcon.svelte';
+	import { t } from '../i18n/i18n.svelte';
 	import { setThemePref, theme, type ThemePref } from '../theme.svelte';
 
-	const options: { value: ThemePref; label: string; Icon: typeof SunIcon }[] = [
-		{ value: 'light', label: 'Light', Icon: SunIcon },
-		{ value: 'dark', label: 'Dark', Icon: MoonIcon },
-		{ value: 'system', label: 'System', Icon: ComputerDesktopIcon }
-	];
+	const options = $derived([
+		{ value: 'light' as const, label: t('theme.light'), Icon: SunIcon },
+		{ value: 'dark' as const, label: t('theme.dark'), Icon: MoonIcon },
+		{ value: 'system' as const, label: t('theme.system'), Icon: ComputerDesktopIcon }
+	]);
 
 	function optionClass(value: ThemePref) {
 		return theme.pref === value
@@ -18,9 +19,9 @@
 	}
 </script>
 
-<div class="px-1.5 py-1" role="group" aria-label="Theme">
+<div class="px-1.5 py-1" role="group" aria-label={t('theme.label')}>
 	<p class="px-3 pb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-		Theme
+		{t('theme.label')}
 	</p>
 	<div class="space-y-0.5">
 		{#each options as option (option.value)}

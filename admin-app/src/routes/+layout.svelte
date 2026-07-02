@@ -1,5 +1,6 @@
 <script lang="ts">
 	import '../app.css';
+	import { t } from '$lib/i18n';
 	import { afterNavigate, beforeNavigate } from '$app/navigation';
 	import { appConfig } from '$lib/config/app';
 	import PwaHead from '$lib/components/PwaHead.svelte';
@@ -66,9 +67,7 @@
 		{#if data.serviceUnavailable}
 			<ServiceUnavailable />
 		{:else}
-			<LocationPermissionPrompt
-				description="Allow location access so you can set club venues on the map and manage nearby clubs."
-			/>
+			<LocationPermissionPrompt description={t('layout.locationPrompt.description')} />
 			{@render children()}
 		{/if}
 	</div>

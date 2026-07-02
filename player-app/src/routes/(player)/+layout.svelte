@@ -6,6 +6,7 @@
 	import ProfileMenu from '$lib/components/ProfileMenu.svelte';
 	import BackLink from '@repo/ui/components/BackLink.svelte';
 	import HomeLink from '@repo/ui/components/HomeLink.svelte';
+	import LocalePicker from '@repo/ui/components/LocalePicker.svelte';
 	import PageTransition from '$lib/components/PageTransition.svelte';
 	import { appConfig } from '$lib/config/app';
 	import { getBackHref, shouldShowBack } from '$lib/navigation/back';
@@ -71,7 +72,10 @@
 		{/if}
 	</div>
 
-	<ProfileMenu profile={data.profile} />
+	<div class="flex shrink-0 items-center gap-0.5">
+		<LocalePicker />
+		<ProfileMenu profile={data.profile} />
+	</div>
 </header>
 
 <PageTransition>{@render children()}</PageTransition>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import { onDestroy, onMount } from 'svelte';
 	import type { Editor } from '@tiptap/core';
 	import { portal } from '@repo/ui/actions/portal';
@@ -7,7 +8,7 @@
 		value = $bindable(''),
 		name,
 		disabled = false,
-		label = 'Description'
+		label = t('clubs.create.descriptionLabel')
 	}: {
 		value?: string;
 		name: string;
@@ -36,20 +37,20 @@
 
 	const TEXT_COLORS = [
 		{ label: 'Default', value: null },
-		{ label: 'Black', value: '#0f172a' },
-		{ label: 'Red', value: '#dc2626' },
-		{ label: 'Blue', value: '#2563eb' },
-		{ label: 'Purple', value: '#7c3aed' },
-		{ label: 'Green', value: '#059669' }
+		{ label: t('editor.color.black'), value: '#0f172a' },
+		{ label: t('editor.color.red'), value: '#dc2626' },
+		{ label: t('editor.color.blue'), value: '#2563eb' },
+		{ label: t('editor.color.purple'), value: '#7c3aed' },
+		{ label: t('editor.color.green'), value: '#059669' }
 	] as const;
 
 	const HIGHLIGHT_COLORS = [
-		{ label: 'None', value: null },
-		{ label: 'Yellow', value: '#fef08a' },
-		{ label: 'Blue', value: '#bfdbfe' },
-		{ label: 'Pink', value: '#fecdd3' },
-		{ label: 'Green', value: '#bbf7d0' },
-		{ label: 'Orange', value: '#fed7aa' }
+		{ label: t('common.none'), value: null },
+		{ label: t('editor.color.yellow'), value: '#fef08a' },
+		{ label: t('editor.color.blue'), value: '#bfdbfe' },
+		{ label: t('editor.color.pink'), value: '#fecdd3' },
+		{ label: t('editor.color.green'), value: '#bbf7d0' },
+		{ label: t('editor.color.orange'), value: '#fed7aa' }
 	] as const;
 
 	const toolbarBtnClass =
@@ -195,7 +196,7 @@
 	const setLink = () => {
 		closeMenus();
 		const previousUrl = editor?.getAttributes('link').href as string | undefined;
-		const href = window.prompt('Link URL', previousUrl ?? 'https://');
+		const href = window.prompt(t('editor.linkUrl'), previousUrl ?? 'https://');
 
 		if (href === null) return;
 
@@ -249,15 +250,15 @@
 		<div
 			class="flex flex-wrap items-center gap-2 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-2 py-2"
 			role="toolbar"
-			aria-label="{label} formatting"
+			aria-label={t('editor.formatting', { label })}
 		>
 			<div class={toolbarGroupClass}>
 				<button
 					type="button"
 					class={toolbarBtnClass}
 					{disabled}
-					title="Bold"
-					aria-label="Bold"
+					title={t('editor.bold')}
+					aria-label={t('editor.bold')}
 					aria-pressed={active.bold}
 					onclick={() => runCommand(() => editor?.chain().focus().toggleBold().run())}
 				>
@@ -271,8 +272,8 @@
 					type="button"
 					class={toolbarBtnClass}
 					{disabled}
-					title="Italic"
-					aria-label="Italic"
+					title={t('editor.italic')}
+					aria-label={t('editor.italic')}
 					aria-pressed={active.italic}
 					onclick={() => runCommand(() => editor?.chain().focus().toggleItalic().run())}
 				>
@@ -287,8 +288,8 @@
 					type="button"
 					class={toolbarBtnClass}
 					{disabled}
-					title="Bullet list"
-					aria-label="Bullet list"
+					title={t('editor.bulletList')}
+					aria-label={t('editor.bulletList')}
 					aria-pressed={active.bulletList}
 					onclick={() => runCommand(() => editor?.chain().focus().toggleBulletList().run())}
 				>
@@ -303,8 +304,8 @@
 					type="button"
 					class={toolbarBtnClass}
 					{disabled}
-					title="Numbered list"
-					aria-label="Numbered list"
+					title={t('editor.numberedList')}
+					aria-label={t('editor.numberedList')}
 					aria-pressed={active.orderedList}
 					onclick={() => runCommand(() => editor?.chain().focus().toggleOrderedList().run())}
 				>
@@ -322,8 +323,8 @@
 					type="button"
 					class={toolbarBtnClass}
 					{disabled}
-					title="Add link"
-					aria-label="Add link"
+					title={t('editor.addLink')}
+					aria-label={t('editor.addLink')}
 					aria-pressed={active.link}
 					onclick={setLink}
 				>
@@ -339,8 +340,8 @@
 					type="button"
 					class={toolbarBtnClass}
 					{disabled}
-					title="Remove link"
-					aria-label="Remove link"
+					title={t('editor.removeLink')}
+					aria-label={t('editor.removeLink')}
 					onclick={() => runCommand(() => editor?.chain().focus().unsetLink().run())}
 				>
 					<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -361,8 +362,8 @@
 					class="{toolbarBtnClass} w-auto gap-1 px-2"
 					data-rich-text-menu-trigger
 					{disabled}
-					title="Text color"
-					aria-label="Text color"
+					title={t('editor.textColor')}
+					aria-label={t('editor.textColor')}
 					aria-expanded={textColorOpen}
 					onclick={toggleTextColorMenu}
 				>
@@ -376,8 +377,8 @@
 					class="{toolbarBtnClass} w-auto gap-1 px-2"
 					data-rich-text-menu-trigger
 					{disabled}
-					title="Highlight"
-					aria-label="Highlight"
+					title={t('editor.highlight')}
+					aria-label={t('editor.highlight')}
 					aria-expanded={highlightOpen}
 					onclick={toggleHighlightMenu}
 				>
@@ -465,7 +466,7 @@
 						onclick={() => applyHighlight(swatch.value)}
 					>
 						{#if swatch.value === null}
-							<span class="text-[10px] font-medium">None</span>
+							<span class="text-[10px] font-medium">{t('common.none')}</span>
 						{/if}
 					</button>
 				{/each}

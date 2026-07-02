@@ -28,8 +28,8 @@ const sessions: SessionListItem[] = [
 		name: 'Alpha Session',
 		description: '',
 		status: 'open',
-		start_at: '2026-07-01T14:00:00.000Z',
-		end_at: '2026-07-01T16:00:00.000Z',
+		start_at: '2027-07-01T14:00:00.000Z',
+		end_at: '2027-07-01T16:00:00.000Z',
 		venue_name: 'Venue A',
 		latitude: 13.7563,
 		longitude: 100.5018,
@@ -56,8 +56,8 @@ const sessions: SessionListItem[] = [
 		name: 'Bravo Session',
 		description: '',
 		status: 'open',
-		start_at: '2026-07-01T10:00:00.000Z',
-		end_at: '2026-07-01T12:00:00.000Z',
+		start_at: '2027-07-01T10:00:00.000Z',
+		end_at: '2027-07-01T12:00:00.000Z',
 		venue_name: 'Venue B',
 		latitude: 13.73,
 		longitude: 100.52,
@@ -84,8 +84,8 @@ const sessions: SessionListItem[] = [
 		name: 'Charlie Session',
 		description: '',
 		status: 'open',
-		start_at: '2026-07-01T08:00:00.000Z',
-		end_at: '2026-07-01T10:00:00.000Z',
+		start_at: '2027-07-01T08:00:00.000Z',
+		end_at: '2027-07-01T10:00:00.000Z',
 		venue_name: null,
 		latitude: null,
 		longitude: null,
@@ -141,7 +141,7 @@ describe('featuredSessions', () => {
 		const many = Array.from({ length: 8 }, (_, index) => ({
 			...sessions[0]!,
 			id: `s${index}`,
-			start_at: `2026-07-0${index + 1}T10:00:00.000Z`
+			start_at: `2027-07-0${index + 1}T10:00:00.000Z`
 		}));
 		expect(featuredSessions(many, null)).toHaveLength(FEATURED_SESSIONS_LIMIT);
 	});

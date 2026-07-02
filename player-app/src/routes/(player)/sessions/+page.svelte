@@ -3,7 +3,7 @@
 	import { invalidate } from '$app/navigation';
 	import { goto } from '$app/navigation';
 	import SessionDetailSheet from '$lib/components/SessionDetailSheet.svelte';
-	import { SESSION_IN_PROGRESS_JOIN_REMARK } from '$lib/config/session';
+	import { sessionInProgressJoinRemark } from '$lib/config/session';
 	import { isEarlyLeftSession, sessionsWithDistance, shouldShowInProgressJoinRemark } from '$lib/sessions/nearby';
 	import { liveSessionHref, shouldOpenLiveSession, shouldViewSessionLivePage } from '$lib/sessions/navigation';
 	import SessionLiveTimers from '@repo/ui/components/SessionLiveTimers.svelte';
@@ -23,6 +23,7 @@
 	import { sessionPlayerStatusLabel, sessionStatusLabel } from '$lib/types/session';
 	import type { SessionListItem } from '$lib/types/session';
 	import { paginate } from '@repo/ui/pagination';
+	import { t } from '@repo/ui/i18n';
 	import type { LayoutData } from '../$types';
 	import type { PageData } from './$types';
 
@@ -31,14 +32,20 @@
 	let userLocation = $state(loadStoredUserLocation());
 	const sessions = $derived(sessionsWithDistance(data.sessions ?? [], userLocation));
 	const sortedByDistance = $derived(userLocation !== null);
-	const sessionCountLabel = $derived(`${sessions.length} session${sessions.length === 1 ? '' : 's'}`);
-	const sectionTitle = $derived(sortedByDistance ? 'Nearby sessions' : 'Upcoming sessions');
+	const sessionCountLabel = $derived(
+		sessions.length === 1
+			? t('common.sessionCount', { count: sessions.length })
+			: t('common.sessionCountPlural', { count: sessions.length })
+	);
+	const sectionTitle = $derived(
+		sortedByDistance ? t('sessions.list.nearby') : t('sessions.list.upcoming')
+	);
 	const sectionMeta = $derived(
 		sessions.length === 0
-			? 'Open sessions appear here once clubs schedule them'
+			? t('sessions.list.emptyMeta')
 			: sortedByDistance
-				? `${sessionCountLabel} · nearest first, soonest on top`
-				: `${sessionCountLabel} · soonest first`
+				? t('sessions.list.metaLocation', { count: sessionCountLabel })
+				: t('sessions.list.meta', { count: sessionCountLabel })
 	);
 
 	let sheetOpen = $state(false);
@@ -92,9 +99,9 @@
 	const sessionDescription = (session: SessionListItem) => {
 		const parts = [session.club?.name, formatDateTime(session.start_at)].filter(Boolean);
 		if (isEarlyLeftSession(session)) {
-			parts.push('You left early — cannot rejoin');
+			parts.push(t('sessions.list.earlyLeaveRemark'));
 		} else if (shouldShowInProgressJoinRemark(session)) {
-			parts.push(SESSION_IN_PROGRESS_JOIN_REMARK);
+			parts.push(sessionInProgressJoinRemark());
 		} else if (session.my_membership) {
 			parts.push(sessionPlayerStatusLabel(session.my_membership.status));
 		}
@@ -120,14 +127,14 @@
 
 <section class="space-y-6">
 	<DashboardHero
-		eyebrow="Sessions"
-		title="Find a game"
-		subtitle="Browse upcoming sessions and join the waiting list."
+		eyebrow={t('sessions.list.eyebrow')}
+		title={t('sessions.list.title')}
+		subtitle={t('sessions.list.subtitle')}
 	>
 		{#if sessions.length > 0}
 			<span class="app-hero-stat app-hero-stat--accent">{sessionCountLabel}</span>
 			{#if sortedByDistance}
-				<span class="app-hero-stat app-hero-stat--success">Sorted by distance</span>
+				<span class="app-hero-stat app-hero-stat--success">{t('common.sortedByDistance')}</span>
 			{/if}
 		{/if}
 	</DashboardHero>
@@ -139,12 +146,12 @@
 				<p class="app-section-meta">{sectionMeta}</p>
 			</div>
 			<div class="flex shrink-0 items-center gap-2">
-				<a href="/sessions/history" class="app-section-action">Session history</a>
+				<a href="/sessions/history" class="app-section-action">{t('sessions.list.historyLink')}</a>
 				<button
 					type="button"
 					class="app-section-action"
 					disabled={refreshing}
-					aria-label="Refresh sessions"
+					aria-label={t('sessions.list.refreshAria')}
 					aria-busy={refreshing}
 					onclick={refreshSessions}
 				>
@@ -156,13 +163,13 @@
 					{:else}
 						<RefreshIcon class="h-4 w-4 text-brand-700" />
 					{/if}
-					Refresh
+					{t('common.refresh')}
 				</button>
 			</div>
 		</header>
 
 		{#if sessions.length === 0}
-			<EmptyState message="No upcoming sessions yet. Check back later." />
+			<EmptyState message={t('sessions.list.empty')} />
 		{:else}
 			<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
 				{#each pagedSessions.items as session (session.id)}
@@ -181,9 +188,9 @@
 							{#if session.status === 'in_progress'}
 								<SessionLiveTimers startAt={session.start_at} endAt={session.end_at} class="mb-1" />
 								{#if isEarlyLeftSession(session)}
-									<p class="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-500">You left early — cannot rejoin this session.</p>
+									<p class="text-xs text-slate-600 dark:text-slate-400 dark:text-slate-500">{t('sessions.list.earlyLeaveDetail')}</p>
 								{:else if shouldShowInProgressJoinRemark(session)}
-									<p class="text-xs text-sky-700">{SESSION_IN_PROGRESS_JOIN_REMARK}</p>
+									<p class="text-xs text-sky-700">{sessionInProgressJoinRemark()}</p>
 								{/if}
 							{:else if session.status === 'open'}
 								<SessionStartCountdown

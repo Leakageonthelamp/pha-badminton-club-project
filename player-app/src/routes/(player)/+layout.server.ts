@@ -1,10 +1,11 @@
 import { isSupabaseUnavailableError } from '$lib/server/supabaseHealth';
 import { authLoadDepends } from '$lib/navigation/authCache';
+import { tForLocale } from '@repo/ui/i18n';
 import { redirect, error as kitError } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals, depends, setHeaders }) => {
-	const { supabase, session, user, serviceUnavailable } = locals;
+	const { supabase, session, user, serviceUnavailable, locale } = locals;
 
 	setHeaders({ 'cache-control': 'private, no-store' });
 
@@ -27,7 +28,7 @@ export const load: LayoutServerLoad = async ({ locals, depends, setHeaders }) =>
 
 		if (profileError && isSupabaseUnavailableError(profileError)) {
 			kitError(503, {
-				message: 'Backend services are temporarily unavailable. Please try again later.',
+				message: tForLocale(locale, 'errors.backendUnavailable'),
 				code: 'SERVICE_UNAVAILABLE'
 			});
 		}
@@ -43,7 +44,7 @@ export const load: LayoutServerLoad = async ({ locals, depends, setHeaders }) =>
 	} catch (caught) {
 		if (isSupabaseUnavailableError(caught)) {
 			kitError(503, {
-				message: 'Backend services are temporarily unavailable. Please try again later.',
+				message: tForLocale(locale, 'errors.backendUnavailable'),
 				code: 'SERVICE_UNAVAILABLE'
 			});
 		}

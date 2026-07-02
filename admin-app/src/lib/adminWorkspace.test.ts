@@ -1,3 +1,4 @@
+import '$lib/i18n';
 import { describe, expect, it } from 'vitest';
 import {
 	canSwitchWorkspace,
@@ -30,8 +31,8 @@ describe('adminWorkspace', () => {
 	});
 
 	it('getWorkspaceOptions maps registry entries', () => {
-		const options = getWorkspaceOptions('super_admin', true);
+		const options = getWorkspaceOptions('super_admin', true, 'en');
 		expect(options.map((o) => o.id)).toEqual(['super', 'club']);
-		expect(options[0].label).toBe('Super admin');
+		expect(options[0]?.label).toBe('Super admin');
 	});
 });

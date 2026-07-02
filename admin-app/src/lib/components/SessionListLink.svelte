@@ -1,11 +1,27 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import SessionStartCountdown from '@repo/ui/components/SessionStartCountdown.svelte';
 	import { formatDraftOpenDeadline, formatSessionMeta } from '$lib/sessions/list';
 	import {
 		sessionStatusBadgeClass,
-		sessionStatusLabel,
-		type SessionListItem
+		type SessionListItem,
+		type SessionStatus
 	} from '$lib/types/session';
+
+	const sessionStatusText = (status: SessionStatus) => {
+		switch (status) {
+			case 'draft':
+				return t('session.status.draft');
+			case 'open':
+				return t('session.status.open');
+			case 'in_progress':
+				return t('session.status.inProgress');
+			case 'closed':
+				return t('session.status.closed');
+			case 'cancelled':
+				return t('session.status.cancelled');
+		}
+	};
 
 	let {
 		session,
@@ -37,11 +53,11 @@
 						session.status
 					)}"
 				>
-					{sessionStatusLabel(session.status)}
+					{sessionStatusText(session.status)}
 				</span>
 				{#if userId && session.host_id === userId}
 					<span class="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
-						Yours
+						{t('session.list.yours')}
 					</span>
 				{/if}
 			</div>
@@ -55,7 +71,7 @@
 			/>
 			{#if session.status === 'draft'}
 				<p class="mt-1 text-xs font-medium text-amber-800 dark:text-amber-300">
-					Open by {formatDraftOpenDeadline(session.start_at)} — tap to review or publish
+					{t('session.list.openBy', { deadline: formatDraftOpenDeadline(session.start_at) })}
 				</p>
 			{/if}
 			{#if pendingCancellationFees > 0}
@@ -68,7 +84,7 @@
 						{pendingCancellationFees}
 					</span>
 					<span>
-						Cancellation fee{pendingCancellationFees === 1 ? '' : 's'} need confirmation or waiver
+						{t('session.list.cancellationFees')}
 					</span>
 				</p>
 			{/if}

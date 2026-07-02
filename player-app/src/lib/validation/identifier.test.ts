@@ -1,3 +1,4 @@
+import { t } from '@repo/ui/i18n';
 import { describe, expect, it } from 'vitest';
 import {
 	getIdentifierKind,
@@ -44,12 +45,12 @@ describe('isEmail', () => {
 describe('validateIdentifier', () => {
 	it('validates email format when input looks like email', () => {
 		expect(validateIdentifier('player@example.com')).toBeNull();
-		expect(validateIdentifier('player@')).toBe('Enter a valid email address');
+		expect(validateIdentifier('player@')).toBe(t('validation.identifier.invalidEmail'));
 	});
 
 	it('validates phone format when input looks like phone', () => {
 		expect(validateIdentifier('0812345678')).toBeNull();
-		expect(validateIdentifier('08123')).toBe('Enter a valid Thai phone number (e.g. 0812345678)');
+		expect(validateIdentifier('08123')).toBe(t('validation.identifier.invalidPhone'));
 	});
 
 	it('detects identifier kind from input', () => {

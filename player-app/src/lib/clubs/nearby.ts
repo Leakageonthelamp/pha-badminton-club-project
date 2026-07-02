@@ -1,4 +1,5 @@
 import type { ClubPublic } from '$lib/types/club';
+import { t } from '@repo/ui/i18n';
 import { haversineDistanceKm, type StoredUserLocation } from '@repo/ui/geolocation';
 
 export type ClubWithDistance = ClubPublic & { distanceKm: number | null };
@@ -16,8 +17,9 @@ export const openSessionCountByClub = (
 };
 
 export const formatOpenSessionBadge = (count: number): string => {
-	if (count === 0) return 'No open sessions';
-	return count === 1 ? '1 open session' : `${count} open sessions`;
+	if (count === 0) return t('openSessions.badge.none');
+	if (count === 1) return t('openSessions.badge.one');
+	return t('openSessions.badge.many', { count });
 };
 
 export const clubsWithDistance = (

@@ -14,6 +14,7 @@
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
 	import { portal } from '@repo/ui/actions/portal';
 	import { toast } from '@repo/ui/toast/toast.svelte';
+	import { t } from '@repo/ui/i18n';
 	import {
 		formatDistanceKm,
 		haversineDistanceKm,
@@ -178,7 +179,7 @@
 				)
 			: false
 	);
-	const title = $derived(activeSession?.name ?? 'Session');
+	const title = $derived(activeSession?.name ?? t('sessions.detail.title'));
 	const hasLocation = $derived(
 		activeSession?.latitude !== null &&
 			activeSession?.latitude !== undefined &&
@@ -253,10 +254,19 @@
 		if (!conflict) return null;
 
 		if (conflict.kind === 'too_soon_after_live') {
-			return `You're in ${conflict.session_name} (ends ${formatDateTime(conflict.end_at)}). While that session is live, you can only join another that starts at least ${LIVE_SESSION_JOIN_BUFFER_HOURS} hours after it ends.`;
+			return t('sessions.detail.joinConflictLiveBuffer', {
+				sessionName: conflict.session_name,
+				endAt: formatDateTime(conflict.end_at),
+				hours: LIVE_SESSION_JOIN_BUFFER_HOURS
+			});
 		}
 
-		return `You're ${joinConflictMembershipPhrase(conflict.membership_status)} ${conflict.session_name} (${formatDateTime(conflict.start_at)} – ${formatDateTime(conflict.end_at)}). You can't join two sessions at the same time.`;
+		return t('sessions.detail.joinConflictOverlap', {
+			phrase: joinConflictMembershipPhrase(conflict.membership_status),
+			sessionName: conflict.session_name,
+			startAt: formatDateTime(conflict.start_at),
+			endAt: formatDateTime(conflict.end_at)
+		});
 	});
 	const isInProgressJoin = $derived(session?.status === 'in_progress');
 	const estimatedCourtShare = $derived(
@@ -312,12 +322,53 @@
 
 	const spotsLabel = $derived.by(() => {
 		if (!session) return null;
-		return `${session.waiting_count}/${session.max_players} spots · ${session.queued_count}/${session.max_buffer} queue`;
+		return t('sessions.detail.spotsLabel', {
+			waiting: session.waiting_count,
+			max: session.max_players,
+			queued: session.queued_count,
+			buffer: session.max_buffer
+		});
 	});
 
 	const shuttleSharePerUse = $derived.by(() => {
 		if (!session) return 0;
 		return computePlayerShuttleShare(1, session.shuttle_price_per_each);
+	});
+
+	const courtFeeHint = $derived.by(() => {
+		if (!session) return '';
+		return session.court_count === 1
+			? t('sessions.detail.courtFeeHint', { count: session.court_count })
+			: t('sessions.detail.courtFeeHintPlural', { count: session.court_count });
+	});
+
+	const shuttleHintText = $derived.by(() => {
+		if (!session) return '';
+		const price = formatThb(session.shuttle_price_per_each);
+		return session.shuttle?.name
+			? t('sessions.detail.shuttleHintNamed', { name: session.shuttle.name, price })
+			: t('sessions.detail.shuttleHint', { price });
+	});
+
+	const joinInProgressEstimate = $derived.by(() => {
+		if (!session || estimatedCourtShare === null) return '';
+		let suffix = t('sessions.detail.joinInProgressEstimate', {
+			amount: formatThb(estimatedCourtShare)
+		});
+		if (
+			session.fixed_court_fee_per_player === null &&
+			estimatedCourtSharePlayerCount !== null
+		) {
+			suffix +=
+				estimatedCourtSharePlayerCount === 1
+					? t('sessions.detail.joinInProgressSplitOne', {
+							count: estimatedCourtSharePlayerCount
+						})
+					: t('sessions.detail.joinInProgressSplitMany', {
+							count: estimatedCourtSharePlayerCount
+						});
+		}
+		return suffix;
 	});
 
 	const detailReady = $derived(!loading);
@@ -351,12 +402,12 @@
 
 				if (result.type === 'failure') {
 					const data = result.data as { message?: string } | undefined;
-					toast.error(data?.message ?? 'Something went wrong.');
+					toast.error(data?.message ?? t('toast.genericError'));
 					return;
 				}
 
 				if (result.type === 'error') {
-					toast.error('Something went wrong.');
+					toast.error(t('toast.genericError'));
 				}
 			};
 		};
@@ -394,9 +445,9 @@
 
 			if (result.type === 'failure') {
 				const data = result.data as { message?: string } | undefined;
-				toast.error(data?.message ?? 'Something went wrong.');
+				toast.error(data?.message ?? t('toast.genericError'));
 			} else if (result.type === 'error') {
-				toast.error('Something went wrong.');
+				toast.error(t('toast.genericError'));
 			}
 		};
 	};
@@ -409,7 +460,7 @@
 
 	const onFeeSubmitted = async () => {
 		feeModalStatus = 'submitted';
-		toast.success('Payment submitted. Waiting for admin confirmation.');
+		toast.success(t('toast.paymentSubmitted'));
 		await invalidate('app:sessions');
 	};
 
@@ -457,7 +508,7 @@
 			.then(async (response) => {
 				if (!response.ok) {
 					const message =
-						response.status === 404 ? 'Session not found.' : 'Could not load session details.';
+						response.status === 404 ? t('sessions.detail.notFound') : t('sessions.detail.loadError');
 					throw new Error(message);
 				}
 				return response.json() as Promise<SessionDetail>;
@@ -468,7 +519,7 @@
 			})
 			.catch((err) => {
 				if (cancelled) return;
-				loadError = err instanceof Error ? err.message : 'Could not load session details.';
+				loadError = err instanceof Error ? err.message : t('sessions.detail.loadError');
 			})
 			.finally(() => {
 				if (!cancelled) loading = false;
@@ -576,7 +627,7 @@
 		<button
 			type="button"
 			class="bottom-sheet-backdrop"
-			aria-label="Close session details"
+			aria-label={t('sessions.detail.closeAria')}
 			style:opacity={backdropOpacity}
 			onclick={close}
 		></button>
@@ -595,7 +646,7 @@
 				class="bottom-sheet-drag-handle flex shrink-0 justify-center pt-3 pb-2"
 				role="button"
 				tabindex="-1"
-				aria-label="Drag down to close"
+				aria-label={t('common.dragToClose')}
 				onpointerdown={onDragStart}
 				onpointermove={onDragMove}
 				onpointerup={onDragEnd}
@@ -621,19 +672,19 @@
 								<span
 									class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold bg-rose-100 text-rose-800 ring-1 ring-rose-200"
 								>
-									Early leaved
+									{t('sessions.playerStatus.earlyLeaved')}
 								</span>
 							{:else if sessionEnded}
 								<span
 									class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold bg-rose-100 text-rose-800 ring-1 ring-rose-200"
 								>
-									Ended
+									{t('sessions.detail.endedBadge')}
 								</span>
 							{/if}
 						</p>
 					{/if}
 					{#if distanceLabel}
-						<p class="mt-1 text-sm font-medium text-brand-700">{distanceLabel} away</p>
+						<p class="mt-1 text-sm font-medium text-brand-700">{t('sessions.detail.away', { distance: distanceLabel })}</p>
 					{/if}
 				</div>
 				<button
@@ -641,7 +692,7 @@
 					class="rounded-lg px-2 py-1 text-sm font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 dark:bg-slate-800 hover:text-slate-700 dark:text-slate-300 dark:text-slate-600"
 					onclick={close}
 				>
-					Close
+					{t('common.close')}
 				</button>
 			</div>
 
@@ -662,7 +713,7 @@
 					/>
 					{#if sessionEnded && !playerEarlyLeave}
 						<p class="rounded-xl border border-rose-200 bg-rose-50/70 px-3 py-2.5 text-sm text-rose-900">
-							<strong>Session ended.</strong> Waiting for the host to start settlement.
+							{t('sessions.detail.sessionEndedBanner')}
 						</p>
 					{/if}
 				</div>
@@ -680,36 +731,32 @@
 						<div class="mt-3 rounded-2xl border border-brand-200 bg-brand-50 p-4">
 							<div class="flex items-start justify-between gap-4">
 								<div class="min-w-0">
-									<p class="app-cost-line-label text-brand-900">Your status</p>
+									<p class="app-cost-line-label text-brand-900">{t('sessions.detail.yourStatus')}</p>
 									{#if detailReady && session}
 										{#if membership.status === 'waiting'}
 											{#if session.status === 'in_progress'}
 												<p class="app-cost-line-hint text-brand-700">
-													This session is in progress. You cannot cancel your join. The admin may
-													confirm you to play at any time.
+													{t('sessions.detail.waitingInProgress')}
 												</p>
 											{:else if isWithinCancelLockWindow}
 												<p class="app-cost-line-hint text-brand-700">
-													The admin is reviewing waiting players now. You can no longer cancel — they
-													may confirm or reject you.
+													{t('sessions.detail.waitingCancelLocked')}
 												</p>
 											{:else}
 												<p class="app-cost-line-hint text-brand-700">
-													The admin will confirm your join request 15 minutes before the session
-													starts. Please be at the venue and ready by then.
+													{t('sessions.detail.waitingBeforeStart')}
 												</p>
 											{/if}
 										{:else if membership.status === 'confirmed'}
 											{#if session.status === 'in_progress'}
 												<p class="app-cost-line-hint text-brand-700">
-													Session is live. Open the live session page to see costs, courts, and
-													request an early leave.
+													{t('sessions.detail.confirmedLive')}
 												</p>
 											{:else}
 												<p class="app-cost-line-hint text-brand-700">
-													You're confirmed for this session. Get ready — it starts
-													{formatDateTime(session.start_at)}. You'll be taken to the live session when
-													play begins.
+													{t('sessions.detail.confirmedUpcoming', {
+														startAt: formatDateTime(session.start_at)
+													})}
 												</p>
 											{/if}
 										{/if}
@@ -724,7 +771,7 @@
 
 					{#if detailReady && session?.has_outstanding_fee}
 						<p class="mt-3 text-sm text-amber-800">
-							You have an outstanding cancellation fee. Settle it before joining another session.
+							{t('sessions.detail.outstandingFee')}
 						</p>
 					{/if}
 
@@ -741,7 +788,7 @@
 						</div>
 					{:else if activeSession?.description}
 						<div class="mt-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
-							<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">About</h3>
+							<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">{t('common.about')}</h3>
 							<RichTextDisplay
 								html={activeSession.description}
 								class="prose prose-sm mt-3 max-w-none text-sm leading-relaxed text-slate-600 dark:text-slate-400 dark:text-slate-500"
@@ -761,7 +808,7 @@
 							</div>
 						{:else if activeSession?.start_at && activeSession.end_at}
 							<div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
-								<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Schedule</h3>
+								<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">{t('common.schedule')}</h3>
 								<SessionDurationPill
 									startAt={activeSession.start_at}
 									endAt={activeSession.end_at}
@@ -770,15 +817,15 @@
 								<div class="app-cost-lines mt-3 rounded-xl border border-slate-100 dark:border-slate-800">
 									<div class="app-cost-line">
 										<div class="min-w-0">
-											<p class="app-cost-line-label">Start</p>
-											<p class="app-cost-line-hint">Session begins</p>
+											<p class="app-cost-line-label">{t('common.start')}</p>
+											<p class="app-cost-line-hint">{t('sessions.detail.sessionBegins')}</p>
 										</div>
 										<p class="app-cost-line-amount">{formatDateTime(activeSession.start_at)}</p>
 									</div>
 									<div class="app-cost-line">
 										<div class="min-w-0">
-											<p class="app-cost-line-label">End</p>
-											<p class="app-cost-line-hint">Scheduled finish</p>
+											<p class="app-cost-line-label">{t('common.end')}</p>
+											<p class="app-cost-line-hint">{t('sessions.detail.scheduledFinish')}</p>
 										</div>
 										<p class="app-cost-line-amount">{formatDateTime(activeSession.end_at)}</p>
 									</div>
@@ -787,7 +834,7 @@
 						{/if}
 
 						<div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4" aria-busy={loading}>
-							<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Venue</h3>
+							<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">{t('common.venue')}</h3>
 							{#if loading && !activeSession?.venue_name && !hasLocation}
 								<div class="mt-3 space-y-2 rounded-xl border border-slate-100 dark:border-slate-800 p-3" aria-hidden="true">
 									<div class="app-skeleton h-4 w-32"></div>
@@ -797,22 +844,22 @@
 								<div class="app-cost-lines mt-3 rounded-xl border border-slate-100 dark:border-slate-800">
 									<div class="app-cost-line">
 										<div class="min-w-0">
-											<p class="app-cost-line-label">Location</p>
+											<p class="app-cost-line-label">{t('sessions.detail.location')}</p>
 											{#if activeSession?.venue_name}
-												<p class="app-cost-line-hint">Where this session is held</p>
+												<p class="app-cost-line-hint">{t('sessions.detail.locationSet')}</p>
 											{:else}
-												<p class="app-cost-line-hint">Venue location has not been set yet</p>
+												<p class="app-cost-line-hint">{t('sessions.detail.locationNotSet')}</p>
 											{/if}
 										</div>
 										<p class="app-cost-line-amount">
-											{activeSession?.venue_name ?? '—'}
+											{activeSession?.venue_name ?? t('common.dash')}
 										</p>
 									</div>
 									{#if hasLocation && googleMapsUrl && appleMapsUrl}
 										<div class="app-cost-line">
 											<div class="min-w-0">
-												<p class="app-cost-line-label">Directions</p>
-												<p class="app-cost-line-hint">Open in your maps app</p>
+												<p class="app-cost-line-label">{t('common.directions')}</p>
+												<p class="app-cost-line-hint">{t('sessions.detail.openInMaps')}</p>
 											</div>
 											<div class="app-cost-line-amount flex flex-col items-end gap-1">
 												<a
@@ -821,7 +868,7 @@
 													rel="noopener noreferrer"
 													class="text-sm font-semibold text-brand-700 dark:text-brand-300 hover:text-brand-800"
 												>
-													Google Maps
+													{t('common.googleMaps')}
 												</a>
 												<a
 													href={appleMapsUrl}
@@ -829,7 +876,7 @@
 													rel="noopener noreferrer"
 													class="text-sm font-semibold text-brand-700 dark:text-brand-300 hover:text-brand-800"
 												>
-													Apple Maps
+													{t('common.appleMaps')}
 												</a>
 											</div>
 										</div>
@@ -839,7 +886,7 @@
 						</div>
 
 						<div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4" aria-busy={loading}>
-							<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Capacity & fees</h3>
+							<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">{t('sessions.detail.capacityFees')}</h3>
 							{#if loading}
 								<div class="mt-3 space-y-3" aria-hidden="true">
 									<div class="flex justify-between gap-4">
@@ -860,9 +907,9 @@
 									{#if spotsLabel}
 										<div class="app-cost-line">
 											<div class="min-w-0">
-												<p class="app-cost-line-label">Availability</p>
+												<p class="app-cost-line-label">{t('sessions.detail.availability')}</p>
 												<p class="app-cost-line-hint">
-													Spots and buffer queue for this session
+													{t('sessions.detail.availabilityHint')}
 												</p>
 											</div>
 											<p class="app-cost-line-amount">{spotsLabel}</p>
@@ -871,19 +918,23 @@
 									{#if session.fixed_court_fee_per_player === null}
 										<div class="app-cost-line">
 											<div class="min-w-0">
-												<p class="app-cost-line-label">Court fee</p>
+												<p class="app-cost-line-label">{t('sessions.detail.courtFee')}</p>
 												<p class="app-cost-line-hint">
-													{session.court_count} court{session.court_count === 1 ? '' : 's'} · hourly rate
+													{courtFeeHint}
 												</p>
 											</div>
 											<p class="app-cost-line-amount">
-												{formatThb(session.court_fee_per_hour)}/hr
+												{t('sessions.detail.courtFeePerHour', {
+													amount: formatThb(session.court_fee_per_hour)
+												})}
 											</p>
 										</div>
 										<div class="app-cost-line">
 											<div class="min-w-0">
 												<p class="app-cost-line-label">
-													Court fee per player · {courtFeePerPlayerModeLabel(null)}
+													{t('sessions.detail.courtFeePerPlayer', {
+														mode: courtFeePerPlayerModeLabel(null)
+													})}
 												</p>
 												<p class="app-cost-line-hint">{courtFeePerPlayerModeHint(null)}</p>
 											</div>
@@ -892,9 +943,11 @@
 										<div class="app-cost-line">
 											<div class="min-w-0">
 												<p class="app-cost-line-label">
-													Court fee per player · {courtFeePerPlayerModeLabel(
-														session.fixed_court_fee_per_player
-													)}
+													{t('sessions.detail.courtFeePerPlayer', {
+														mode: courtFeePerPlayerModeLabel(
+															session.fixed_court_fee_per_player
+														)
+													})}
 												</p>
 												<p class="app-cost-line-hint">
 													{courtFeePerPlayerModeHint(session.fixed_court_fee_per_player)}
@@ -908,30 +961,25 @@
 
 									<div class="app-cost-line">
 										<div class="min-w-0">
-											<p class="app-cost-line-label">Shuttle</p>
+											<p class="app-cost-line-label">{t('sessions.detail.shuttle')}</p>
 											<p class="app-cost-line-hint">
-												{#if session.shuttle?.name}
-													{session.shuttle.name} · {formatThb(session.shuttle_price_per_each)} each
-												{:else}
-													{formatThb(session.shuttle_price_per_each)} each
-												{/if}
-												· split 4 ways per match
+												{shuttleHintText}
 											</p>
 										</div>
 										<p class="app-cost-line-amount">
 											{formatThb(shuttleSharePerUse)}
-											<span class="block text-xs font-normal text-slate-500 dark:text-slate-400 dark:text-slate-500">per shuttle</span>
+											<span class="block text-xs font-normal text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('sessions.detail.perShuttle')}</span>
 										</p>
 									</div>
 
 									<div class="app-cost-line">
 										<div class="min-w-0">
-											<p class="app-cost-line-label">Late cancel fee</p>
+											<p class="app-cost-line-label">{t('sessions.detail.lateCancelFee')}</p>
 											<p class="app-cost-line-hint">
 												{#if session.cancellation_fee > 0}
-													Within 1 hour of start
+													{t('sessions.detail.lateCancelWithinHour')}
 												{:else}
-													No charge for late cancellation
+													{t('sessions.detail.lateCancelNone')}
 												{/if}
 											</p>
 										</div>
@@ -939,7 +987,7 @@
 											{#if session.cancellation_fee > 0}
 												{formatThb(session.cancellation_fee)}
 											{:else}
-												No fee
+												{t('sessions.detail.noFee')}
 											{/if}
 										</p>
 									</div>
@@ -957,19 +1005,19 @@
 							</div>
 						{:else if activeSession?.match_score_type}
 							<div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
-								<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Match settings</h3>
+								<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">{t('sessions.detail.matchSettings')}</h3>
 								<div class="app-cost-lines mt-3 rounded-xl border border-slate-100 dark:border-slate-800">
 									<div class="app-cost-line">
 										<div class="min-w-0">
-											<p class="app-cost-line-label">Rally points</p>
-											<p class="app-cost-line-hint">Points to win each game</p>
+											<p class="app-cost-line-label">{t('sessions.detail.rallyPoints')}</p>
+											<p class="app-cost-line-hint">{t('sessions.detail.rallyPointsHint')}</p>
 										</div>
 										<p class="app-cost-line-amount">{activeSession.match_score_type}</p>
 									</div>
 									<div class="app-cost-line">
 										<div class="min-w-0">
-											<p class="app-cost-line-label">Match format</p>
-											<p class="app-cost-line-hint">How many rounds per match</p>
+											<p class="app-cost-line-label">{t('sessions.detail.matchFormat')}</p>
+											<p class="app-cost-line-hint">{t('sessions.detail.matchFormatHint')}</p>
 										</div>
 										<p class="app-cost-line-amount">
 											{matchTypeLabel(activeSession.match_type)}
@@ -981,7 +1029,7 @@
 
 						{#if loading}
 							<div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4" aria-busy="true">
-								<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Host</h3>
+								<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">{t('common.host')}</h3>
 								<div class="mt-3 space-y-2 rounded-xl border border-slate-100 dark:border-slate-800 p-3" aria-hidden="true">
 									<div class="app-skeleton h-4 w-32"></div>
 									<div class="app-skeleton h-3 w-24"></div>
@@ -989,12 +1037,12 @@
 							</div>
 						{:else if session?.host}
 							<div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
-								<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Host</h3>
+								<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">{t('common.host')}</h3>
 								<div class="app-cost-lines mt-3 rounded-xl border border-slate-100 dark:border-slate-800">
 									<div class="app-cost-line">
 										<div class="min-w-0">
-											<p class="app-cost-line-label">Session host</p>
-											<p class="app-cost-line-hint">Organizing this session</p>
+											<p class="app-cost-line-label">{t('sessions.detail.sessionHost')}</p>
+											<p class="app-cost-line-hint">{t('sessions.detail.organizing')}</p>
 										</div>
 										<div class="app-cost-line-amount flex flex-col items-end gap-1">
 											<span>{session.host.display_name}</span>
@@ -1009,13 +1057,13 @@
 
 						{#if loading || !rosterReady}
 							<div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4" aria-busy="true">
-								<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Participants</h3>
+								<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">{t('sessions.detail.participants')}</h3>
 								<p class="mt-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-									Waiting list and buffer queue for this session.
+									{t('sessions.detail.participantsHint')}
 								</p>
 								<ul
 									class="mt-4 divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800"
-									aria-label="Loading participants"
+									aria-label={t('sessions.detail.loadingParticipants')}
 								>
 									{#each [0, 1, 2] as row (row)}
 										<li class="flex items-center gap-3 bg-white dark:bg-slate-900 px-3 py-2.5">
@@ -1030,42 +1078,42 @@
 							</div>
 						{:else if showParticipants && session}
 							<div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
-								<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">Participants</h3>
+								<h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">{t('sessions.detail.participants')}</h3>
 								<p class="mt-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-									Waiting list and buffer queue for this session.
+									{t('sessions.detail.participantsHint')}
 								</p>
 
 								<div class="app-cost-lines mt-3 rounded-xl border border-slate-100 dark:border-slate-800">
 									<div>
 										<div class="app-cost-line">
 											<div class="min-w-0">
-												<p class="app-cost-line-label">Waiting list</p>
-												<p class="app-cost-line-hint">Awaiting admin confirmation</p>
+												<p class="app-cost-line-label">{t('sessions.detail.waitingList')}</p>
+												<p class="app-cost-line-hint">{t('sessions.detail.awaitingConfirmation')}</p>
 											</div>
 											<p class="app-cost-line-amount">{waitingPlayers.length}</p>
 										</div>
 										{#if waitingPlayers.length === 0}
 											<p class="border-t border-slate-100 dark:border-slate-800 px-4 py-3 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-												No players waiting.
+												{t('sessions.detail.noPlayersWaiting')}
 											</p>
 										{:else}
 											<ul class="divide-y divide-slate-100 dark:divide-slate-800 border-t border-slate-100 dark:border-slate-800">
 												{#each waitingPlayers as player (player.id)}
 													<li class="flex items-center gap-3 bg-white dark:bg-slate-900 px-4 py-2.5">
 														<UserAvatar
-															displayName={player.profile?.display_name ?? 'Player'}
+															displayName={player.profile?.display_name ?? t('common.player')}
 															avatarUrl={player.profile?.avatar_url ?? null}
 															size="sm"
 														/>
 														<div class="min-w-0 flex-1">
 															<p class="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
-																{player.profile?.display_name ?? 'Unknown'}
+																{player.profile?.display_name ?? t('common.unknownPlayer')}
 																{#if player.is_me}
-																	<span class="text-brand-700"> (you)</span>
+																	<span class="text-brand-700">{t('common.youParen')}</span>
 																{/if}
 															</p>
 															<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-																Joined {formatDateTime(player.joined_at)}
+																{t('sessions.detail.joinedAt', { date: formatDateTime(player.joined_at) })}
 															</p>
 														</div>
 														{#if player.profile?.tag}
@@ -1080,9 +1128,9 @@
 									<div>
 										<div class="app-cost-line">
 											<div class="min-w-0">
-												<p class="app-cost-line-label">Buffer queue</p>
+												<p class="app-cost-line-label">{t('sessions.detail.bufferQueue')}</p>
 												<p class="app-cost-line-hint">
-													Overflow when main spots are full · max {session.max_buffer}
+													{t('sessions.detail.bufferQueueHint', { max: session.max_buffer })}
 												</p>
 											</div>
 											<p class="app-cost-line-amount">
@@ -1091,26 +1139,26 @@
 										</div>
 										{#if queuedPlayers.length === 0}
 											<p class="border-t border-slate-100 dark:border-slate-800 px-4 py-3 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-												No players in the buffer queue.
+												{t('sessions.detail.noPlayersInBuffer')}
 											</p>
 										{:else}
 											<ul class="divide-y divide-slate-100 dark:divide-slate-800 border-t border-slate-100 dark:border-slate-800">
 												{#each queuedPlayers as player (player.id)}
 													<li class="flex items-center gap-3 bg-white dark:bg-slate-900 px-4 py-2.5">
 														<UserAvatar
-															displayName={player.profile?.display_name ?? 'Player'}
+															displayName={player.profile?.display_name ?? t('common.player')}
 															avatarUrl={player.profile?.avatar_url ?? null}
 															size="sm"
 														/>
 														<div class="min-w-0 flex-1">
 															<p class="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
-																{player.profile?.display_name ?? 'Unknown'}
+																{player.profile?.display_name ?? t('common.unknownPlayer')}
 																{#if player.is_me}
-																	<span class="text-brand-700"> (you)</span>
+																	<span class="text-brand-700">{t('common.youParen')}</span>
 																{/if}
 															</p>
 															<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-																Joined {formatDateTime(player.joined_at)}
+																{t('sessions.detail.joinedAt', { date: formatDateTime(player.joined_at) })}
 															</p>
 														</div>
 														{#if player.profile?.tag}
@@ -1125,32 +1173,32 @@
 									<div>
 										<div class="app-cost-line">
 											<div class="min-w-0">
-												<p class="app-cost-line-label">Confirmed</p>
-												<p class="app-cost-line-hint">Approved to play</p>
+												<p class="app-cost-line-label">{t('sessions.detail.confirmedLabel')}</p>
+												<p class="app-cost-line-hint">{t('sessions.detail.approvedToPlay')}</p>
 											</div>
 											<p class="app-cost-line-amount">{confirmedPlayers.length}</p>
 										</div>
 										{#if confirmedPlayers.length === 0}
 											<p class="border-t border-slate-100 dark:border-slate-800 px-4 py-3 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-												No confirmed players yet.
+												{t('sessions.detail.noConfirmed')}
 											</p>
 										{:else}
 											<ul class="divide-y divide-slate-100 dark:divide-slate-800 border-t border-slate-100 dark:border-slate-800">
 												{#each confirmedPlayers as player (player.id)}
 													<li class="flex items-center gap-3 bg-white dark:bg-slate-900 px-4 py-2.5">
 														<UserAvatar
-															displayName={player.profile?.display_name ?? 'Player'}
+															displayName={player.profile?.display_name ?? t('common.player')}
 															avatarUrl={player.profile?.avatar_url ?? null}
 															size="sm"
 														/>
 														<div class="min-w-0 flex-1">
 															<p class="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
-																{player.profile?.display_name ?? 'Unknown'}
+																{player.profile?.display_name ?? t('common.unknownPlayer')}
 																{#if player.is_me}
-																	<span class="text-brand-700"> (you)</span>
+																	<span class="text-brand-700">{t('common.youParen')}</span>
 																{/if}
 															</p>
-															<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">Confirmed player</p>
+															<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('sessions.detail.confirmedPlayer')}</p>
 														</div>
 														{#if player.profile?.tag}
 															<TagPill tag={player.profile.tag} />
@@ -1171,10 +1219,10 @@
 						{:else if session}
 							{#if canJoin}
 								<SubmitButton type="button" variant="accent" onclick={() => (joinModalOpen = true)}>
-									Join session
+									{t('actions.joinSession')}
 								</SubmitButton>
 							{:else if showJoinConflict}
-								<SubmitButton type="button" disabled>Join session</SubmitButton>
+								<SubmitButton type="button" disabled>{t('actions.joinSession')}</SubmitButton>
 							{/if}
 
 							{#if canCancel}
@@ -1191,7 +1239,7 @@
 									}}
 									loading={actionLoading}
 								>
-									Cancel join
+									{t('sessions.detail.cancelJoin')}
 								</SubmitButton>
 								<form
 									id="cancel-membership-form"
@@ -1204,20 +1252,23 @@
 								</form>
 								{#if membership?.status === 'waiting' && session.cancellation_fee > 0}
 									<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-										Cancelling within 1 hour of start may incur a {formatThb(session.cancellation_fee)} fee.
+										{t('sessions.detail.cancelWithinHourHint', {
+											amount: formatThb(session.cancellation_fee)
+										})}
 									</p>
 								{/if}
 							{/if}
 
 							{#if cancelJoinLocked}
 								<SubmitButton type="button" variant="secondary" disabled>
-									Cancel join
+									{t('sessions.detail.cancelJoin')}
 								</SubmitButton>
 								<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-									Cancellation closed within 15 minutes of start. The admin may confirm or reject you. If
-									you play and leave early, you will be billed your court fee per player ({courtFeePerPlayerModeLabel(
-										session.fixed_court_fee_per_player
-									).toLowerCase()}).
+									{t('sessions.detail.cancelJoinLockedBody', {
+										mode: courtFeePerPlayerModeLabel(
+											session.fixed_court_fee_per_player
+										).toLowerCase()
+									})}
 								</p>
 							{/if}
 
@@ -1227,13 +1278,12 @@
 									variant="secondary"
 									onclick={goToLiveSession}
 									loading={liveNavLoading}
-									loadingLabel="Opening…"
+									loadingLabel={t('common.opening')}
 								>
-									Leave session
+									{t('sessions.detail.leaveSession')}
 								</SubmitButton>
 								<p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-									Early leave bills your court-fee share, requires admin payment confirmation, then admin
-									leave approval — same as on the live session page.
+									{t('sessions.detail.leaveSessionHint')}
 								</p>
 							{:else if session.status === 'in_progress' && membership?.status === 'confirmed'}
 								<SubmitButton
@@ -1241,9 +1291,9 @@
 									variant="accent"
 									onclick={goToLiveSession}
 									loading={liveNavLoading}
-									loadingLabel="Opening…"
+									loadingLabel={t('common.opening')}
 								>
-									Open live session
+									{t('sessions.detail.openLiveSession')}
 								</SubmitButton>
 							{/if}
 						{/if}
@@ -1258,39 +1308,38 @@
 			<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
 				<div class="border-b border-brand-100 bg-brand-50 px-4 py-4">
 					<h2 id="join-session-title" class="text-lg font-semibold text-brand-900">
-						{isInProgressJoin ? 'Join session in progress?' : 'Before you join'}
+						{isInProgressJoin
+							? t('sessions.detail.joinInProgressTitle')
+							: t('sessions.detail.beforeYouJoin')}
 					</h2>
 					<div class="mt-3 space-y-3 text-sm text-brand-800">
 						{#if isInProgressJoin}
-							<p>This session has already started.</p>
+							<p>{t('sessions.detail.alreadyStarted')}</p>
 							<p>
-								Once you join, you cannot cancel your membership. To leave, you must pay your
-								court fee per player ({courtFeePerPlayerModeLabel(
-									session.fixed_court_fee_per_player
-								).toLowerCase()}{#if estimatedCourtShare !== null}
-									— currently about {formatThb(estimatedCourtShare)}{#if session.fixed_court_fee_per_player === null && estimatedCourtSharePlayerCount !== null}
-										, split across {estimatedCourtSharePlayerCount} active player{estimatedCourtSharePlayerCount ===
-										1
-											? ''
-											: 's'} if you join{/if}{/if}).
+								{t('sessions.detail.joinInProgressNoCancel', {
+									mode: courtFeePerPlayerModeLabel(
+										session.fixed_court_fee_per_player
+									).toLowerCase(),
+									estimate: joinInProgressEstimate
+								})}
 							</p>
 							<p>
-								Unpaid session fees will prevent you from joining other sessions until they are
-								settled.
+								{t('sessions.detail.unpaidFeesBlock')}
 							</p>
 						{:else}
 							<p>
-								Please arrive at the venue at least 15 minutes before the session starts ({formatDateTime(session.start_at)})
-								so the admin can confirm your attendance.
+								{t('sessions.detail.arriveEarly', {
+									startAt: formatDateTime(session.start_at)
+								})}
 							</p>
 							<p>
-								You can cancel from session details while on the waiting list until 15 minutes before
-								start, or anytime while in the buffer queue.
+								{t('sessions.detail.cancelPolicy')}
 							</p>
 							{#if session.cancellation_fee > 0}
 								<p>
-									Cancelling within 1 hour of the session start may incur a late cancellation fee of
-									{formatThb(session.cancellation_fee)}.
+									{t('sessions.detail.cancelBodyFee', {
+										amount: formatThb(session.cancellation_fee)
+									})}
 								</p>
 							{/if}
 						{/if}
@@ -1303,8 +1352,8 @@
 					use:enhance={enhanceAction()}
 				>
 					<input type="hidden" name="session_id" value={session.id} />
-					<SubmitButton loading={actionLoading} loadingLabel="Joining…" variant="accent" class="!w-auto">
-						Join session
+					<SubmitButton loading={actionLoading} loadingLabel={t('common.joining')} variant="accent" class="!w-auto">
+						{t('actions.joinSession')}
 					</SubmitButton>
 					<SubmitButton
 						type="button"
@@ -1313,7 +1362,7 @@
 						disabled={actionLoading}
 						onclick={closeJoinModal}
 					>
-						Cancel
+						{t('common.cancel')}
 					</SubmitButton>
 				</form>
 			</div>
@@ -1325,11 +1374,12 @@
 			<div class="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-xl">
 				<div class="border-b border-amber-100 bg-amber-50 px-4 py-4">
 					<h2 id="cancel-confirm-title" class="text-lg font-semibold text-amber-900">
-						Late cancellation fee
+						{t('sessions.detail.lateCancelConfirmTitle')}
 					</h2>
 					<p class="mt-3 text-sm text-amber-900">
-						Cancelling within 1 hour of start will record a late cancellation fee of
-						{formatThb(session.cancellation_fee)}. You must pay this fee before joining another session.
+						{t('sessions.detail.lateCancelConfirmBodyFull', {
+							amount: formatThb(session.cancellation_fee)
+						})}
 					</p>
 				</div>
 				<form
@@ -1339,8 +1389,8 @@
 					use:enhance={enhanceCancel}
 				>
 					<input type="hidden" name="session_id" value={session.id} />
-					<SubmitButton loading={actionLoading} loadingLabel="Cancelling…" class="!w-auto">
-						Accept and cancel
+					<SubmitButton loading={actionLoading} loadingLabel={t('common.cancelling')} class="!w-auto">
+						{t('sessions.detail.acceptAndCancel')}
 					</SubmitButton>
 					<SubmitButton
 						type="button"
@@ -1349,7 +1399,7 @@
 						disabled={actionLoading}
 						onclick={() => (cancelConfirmOpen = false)}
 					>
-						Keep my spot
+						{t('sessions.detail.keepMySpot')}
 					</SubmitButton>
 				</form>
 			</div>
@@ -1363,7 +1413,7 @@
 			amount={feeModalAmount}
 			promptpayTarget={session.promptpay_target}
 			feeStatus={feeModalStatus}
-			sessionLabel="{session.name} · {session.club?.name ?? 'Club session'}"
+			sessionLabel="{session.name} · {session.club?.name ?? t('sessions.detail.clubSessionFallback')}"
 			onClose={closeFeeModal}
 			onSubmitted={onFeeSubmitted}
 		/>

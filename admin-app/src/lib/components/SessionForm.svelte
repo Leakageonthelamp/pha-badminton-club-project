@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import { enhance } from '$app/forms';
 	import NotSetBadge from '@repo/ui/components/NotSetBadge.svelte';
 	import SectionHeading from '@repo/ui/components/SectionHeading.svelte';
@@ -295,14 +296,14 @@
 
 	{#if managedClubs.length > 1 && activeClub}
 		<div class={formSectionClass}>
-			<SectionHeading title="Club" />
+			<SectionHeading title={t('workspace.club.shortLabel')} />
 			<div>
 				<input
 					id="club_name"
 					type="text"
 					value={activeClub.name}
 					disabled
-					aria-label="Club"
+					aria-label={t('workspace.club.shortLabel')}
 					class="{inputClass} disabled:cursor-not-allowed disabled:bg-slate-50 dark:bg-slate-950 disabled:text-slate-700 dark:text-slate-300 dark:text-slate-600"
 				/>
 				{#if mode === 'create'}
@@ -315,9 +316,9 @@
 	{/if}
 
 	<div class={formSectionClass}>
-		<SectionHeading title="Session details" />
+		<SectionHeading title={t('sessionForm.details')} />
 		<div>
-			<label for="name" class={labelClass}>Session name</label>
+			<label for="name" class={labelClass}>{t('sessionForm.nameLabel')}</label>
 			<input
 				id="name"
 				name="name"
@@ -326,7 +327,7 @@
 				maxlength={SESSION_NAME_MAX_LENGTH}
 				bind:value={name}
 				class={inputClass}
-				placeholder="Friday Night Smash"
+				placeholder={t('sessionForm.namePlaceholder')}
 			/>
 		</div>
 
@@ -334,15 +335,15 @@
 	</div>
 
 	<div class={formSectionClass}>
-		<SectionHeading title="Schedule" />
+		<SectionHeading title={t('sessionForm.schedule')} />
 		<div class="grid gap-4 sm:grid-cols-2">
 			<div>
 				<DateTimePicker
 					id="start_at_local"
-					label="Start"
+					label={t('sessionForm.start')}
 					required
 					minOffsetMinutes={mode === 'create' ? SESSION_MIN_START_LEAD_MINUTES : 0}
-					placeholder="dd/mm/yyyy, --:--"
+					placeholder={t('sessionForm.datetimePlaceholder')}
 					bind:value={startAtLocal}
 				/>
 				<input type="hidden" name="start_at" value={startAtUtc} />
@@ -350,11 +351,11 @@
 			<div>
 				<DateTimePicker
 					id="end_at_local"
-					label="End"
+					label={t('sessionForm.end')}
 					required
 					disabled={!startAtLocal}
 					min={endMinLocal}
-					placeholder="dd/mm/yyyy, --:--"
+					placeholder={t('sessionForm.datetimePlaceholder')}
 					bind:value={endAtLocal}
 				/>
 				<input type="hidden" name="end_at" value={endAtUtc} />
@@ -368,7 +369,7 @@
 
 	<div class={formSectionClass}>
 		<div class="flex flex-wrap items-center gap-2">
-			<SectionHeading title="Venue" />
+			<SectionHeading title={t('sessionForm.venue')} />
 			{#if activeClub && !hasClubVenueDefaults}
 				<NotSetBadge />
 			{/if}
@@ -424,7 +425,7 @@
 		{/if}
 
 		<div>
-			<label for="venue_name" class={labelClass}>Venue name</label>
+			<label for="venue_name" class={labelClass}>{t('clubs.detail.location.venueLabel')}</label>
 			<input type="hidden" name="venue_name" value={venueName} />
 			<input
 				id="venue_name"
@@ -432,13 +433,13 @@
 				required
 				bind:value={venueName}
 				disabled={venueLocked || loading}
-				placeholder={hasClubVenueDefaults ? undefined : 'e.g. Rama IX Sports Center'}
+				placeholder={hasClubVenueDefaults ? undefined : t('clubs.detail.location.venuePlaceholder')}
 				class="{inputClass} disabled:cursor-not-allowed disabled:bg-slate-50 dark:bg-slate-950 disabled:text-slate-700 dark:text-slate-300 dark:text-slate-600"
 			/>
 		</div>
 
 		<div class="space-y-2">
-			<p class={labelClass}>Venue location</p>
+			<p class={labelClass}>{t('clubs.detail.locationTitle')}</p>
 			<MapPinPicker
 				bind:latitude
 				bind:longitude
@@ -452,10 +453,10 @@
 	</div>
 
 	<div class={formSectionClass}>
-		<SectionHeading title="Players & courts" />
+		<SectionHeading title={t('sessionForm.playersCourts')} />
 		<div class="grid gap-4 sm:grid-cols-2">
 			<div>
-				<label for="max_players" class={labelClass}>Max players</label>
+				<label for="max_players" class={labelClass}>{t('sessionForm.maxPlayers')}</label>
 				<input
 					id="max_players"
 					name="max_players"
@@ -468,7 +469,7 @@
 				/>
 			</div>
 			<div>
-				<label for="min_players" class={labelClass}>Min players</label>
+				<label for="min_players" class={labelClass}>{t('sessionForm.minPlayers')}</label>
 				<input
 					id="min_players"
 					name="min_players"
@@ -481,7 +482,7 @@
 				/>
 			</div>
 			<div>
-				<label for="court_count" class={labelClass}>Court count</label>
+				<label for="court_count" class={labelClass}>{t('sessionForm.courtCount')}</label>
 				<input
 					id="court_count"
 					name="court_count"
@@ -494,7 +495,7 @@
 				/>
 			</div>
 			<div>
-				<label for="court_fee_per_hour" class={labelClass}>Court fee per hour (THB)</label>
+				<label for="court_fee_per_hour" class={labelClass}>{t('sessionForm.courtFeePerHour')}</label>
 				<input
 					id="court_fee_per_hour"
 					name="court_fee_per_hour"
@@ -510,7 +511,7 @@
 		</div>
 
 		<div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-4 py-3">
-			<p class="text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">Estimated actual court cost per player</p>
+			<p class="text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">{t('sessionForm.estimatedCostTitle')}</p>
 			{#if estimatedCourtCostPerPlayer !== null}
 				<p class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
 					{formatThb(estimatedCourtCostPerPlayer)}
@@ -540,7 +541,7 @@
 				min="0"
 				step="0.01"
 				bind:value={fixedCourtFeePerPlayer}
-				placeholder="Leave blank to split the cost evenly"
+				placeholder={t('sessionForm.fixedCourtFeePlaceholder')}
 				class={inputClass}
 			/>
 			<p class="mt-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
@@ -552,17 +553,17 @@
 	</div>
 
 	<div class={formSectionClass}>
-		<SectionHeading title="Shuttle & pricing" />
+		<SectionHeading title={t('sessionForm.shuttlePricing')} />
 		<div class="space-y-4">
 			{#if shuttleOptions.length === 0}
 				<p class="text-sm text-amber-700">
-					Add shuttlecocks in club settings before {mode === 'create' ? 'creating' : 'editing'} a
+					Add shuttlecocks in club settings before {mode === 'create' ? t('sessionForm.creating') : t('sessionForm.editing')} a
 					session.
 				</p>
 			{:else}
 				<SelectMenu
 					id="shuttle_id"
-					label="Shuttle"
+					label={t('sessionForm.shuttle')}
 					options={shuttleOptions}
 					truncate={false}
 					bind:value={shuttleId}
@@ -570,7 +571,7 @@
 				/>
 				<input type="hidden" name="shuttle_id" value={shuttleId} />
 				<div class="max-w-md">
-					<label for="shuttle_price_per_each" class={labelClass}>Shuttle price per each (THB)</label>
+					<label for="shuttle_price_per_each" class={labelClass}>{t('sessionForm.shuttlePrice')}</label>
 					<input
 						id="shuttle_price_per_each"
 						name="shuttle_price_per_each"
@@ -593,7 +594,7 @@
 
 	<div class={formSectionClass}>
 		<div class="flex flex-wrap items-center gap-2">
-			<SectionHeading title="Payment" />
+			<SectionHeading title={t('sessionForm.payment')} />
 			{#if activeClub && !hasClubPromptPayDefaults}
 				<NotSetBadge />
 			{/if}
@@ -610,8 +611,8 @@
 				<p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 					{#if promptPayLocked}
 						Using your club's default PromptPay ({promptPayType === 'national_id'
-							? 'National ID'
-							: 'Mobile phone'}). Edit to use different payment details for this session.
+							? t('clubs.detail.promptPay.nationalId')
+							: t('clubs.detail.promptPay.mobilePhone')}). Edit to use different payment details for this session.
 					{:else}
 						Custom PromptPay for this session.
 					{/if}
@@ -659,7 +660,7 @@
 		{/if}
 
 		<fieldset class="space-y-3" disabled={promptPayLocked || loading}>
-			<legend class="sr-only">PromptPay type</legend>
+			<legend class="sr-only">{t('sessionForm.promptPayTypeLegend')}</legend>
 			<label class="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3">
 				<input
 					type="radio"
@@ -669,7 +670,7 @@
 					required={!promptPayLocked}
 					class="h-4 w-4 border-slate-300 dark:border-slate-600 text-brand-600 focus:ring-brand-600"
 				/>
-				<span class="text-sm font-medium text-slate-900 dark:text-slate-100">Mobile phone</span>
+				<span class="text-sm font-medium text-slate-900 dark:text-slate-100">{t('clubs.detail.promptPay.mobilePhone')}</span>
 			</label>
 			<label class="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3">
 				<input
@@ -680,13 +681,13 @@
 					required={!promptPayLocked}
 					class="h-4 w-4 border-slate-300 dark:border-slate-600 text-brand-600 focus:ring-brand-600"
 				/>
-				<span class="text-sm font-medium text-slate-900 dark:text-slate-100">National ID card</span>
+				<span class="text-sm font-medium text-slate-900 dark:text-slate-100">{t('clubs.detail.promptPay.nationalIdCard')}</span>
 			</label>
 		</fieldset>
 
 		<div>
 			<label for="promptpay_target" class={labelClass}>
-				{promptPayType === 'national_id' ? 'National ID' : 'Phone number'}
+				{promptPayType === 'national_id' ? t('clubs.detail.promptPay.nationalId') : t('auth.field.identifierPhone')}
 				<span class="text-red-600">*</span>
 			</label>
 			<input
@@ -697,17 +698,17 @@
 				required={!promptPayLocked}
 				bind:value={promptPayTarget}
 				disabled={promptPayLocked || loading}
-				placeholder={promptPayType === 'national_id' ? '1234567890123' : '0812345678'}
+				placeholder={promptPayType === 'national_id' ? t('sessionForm.nationalIdPlaceholder') : t('auth.field.placeholder.phone')}
 				class="{inputClass} disabled:cursor-not-allowed disabled:bg-slate-50 dark:bg-slate-950 disabled:text-slate-700 dark:text-slate-300 dark:text-slate-600"
 			/>
 		</div>
 	</div>
 
 	<div class={formSectionClass}>
-		<SectionHeading title="Join settings" />
+		<SectionHeading title={t('sessionForm.joinSettings')} />
 		<div class="grid gap-4 sm:grid-cols-2">
 			<div>
-				<label for="max_buffer" class={labelClass}>Max buffer queue</label>
+				<label for="max_buffer" class={labelClass}>{t('sessionForm.maxBuffer')}</label>
 				<input
 					id="max_buffer"
 					name="max_buffer"
@@ -724,7 +725,7 @@
 				</p>
 			</div>
 			<div>
-				<label for="cancellation_fee" class={labelClass}>Late cancel fee (THB)</label>
+				<label for="cancellation_fee" class={labelClass}>{t('sessionForm.lateCancelFee')}</label>
 				<input
 					id="cancellation_fee"
 					name="cancellation_fee"
@@ -745,15 +746,15 @@
 	</div>
 
 	<div class={formSectionClass}>
-		<SectionHeading title="Match settings" />
+		<SectionHeading title={t('sessionForm.matchSettings')} />
 		<div class="grid gap-4 sm:grid-cols-2">
 			<div>
 				<SelectMenu
 					id="match_score_type"
-					label="Match score type"
+					label={t('sessionForm.matchScoreType')}
 					options={[
-						{ value: '15', label: '15 points' },
-						{ value: '21', label: '21 points' }
+						{ value: '15', label: t('sessionForm.score15') },
+						{ value: '21', label: t('sessionForm.score21') }
 					]}
 					bind:value={matchScoreType}
 				/>
@@ -762,10 +763,10 @@
 			<div>
 				<SelectMenu
 					id="match_type"
-					label="Match type"
+					label={t('sessionForm.matchType')}
 					options={[
-						{ value: 'one_round', label: 'One round' },
-						{ value: 'two_round', label: 'Two rounds' }
+						{ value: 'one_round', label: t('session.matchType.oneRound') },
+						{ value: 'two_round', label: t('session.matchType.twoRounds') }
 					]}
 					bind:value={matchType}
 				/>

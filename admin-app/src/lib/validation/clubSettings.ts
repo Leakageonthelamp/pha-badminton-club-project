@@ -1,5 +1,8 @@
 import { CLUB_DESCRIPTION_MAX_LENGTH, CLUB_NAME_MAX_LENGTH } from '$lib/config/club';
+import type { Locale } from '$lib/i18n';
+import { tForLocale } from '$lib/i18n';
 import { richTextPlainTextLength } from '@repo/ui/richText';
+import { DEFAULT_LOCALE } from '@repo/ui/i18n';
 import { z } from 'zod';
 
 const booleanField = z.preprocess(
@@ -15,41 +18,57 @@ export const VENUE_NAME_MAX_LENGTH = 120;
 
 export const SHUTTLE_SPEEDS = [75, 76] as const;
 
-export const shuttleInputSchema = z.object({
-	name: z
-		.string()
-		.trim()
-		.min(1, 'Name is required')
-		.max(SHUTTLE_NAME_MAX_LENGTH, `Name must be ${SHUTTLE_NAME_MAX_LENGTH} characters or fewer`),
-	speed: z.coerce
-		.number({ invalid_type_error: 'Speed must be a number' })
-		.int('Speed must be a whole number')
-		.refine((value) => value === 75 || value === 76, 'Speed must be 75 or 76'),
-	price: z.coerce
-		.number({ invalid_type_error: 'Tube price must be a number' })
-		.min(0, 'Tube price cannot be negative'),
-	number_per_box: z.coerce
-		.number({ invalid_type_error: 'Amount per tube must be a number' })
-		.int('Amount per tube must be a whole number')
-		.min(1, 'Amount per tube must be at least 1')
-});
+export const buildShuttleInputSchema = (locale: Locale = DEFAULT_LOCALE) =>
+	z.object({
+		name: z
+			.string()
+			.trim()
+			.min(1, tForLocale(locale, 'validation.shuttle.nameRequired'))
+			.max(
+				SHUTTLE_NAME_MAX_LENGTH,
+				tForLocale(locale, 'validation.shuttle.nameMax', { max: SHUTTLE_NAME_MAX_LENGTH })
+			),
+		speed: z.coerce
+			.number({ invalid_type_error: tForLocale(locale, 'validation.shuttle.speedNumber') })
+			.int(tForLocale(locale, 'validation.shuttle.speedInt'))
+			.refine(
+				(value) => value === 75 || value === 76,
+				tForLocale(locale, 'validation.shuttle.speedValues')
+			),
+		price: z.coerce
+			.number({ invalid_type_error: tForLocale(locale, 'validation.shuttle.priceNumber') })
+			.min(0, tForLocale(locale, 'validation.shuttle.priceMin')),
+		number_per_box: z.coerce
+			.number({ invalid_type_error: tForLocale(locale, 'validation.shuttle.perBoxNumber') })
+			.int(tForLocale(locale, 'validation.shuttle.perBoxInt'))
+			.min(1, tForLocale(locale, 'validation.shuttle.perBoxMin'))
+	});
 
-export const shuttleUpdateSchema = shuttleInputSchema.extend({
-	shuttleId: z.string().uuid('Invalid shuttle')
-});
+export const shuttleInputSchema = buildShuttleInputSchema();
 
-export const shuttleDeleteSchema = z.object({
-	shuttleId: z.string().uuid('Invalid shuttle')
-});
+export const buildShuttleUpdateSchema = (locale: Locale = DEFAULT_LOCALE) =>
+	buildShuttleInputSchema(locale).extend({
+		shuttleId: z.string().uuid(tForLocale(locale, 'validation.shuttle.invalid'))
+	});
+
+export const shuttleUpdateSchema = buildShuttleUpdateSchema();
+
+export const buildShuttleDeleteSchema = (locale: Locale = DEFAULT_LOCALE) =>
+	z.object({
+		shuttleId: z.string().uuid(tForLocale(locale, 'validation.shuttle.invalid'))
+	});
+
+export const shuttleDeleteSchema = buildShuttleDeleteSchema();
 
 const refinePromptPayTarget = (
 	data: { promptpay_type: 'phone' | 'national_id'; promptpay_target: string },
-	ctx: z.RefinementCtx
+	ctx: z.RefinementCtx,
+	locale: Locale
 ) => {
 	if (data.promptpay_type === 'phone' && !thaiPhoneRegex.test(data.promptpay_target)) {
 		ctx.addIssue({
 			code: z.ZodIssueCode.custom,
-			message: 'Enter a valid 10-digit Thai mobile number (e.g. 0812345678)',
+			message: tForLocale(locale, 'validation.promptPay.phone'),
 			path: ['promptpay_target']
 		});
 	}
@@ -57,114 +76,133 @@ const refinePromptPayTarget = (
 	if (data.promptpay_type === 'national_id' && !nationalIdRegex.test(data.promptpay_target)) {
 		ctx.addIssue({
 			code: z.ZodIssueCode.custom,
-			message: 'Enter a valid 13-digit national ID',
+			message: tForLocale(locale, 'validation.promptPay.nationalId'),
 			path: ['promptpay_target']
 		});
 	}
 };
 
-export const requiredPromptPayFieldsSchema = z
-	.object({
-		promptpay_type: z.enum(['phone', 'national_id'], {
-			errorMap: () => ({ message: 'Select PromptPay type' })
-		}),
-		promptpay_target: z.string().trim().min(1, 'PromptPay target is required')
-	})
-	.superRefine(refinePromptPayTarget);
+export const buildRequiredPromptPayFieldsSchema = (locale: Locale = DEFAULT_LOCALE) =>
+	z
+		.object({
+			promptpay_type: z.enum(['phone', 'national_id'], {
+				errorMap: () => ({ message: tForLocale(locale, 'validation.session.promptPayType') })
+			}),
+			promptpay_target: z
+				.string()
+				.trim()
+				.min(1, tForLocale(locale, 'validation.session.promptPayTarget'))
+		})
+		.superRefine((data, ctx) => refinePromptPayTarget(data, ctx, locale));
 
-export const promptPayInputSchema = z
-	.object({
-		clear: booleanField.optional().default(false),
-		promptpay_type: z.enum(['phone', 'national_id']).optional(),
-		promptpay_target: z.string().trim()
-	})
-	.superRefine((data, ctx) => {
-		if (data.clear) {
-			return;
-		}
+export const requiredPromptPayFieldsSchema = buildRequiredPromptPayFieldsSchema();
 
-		if (!data.promptpay_type) {
-			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
-				message: 'Select PromptPay type',
-				path: ['promptpay_type']
-			});
-			return;
-		}
+export const buildPromptPayInputSchema = (locale: Locale = DEFAULT_LOCALE) =>
+	z
+		.object({
+			clear: booleanField.optional().default(false),
+			promptpay_type: z.enum(['phone', 'national_id']).optional(),
+			promptpay_target: z.string().trim()
+		})
+		.superRefine((data, ctx) => {
+			if (data.clear) {
+				return;
+			}
 
-		if (!data.promptpay_target) {
-			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
-				message: 'PromptPay target is required',
-				path: ['promptpay_target']
-			});
-			return;
-		}
+			if (!data.promptpay_type) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: tForLocale(locale, 'validation.session.promptPayType'),
+					path: ['promptpay_type']
+				});
+				return;
+			}
 
-		refinePromptPayTarget(
-			{ promptpay_type: data.promptpay_type, promptpay_target: data.promptpay_target },
-			ctx
-		);
-	});
+			if (!data.promptpay_target) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: tForLocale(locale, 'validation.session.promptPayTarget'),
+					path: ['promptpay_target']
+				});
+				return;
+			}
 
-export const locationInputSchema = z
-	.object({
-		clear: booleanField.optional().default(false),
-		venue_name: z
+			refinePromptPayTarget(
+				{ promptpay_type: data.promptpay_type, promptpay_target: data.promptpay_target },
+				ctx,
+				locale
+			);
+		});
+
+export const promptPayInputSchema = buildPromptPayInputSchema();
+
+export const buildLocationInputSchema = (locale: Locale = DEFAULT_LOCALE) =>
+	z
+		.object({
+			clear: booleanField.optional().default(false),
+			venue_name: z
+				.string()
+				.trim()
+				.max(
+					VENUE_NAME_MAX_LENGTH,
+					tForLocale(locale, 'validation.location.venueMax', { max: VENUE_NAME_MAX_LENGTH })
+				)
+				.optional()
+				.transform((value) => value || null),
+			latitude: z.preprocess(
+				(val) => (val === '' || val === null || val === undefined ? null : val),
+				z.coerce.number().min(-90).max(90).nullable()
+			),
+			longitude: z.preprocess(
+				(val) => (val === '' || val === null || val === undefined ? null : val),
+				z.coerce.number().min(-180).max(180).nullable()
+			)
+		})
+		.superRefine((data, ctx) => {
+			if (data.clear) {
+				return;
+			}
+
+			const hasLat = data.latitude !== null;
+			const hasLng = data.longitude !== null;
+
+			if (hasLat !== hasLng) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: tForLocale(locale, 'validation.location.pin'),
+					path: ['latitude']
+				});
+			}
+
+			if ((hasLat || hasLng) && !data.venue_name) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: tForLocale(locale, 'validation.location.venueRequired'),
+					path: ['venue_name']
+				});
+			}
+		});
+
+export const locationInputSchema = buildLocationInputSchema();
+
+export const buildClubAdminClubInputSchema = (locale: Locale = DEFAULT_LOCALE) =>
+	z.object({
+		name: z
 			.string()
 			.trim()
+			.min(1, tForLocale(locale, 'validation.club.nameRequired'))
 			.max(
-				VENUE_NAME_MAX_LENGTH,
-				`Venue name must be ${VENUE_NAME_MAX_LENGTH} characters or fewer`
+				CLUB_NAME_MAX_LENGTH,
+				tForLocale(locale, 'validation.club.nameMax', { max: CLUB_NAME_MAX_LENGTH })
+			),
+		description: z
+			.string()
+			.trim()
+			.default('')
+			.refine(
+				(val) => richTextPlainTextLength(val) <= CLUB_DESCRIPTION_MAX_LENGTH,
+				tForLocale(locale, 'validation.club.descriptionMax', { max: CLUB_DESCRIPTION_MAX_LENGTH })
 			)
-			.optional()
-			.transform((value) => value || null),
-		latitude: z.preprocess(
-			(val) => (val === '' || val === null || val === undefined ? null : val),
-			z.coerce.number().min(-90).max(90).nullable()
-		),
-		longitude: z.preprocess(
-			(val) => (val === '' || val === null || val === undefined ? null : val),
-			z.coerce.number().min(-180).max(180).nullable()
-		)
-	})
-	.superRefine((data, ctx) => {
-		if (data.clear) {
-			return;
-		}
-
-		const hasLat = data.latitude !== null;
-		const hasLng = data.longitude !== null;
-
-		if (hasLat !== hasLng) {
-			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
-				message: 'Set a location pin on the map',
-				path: ['latitude']
-			});
-		}
-
-		if ((hasLat || hasLng) && !data.venue_name) {
-			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
-				message: 'Venue name is required when a location is set',
-				path: ['venue_name']
-			});
-		}
 	});
 
-export const clubAdminClubInputSchema = z.object({
-	name: z
-		.string()
-		.trim()
-		.min(1, 'Club name is required')
-		.max(CLUB_NAME_MAX_LENGTH, `Club name must be ${CLUB_NAME_MAX_LENGTH} characters or fewer`),
-	description: z
-		.string()
-		.trim()
-		.default('')
-		.refine(
-			(val) => richTextPlainTextLength(val) <= CLUB_DESCRIPTION_MAX_LENGTH,
-			`Description must be ${CLUB_DESCRIPTION_MAX_LENGTH} characters or fewer`
-		)
-});
+export const clubAdminClubInputSchema = buildClubAdminClubInputSchema();

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import { goto } from '$app/navigation';
 	import {
 		getWorkspaceHomePath,
@@ -77,8 +78,10 @@
 			aria-expanded={open}
 			aria-busy={switching}
 			aria-haspopup="menu"
-			aria-label="Switch admin workspace ({currentOption?.label ?? 'Admin'})"
-			title="Admin workspace"
+			aria-label={t('workspace.admin.switchAria', {
+				label: currentOption?.label ?? t('workspace.super.shortLabel')
+			})}
+			title={t('workspace.admin.title')}
 			disabled={switching}
 			onclick={toggleMenu}
 		>
@@ -96,7 +99,7 @@
 			<button
 				type="button"
 				class="fixed inset-0 z-40 cursor-default"
-				aria-label="Close workspace menu"
+				aria-label={t('workspace.admin.closeMenu')}
 				onclick={closeMenu}
 			></button>
 
@@ -106,7 +109,7 @@
 			>
 				<div class="border-b border-slate-100 dark:border-slate-800 px-3 py-2.5">
 					<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-						Admin workspace
+						{t('workspace.admin.title')}
 					</p>
 				</div>
 
@@ -131,7 +134,9 @@
 							</span>
 							<span class="min-w-0">
 								<span class="block font-semibold">{option.label}</span>
-								<span class="block text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">{option.shortLabel} dashboard</span>
+								<span class="block text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500"
+									>{option.shortLabel} {t('workspace.admin.dashboardSuffix')}</span
+								>
 							</span>
 							{#if option.id === currentWorkspace}
 								<MenuSelectedMark />

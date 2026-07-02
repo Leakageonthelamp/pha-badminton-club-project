@@ -5,6 +5,7 @@ import {
 	validateSlipFile
 } from '$lib/images/compressSlip';
 import { createSupabaseAdminClient } from '$lib/supabase/server';
+import { t } from '@repo/ui/i18n';
 
 export const uploadSlip = async (
 	userId: string,
@@ -35,7 +36,7 @@ export const readSlipFromForm = (
 ): { ok: true; file: File } | { ok: false; message: string } => {
 	const slip = formData.get('slip');
 	if (!(slip instanceof File) || slip.size === 0) {
-		return { ok: false, message: 'Attach your bank slip before submitting.' };
+		return { ok: false, message: t('payments.slip.required') };
 	}
 
 	return { ok: true, file: slip };

@@ -17,6 +17,7 @@ import {
 	parseTransactionStatusFilter
 } from '$lib/transactions/list';
 import { createSupabaseAdminClient } from '$lib/supabase/server';
+import { tForLocale } from '@repo/ui/i18n';
 import { fail } from '@sveltejs/kit';
 import type { PlayerTransactionPage } from '$lib/types/transaction';
 import type { PasswordSignInPreference } from '$lib/types/auth';
@@ -38,7 +39,7 @@ const profileSchema = z.object({
 	tag: tagSchema
 });
 
-export const load: PageServerLoad = async ({ url, locals: { supabase, user }, depends }) => {
+export const load: PageServerLoad = async ({ url, locals: { supabase, user, locale }, depends }) => {
 	authLoadDepends(user!.id, depends);
 	depends('app:profile');
 
@@ -54,7 +55,7 @@ export const load: PageServerLoad = async ({ url, locals: { supabase, user }, de
 	if (error) {
 		return {
 			profile: null,
-			loadError: 'Could not load your profile.',
+			loadError: tForLocale(locale, 'profile.loadError'),
 			outstandingFees: [],
 			transactions: emptyTransactions()
 		};
@@ -74,7 +75,7 @@ export const load: PageServerLoad = async ({ url, locals: { supabase, user }, de
 };
 
 export const actions: Actions = {
-	updateProfile: async ({ request, locals: { supabase, user } }) => {
+	updateProfile: async ({ request, locals: { supabase, user, locale } }) => {
 		const formData = await request.formData();
 		const parsed = profileSchema.safeParse({
 			displayName: String(formData.get('displayName') ?? ''),
@@ -87,7 +88,7 @@ export const actions: Actions = {
 				error:
 					fieldErrors.displayName?.[0] ??
 					fieldErrors.tag?.[0] ??
-					'Please check your input and try again.',
+					tForLocale(locale, 'auth.error.invalid_input'),
 				fieldErrors: {
 					displayName: fieldErrors.displayName?.[0] ?? null,
 					tag: fieldErrors.tag?.[0] ?? null
@@ -108,9 +109,10 @@ export const actions: Actions = {
 			.maybeSingle();
 
 		if (existingTag) {
+			const tagTaken = tForLocale(locale, 'validation.tag.taken');
 			return fail(400, {
-				error: 'This tag is already taken. Choose another.',
-				fieldErrors: { displayName: null, tag: 'This tag is already taken. Choose another.' },
+				error: tagTaken,
+				fieldErrors: { displayName: null, tag: tagTaken },
 				values: {
 					displayName: parsed.data.displayName,
 					tag: parsed.data.tag
@@ -137,7 +139,7 @@ export const actions: Actions = {
 				.upload(path, avatar, { upsert: true, contentType: avatar.type });
 
 			if (uploadError) {
-				return fail(400, { error: 'Could not upload avatar. Please try again.' });
+				return fail(400, { error: tForLocale(locale, 'profile.uploadError') });
 			}
 
 			const { data: publicUrl } = supabase.storage.from('avatars').getPublicUrl(path);
@@ -148,9 +150,10 @@ export const actions: Actions = {
 
 		if (error) {
 			if (error.code === '23505') {
+				const tagTaken = tForLocale(locale, 'validation.tag.taken');
 				return fail(400, {
-					error: 'This tag is already taken. Choose another.',
-					fieldErrors: { displayName: null, tag: 'This tag is already taken. Choose another.' },
+					error: tagTaken,
+					fieldErrors: { displayName: null, tag: tagTaken },
 					values: {
 						displayName: parsed.data.displayName,
 						tag: parsed.data.tag
@@ -158,13 +161,13 @@ export const actions: Actions = {
 				});
 			}
 
-			return fail(400, { error: 'Could not update profile. Please try again.' });
+			return fail(400, { error: tForLocale(locale, 'profile.updateError') });
 		}
 
 		return { success: true, at: Date.now() };
 	},
 
-	updateCredentials: async ({ request, locals: { supabase, user } }) => {
+	updateCredentials: async ({ request, locals: { supabase, user, locale } }) => {
 		const formData = await request.formData();
 		const input: CredentialsInput = {
 			email: String(formData.get('email') ?? ''),
@@ -182,7 +185,7 @@ export const actions: Actions = {
 		if (loadError || !profile) {
 			return fail(400, {
 				credentialsAction: true,
-				error: 'Could not load your profile.'
+				error: tForLocale(locale, 'profile.loadError')
 			});
 		}
 
@@ -192,7 +195,8 @@ export const actions: Actions = {
 			supabase,
 			userId: user!.id,
 			profile,
-			input
+			input,
+			locale
 		});
 
 		if (!result.ok) {
@@ -212,15 +216,15 @@ export const actions: Actions = {
 		};
 	},
 
-	submitFee: async ({ request, locals: { supabase, user } }) => {
+	submitFee: async ({ request, locals: { supabase, user, locale } }) => {
 		if (!user) {
-			return fail(401, { error: 'Sign in required' });
+			return fail(401, { error: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const formData = await request.formData();
 		const playerId = String(formData.get('player_id') ?? '');
 		if (!playerId) {
-			return fail(400, { error: 'Fee record is required' });
+			return fail(400, { error: tForLocale(locale, 'validation.feeRecord.required') });
 		}
 
 		const slipInput = readSlipFromForm(formData);
@@ -234,7 +238,7 @@ export const actions: Actions = {
 		}
 
 		if (!(await ensureSupabaseAuth(supabase))) {
-			return fail(401, { error: 'Sign in required' });
+			return fail(401, { error: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const result = await submitCancellationFee(supabase, playerId, upload.path);

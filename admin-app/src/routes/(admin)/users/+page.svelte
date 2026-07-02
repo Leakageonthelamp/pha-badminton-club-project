@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import { navigating } from '$app/state';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import Pagination from '@repo/ui/components/Pagination.svelte';
@@ -8,8 +9,6 @@
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
 	import SearchIcon from '@repo/ui/icons/SearchIcon.svelte';
-	import { appRoleLabel } from '$lib/types/auth';
-	import type { AppRole } from '$lib/types/auth';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -17,12 +16,12 @@
 	let searchQuery = $state('');
 	let roleFilter = $state('');
 
-	const roleFilterOptions = [
-		{ value: '', label: 'All roles' },
-		{ value: 'player', label: appRoleLabel('player') },
-		{ value: 'club_admin', label: appRoleLabel('club_admin') },
-		{ value: 'super_admin', label: appRoleLabel('super_admin') }
-	];
+	const roleFilterOptions = $derived([
+		{ value: '', label: t('users.list.allRoles') },
+		{ value: 'player', label: t('role.player') },
+		{ value: 'club_admin', label: t('role.clubAdmin') },
+		{ value: 'super_admin', label: t('role.superAdmin') }
+	]);
 
 	const isFetchingUsers = $derived(
 		navigating.to !== null && navigating.to.url.pathname === '/users'
@@ -52,21 +51,21 @@
 
 <section class="space-y-6">
 	<DashboardHero
-		eyebrow="User management"
-		title="All users"
-		subtitle="Search and manage accounts across the system."
+		eyebrow={t('users.list.eyebrow')}
+		title={t('users.list.title')}
+		subtitle={t('users.list.subtitle')}
 	/>
 
 	<form method="GET" action="/users" class="space-y-3">
 		<div class="app-filter-row">
 			<div class="min-w-0">
-				<label for="user-search" class="app-filter-label">Search</label>
+				<label for="user-search" class="app-filter-label">{t('dashboard.super.searchLabel')}</label>
 				<input
 					id="user-search"
 					type="search"
 					name="q"
 					bind:value={searchQuery}
-					placeholder="Search name, tag, email, or phone"
+					placeholder={t('users.list.searchPlaceholder')}
 					minlength="2"
 					class="app-filter-input"
 				/>
@@ -74,19 +73,19 @@
 			<div class="min-w-0">
 				<SelectMenu
 					id="user-role-filter"
-					label="Role"
+					label={t('users.list.roleLabel')}
 					options={roleFilterOptions}
 					bind:value={roleFilter}
 				/>
 				<input type="hidden" name="role" value={roleFilter} />
 			</div>
 			<div class="app-filter-submit-wrap">
-				<span class="app-filter-label invisible" aria-hidden="true">Search</span>
+				<span class="app-filter-label invisible" aria-hidden="true">{t('dashboard.super.searchLabel')}</span>
 				<button
 					type="submit"
 					class="app-filter-submit"
-					aria-label="Search users"
-					title="Search"
+					aria-label={t('users.list.searchAria')}
+					title={t('dashboard.super.searchLabel')}
 					disabled={isFetchingUsers}
 					aria-busy={isFetchingUsers}
 				>
@@ -104,7 +103,7 @@
 	</form>
 
 	{#if isFetchingUsers}
-		<div class="space-y-4" aria-busy="true" aria-label="Loading users">
+		<div class="space-y-4" aria-busy="true" aria-label={t('users.list.loadingAria')}>
 			<div class="app-skeleton h-5 w-24 rounded-md"></div>
 			<ul class="divide-y divide-slate-200 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
 				{#each Array(6) as _, index (index)}
@@ -119,7 +118,7 @@
 			</ul>
 		</div>
 	{:else if data.users.length === 0}
-		<EmptyState message="No users found." />
+		<EmptyState message={t('users.list.empty')} />
 	{:else}
 		<div class="space-y-4">
 			<SectionHeading title="{data.totalCount} user{data.totalCount === 1 ? '' : 's'}" />
@@ -146,11 +145,15 @@
 										<TagPill tag={user.tag} />
 									{/if}
 									<span class="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600">
-										{appRoleLabel(user.app_role as AppRole)}
+										{user.app_role === 'super_admin'
+											? t('role.superAdmin')
+											: user.app_role === 'club_admin'
+												? t('role.clubAdmin')
+												: t('role.player')}
 									</span>
 									{#if user.isBanned}
 										<span class="app-role-badge bg-red-50 text-red-800 ring-1 ring-red-200/80">
-											Banned
+											{t('users.list.banned')}
 										</span>
 									{/if}
 									{#if user.managedClubCount > 0}

@@ -1,3 +1,4 @@
+import { t } from '@repo/ui/i18n';
 import { describe, expect, it } from 'vitest';
 import {
 	AVATAR_INPUT_MAX_BYTES,
@@ -8,13 +9,13 @@ import {
 
 describe('validateAvatarInput', () => {
 	it('requires a file', () => {
-		expect(validateAvatarInput(null)).toBe('Choose an image.');
+		expect(validateAvatarInput(null)).toBe(t('validation.avatar.choose'));
 	});
 
 	it('rejects non-images', () => {
 		const file = new File(['x'], 'doc.pdf', { type: 'application/pdf' });
 		Object.defineProperty(file, 'size', { value: 100 });
-		expect(validateAvatarInput(file)).toBe('Avatar must be an image file.');
+		expect(validateAvatarInput(file)).toBe(t('validation.avatar.mustBeImage'));
 	});
 
 	it('allows large phone photos before crop', () => {
@@ -39,7 +40,7 @@ describe('validateAvatarFile', () => {
 	it('rejects non-images', () => {
 		const file = new File(['x'], 'doc.pdf', { type: 'application/pdf' });
 		Object.defineProperty(file, 'size', { value: 100 });
-		expect(validateAvatarFile(file)).toBe('Avatar must be an image file.');
+		expect(validateAvatarFile(file)).toBe(t('validation.avatar.mustBeImage'));
 	});
 
 	it('rejects processed files over the limit', () => {

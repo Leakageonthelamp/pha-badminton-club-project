@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
 	import SessionListLink from '$lib/components/SessionListLink.svelte';
 	import type { SessionListItem } from '$lib/types/session';
@@ -9,10 +10,10 @@
 		showClub = false,
 		limit,
 		viewAllHref = '/sessions',
-		eyebrow = 'Upcoming sessions',
+		eyebrow = t('upcoming.eyebrow'),
 		title,
-		subtitle = 'Your next badminton sessions — tap to view details.',
-		emptyMessage = 'No upcoming sessions for this club.',
+		subtitle = t('upcoming.subtitle'),
+		emptyMessage = t('upcoming.empty'),
 		tone = 'brand'
 	}: {
 		sessions: SessionListItem[];
@@ -50,7 +51,7 @@
 	const panelTitle = $derived(
 		title ??
 			(sessions.length === 0
-				? 'Nothing scheduled yet'
+				? t('upcoming.titleEmpty')
 				: `${sessions.length} session${sessions.length === 1 ? '' : 's'} coming up`)
 	);
 </script>

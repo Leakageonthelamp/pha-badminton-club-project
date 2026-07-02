@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import { enhance } from '$app/forms';
 	import AppLogo from '$lib/components/AppLogo.svelte';
 	import FacebookIcon from '@repo/ui/icons/FacebookIcon.svelte';
@@ -29,7 +30,7 @@
 <FormToast message={form?.message ?? data.error} variant="error" token={form?.message ?? data.error ?? ''} />
 
 <section class="space-y-6">
-	<DashboardHero title="Admin sign in" subtitle="Super admin and club admin. Use your player account credentials." footerCenter>
+	<DashboardHero title={t('auth.login.title')} subtitle={t('auth.login.subtitle')} footerCenter>
 		<AppLogo size={48} tone="white" class="mx-auto opacity-95" />
 	</DashboardHero>
 
@@ -43,18 +44,18 @@
 
 			<PasswordField serverError={form?.error?.password?.[0] ?? null} />
 
-			<SubmitButton loading={loginLoading} loadingLabel="Signing in…" variant="accent">Sign in</SubmitButton>
+			<SubmitButton loading={loginLoading} loadingLabel={t('auth.login.submitting')} variant="accent">{t('auth.login.submit')}</SubmitButton>
 		</form>
 
 		<div class="space-y-3 border-t border-slate-100 dark:border-slate-800 pt-4">
-			<p class="text-center text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Or continue with</p>
+			<p class="text-center text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('auth.login.orContinueWith')}</p>
 			<form method="POST" action="?/oauth" onsubmit={() => (googleLoading = true)}>
 				<input type="hidden" name="provider" value="google" />
 				<SubmitButton
 					variant="secondary"
 					class="mb-3"
 					loading={googleLoading}
-					loadingLabel="Connecting…"
+					loadingLabel={t('auth.login.connecting')}
 				>
 					<GoogleIcon />
 					Continue with Google
@@ -62,7 +63,7 @@
 			</form>
 			<form method="POST" action="?/oauth" onsubmit={() => (facebookLoading = true)}>
 				<input type="hidden" name="provider" value="facebook" />
-				<SubmitButton variant="secondary" loading={facebookLoading} loadingLabel="Connecting…">
+				<SubmitButton variant="secondary" loading={facebookLoading} loadingLabel={t('auth.login.connecting')}>
 					<FacebookIcon />
 					Continue with Facebook
 				</SubmitButton>

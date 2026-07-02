@@ -1,4 +1,7 @@
+import type { Locale } from '$lib/i18n';
+import { tForLocale } from '$lib/i18n';
 import type { AdminTransaction } from '$lib/types/transaction';
+import { DEFAULT_LOCALE } from '@repo/ui/i18n';
 import { occurredOnDate, type TransactionFilterStatus, type TransactionKind } from '@repo/ui/transactions';
 
 export type AdminTransactionFilters = {
@@ -46,8 +49,10 @@ export const countAdvancedFilters = (filters: AdminTransactionFilters): number =
 };
 
 export const clubFilterOptions = (
-	transactions: AdminTransaction[]
+	transactions: AdminTransaction[],
+	locale?: Locale
 ): { value: string; label: string }[] => {
+	const loc = locale ?? DEFAULT_LOCALE;
 	const clubs = new Map<string, string>();
 	for (const transaction of transactions) {
 		if (transaction.club_id) {
@@ -56,7 +61,7 @@ export const clubFilterOptions = (
 	}
 
 	return [
-		{ value: '', label: 'All clubs' },
+		{ value: '', label: tForLocale(loc, 'transactions.allClubs') },
 		...Array.from(clubs.entries())
 			.sort((a, b) => a[1].localeCompare(b[1]))
 			.map(([value, label]) => ({ value, label }))
@@ -64,8 +69,10 @@ export const clubFilterOptions = (
 };
 
 export const playerFilterOptions = (
-	transactions: AdminTransaction[]
+	transactions: AdminTransaction[],
+	locale?: Locale
 ): { value: string; label: string }[] => {
+	const loc = locale ?? DEFAULT_LOCALE;
 	const players = new Map<string, string>();
 	for (const transaction of transactions) {
 		const label = transaction.player_tag
@@ -75,7 +82,7 @@ export const playerFilterOptions = (
 	}
 
 	return [
-		{ value: '', label: 'All players' },
+		{ value: '', label: tForLocale(loc, 'transactions.allPlayers') },
 		...Array.from(players.entries())
 			.sort((a, b) => a[1].localeCompare(b[1]))
 			.map(([value, label]) => ({ value, label }))

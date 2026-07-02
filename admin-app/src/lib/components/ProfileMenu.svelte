@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import { portal } from '@repo/ui/actions/portal';
 	import LogOutIcon from '@repo/ui/icons/LogOutIcon.svelte';
 	import UserIcon from '@repo/ui/icons/UserIcon.svelte';
@@ -6,7 +7,14 @@
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import ThemePicker from '@repo/ui/components/ThemePicker.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
-	import { appRoleLabel, type AppRole, type Profile } from '$lib/types/auth';
+	import { type AppRole, type Profile } from '$lib/types/auth';
+
+	const roleKey = (role: AppRole) =>
+		role === 'super_admin'
+			? 'role.superAdmin'
+			: role === 'club_admin'
+				? 'role.clubAdmin'
+				: 'role.player';
 
 	let {
 		profile
@@ -21,7 +29,7 @@
 	let menuTop = $state(0);
 	let menuRight = $state(0);
 
-	const roleLabel = $derived(profile ? appRoleLabel(profile.app_role as AppRole) : '');
+	const roleLabel = $derived(profile ? t(roleKey(profile.app_role as AppRole)) : '');
 
 	function updateMenuPosition() {
 		if (!triggerEl) return;
@@ -68,7 +76,7 @@
 			class="block rounded-full p-0.5 ring-2 ring-transparent transition hover:ring-brand-200 focus:outline-none focus-visible:ring-brand-600"
 			aria-expanded={open}
 			aria-haspopup="menu"
-			aria-label="Account menu"
+			aria-label={t('profile.menu')}
 			onclick={toggleMenu}
 		>
 			<UserAvatar
@@ -83,7 +91,7 @@
 				<button
 					type="button"
 					class="fixed inset-0 z-[100] cursor-default"
-					aria-label="Close account menu"
+					aria-label={t('profile.closeMenu')}
 					onclick={closeMenu}
 				></button>
 

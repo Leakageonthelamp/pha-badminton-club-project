@@ -1,6 +1,7 @@
 <script lang="ts">
 	import AppModal from './AppModal.svelte';
 	import CourtIcon from './CourtIcon.svelte';
+	import { t } from '../i18n/i18n.svelte';
 	import {
 		courtGridStatusLabel,
 		matchStatusBadgeClass,
@@ -101,10 +102,10 @@
 					<CourtIcon size="lg" />
 				</div>
 				<p class="mt-4 text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400 dark:text-slate-500">
-					Court details
+					{t('court.details')}
 				</p>
 				<h2 id="court-detail-title" class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-					Court {court.courtNumber}
+					{t('common.court', { number: court.courtNumber })}
 				</h2>
 				<div class="mt-3 flex flex-wrap items-center justify-center gap-2">
 					<span
@@ -126,7 +127,7 @@
 				{/if}
 				{#if court.status === 'suspended'}
 					<p class="mx-auto mt-3 max-w-xs text-sm leading-relaxed text-rose-800/90">
-						Score was rejected — review and enter the final result.
+						{t('match.scoreRejectedReview')}
 					</p>
 				{/if}
 			</div>
@@ -135,17 +136,17 @@
 				{#if hasTeams}
 					<div class="grid grid-cols-[1fr_auto_1fr] items-start gap-2">
 						{#if court.teamA?.length}
-							{@render teamPanel('Team A', court.teamA, 'A')}
+							{@render teamPanel(t('common.teamA'), court.teamA, 'A')}
 						{:else}
 							<div></div>
 						{/if}
 						<span
 							class="mt-10 rounded-full bg-white dark:bg-slate-900 px-2 py-1 text-[0.65rem] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 ring-1 ring-slate-200"
 						>
-							vs
+							{t('common.vs')}
 						</span>
 						{#if court.teamB?.length}
-							{@render teamPanel('Team B', court.teamB, 'B')}
+							{@render teamPanel(t('common.teamB'), court.teamB, 'B')}
 						{:else}
 							<div></div>
 						{/if}
@@ -155,7 +156,7 @@
 						<div
 							class="border-b border-slate-100 dark:border-slate-800 bg-slate-100/80 px-3 py-2 text-center text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-400 dark:text-slate-500"
 						>
-							Players
+							{t('court.players')}
 						</div>
 						<ul class="space-y-2 p-3">
 							{#each court.players as name, index (index)}
@@ -165,7 +166,7 @@
 					</div>
 				{:else}
 					<div class="rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-8 text-center">
-						<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">No match on this court.</p>
+						<p class="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('match.noMatchOnCourt')}</p>
 					</div>
 				{/if}
 			</div>

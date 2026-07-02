@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import { browser } from '$app/environment';
 	import SubmitButton from '@repo/ui/components/SubmitButton.svelte';
 	import {
@@ -244,7 +245,7 @@
 			variant="secondary"
 			class="!w-auto !py-2.5 !text-sm"
 			loading={locateLoading}
-			loadingLabel="Locating…"
+			loadingLabel={t('mapPin.locating')}
 			onclick={useCurrentLocation}
 		>
 			Use my current location

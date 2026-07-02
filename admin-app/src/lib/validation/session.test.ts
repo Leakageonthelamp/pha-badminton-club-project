@@ -1,3 +1,4 @@
+import '$lib/i18n';
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { buildSessionInputSchema, sessionInputSchema } from './session';
 
@@ -74,7 +75,7 @@ describe('buildSessionInputSchema for edits', () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date('2026-06-01T10:00:00.000Z'));
 
-		const result = buildSessionInputSchema(0).safeParse({
+		const result = buildSessionInputSchema('en', 0).safeParse({
 			...validSessionInput,
 			start_at: '2026-06-01T10:30:00.000Z',
 			end_at: '2026-06-01T11:30:00.000Z'
@@ -87,7 +88,7 @@ describe('buildSessionInputSchema for edits', () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date('2026-06-01T13:00:00.000Z'));
 
-		const result = buildSessionInputSchema(0).safeParse(validSessionInput);
+		const result = buildSessionInputSchema('en', 0).safeParse(validSessionInput);
 
 		expect(result.success).toBe(false);
 	});

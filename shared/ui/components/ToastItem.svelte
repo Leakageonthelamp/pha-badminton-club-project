@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '../i18n/i18n.svelte';
 	import type { ToastItem } from '../toast/toast.svelte';
 
 	let { item, onDismiss }: { item: ToastItem; onDismiss: () => void } = $props();
@@ -36,7 +37,7 @@
 		<button
 			type="button"
 			class="shrink-0 rounded-md px-1 text-lg leading-none opacity-60 transition hover:opacity-100"
-			aria-label="Dismiss"
+			aria-label={t('common.dismiss')}
 			onclick={onDismiss}
 		>
 			×

@@ -1,3 +1,6 @@
+import type { Locale } from '$lib/i18n';
+import { tForLocale } from '$lib/i18n';
+import { DEFAULT_LOCALE } from '@repo/ui/i18n';
 import { z } from 'zod';
 
 export const DISPLAY_NAME_MIN = 2;
@@ -6,14 +9,11 @@ export const DISPLAY_NAME_MAX = 50;
 /** Letters (Latin + Thai), digits, hyphen, underscore — no spaces or other symbols */
 export const DISPLAY_NAME_PATTERN = /^[a-zA-Z0-9_\-\u0E00-\u0E7F]+$/;
 
-export const DISPLAY_NAME_SPACE_ERROR = 'Display name must not contain spaces';
-export const DISPLAY_NAME_CHARS_ERROR = 'Display name must not contain special characters';
-
-const displayNameCharsRefine = (value: string, ctx: z.RefinementCtx) => {
+const displayNameCharsRefine = (value: string, ctx: z.RefinementCtx, locale: Locale) => {
 	if (/\s/.test(value)) {
 		ctx.addIssue({
 			code: z.ZodIssueCode.custom,
-			message: DISPLAY_NAME_SPACE_ERROR
+			message: tForLocale(locale, 'validation.displayName.spaces')
 		});
 		return;
 	}
@@ -21,23 +21,32 @@ const displayNameCharsRefine = (value: string, ctx: z.RefinementCtx) => {
 	if (!DISPLAY_NAME_PATTERN.test(value)) {
 		ctx.addIssue({
 			code: z.ZodIssueCode.custom,
-			message: DISPLAY_NAME_CHARS_ERROR
+			message: tForLocale(locale, 'validation.displayName.chars')
 		});
 	}
 };
 
-export const displayNameSchema = z
-	.string()
-	.trim()
-	.min(DISPLAY_NAME_MIN, `Display name must be at least ${DISPLAY_NAME_MIN} characters`)
-	.max(DISPLAY_NAME_MAX, `Display name must not exceed ${DISPLAY_NAME_MAX} characters`)
-	.superRefine(displayNameCharsRefine);
+export const buildDisplayNameSchema = (locale: Locale = DEFAULT_LOCALE) =>
+	z
+		.string()
+		.trim()
+		.min(
+			DISPLAY_NAME_MIN,
+			tForLocale(locale, 'validation.displayName.min', { min: DISPLAY_NAME_MIN })
+		)
+		.max(
+			DISPLAY_NAME_MAX,
+			tForLocale(locale, 'validation.displayName.max', { max: DISPLAY_NAME_MAX })
+		)
+		.superRefine((value, ctx) => displayNameCharsRefine(value, ctx, locale));
 
-export const validateDisplayName = (value: string): string | null => {
-	const result = displayNameSchema.safeParse(value);
+export const displayNameSchema = buildDisplayNameSchema();
+
+export const validateDisplayName = (value: string, locale: Locale = DEFAULT_LOCALE): string | null => {
+	const result = buildDisplayNameSchema(locale).safeParse(value);
 	if (result.success) {
 		return null;
 	}
 
-	return result.error.issues[0]?.message ?? 'Invalid display name';
+	return result.error.issues[0]?.message ?? tForLocale(locale, 'validation.displayName.invalid');
 };

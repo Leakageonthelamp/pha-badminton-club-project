@@ -1,3 +1,4 @@
+import { tForLocale } from '$lib/i18n';
 import { resolveEffectiveAppRole } from '$lib/server/adminDashboardMode';
 import { assertCanManageClub } from '$lib/server/clubAccess';
 import {
@@ -33,19 +34,19 @@ export const load: PageServerLoad = async ({
 	params,
 	cookies,
 	depends,
-	locals: { supabase, user, appRole }
+	locals: { supabase, user, appRole, locale }
 }) => {
 	depends('app:session-control');
 
 	if (!user || !appRole) {
-		error(401, 'Sign in required');
+		error(401, tForLocale(locale, 'auth.error.signInRequired'));
 	}
 
 	const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
 	const initialSession = await loadSessionDetail(supabase, params.id);
 
 	if (!initialSession) {
-		error(404, 'Session not found');
+		error(404, tForLocale(locale, 'errors.sessionNotFound'));
 	}
 
 	await sweepOverdueDraftSessions(supabase, { clubIds: [initialSession.club_id] });
@@ -57,7 +58,7 @@ export const load: PageServerLoad = async ({
 	try {
 		await assertCanManageClub(supabase, user.id, session.club_id, effectiveAppRole);
 	} catch {
-		error(403, 'Club admin access required');
+		error(403, tForLocale(locale, 'errors.clubAdminRequired'));
 	}
 
 	if (session.status !== 'in_progress') {
@@ -138,14 +139,14 @@ const readId = (formData: FormData, key: string): string | null => {
 };
 
 export const actions = {
-	approvePayment: async ({ request, locals: { supabase, user, appRole }, cookies }) => {
+	approvePayment: async ({ request, locals: { supabase, user, appRole, locale }, cookies }) => {
 		if (!user || !appRole) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const paymentId = readId(await request.formData(), 'payment_id');
 		if (!paymentId) {
-			return fail(400, { message: 'Payment is required' });
+			return fail(400, { message: tForLocale(locale, 'control.action.paymentRequired') });
 		}
 
 		const result = await approvePayment(supabase, paymentId);
@@ -153,17 +154,17 @@ export const actions = {
 			return fail(400, { message: result.message });
 		}
 
-		return { success: true, message: 'Payment approved.' };
+		return { success: true, message: tForLocale(locale, 'control.action.paymentApproved') };
 	},
 
-	approveLeave: async ({ request, locals: { supabase, user, appRole } }) => {
+	approveLeave: async ({ request, locals: { supabase, user, appRole, locale } }) => {
 		if (!user || !appRole) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const requestId = readId(await request.formData(), 'request_id');
 		if (!requestId) {
-			return fail(400, { message: 'Leave request is required' });
+			return fail(400, { message: tForLocale(locale, 'control.action.leaveRequired') });
 		}
 
 		const result = await approveSessionLeave(supabase, requestId);
@@ -171,17 +172,17 @@ export const actions = {
 			return fail(400, { message: result.message });
 		}
 
-		return { success: true, message: 'Leave request approved.' };
+		return { success: true, message: tForLocale(locale, 'control.action.leaveApproved') };
 	},
 
-	rejectLeave: async ({ request, locals: { supabase, user, appRole } }) => {
+	rejectLeave: async ({ request, locals: { supabase, user, appRole, locale } }) => {
 		if (!user || !appRole) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const requestId = readId(await request.formData(), 'request_id');
 		if (!requestId) {
-			return fail(400, { message: 'Leave request is required' });
+			return fail(400, { message: tForLocale(locale, 'control.action.leaveRequired') });
 		}
 
 		const result = await rejectSessionLeave(supabase, requestId);
@@ -189,25 +190,25 @@ export const actions = {
 			return fail(400, { message: result.message });
 		}
 
-		return { success: true, message: 'Leave request rejected.' };
+		return { success: true, message: tForLocale(locale, 'control.action.leaveRejected') };
 	},
 
-	beginSettlement: async ({ params, locals: { supabase, user, appRole }, cookies }) => {
+	beginSettlement: async ({ params, locals: { supabase, user, appRole, locale }, cookies }) => {
 		if (!user || !appRole) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
 		const session = await loadSessionDetail(supabase, params.id);
 
 		if (!session) {
-			return fail(404, { message: 'Session not found' });
+			return fail(404, { message: tForLocale(locale, 'errors.sessionNotFound') });
 		}
 
 		try {
 			await assertCanManageClub(supabase, user.id, session.club_id, effectiveAppRole);
 		} catch {
-			return fail(403, { message: 'Club admin access required' });
+			return fail(403, { message: tForLocale(locale, 'errors.clubAdminRequired') });
 		}
 
 		const result = await beginSessionSettlement(supabase, session.id);
@@ -215,25 +216,25 @@ export const actions = {
 			return fail(400, { message: result.message });
 		}
 
-		return { success: true, message: 'Settlement started for all active players.' };
+		return { success: true, message: tForLocale(locale, 'control.action.settlementStarted') };
 	},
 
-	endSessionEarly: async ({ params, locals: { supabase, user, appRole }, cookies }) => {
+	endSessionEarly: async ({ params, locals: { supabase, user, appRole, locale }, cookies }) => {
 		if (!user || !appRole) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
 		const session = await loadSessionDetail(supabase, params.id);
 
 		if (!session) {
-			return fail(404, { message: 'Session not found' });
+			return fail(404, { message: tForLocale(locale, 'errors.sessionNotFound') });
 		}
 
 		try {
 			await assertCanManageClub(supabase, user.id, session.club_id, effectiveAppRole);
 		} catch {
-			return fail(403, { message: 'Club admin access required' });
+			return fail(403, { message: tForLocale(locale, 'errors.clubAdminRequired') });
 		}
 
 		const result = await endSessionEarly(supabase, session.id);
@@ -241,25 +242,25 @@ export const actions = {
 			return fail(400, { message: result.message });
 		}
 
-		return { success: true, message: 'Session ended early. All players have been billed.' };
+		return { success: true, message: tForLocale(locale, 'control.action.endedEarly') };
 	},
 
-	closeSession: async ({ params, locals: { supabase, user, appRole }, cookies }) => {
+	closeSession: async ({ params, locals: { supabase, user, appRole, locale }, cookies }) => {
 		if (!user || !appRole) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
 		const session = await loadSessionDetail(supabase, params.id);
 
 		if (!session) {
-			return fail(404, { message: 'Session not found' });
+			return fail(404, { message: tForLocale(locale, 'errors.sessionNotFound') });
 		}
 
 		try {
 			await assertCanManageClub(supabase, user.id, session.club_id, effectiveAppRole);
 		} catch {
-			return fail(403, { message: 'Club admin access required' });
+			return fail(403, { message: tForLocale(locale, 'errors.clubAdminRequired') });
 		}
 
 		const result = await closeSession(supabase, session.id);
@@ -270,26 +271,26 @@ export const actions = {
 		redirect(303, `/sessions/${session.id}`);
 	},
 
-	confirmFee: async ({ request, params, locals: { supabase, user, appRole }, cookies }) => {
+	confirmFee: async ({ request, params, locals: { supabase, user, appRole, locale }, cookies }) => {
 		if (!user || !appRole) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
 		const session = await loadSessionDetail(supabase, params.id);
 		if (!session) {
-			return fail(404, { message: 'Session not found' });
+			return fail(404, { message: tForLocale(locale, 'errors.sessionNotFound') });
 		}
 
 		try {
 			await assertCanManageClub(supabase, user.id, session.club_id, effectiveAppRole);
 		} catch {
-			return fail(403, { message: 'Club admin access required' });
+			return fail(403, { message: tForLocale(locale, 'errors.clubAdminRequired') });
 		}
 
 		const playerId = readId(await request.formData(), 'player_id');
 		if (!playerId) {
-			return fail(400, { message: 'Invalid request' });
+			return fail(400, { message: tForLocale(locale, 'errors.invalidRequest') });
 		}
 
 		const result = await confirmCancellationFee(supabase, playerId);
@@ -297,29 +298,29 @@ export const actions = {
 			return fail(400, { message: result.message });
 		}
 
-		return { success: true, message: 'Cancellation fee confirmed.' };
+		return { success: true, message: tForLocale(locale, 'session.action.feeConfirmed') };
 	},
 
-	waiveFee: async ({ request, params, locals: { supabase, user, appRole }, cookies }) => {
+	waiveFee: async ({ request, params, locals: { supabase, user, appRole, locale }, cookies }) => {
 		if (!user || !appRole) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
 		const session = await loadSessionDetail(supabase, params.id);
 		if (!session) {
-			return fail(404, { message: 'Session not found' });
+			return fail(404, { message: tForLocale(locale, 'errors.sessionNotFound') });
 		}
 
 		try {
 			await assertCanManageClub(supabase, user.id, session.club_id, effectiveAppRole);
 		} catch {
-			return fail(403, { message: 'Club admin access required' });
+			return fail(403, { message: tForLocale(locale, 'errors.clubAdminRequired') });
 		}
 
 		const playerId = readId(await request.formData(), 'player_id');
 		if (!playerId) {
-			return fail(400, { message: 'Invalid request' });
+			return fail(400, { message: tForLocale(locale, 'errors.invalidRequest') });
 		}
 
 		const result = await waiveCancellationFee(supabase, playerId);
@@ -327,24 +328,24 @@ export const actions = {
 			return fail(400, { message: result.message });
 		}
 
-		return { success: true, message: 'Cancellation fee waived.' };
+		return { success: true, message: tForLocale(locale, 'session.action.feeWaived') };
 	},
 
-	createMatch: async ({ request, params, locals: { supabase, user, appRole }, cookies }) => {
+	createMatch: async ({ request, params, locals: { supabase, user, appRole, locale }, cookies }) => {
 		if (!user || !appRole) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const { effectiveAppRole } = await resolveEffectiveAppRole(supabase, user.id, appRole, cookies);
 		const session = await loadSessionDetail(supabase, params.id);
 		if (!session) {
-			return fail(404, { message: 'Session not found' });
+			return fail(404, { message: tForLocale(locale, 'errors.sessionNotFound') });
 		}
 
 		try {
 			await assertCanManageClub(supabase, user.id, session.club_id, effectiveAppRole);
 		} catch {
-			return fail(403, { message: 'Club admin access required' });
+			return fail(403, { message: tForLocale(locale, 'errors.clubAdminRequired') });
 		}
 
 		const formData = await request.formData();
@@ -352,7 +353,7 @@ export const actions = {
 		const userIds = formData.getAll('user_ids').filter((value): value is string => typeof value === 'string');
 
 		if (!Number.isInteger(courtNumber) || courtNumber < 1) {
-			return fail(400, { message: 'Court is required' });
+			return fail(400, { message: tForLocale(locale, 'control.action.courtRequired') });
 		}
 
 		const result = await createMatch(supabase, session.id, courtNumber, userIds);
@@ -360,6 +361,6 @@ export const actions = {
 			return fail(400, { message: result.message });
 		}
 
-		return { success: true, message: 'Match invite sent to players.' };
+		return { success: true, message: tForLocale(locale, 'control.action.matchInviteSent') };
 	}
 } satisfies Actions;

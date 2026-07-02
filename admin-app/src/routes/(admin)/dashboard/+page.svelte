@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import ActionRowLink from '@repo/ui/components/ActionRowLink.svelte';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import DashboardTile from '@repo/ui/components/DashboardTile.svelte';
@@ -47,7 +48,7 @@
 
 <section class="space-y-6">
 	<DashboardHero
-		eyebrow="Welcome back"
+		eyebrow={t('dashboard.club.eyebrow')}
 		title={data.profileName}
 		tag={data.profile?.tag}
 		roleLabel={roleLabel}
@@ -58,31 +59,31 @@
 	/>
 
 	{#if clubs.length === 0}
-		<EmptyState message="No clubs assigned to you yet." />
+		<EmptyState message={t('dashboard.club.noClubs')} />
 	{:else if activeClub}
 		<div class="space-y-3">
-			<SectionHeading title="Quick actions" />
+			<SectionHeading title={t('dashboard.super.quickActions')} />
 			<div class="app-quick-actions-grid">
 				{#if data.canCreate}
 					<DashboardTile
 						href="/sessions/new"
-						title="Create session"
-						description="Schedule a new badminton session"
+						title={t('dashboard.club.createSession.title')}
+						description={t('dashboard.club.createSession.description')}
 						icon={PlusIcon}
 						accent="brand"
 					/>
 				{/if}
 				<DashboardTile
 					href="/sessions/history"
-					title="Session history"
-					description="Closed and cancelled sessions"
+					title={t('dashboard.club.history.title')}
+					description={t('dashboard.club.history.description')}
 					icon={ClockIcon}
 					accent="secondary"
 				/>
 				<DashboardTile
 					href="/transactions"
-					title="Payments"
-					description="Session and cancellation fees"
+					title={t('dashboard.club.payments.title')}
+					description={t('dashboard.club.payments.description')}
 					icon={BanknotesIcon}
 					accent="indigo"
 				/>
@@ -95,12 +96,12 @@
 			limit={5}
 			viewAllHref="/sessions"
 			tone="amber"
-			eyebrow="Draft sessions"
+			eyebrow={t('dashboard.club.draft.eyebrow')}
 			title={draftSessions.length === 0
-				? 'Nothing waiting for you'
+				? t('dashboard.club.draft.titleEmpty')
 				: `${draftSessions.length} draft${draftSessions.length === 1 ? '' : 's'} need attention`}
-			subtitle="Review settings, then open each session so players can join."
-			emptyMessage="No draft sessions — create one or edit an open session to return it to draft."
+			subtitle={t('dashboard.club.draft.subtitle')}
+			emptyMessage={t('dashboard.club.draft.empty')}
 		/>
 
 		<UpcomingSessionsPanel
@@ -108,12 +109,12 @@
 			userId={data.userId}
 			limit={5}
 			viewAllHref="/sessions"
-			eyebrow="Ongoing sessions"
+			eyebrow={t('dashboard.club.ongoing.eyebrow')}
 			title={ongoingSessions.length === 0
-				? 'Nothing in progress'
+				? t('dashboard.club.ongoing.titleEmpty')
 				: `${ongoingSessions.length} session${ongoingSessions.length === 1 ? '' : 's'} live now`}
-			subtitle="Sessions currently in progress — tap to manage."
-			emptyMessage="No sessions in progress right now."
+			subtitle={t('dashboard.club.ongoing.subtitle')}
+			emptyMessage={t('dashboard.club.ongoing.empty')}
 		/>
 
 		<UpcomingSessionsPanel
@@ -124,25 +125,25 @@
 		/>
 
 		<div class="space-y-3">
-			<SectionHeading title="Menu" />
+			<SectionHeading title={t('dashboard.club.menu')} />
 			<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
 				<ActionRowLink
 					href="/clubs/{activeClub.id}"
-					title="Club settings"
-					description="Shuttles, PromptPay, venue & location"
+					title={t('dashboard.club.clubSettings.title')}
+					description={t('dashboard.club.clubSettings.description')}
 					icon={SettingsIcon}
 				/>
 				<ActionRowLink
 					href="/sessions"
-					title="Sessions"
-					description="Manage upcoming sessions and history"
+					title={t('dashboard.super.sessions.title')}
+					description={t('dashboard.club.sessions.description')}
 					icon={CalendarDaysIcon}
 					accent="violet"
 				/>
 				<ActionRowLink
 					href="/transactions"
-					title="Payment transactions"
-					description="Session fees and late-cancellation fees"
+					title={t('dashboard.super.transactions.title')}
+					description={t('dashboard.club.transactions.description')}
 					icon={BanknotesIcon}
 					accent="indigo"
 				/>

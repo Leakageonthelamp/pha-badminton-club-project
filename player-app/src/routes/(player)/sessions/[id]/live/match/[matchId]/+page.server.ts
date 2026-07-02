@@ -6,6 +6,7 @@ import {
 import { loadLiveSessionForPlayer } from '$lib/server/sessions';
 import { shouldViewSessionLivePage } from '$lib/sessions/navigation';
 import type { MatchGameInput } from '$lib/types/match';
+import { tForLocale } from '@repo/ui/i18n';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -21,18 +22,18 @@ const readMatchGames = (formData: FormData): MatchGameInput[] | null => {
 	}
 };
 
-export const load: PageServerLoad = async ({ params, depends, locals: { supabase, user } }) => {
+export const load: PageServerLoad = async ({ params, depends, locals: { supabase, user, locale } }) => {
 	depends('app:player-match-live');
 
 	if (!user) {
-		error(401, 'Sign in required');
+		error(401, tForLocale(locale, 'auth.error.signInRequired'));
 	}
 
 	await expirePendingMatches(supabase, params.id);
 
 	const live = await loadLiveSessionForPlayer(supabase, params.id, user.id);
 	if (!live) {
-		error(404, 'Session not found');
+		error(404, tForLocale(locale, 'errors.sessionNotFound'));
 	}
 
 	if (
@@ -46,7 +47,7 @@ export const load: PageServerLoad = async ({ params, depends, locals: { supabase
 
 	const match = await loadMatchForPlayer(supabase, params.matchId, user.id);
 	if (!match || match.session_id !== params.id) {
-		error(404, 'Match not found');
+		error(404, tForLocale(locale, 'errors.matchNotFound'));
 	}
 
 	if (!['active', 'score_pending', 'suspended'].includes(match.status)) {
@@ -57,14 +58,14 @@ export const load: PageServerLoad = async ({ params, depends, locals: { supabase
 };
 
 export const actions = {
-	submitScore: async ({ params, request, locals: { supabase, user } }) => {
+	submitScore: async ({ params, request, locals: { supabase, user, locale } }) => {
 		if (!user) {
-			return fail(401, { message: 'Sign in required' });
+			return fail(401, { message: tForLocale(locale, 'auth.error.signInRequired') });
 		}
 
 		const games = readMatchGames(await request.formData());
 		if (!games?.length) {
-			return fail(400, { message: 'Score is required' });
+			return fail(400, { message: tForLocale(locale, 'validation.score.required') });
 		}
 
 		const result = await submitMatchScore(supabase, params.matchId, games);
@@ -72,6 +73,6 @@ export const actions = {
 			return fail(400, { message: result.message });
 		}
 
-		return { success: true, message: 'Score submitted for confirmation.' };
+		return { success: true, message: tForLocale(locale, 'matches.live.scoreSubmitted') };
 	}
 } satisfies Actions;

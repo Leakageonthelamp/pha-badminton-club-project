@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import AppLogo from '$lib/components/AppLogo.svelte';
 	import BackLink from '@repo/ui/components/BackLink.svelte';
+	import LocalePicker from '@repo/ui/components/LocalePicker.svelte';
 	import PageTransition from '$lib/components/PageTransition.svelte';
 	import { appConfig } from '$lib/config/app';
 	import { getBackHref, shouldShowBack } from '$lib/navigation/back';
@@ -23,6 +24,7 @@
 			<span class="app-topbar-title">{appConfig.name}</span>
 		</a>
 	{/if}
+	<LocalePicker />
 </header>
 
 <PageTransition>{@render children()}</PageTransition>

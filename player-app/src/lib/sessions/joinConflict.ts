@@ -1,5 +1,6 @@
 import type { SessionJoinConflict, SessionPlayerStatus, SessionStatus } from '$lib/types/session';
 import { LIVE_SESSION_JOIN_BUFFER_MS } from '$lib/config/session';
+import { t } from '@repo/ui/i18n';
 
 export const sessionsTimeOverlap = (
 	aStart: string,
@@ -75,12 +76,12 @@ export const pickJoinConflict = (
 export const joinConflictMembershipPhrase = (status: SessionPlayerStatus): string => {
 	switch (status) {
 		case 'waiting':
-			return 'on the waiting list for';
+			return t('sessions.detail.joinConflict.waiting');
 		case 'queued':
-			return 'in the buffer queue for';
+			return t('sessions.detail.joinConflict.queued');
 		case 'confirmed':
-			return 'confirmed for';
+			return t('sessions.detail.joinConflict.confirmed');
 		default:
-			return 'joined';
+			return t('sessions.detail.joinConflict.joined');
 	}
 };

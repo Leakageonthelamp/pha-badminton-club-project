@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import DashboardIcon from '@repo/ui/components/DashboardIcon.svelte';
 	import DashboardTile from '@repo/ui/components/DashboardTile.svelte';
@@ -26,7 +27,7 @@
 	let statusFilter = $state<'all' | 'active' | 'inactive'>('all');
 	let listPage = $state(1);
 
-	const profileName = $derived(data.profile?.display_name ?? 'Super admin');
+	const profileName = $derived(data.profile?.display_name ?? t('role.superAdmin'));
 	const clubCount = $derived(data.clubs.length);
 	const activeClubCount = $derived(data.clubs.filter((club) => club.is_active).length);
 	const inactiveClubCount = $derived(clubCount - activeClubCount);
@@ -37,9 +38,9 @@
 	const roleBadgeClass = $derived(adminRoleHeroBadgeClass(effectiveAppRole));
 
 	const statusFilterOptions = [
-		{ value: 'all', label: 'All statuses' },
-		{ value: 'active', label: 'Active only' },
-		{ value: 'inactive', label: 'Inactive only' }
+		{ value: 'all', label: t('dashboard.super.statusAll') },
+		{ value: 'active', label: t('dashboard.super.statusActive') },
+		{ value: 'inactive', label: t('dashboard.super.statusInactive') }
 	];
 
 	const normalizedSearch = $derived(searchQuery.trim().toLowerCase());
@@ -73,7 +74,7 @@
 	function clubSubtitle(club: Club): string {
 		if (club.venue_name) return club.venue_name;
 		if (!isRichTextEmpty(club.description)) return richTextExcerpt(club.description, 100);
-		return club.is_active ? 'Tap to manage club settings' : 'Inactive — tap to review settings';
+		return club.is_active ? t('dashboard.super.tapManageActive') : t('dashboard.super.tapManageInactive');
 	}
 
 	function clubLimits(club: Club): string {
@@ -83,12 +84,12 @@
 
 <section class="space-y-8">
 	<DashboardHero
-		eyebrow="Admin dashboard"
+		eyebrow={t('dashboard.super.eyebrow')}
 		title={profileName}
 		tag={data.profile?.tag}
 		roleLabel={roleLabel}
 		roleBadgeClass={roleBadgeClass}
-		subtitle="Create and manage clubs and their admins."
+		subtitle={t('dashboard.super.subtitle')}
 	>
 		{#if clubCount > 0}
 			<span class="app-hero-stat app-hero-stat--accent">
@@ -108,33 +109,33 @@
 	</DashboardHero>
 
 	<div class="space-y-3">
-		<SectionHeading title="Quick actions" />
+		<SectionHeading title={t('dashboard.super.quickActions')} />
 		<div class="app-quick-actions-grid">
 			<DashboardTile
 				href="/clubs/new"
-				title="Create club"
-				description="Add a new club to the system"
+				title={t('dashboard.super.createClub.title')}
+				description={t('dashboard.super.createClub.description')}
 				icon={PlusIcon}
 				accent="brand"
 			/>
 			<DashboardTile
 				href="/users"
-				title="Users"
-				description="View and manage all accounts"
+				title={t('dashboard.super.users.title')}
+				description={t('dashboard.super.users.description')}
 				icon={UserIcon}
 				accent="secondary"
 			/>
 			<DashboardTile
 				href="/sessions"
-				title="Sessions"
-				description="View all club sessions"
+				title={t('dashboard.super.sessions.title')}
+				description={t('dashboard.super.sessions.description')}
 				icon={CalendarDaysIcon}
 				accent="violet"
 			/>
 			<DashboardTile
 				href="/transactions"
-				title="Payment transactions"
-				description="Session fees and cancellation fees"
+				title={t('dashboard.super.transactions.title')}
+				description={t('dashboard.super.transactions.description')}
 				icon={BanknotesIcon}
 				accent="indigo"
 			/>
@@ -142,7 +143,7 @@
 	</div>
 
 	{#if data.clubs.length === 0}
-		<EmptyState message="No clubs yet.">
+		<EmptyState message={t('dashboard.super.noClubs')}>
 			<a href="/clubs/new" class="text-sm font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800">
 				Create your first club
 			</a>
@@ -151,7 +152,7 @@
 		<div class="space-y-4">
 			<div class="app-section-header px-1">
 				<div class="min-w-0">
-					<h2 class="app-section-title">All clubs</h2>
+					<h2 class="app-section-title">{t('dashboard.super.allClubs')}</h2>
 					<p class="app-section-meta">
 						{clubCount} total · {activeClubCount} active
 						{#if inactiveClubCount > 0}
@@ -167,30 +168,30 @@
 
 			<div class="app-filter-row">
 				<div class="min-w-0">
-					<label for="club-search" class="app-filter-label">Search</label>
+					<label for="club-search" class="app-filter-label">{t('dashboard.super.searchLabel')}</label>
 					<input
 						id="club-search"
 						type="search"
 						bind:value={searchQuery}
-						placeholder="Search name, venue, or description"
+						placeholder={t('dashboard.super.searchPlaceholder')}
 						class="app-filter-input"
 					/>
 				</div>
 				<div class="min-w-0">
 					<SelectMenu
 						id="club-status-filter"
-						label="Status"
+						label={t('dashboard.super.statusLabel')}
 						options={statusFilterOptions}
 						bind:value={statusFilter}
 					/>
 				</div>
 				<div class="app-filter-submit-wrap">
-					<span class="app-filter-label invisible" aria-hidden="true">Search</span>
+					<span class="app-filter-label invisible" aria-hidden="true">{t('dashboard.super.searchLabel')}</span>
 					<button
 						type="button"
 						class="app-filter-submit"
-						aria-label="Search clubs"
-						title="Search"
+						aria-label={t('dashboard.super.searchAria')}
+						title={t('dashboard.super.searchLabel')}
 					>
 						<SearchIcon class="h-5 w-5 text-brand-700" />
 					</button>
@@ -198,7 +199,7 @@
 			</div>
 
 			{#if filteredClubs.length === 0}
-				<EmptyState message="No clubs match your filters.">
+				<EmptyState message={t('dashboard.super.noMatch')}>
 					<button
 						type="button"
 						class="text-sm font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800"

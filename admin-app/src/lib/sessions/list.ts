@@ -1,6 +1,9 @@
 import { SESSION_DRAFT_OPEN_LEAD_MINUTES, SESSION_EDIT_LOCK_LEAD_MINUTES } from '$lib/config/session';
-import { formatDateTime } from '@repo/ui/datetime';
+import type { Locale } from '$lib/i18n';
+import { tForLocale } from '$lib/i18n';
 import type { SessionListItem } from '$lib/types/session';
+import { formatDateTime } from '@repo/ui/datetime';
+import { DEFAULT_LOCALE } from '@repo/ui/i18n';
 
 export const isHistorySession = (session: SessionListItem): boolean =>
 	session.status === 'closed' || session.status === 'cancelled';
@@ -55,11 +58,17 @@ export const filterHistorySessions = (sessions: SessionListItem[]): SessionListI
 		.filter(isHistorySession)
 		.sort((a, b) => new Date(b.start_at).getTime() - new Date(a.start_at).getTime());
 
-export const formatSessionMeta = (session: SessionListItem, options?: { showClub?: boolean }): string => {
+export const formatSessionMeta = (
+	session: SessionListItem,
+	options?: { showClub?: boolean; locale?: Locale }
+): string => {
+	const locale = options?.locale ?? DEFAULT_LOCALE;
 	const parts = [
 		formatDateTime(session.start_at),
 		options?.showClub ? session.club?.name : null,
-		session.host?.display_name ? `Host: ${session.host.display_name}` : null
+		session.host?.display_name
+			? tForLocale(locale, 'session.list.hostPrefix', { name: session.host.display_name })
+			: null
 	].filter(Boolean);
 
 	return parts.join(' · ');

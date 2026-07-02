@@ -11,6 +11,7 @@
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import { loadSignInPreference } from '@repo/ui/signInPreference';
 	import { whileSubmitting } from '$lib/forms/submitting';
+	import { t } from '@repo/ui/i18n';
 	import { onMount } from 'svelte';
 	import type { ActionData, PageData } from './$types';
 
@@ -29,7 +30,7 @@
 <FormToast message={form?.message ?? data.error} variant="error" token={form?.message ?? data.error ?? ''} />
 
 <section class="space-y-6">
-	<DashboardHero title="Log in" subtitle="Use email or phone number with your password." footerCenter>
+	<DashboardHero title={t('auth.login.title')} subtitle={t('auth.login.subtitle')} footerCenter>
 		<AppLogo size={48} tone="white" class="mx-auto opacity-95" />
 	</DashboardHero>
 
@@ -43,35 +44,41 @@
 
 			<PasswordField serverError={form?.error?.password?.[0] ?? null} />
 
-			<SubmitButton loading={loginLoading} loadingLabel="Logging in…" variant="accent">Log in</SubmitButton>
+			<SubmitButton loading={loginLoading} loadingLabel={t('auth.login.submitting')} variant="accent">
+				{t('auth.login.submit')}
+			</SubmitButton>
 		</form>
 
 		<div class="space-y-3 border-t border-slate-100 dark:border-slate-800 pt-4">
-			<p class="text-center text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">Or continue with</p>
+			<p class="text-center text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
+				{t('auth.login.orContinueWith')}
+			</p>
 			<form method="POST" action="/login?/oauth" onsubmit={() => (googleLoading = true)}>
 				<input type="hidden" name="provider" value="google" />
 				<SubmitButton
 					variant="secondary"
 					class="mb-3"
 					loading={googleLoading}
-					loadingLabel="Connecting…"
+					loadingLabel={t('auth.login.connecting')}
 				>
 					<GoogleIcon />
-					Continue with Google
+					{t('auth.login.continueGoogle')}
 				</SubmitButton>
 			</form>
 			<form method="POST" action="/login?/oauth" onsubmit={() => (facebookLoading = true)}>
 				<input type="hidden" name="provider" value="facebook" />
-				<SubmitButton variant="secondary" loading={facebookLoading} loadingLabel="Connecting…">
+				<SubmitButton variant="secondary" loading={facebookLoading} loadingLabel={t('auth.login.connecting')}>
 					<FacebookIcon />
-					Continue with Facebook
+					{t('auth.login.continueFacebook')}
 				</SubmitButton>
 			</form>
 		</div>
 	</AppCard>
 
 	<p class="text-center text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
-		No account?
-		<a href="/register" class="font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800">Register</a>
+		{t('auth.login.noAccount')}
+		<a href="/register" class="font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800">
+			{t('auth.login.registerLink')}
+		</a>
 	</p>
 </section>

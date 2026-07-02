@@ -1,5 +1,6 @@
 <script lang="ts">
 	import TeamRosterList from './TeamRosterList.svelte';
+	import { t } from '../i18n/i18n.svelte';
 	import {
 		rallyScoreHint,
 		validateRallyGameScore,
@@ -77,9 +78,7 @@
 
 <p class="text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{rallyScoreHint(scoreType)}</p>
 {#if viewerTeam}
-	<p class="text-sm font-medium text-brand-800">
-		Your team is highlighted — enter <strong>your team's score</strong> on that side.
-	</p>
+	<p class="text-sm font-medium text-brand-800">{t('score.yourTeamHint')}</p>
 {/if}
 
 <div class="space-y-4">
@@ -87,7 +86,7 @@
 		<div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 p-4">
 			{#if gameScores.length > 1}
 				<p class="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
-					Game {index + 1}
+					{t('score.game', { number: index + 1 })}
 				</p>
 			{/if}
 
@@ -95,25 +94,25 @@
 				class="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] grid-rows-[auto_auto_auto] items-stretch gap-x-3"
 			>
 				<div class="{teamCellClass('A', 'head')} text-center">
-					<p class="text-sm font-semibold {teamHeadingClass('A')}">Team A</p>
+					<p class="text-sm font-semibold {teamHeadingClass('A')}">{t('common.teamA')}</p>
 					{#if viewerTeam === 'A'}
-						<span class="text-xs font-bold text-brand-700">Your team</span>
+						<span class="text-xs font-bold text-brand-700">{t('score.yourTeam')}</span>
 					{:else if viewerTeam}
-						<span class="text-xs invisible" aria-hidden="true">Your team</span>
+						<span class="text-xs invisible" aria-hidden="true">{t('score.yourTeam')}</span>
 					{/if}
 				</div>
 
 				<span
 					class="col-start-2 row-span-3 row-start-1 self-center px-1 text-sm font-semibold text-slate-400 dark:text-slate-500"
-					>vs</span
+					>{t('common.vs')}</span
 				>
 
 				<div class="{teamCellClass('B', 'head')} text-center">
-					<p class="text-sm font-semibold {teamHeadingClass('B')}">Team B</p>
+					<p class="text-sm font-semibold {teamHeadingClass('B')}">{t('common.teamB')}</p>
 					{#if viewerTeam === 'B'}
-						<span class="text-xs font-bold text-brand-700">Your team</span>
+						<span class="text-xs font-bold text-brand-700">{t('score.yourTeam')}</span>
 					{:else if viewerTeam}
-						<span class="text-xs invisible" aria-hidden="true">Your team</span>
+						<span class="text-xs invisible" aria-hidden="true">{t('score.yourTeam')}</span>
 					{/if}
 				</div>
 
@@ -132,8 +131,8 @@
 						min="0"
 						inputmode="numeric"
 						aria-label={viewerTeam === 'A'
-							? `Your team score game ${index + 1}`
-							: `Team A score game ${index + 1}`}
+							? t('score.yourTeamScoreGame', { number: index + 1 })
+							: t('score.teamAScoreGame', { number: index + 1 })}
 						bind:value={game.team_a_score}
 						required
 						disabled={disabled}
@@ -147,8 +146,8 @@
 						min="0"
 						inputmode="numeric"
 						aria-label={viewerTeam === 'B'
-							? `Your team score game ${index + 1}`
-							: `Team B score game ${index + 1}`}
+							? t('score.yourTeamScoreGame', { number: index + 1 })
+							: t('score.teamBScoreGame', { number: index + 1 })}
 						bind:value={game.team_b_score}
 						required
 						disabled={disabled}

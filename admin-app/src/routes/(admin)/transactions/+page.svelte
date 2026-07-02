@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '$lib/i18n';
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import DatePicker from '@repo/ui/components/DatePicker.svelte';
 	import EmptyState from '@repo/ui/components/EmptyState.svelte';
@@ -43,11 +44,12 @@
 	let slipPreviewPath = $state<string | null>(null);
 	let listPage = $state(1);
 
-	const typeChipOptions: { value: '' | TransactionKind; label: string }[] = [
-		{ value: '', label: 'All' },
-		{ value: 'session_fee', label: 'Session fee' },
-		{ value: 'cancellation_fee', label: 'Late cancel' }
-	];
+	const typeChipOptions = $derived([
+		{ value: '' as const, label: t('transactions.typeAll') },
+		{ value: 'session_fee' as const, label: t('transactions.typeSessionFee') },
+		{ value: 'cancellation_fee' as const, label: t('transactions.typeLateCancel') }
+	]);
+	const statusFilterOptions = $derived(transactionStatusFilterOptions());
 
 	const effectiveAppRole = $derived(data.effectiveAppRole ?? null);
 	const roleLabel = $derived(
@@ -94,7 +96,7 @@
 	const playerLabel = (transaction: AdminTransaction): string => transaction.player_name;
 
 	const kindShort = (kind: AdminTransaction['kind']): string =>
-		kind === 'session_fee' ? 'Session fee' : 'Late cancel';
+		kind === 'session_fee' ? t('transactions.typeSessionFee') : t('transactions.typeLateCancel');
 
 	$effect(() => {
 		selectedClubId;
@@ -106,22 +108,22 @@
 
 <section class="space-y-5">
 	<DashboardHero
-		eyebrow="Payments"
-		title="Payment transactions"
+		eyebrow={t('dashboard.club.payments.title')}
+		title={t('dashboard.super.transactions.title')}
 		tag={data.profile?.tag}
 		roleLabel={roleLabel}
 		roleBadgeClass={roleBadgeClass}
 		subtitle={data.isSuperAdmin
-			? 'Fees across all clubs.'
-			: 'Session and late-cancellation fees.'}
+			? t('transactions.subtitleSuper')
+			: t('transactions.subtitleClub')}
 	>
 		{#if scopedTransactions.length > 0}
 			<span class="app-hero-stat app-hero-stat--accent">
-				{scopedTransactions.length} total
+				{t('transactions.totalStat', { count: scopedTransactions.length })}
 			</span>
 			{#if hasActiveFilters && filteredTransactions.length !== scopedTransactions.length}
 				<span class="app-hero-stat app-hero-stat--success">
-					{filteredTransactions.length} matching
+					{t('transactions.matchingStat', { count: filteredTransactions.length })}
 				</span>
 			{/if}
 		{/if}
@@ -131,41 +133,41 @@
 		{#if scopedTransactions.length > 0}
 			<dl class="grid grid-cols-2 gap-3">
 				<div class="app-history-stat">
-					<dt class="app-history-stat-label">Total income</dt>
+					<dt class="app-history-stat-label">{t('transactions.totalIncome')}</dt>
 					<dd class="app-history-stat-value app-history-stat-value--money">
 						{formatThb(summary.totalIncome)}
 					</dd>
 				</div>
 				<div class="app-history-stat">
-					<dt class="app-history-stat-label">Session fees</dt>
+					<dt class="app-history-stat-label">{t('transactions.sessionFees')}</dt>
 					<dd class="app-history-stat-value app-history-stat-value--money">
 						{formatThb(summary.sessionFeeIncome)}
 					</dd>
 				</div>
 				<div class="app-history-stat">
-					<dt class="app-history-stat-label">Late-cancel fees</dt>
+					<dt class="app-history-stat-label">{t('transactions.lateCancelFees')}</dt>
 					<dd class="app-history-stat-value app-history-stat-value--money">
 						{formatThb(summary.lateCancelIncome)}
 					</dd>
 				</div>
 				<div class="app-history-stat">
-					<dt class="app-history-stat-label">Unpaid transactions</dt>
+					<dt class="app-history-stat-label">{t('transactions.unpaid')}</dt>
 					<dd class="app-history-stat-value">{summary.unpaidCount}</dd>
 				</div>
 			</dl>
 		{/if}
 
 		<div class="space-y-3">
-			<label for="tx-search" class="sr-only">Search session or player</label>
+			<label for="tx-search" class="sr-only">{t('transactions.searchSrOnly')}</label>
 			<input
 				id="tx-search"
 				type="search"
 				bind:value={filters.search}
-				placeholder="Search session or player"
+				placeholder={t('transactions.searchSrOnly')}
 				class="app-filter-input"
 			/>
 
-			<div class="flex flex-wrap gap-2" role="group" aria-label="Transaction type">
+			<div class="flex flex-wrap gap-2" role="group" aria-label={t('transactions.typeGroup')}>
 				{#each typeChipOptions as option (option.value)}
 					<button
 						type="button"
@@ -187,13 +189,13 @@
 				<div class="min-w-0">
 					<SelectMenu
 						id="tx-status"
-						label="Status"
-						options={transactionStatusFilterOptions}
+						label={t('dashboard.super.statusLabel')}
+						options={statusFilterOptions}
 						bind:value={filters.status}
 					/>
 				</div>
 				<div class="min-w-0">
-					<span class="app-filter-label invisible" aria-hidden="true">More filters</span>
+					<span class="app-filter-label invisible" aria-hidden="true">{t('transactions.moreFilters')}</span>
 					<button
 						type="button"
 						class="flex h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 text-sm font-medium text-slate-700 dark:text-slate-300 dark:text-slate-600 shadow-sm transition hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-950"
@@ -203,7 +205,7 @@
 							showAdvanced = !showAdvanced;
 						}}
 					>
-						More filters
+						{t('transactions.moreFilters')}
 						{#if advancedFilterCount > 0}
 							<span
 								class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-secondary-200 px-1 text-xs font-semibold text-secondary-900"
@@ -218,7 +220,7 @@
 				</div>
 				{#if hasActiveFilters}
 					<div class="col-span-2 min-w-0 sm:col-span-1">
-						<span class="app-filter-label invisible" aria-hidden="true">Clear filters</span>
+						<span class="app-filter-label invisible" aria-hidden="true">{t('dashboard.super.clearFilters')}</span>
 						<button
 							type="button"
 							class="flex h-11 w-full items-center justify-center px-3 text-sm font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800"
@@ -236,18 +238,18 @@
 					class="app-filter-toolbar grid grid-cols-2 gap-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 p-3 sm:items-end"
 				>
 					<div class="min-w-0">
-						<DatePicker id="tx-date" label="Date" variant="filter" bind:value={filters.date} />
+						<DatePicker id="tx-date" label={t('transactions.dateLabel')} variant="filter" bind:value={filters.date} />
 					</div>
 					<div class="min-w-0">
 						<SelectMenu
 							id="tx-player"
-							label="Player"
+							label={t('role.player')}
 							options={playerOptions}
 							bind:value={filters.playerId}
 						/>
 					</div>
 					<div class="min-w-0 {data.isSuperAdmin ? '' : 'col-span-2'}">
-						<span class="app-filter-label">Price range (THB)</span>
+						<span class="app-filter-label">{t('transactions.priceRange')}</span>
 						<div class="grid grid-cols-2 gap-2">
 							<input
 								id="tx-price-min"
@@ -255,8 +257,8 @@
 								min="0"
 								step="0.01"
 								bind:value={filters.priceMin}
-								placeholder="Min"
-								aria-label="Minimum price in THB"
+								placeholder={t('transactions.priceMin')}
+								aria-label={t('transactions.priceMinAria')}
 								class="app-filter-input"
 							/>
 							<input
@@ -265,8 +267,8 @@
 								min="0"
 								step="0.01"
 								bind:value={filters.priceMax}
-								placeholder="Max"
-								aria-label="Maximum price in THB"
+								placeholder={t('transactions.priceMax')}
+								aria-label={t('transactions.priceMaxAria')}
 								class="app-filter-input"
 							/>
 						</div>
@@ -275,7 +277,7 @@
 						<div class="min-w-0">
 							<SelectMenu
 								id="tx-club"
-								label="Club"
+								label={t('workspace.club.shortLabel')}
 								options={clubOptions}
 								bind:value={filters.clubId}
 							/>
@@ -286,9 +288,9 @@
 		</div>
 
 		{#if scopedTransactions.length === 0}
-			<EmptyState message="No payment transactions yet." />
+			<EmptyState message={t('transactions.empty')} />
 		{:else if filteredTransactions.length === 0}
-			<EmptyState message="No transactions match your filters.">
+			<EmptyState message={t('transactions.noMatch')}>
 				<button
 					type="button"
 					class="text-sm font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800"

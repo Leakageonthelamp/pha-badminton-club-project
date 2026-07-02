@@ -4,6 +4,7 @@ import { ensureProfileTag } from '$lib/server/tag';
 import { displayNameSchema } from '$lib/validation/displayName';
 import { isEmail, normalizePhone, validateIdentifier } from '$lib/validation/identifier';
 import { registerPasswordSchema } from '$lib/validation/password';
+import { t } from '@repo/ui/i18n';
 import { z } from 'zod';
 
 export { isEmail, normalizePhone } from '$lib/validation/identifier';
@@ -31,28 +32,62 @@ const identifierRefine = (value: string, ctx: z.RefinementCtx) => {
 const registerSchema = z
 	.object({
 		displayName: displayNameSchema,
-		identifier: z.string().trim().min(1, 'Enter your email or phone number'),
+		identifier: z.string().trim().min(1),
 		password: registerPasswordSchema,
-		confirmPassword: z.string().min(1, 'Confirm your password')
+		confirmPassword: z.string().min(1)
 	})
 	.superRefine((data, ctx) => {
 		identifierRefine(data.identifier, ctx);
+
+		if (!data.identifier.trim()) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ['identifier'],
+				message: t('auth.error.identifierRequired')
+			});
+		}
+
+		if (!data.confirmPassword.trim()) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ['confirmPassword'],
+				message: t('auth.error.confirmPasswordRequired')
+			});
+		}
 
 		if (data.password !== data.confirmPassword) {
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
 				path: ['confirmPassword'],
-				message: 'Passwords do not match'
+				message: t('auth.error.passwordsMismatch')
 			});
 		}
 	});
 
 const loginSchema = z
 	.object({
-		identifier: z.string().trim().min(1, 'Enter your email or phone number'),
-		password: z.string().min(1, 'Password is required')
+		identifier: z.string().trim().min(1),
+		password: z.string().min(1)
 	})
-	.superRefine((data, ctx) => identifierRefine(data.identifier, ctx));
+	.superRefine((data, ctx) => {
+		if (!data.identifier.trim()) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ['identifier'],
+				message: t('auth.error.identifierRequired')
+			});
+		} else {
+			identifierRefine(data.identifier, ctx);
+		}
+
+		if (!data.password) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ['password'],
+				message: t('auth.error.passwordRequired')
+			});
+		}
+	});
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;

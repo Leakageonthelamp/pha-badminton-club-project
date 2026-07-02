@@ -1,3 +1,6 @@
+import type { Locale } from '$lib/i18n';
+import { tForLocale } from '$lib/i18n';
+import { DEFAULT_LOCALE } from '@repo/ui/i18n';
 import { z } from 'zod';
 
 export const isEmail = (value: string): boolean =>
@@ -51,21 +54,21 @@ export const getIdentifierKind = (value: string): IdentifierKind => {
 	return 'unknown';
 };
 
-export const validateIdentifier = (value: string): string | null => {
+export const validateIdentifier = (value: string, locale: Locale = DEFAULT_LOCALE): string | null => {
 	const trimmed = value.trim();
 	if (!trimmed) {
-		return 'Enter your email or phone number';
+		return tForLocale(locale, 'validation.identifier.required');
 	}
 
 	const kind = getIdentifierKind(trimmed);
 
 	if (kind === 'phone') {
-		return normalizePhone(trimmed) ? null : 'Enter a valid Thai phone number (e.g. 0812345678)';
+		return normalizePhone(trimmed) ? null : tForLocale(locale, 'validation.identifier.phone');
 	}
 
 	if (kind === 'email') {
-		return isEmail(trimmed) ? null : 'Enter a valid email address';
+		return isEmail(trimmed) ? null : tForLocale(locale, 'validation.identifier.email');
 	}
 
-	return 'Enter a valid email or Thai phone number';
+	return tForLocale(locale, 'validation.identifier.both');
 };

@@ -15,6 +15,7 @@ import type {
 	OutstandingFee
 } from '$lib/types/session';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { t } from '@repo/ui/i18n';
 import { ensureSupabaseAuth } from '$lib/server/supabaseAuth';
 import { pickJoinConflict } from '$lib/sessions/joinConflict';
 import {
@@ -503,7 +504,7 @@ export const joinSession = async (
 
 	const row = data as SessionPlayerRow | null;
 	if (!row?.id || row.status !== 'waiting' && row.status !== 'queued') {
-		return { ok: false, message: 'Could not join session. Please try again.' };
+		return { ok: false, message: t('sessions.joinFailed') };
 	}
 
 	return { ok: true, status: row.status };
@@ -848,7 +849,7 @@ export const loadOutstandingFees = async (
 				player_id: row.id as string,
 				session_id: row.session_id as string,
 				session_name: session.name,
-				club_name: club?.name ?? 'Club session',
+				club_name: club?.name ?? t('sessions.detail.clubSessionFallback'),
 				fee_owed: Number(row.fee_owed),
 				fee_status: row.fee_status as CancellationFeeStatus,
 				promptpay_target: session.promptpay_target

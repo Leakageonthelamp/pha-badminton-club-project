@@ -6,6 +6,7 @@
 	import TagPill from '@repo/ui/components/TagPill.svelte';
 	import UserAvatar from '@repo/ui/components/UserAvatar.svelte';
 	import { formatUptime } from '@repo/ui/datetime';
+	import { t } from '@repo/ui/i18n';
 	import {
 		deriveMatchWinner,
 		isMatchDraw,
@@ -188,7 +189,7 @@
 		<button
 			type="button"
 			class="bottom-sheet-backdrop"
-			aria-label="Close match summary"
+			aria-label={t('matches.summary.closeAria')}
 			style:opacity={backdropOpacity}
 			onclick={close}
 		></button>
@@ -207,7 +208,7 @@
 				class="bottom-sheet-drag-handle flex shrink-0 justify-center pt-3 pb-2"
 				role="button"
 				tabindex="-1"
-				aria-label="Drag down to close"
+				aria-label={t('common.dragToClose')}
 				onpointerdown={onDragStart}
 				onpointermove={onDragMove}
 				onpointerup={onDragEnd}
@@ -218,21 +219,23 @@
 
 			<div class="app-surface-header flex shrink-0 items-start justify-between gap-3 pb-4">
 				<div class="min-w-0">
-					<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Match summary</p>
+					<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('matches.summary.title')}</p>
 					<h2 id="match-summary-title" class="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-100">
-						Court {match.court_number}
+						{t('matches.summary.court', { number: match.court_number })}
 					</h2>
 					{#if matchWinner}
-						<p class="mt-1 text-sm text-emerald-700">Team {matchWinner} won</p>
+						<p class="mt-1 text-sm text-emerald-700">{t('matches.summary.teamWon', { team: matchWinner })}</p>
 					{:else if matchDraw}
-						<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">Match drawn</p>
+						<p class="mt-1 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">{t('matches.summary.drawn')}</p>
 					{/if}
 					<div class="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
 						{#if durationLabel}
 							<span class="font-mono tabular-nums">{durationLabel}</span>
 						{/if}
 						<span>
-							{match.shuttles_used} shuttle{match.shuttles_used === 1 ? '' : 's'}
+							{match.shuttles_used === 1
+								? t('matches.summary.shuttles', { count: match.shuttles_used })
+								: t('matches.summary.shuttlesPlural', { count: match.shuttles_used })}
 						</span>
 						{#if sessionName && sessionHref}
 							<a
@@ -258,7 +261,7 @@
 						class="rounded-lg px-2 py-1 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
 						onclick={close}
 					>
-						Close
+						{t('common.close')}
 					</button>
 				</div>
 			</div>
@@ -278,20 +281,20 @@
 
 				<div class="space-y-4 py-4">
 					<div class="space-y-2">
-						<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Team A</p>
+						<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('common.teamA')}</p>
 						<ul class="space-y-2">
 							{#each teams.teamA as player (player.user_id ?? player.profile?.display_name)}
 								<li class="app-list-row flex items-center gap-3 p-3">
 									<UserAvatar
-										displayName={player.profile?.display_name ?? 'Player'}
+										displayName={player.profile?.display_name ?? t('common.player')}
 										avatarUrl={player.profile?.avatar_url ?? null}
 										size="sm"
 									/>
 									<div class="min-w-0 flex-1">
 										<p class="truncate font-medium text-slate-800 dark:text-slate-200">
-											{player.profile?.display_name ?? 'Player'}
+											{player.profile?.display_name ?? t('common.player')}
 											{#if highlightUserId && player.user_id === highlightUserId}
-												<span class="text-slate-500 dark:text-slate-400 dark:text-slate-500">(you)</span>
+												<span class="text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('common.youParen')}</span>
 											{/if}
 										</p>
 										{#if player.profile?.tag}
@@ -303,20 +306,20 @@
 						</ul>
 					</div>
 					<div class="space-y-2">
-						<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">Team B</p>
+						<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('common.teamB')}</p>
 						<ul class="space-y-2">
 							{#each teams.teamB as player (player.user_id ?? player.profile?.display_name)}
 								<li class="app-list-row flex items-center gap-3 p-3">
 									<UserAvatar
-										displayName={player.profile?.display_name ?? 'Player'}
+										displayName={player.profile?.display_name ?? t('common.player')}
 										avatarUrl={player.profile?.avatar_url ?? null}
 										size="sm"
 									/>
 									<div class="min-w-0 flex-1">
 										<p class="truncate font-medium text-slate-800 dark:text-slate-200">
-											{player.profile?.display_name ?? 'Player'}
+											{player.profile?.display_name ?? t('common.player')}
 											{#if highlightUserId && player.user_id === highlightUserId}
-												<span class="text-slate-500 dark:text-slate-400 dark:text-slate-500">(you)</span>
+												<span class="text-slate-500 dark:text-slate-400 dark:text-slate-500">{t('common.youParen')}</span>
 											{/if}
 										</p>
 										{#if player.profile?.tag}

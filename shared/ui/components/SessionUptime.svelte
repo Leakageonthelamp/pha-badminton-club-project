@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { formatUptime } from '../datetime';
+	import { t } from '../i18n/i18n.svelte';
 
 	let {
 		startAt,
 		active = true,
-		label = 'Uptime',
+		label,
 		variant = 'banner',
 		live = false,
 		class: className = ''
@@ -23,6 +24,7 @@
 	const startMs = $derived(new Date(startAt).getTime());
 	const visible = $derived(active && !Number.isNaN(startMs) && nowMs >= startMs);
 	const uptimeLabel = $derived(formatUptime(startAt, nowMs));
+	const resolvedLabel = $derived(label ?? t('session.uptimeLabel'));
 
 	$effect(() => {
 		if (typeof window === 'undefined' || !visible) return;
@@ -43,7 +45,7 @@
 					? 'text-emerald-700'
 					: ''}"
 			>
-				{label}
+				{resolvedLabel}
 			</span>
 			<span
 				class="app-session-countdown-compact-value {live
@@ -56,7 +58,7 @@
 	{:else if variant === 'inline'}
 		<p class="app-session-countdown-inline {className}" aria-live="polite">
 			<span class="app-session-countdown-inline-label {live ? 'text-emerald-700' : ''}">
-				{label}
+				{resolvedLabel}
 			</span>
 			<span class="app-session-countdown-inline-value {live ? 'text-emerald-900' : ''}">
 				{uptimeLabel}
@@ -74,7 +76,7 @@
 					class="h-2 w-2 animate-pulse rounded-full {live ? 'bg-emerald-500' : 'bg-brand-600'}"
 					aria-hidden="true"
 				></span>
-				{label}
+				{resolvedLabel}
 			</span>
 			<span class="app-session-countdown-value {live ? 'text-emerald-900' : ''}">
 				{uptimeLabel}

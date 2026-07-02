@@ -10,6 +10,7 @@
 	import DashboardHero from '@repo/ui/components/DashboardHero.svelte';
 	import { whileSubmitting } from '$lib/forms/submitting';
 	import { PASSWORD_MIN_LENGTH, validateRegisterPassword } from '$lib/validation/password';
+	import { t } from '@repo/ui/i18n';
 	import type { ActionData } from './$types';
 
 	let { form }: { form: ActionData } = $props();
@@ -22,8 +23,8 @@
 
 <section class="space-y-6">
 	<DashboardHero
-		title="Create account"
-		subtitle="Register with email or phone. You need at least one unique identifier."
+		title={t('auth.register.title')}
+		subtitle={t('auth.register.subtitle')}
 		footerCenter
 	>
 		<AppLogo size={48} tone="white" class="mx-auto opacity-95" />
@@ -57,20 +58,22 @@
 			<PasswordField
 				id="confirmPassword"
 				name="confirmPassword"
-				label="Confirm password"
+				label={t('auth.register.confirmPassword')}
 				matchValue={password}
 				autocomplete="new-password"
 				serverError={form?.error?.confirmPassword?.[0] ?? null}
 			/>
 
-			<SubmitButton loading={registerLoading} loadingLabel="Creating account…" variant="accent">
-				Create account
+			<SubmitButton loading={registerLoading} loadingLabel={t('auth.register.submitting')} variant="accent">
+				{t('auth.register.submit')}
 			</SubmitButton>
 		</form>
 	</AppCard>
 
 	<p class="text-center text-sm text-slate-600 dark:text-slate-400 dark:text-slate-500">
-		Already have an account?
-		<a href="/login" class="font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800">Log in</a>
+		{t('auth.register.hasAccount')}
+		<a href="/login" class="font-medium text-brand-700 dark:text-brand-300 hover:text-brand-800">
+			{t('auth.register.loginLink')}
+		</a>
 	</p>
 </section>
